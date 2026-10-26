@@ -370,44 +370,103 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    @forelse($banks as $b)
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="py-3 px-4 font-mono font-bold text-slate-900">{{ $b->account_code }}</td>
-                            <td class="py-3 px-4 font-bold text-slate-900">{{ $b->account_name }}</td>
-                            <td class="py-3 px-4 text-slate-600">{{ $b->bank_name ?? '—' }}</td>
-                            <td class="py-3 px-4 font-mono text-slate-600 dir-ltr text-right">{{ $b->account_number ?? '—' }}</td>
-                            <td class="py-3 px-4">
-                                @if($b->box_nature === 'receipt')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">📥 إيداع وقبض فقط</span>
-                                @elseif($b->box_nature === 'payment')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">📤 سحب وصرف فقط</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">🔄 تحويل وقبض وصرف</span>
+                    @forelse($parentBanks as $pb)
+                        <!-- الحساب البنكي الرئيسي الأب بالدليل -->
+                        <tr class="bg-blue-50/50 font-bold hover:bg-blue-100/50 transition">
+                            <td class="py-3 px-4 font-mono font-bold text-slate-900 flex items-center gap-2">
+                                <span class="text-base text-blue-600">🏦</span>
+                                <span>{{ $pb->account_code }}</span>
+                            </td>
+                            <td class="py-3 px-4 text-slate-900 font-black">
+                                <span>{{ $pb->account_name }}</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 mr-2 border border-blue-200">حساب رئيسي بالدليل</span>
+                                @if($pb->description)
+                                    <span class="block text-[10px] text-slate-400 font-normal">{{ $pb->description }}</span>
                                 @endif
                             </td>
-                            <td class="py-3 px-4 font-bold text-slate-700">{{ $b->currency_name }}</td>
-                            <td class="py-3 px-4 text-left font-mono font-black text-blue-700">{{ $b->formatted_balance }}</td>
+                            <td class="py-3 px-4 text-slate-500">—</td>
+                            <td class="py-3 px-4 text-slate-500">—</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">حساب رئيسي تجميعي</span>
+                            </td>
+                            <td class="py-3 px-4 font-bold text-slate-700">{{ $pb->currency_name }} ({{ $pb->currency }})</td>
+                            <td class="py-3 px-4 text-left font-mono font-black text-blue-700">
+                                {{ $pb->formatted_total_balance }}
+                            </td>
                             <td class="py-3 px-4 text-center">
-                                @if($b->is_active)
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">نشط</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">موقف</span>
-                                @endif
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">نشط</span>
                             </td>
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <a href="{{ route('accounting.cash_boxes.statement', $b->id) }}" class="p-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition" title="كشف الحساب">
-                                        📜
-                                    </a>
-                                    <a href="{{ route('accounting.cash_boxes.statement.print', $b->id) }}" target="_blank" class="p-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition" title="طباعة تقرير رسمي A4 / PDF">
-                                        🖨️
-                                    </a>
-                                    <button onclick="openEditModal({{ json_encode($b) }})" class="p-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition" title="تعديل">
-                                        ✏️
+                                    <button onclick="openSubBoxModal({{ $pb->id }}, '{{ addslashes($pb->account_name) }}', '{{ $pb->currency }}', 'bank')" class="p-1.5 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition text-[11px] font-bold flex items-center gap-1" title="تفريغ حساب بنكي فرعي تحت هذا الحساب">
+                                        <span>➕ فرعي</span>
                                     </button>
                                 </div>
                             </td>
                         </tr>
+
+                        <!-- الحسابات البنكية الفرعية التابعة له -->
+                        @foreach($pb->children as $b)
+                            <tr class="hover:bg-slate-50 transition border-r-4 border-blue-400 bg-white">
+                                <td class="py-2.5 px-4 font-mono text-slate-600 pr-8">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-slate-400 font-sans">↳</span>
+                                        <span class="font-bold text-slate-800">{{ $b->account_code }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-2.5 px-4 font-bold text-slate-900 pr-8">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-sm">💳</span>
+                                        <span>{{ $b->account_name }}</span>
+                                    </div>
+                                    @if($b->description)
+                                        <span class="block text-[10px] text-slate-400 font-normal pr-5">{{ $b->description }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-4 text-slate-600">{{ $b->bank_name ?? '—' }}</td>
+                                <td class="py-2.5 px-4 font-mono text-slate-600 dir-ltr text-right">{{ $b->account_number ?? '—' }}</td>
+                                <td class="py-2.5 px-4">
+                                    @if($b->box_nature === 'receipt')
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">📥 إيداع وقبض فقط</span>
+                                    @elseif($b->box_nature === 'payment')
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">📤 سحب وصرف فقط</span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">🔄 تحويل وقبض وصرف</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-4 font-bold text-slate-700">{{ $b->currency_name }}</td>
+                                <td class="py-2.5 px-4 text-left font-mono font-black text-blue-700">{{ $b->formatted_balance }}</td>
+                                <td class="py-2.5 px-4 text-center">
+                                    @if($b->is_active)
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">نشط</span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">موقف</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-4 text-center">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <a href="{{ route('accounting.cash_boxes.statement', $b->id) }}" class="p-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition" title="كشف الحساب">
+                                            📜
+                                        </a>
+                                        <a href="{{ route('accounting.cash_boxes.statement.print', $b->id) }}" target="_blank" class="p-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition" title="طباعة تقرير رسمي A4 / PDF">
+                                            🖨️
+                                        </a>
+                                        <button onclick="openEditModal({{ json_encode($b) }})" class="p-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition" title="تعديل">
+                                            ✏️
+                                        </button>
+                                        @if($b->box_vouchers_count == 0 && abs((float)$b->current_balance) < 0.001)
+                                            <form action="{{ route('accounting.cash_boxes.destroy', $b->id) }}" method="POST" class="inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا الحساب البنكي؟');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="p-1 bg-rose-50 text-rose-700 rounded hover:bg-rose-100 transition text-[11px]" title="حذف">
+                                                    🗑️
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
                     @empty
                         <tr>
                             <td colspan="9" class="py-6 text-center text-slate-400">
@@ -463,16 +522,35 @@
                 </div>
             </div>
 
-            <!-- الصندوق الأب (في حالة الصندوق الفرعي) -->
-            <div id="parentBoxWrapper" class="hidden p-3 bg-amber-50 rounded-xl border border-amber-200">
-                <label class="block font-black text-amber-950 mb-1">اختر الصندوق الرئيسي الأب <span class="text-rose-500">*</span></label>
-                <select name="parent_id" id="modalParentId" class="w-full border border-amber-300 rounded-xl px-3 py-2 bg-white font-bold outline-none focus:ring-2 focus:ring-emerald-500">
-                    <option value="">-- اختر الصندوق الرئيسي التابع له --</option>
+            <!-- الصندوق الأب (الحساب الرئيسي بالدليل المحاسبي) -->
+            <div id="parentBoxWrapper" class="p-3 bg-amber-50/90 rounded-2xl border border-amber-200 space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label class="block font-black text-amber-950 text-xs">
+                        الحساب الرئيسي بالدليل المحاسبي (الأب للتفريع) <span class="text-rose-500">*</span>
+                    </label>
+                    <span class="text-[10px] text-amber-800 font-bold bg-amber-200/80 px-2 py-0.5 rounded-full border border-amber-300">
+                        ⚡ يظهر فقط الحسابات المعرفة كـ (صناديق / بنوك)
+                    </span>
+                </div>
+                <select name="parent_id" id="modalParentId" class="w-full border border-amber-300 rounded-xl px-3 py-2 bg-white font-bold outline-none focus:ring-2 focus:ring-emerald-500 text-xs">
+                    <option value="">-- اختر الحساب الرئيسي للتفريع تحته --</option>
                     @foreach($parentBoxes as $p)
-                        <option value="{{ $p->id }}">{{ $p->account_name }} (كود: {{ $p->account_code }}) - {{ $p->currency }}</option>
+                        <option value="{{ $p->id }}" data-type="cash_box">
+                            📂 [{{ $p->account_code }}] {{ $p->account_name }} (صندوق رئيسي بالدليل)
+                        </option>
+                    @endforeach
+                    @foreach($parentBanks as $b)
+                        <option value="{{ $b->id }}" data-type="bank">
+                            🏦 [{{ $b->account_code }}] {{ $b->account_name }} (بنك رئيسي بالدليل)
+                        </option>
                     @endforeach
                 </select>
-                <span class="text-[10px] text-amber-700 block mt-1">سيتم تفريع الحساب تسلسلياً تحت كود هذا الصندوق الرئيسي تلقائياً.</span>
+                <div class="text-[11px] text-amber-900 leading-relaxed bg-white/80 p-2 rounded-lg border border-amber-100 flex items-start gap-1.5">
+                    <span class="text-amber-600 font-bold">💡</span>
+                    <span>
+                        وفق معايير الدليل المحاسبي (الرتبة الخامسة): تظهر هنا <strong>فقط الحسابات الرئيسية المعرفة بنوع (صندوق أو بنك) في الدليل المحاسبي</strong>. يتم إنشاء الصندوق كحساب فرعي حركي (رتبة 5) تحته مباشرة لتسجيل المقبوضات والمدفوعات.
+                    </span>
+                </div>
             </div>
 
             <!-- اسم الصندوق والكود -->
@@ -579,6 +657,37 @@
 </div>
 
 <script>
+    function filterParentOptions() {
+        const type = document.getElementById('modalAccountType').value;
+        const parentSelect = document.getElementById('modalParentId');
+        const options = parentSelect.querySelectorAll('option[data-type]');
+        let currentValMatches = false;
+
+        options.forEach(opt => {
+            const optType = opt.getAttribute('data-type');
+            if (optType === type) {
+                opt.style.display = '';
+                opt.disabled = false;
+                if (parentSelect.value == opt.value) {
+                    currentValMatches = true;
+                }
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            }
+        });
+
+        // إذا لم يكن الحساب المختار الحالي متطابقاً مع نوع الحساب الجديد، نختار أول خيار متطابق تلقائياً
+        if (!currentValMatches) {
+            for (let opt of options) {
+                if (opt.getAttribute('data-type') === type && !opt.disabled) {
+                    parentSelect.value = opt.value;
+                    break;
+                }
+            }
+        }
+    }
+
     function openCreateModal() {
         document.getElementById('modalTitle').innerText = 'إضافة صندوق أو بنك جديد';
         document.getElementById('submitBtnText').innerText = 'حفظ الصندوق المالي';
@@ -604,19 +713,20 @@
         document.getElementById('activeStatusWrapper').classList.add('hidden');
 
         toggleAccountTypeFields();
-        toggleParentBoxField();
+        filterParentOptions();
 
         document.getElementById('boxModal').classList.remove('hidden');
     }
 
-    function openSubBoxModal(parentId, parentName, currency) {
+    function openSubBoxModal(parentId, parentName, currency, type = 'cash_box') {
         openCreateModal();
-        document.getElementById('modalTitle').innerText = 'إضافة صندوق فرعي تابع لـ: ' + parentName;
+        document.getElementById('modalAccountType').value = type;
+        toggleAccountTypeFields();
+        document.getElementById('modalTitle').innerText = 'إضافة فرعي تابع لـ: ' + parentName;
         document.getElementById('modalBoxCategory').value = 'sub_box';
         document.getElementById('modalParentId').value = parentId;
         document.getElementById('modalCurrency').value = currency || 'YER';
         document.querySelector('input[name="box_nature"][value="receipt"]').checked = true;
-        toggleParentBoxField();
     }
 
     function openEditModal(box) {
@@ -645,7 +755,6 @@
         document.getElementById('activeStatusWrapper').classList.remove('hidden');
 
         toggleAccountTypeFields();
-        toggleParentBoxField();
 
         document.getElementById('boxModal').classList.remove('hidden');
     }
@@ -670,17 +779,11 @@
                 catSelect.value = 'main_box';
             }
         }
-        toggleParentBoxField();
+        filterParentOptions();
     }
 
     function toggleParentBoxField() {
-        const cat = document.getElementById('modalBoxCategory').value;
-        const pWrap = document.getElementById('parentBoxWrapper');
-        if (cat === 'sub_box') {
-            pWrap.classList.remove('hidden');
-        } else {
-            pWrap.classList.add('hidden');
-        }
+        // الحقل مرئي دائماً لربط الحساب بالشجرة
     }
 </script>
 @endsection
