@@ -1,27 +1,30 @@
 <!-- مودال استعراض القيد المحاسبي والأثر المالي للعملية -->
-<div id="voucherJournalEntryModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <!-- خلفية معتمة -->
-    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" onclick="closeJournalEntryModal()"></div>
+<div id="voucherJournalEntryModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- خلفية معتمة تفاعلية -->
+    <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm transition-opacity" onclick="closeJournalEntryModal()"></div>
 
-    <div class="flex min-h-screen items-center justify-center p-3 text-center sm:p-4">
-        <div class="relative transform overflow-hidden rounded-3xl bg-white text-right shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-4xl border border-slate-200">
+    <!-- حاوية التمركز والاحتواء الكامل للشاشة دون تجاوز أو جمود -->
+    <div class="fixed inset-0 z-10 flex items-center justify-center p-2 sm:p-4 md:p-6 pointer-events-none">
+        
+        <!-- بطاقة المودال الرئيسية: محتواة تماماً داخل الشاشة (max-h 92vh) مع رأس وذيل ثابتين ومحتوى داخلي قابل للتمرير -->
+        <div class="relative pointer-events-auto w-full max-w-4xl max-h-[92vh] sm:max-h-[88vh] flex flex-col rounded-3xl bg-white text-right shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
             
-            <!-- رأس المودال -->
-            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-6 py-5 flex items-center justify-between">
+            <!-- رأس المودال (ثابت بالأعلى دائماً) -->
+            <div class="shrink-0 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-5 sm:px-6 py-4 flex items-center justify-between border-b border-white/10 shadow-xs z-10">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl border border-white/20 shadow-inner">
+                    <div class="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center text-2xl border border-white/20 shadow-inner shrink-0">
                         ⚖️
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-black text-white tracking-wide" id="modalVoucherTitle">
+                            <h3 class="text-base sm:text-lg font-black text-white tracking-wide" id="modalVoucherTitle">
                                 القيد المحاسبي والأثر المالي للعملية
                             </h3>
                             <span id="modalVoucherTypeBadge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-white/20 text-white border border-white/30">
                                 سند قبض
                             </span>
                         </div>
-                        <p class="text-xs text-slate-300 mt-1 flex items-center gap-3 flex-wrap">
+                        <p class="text-[11px] sm:text-xs text-slate-300 mt-1 flex items-center gap-2.5 flex-wrap">
                             <span>رقم السند: <strong id="modalVoucherNo" class="font-mono text-amber-300">—</strong></span>
                             <span>•</span>
                             <span>رقم القيد الآلي: <strong id="modalEntryNo" class="font-mono text-emerald-300">—</strong></span>
@@ -31,13 +34,13 @@
                     </div>
                 </div>
 
-                <button type="button" onclick="closeJournalEntryModal()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center text-lg transition">
+                <button type="button" onclick="closeJournalEntryModal()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/25 text-slate-300 hover:text-white flex items-center justify-center text-lg transition shrink-0" title="إغلاق النافذة (ESC)">
                     ✕
                 </button>
             </div>
 
-            <!-- محتوى المودال -->
-            <div class="p-6 space-y-6">
+            <!-- محتوى المودال (قابل للتمرير العمودي السلس مع شريط تمرير واضح وأنيق) -->
+            <div class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 custom-modal-scrollbar bg-slate-50/40">
 
                 <!-- حالة التحميل Spinner -->
                 <div id="modalLoadingState" class="py-16 text-center">
@@ -78,20 +81,20 @@
                     </div>
 
                     <!-- البيان العام للعملية -->
-                    <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 text-xs text-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 text-xs text-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
                         <div>
                             <span class="font-bold text-slate-500 block mb-0.5 text-[11px]">بيان وسند العملية:</span>
-                            <span id="modalVoucherStatement" class="font-bold text-slate-900 text-sm">—</span>
+                            <span id="modalVoucherStatement" class="font-bold text-slate-900 text-sm leading-relaxed">—</span>
                         </div>
                         <div class="flex items-center gap-3 font-mono text-[11px] text-slate-500 shrink-0">
-                            <span>الخزينة/الصندوق: <strong id="modalBoxName" class="text-slate-800 font-sans">—</strong></span>
+                            <span>الخزينة/الصندوق: <strong id="modalBoxName" class="text-slate-800 font-sans font-bold">—</strong></span>
                             <span>•</span>
-                            <span>المستخدم: <strong id="modalCreatorName" class="text-slate-800 font-sans">—</strong></span>
+                            <span>المستخدم: <strong id="modalCreatorName" class="text-slate-800 font-sans font-bold">—</strong></span>
                         </div>
                     </div>
 
                     <!-- جدول أطراف القيد المزدوج (مدين / دائن) -->
-                    <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-xs bg-white">
                         <div class="bg-slate-100/90 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
                             <span class="text-xs font-black text-slate-800 flex items-center gap-1.5">
                                 <span>📋</span>
@@ -140,39 +143,39 @@
 
                     <!-- بطاقات الأثر المالي والتحليل المحاسبي -->
                     <div>
-                        <h5 class="text-xs font-black text-slate-800 mb-2 flex items-center gap-1.5">
+                        <h5 class="text-xs font-black text-slate-800 mb-2.5 flex items-center gap-1.5">
                             <span>💡</span>
                             <span>التحليل والأثر المالي للعملية (Financial Impact Breakdown)</span>
                         </h5>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <!-- أثر السيولة -->
-                            <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-3.5 text-right">
+                            <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-3.5 text-right shadow-xs">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-[11px] font-black text-blue-900">أثر السيولة النقدية</span>
                                     <span class="text-sm">🏦</span>
                                 </div>
                                 <p id="impactBox" class="text-xs font-bold text-blue-800 mt-1 leading-relaxed">—</p>
-                                <span class="text-[10px] text-blue-600 block mt-1">حساب الأصول المتداولة (الصندوق/البنك)</span>
+                                <span class="text-[10px] text-blue-600 block mt-1 font-semibold">حساب الأصول المتداولة (الصندوق/البنك)</span>
                             </div>
 
                             <!-- أثر الطرف المقابل -->
-                            <div class="bg-purple-50/70 border border-purple-200 rounded-2xl p-3.5 text-right">
+                            <div class="bg-purple-50/70 border border-purple-200 rounded-2xl p-3.5 text-right shadow-xs">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-[11px] font-black text-purple-900">أثر الحساب المقابل / الذمم</span>
                                     <span class="text-sm">👥</span>
                                 </div>
                                 <p id="impactParty" class="text-xs font-bold text-purple-800 mt-1 leading-relaxed">—</p>
-                                <span class="text-[10px] text-purple-600 block mt-1">ذمم الطلاب / المعلمين / المصروفات</span>
+                                <span class="text-[10px] text-purple-600 block mt-1 font-semibold">ذمم الطلاب / المعلمين / المصروفات</span>
                             </div>
 
                             <!-- القاعدة المحاسبية المطبقة -->
-                            <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3.5 text-right">
+                            <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3.5 text-right shadow-xs">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-[11px] font-black text-emerald-900">معيار القيد المزدوج</span>
                                     <span class="text-sm">⚖️</span>
                                 </div>
                                 <p id="impactRule" class="text-xs font-bold text-emerald-800 mt-1 leading-relaxed">—</p>
-                                <span class="text-[10px] text-emerald-600 block mt-1">توازن الأصول والخصوم والمصروفات</span>
+                                <span class="text-[10px] text-emerald-600 block mt-1 font-semibold">توازن الأصول والخصوم والمصروفات</span>
                             </div>
                         </div>
                     </div>
@@ -180,20 +183,20 @@
                 </div>
             </div>
 
-            <!-- ذيل المودال وأزرار الإجراءات -->
-            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div class="flex items-center gap-2">
-                    <a id="btnViewJournalEntry" href="#" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs">
+            <!-- ذيل المودال وأزرار الإجراءات (ثابت بالأسفل دائماً) -->
+            <div class="shrink-0 bg-white px-5 sm:px-6 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 z-10 shadow-xs">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <a id="btnViewJournalEntry" href="#" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs w-full sm:w-auto">
                         <span>🔍</span>
                         <span>عرض القيد في دفتر اليومية العام</span>
                     </a>
-                    <a id="btnPrintJournalEntry" href="#" target="_blank" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl transition flex items-center gap-1.5">
+                    <a id="btnPrintJournalEntry" href="#" target="_blank" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-300 w-full sm:w-auto">
                         <span>🖨️</span>
                         <span>طباعة إشعار القيد</span>
                     </a>
                 </div>
 
-                <button type="button" onclick="closeJournalEntryModal()" class="w-full sm:w-auto px-5 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl transition">
+                <button type="button" onclick="closeJournalEntryModal()" class="w-full sm:w-auto px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-black rounded-xl transition">
                     إغلاق النافذة
                 </button>
             </div>
@@ -202,12 +205,39 @@
     </div>
 </div>
 
+<style>
+    /* أشرطة تمرير أنيقة وواضحة لمودال القيد المحاسبي */
+    .custom-modal-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #94a3b8 #f1f5f9;
+    }
+    .custom-modal-scrollbar::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .custom-modal-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 9999px;
+    }
+    .custom-modal-scrollbar::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 9999px;
+        border: 2px solid #f1f5f9;
+    }
+    .custom-modal-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+    }
+</style>
+
 <script>
     function openJournalEntryModal(voucherId) {
         const modal = document.getElementById('voucherJournalEntryModal');
         const loading = document.getElementById('modalLoadingState');
         const errorState = document.getElementById('modalErrorState');
         const content = document.getElementById('modalEntryContent');
+
+        // قفل تمرير الصفحة الخلفية حتى لا تتجمد النافذة
+        document.body.classList.add('overflow-hidden');
 
         modal.classList.remove('hidden');
         loading.classList.remove('hidden');
@@ -337,6 +367,7 @@
 
     function closeJournalEntryModal() {
         document.getElementById('voucherJournalEntryModal').classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
     }
 
     // إغلاق المودال بزر ESC
