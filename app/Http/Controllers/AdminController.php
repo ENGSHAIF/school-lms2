@@ -3,21 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
-use App\Models\Level;
-use App\Models\Lesson;  
-use App\Models\Package;
-use App\Models\User;
-use App\Models\ExamAttempt;
-use App\Models\StudentEnrollment;
-use App\Models\StudentInstallment;
+use App\Models\Exam;
 use App\Models\FinancialAccount;
+use App\Models\Lesson;
+use App\Models\Level;
+use App\Models\Package;
 use App\Models\PasswordResetRequest;
 use App\Models\PermissionGroup;
+use App\Models\SiteSetting;
+use App\Models\StudentEnrollment;
+use App\Models\StudentInstallment;
 use App\Models\StudentProfile;
+use App\Models\StudyGroup;
 use App\Models\SystemAuditLog;
+use App\Models\User;
 use App\Models\Voucher;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -28,12 +32,12 @@ class AdminController extends Controller
         $activeStudents = User::where('role', 'student')->where('status', 'active')->count();
         $totalTeachers = User::whereIn('role', ['teacher', 'supervisor'])->count();
         $coursesCount = Course::count();
-        $groupsCount = \App\Models\StudyGroup::count();
-        $examsCount = \App\Models\Exam::count();
+        $groupsCount = StudyGroup::count();
+        $examsCount = Exam::count();
         $vouchersCount = Voucher::count();
         $todayReceipts = Voucher::where('voucher_type', 'receipt')->whereDate('created_at', today())->sum('amount');
         $pendingPasswordRequests = PasswordResetRequest::where('status', 'pending')->count();
-        $whatsappMasterOn = (bool) \App\Models\SiteSetting::get('whatsapp_master_switch', true);
+        $whatsappMasterOn = (bool) SiteSetting::get('whatsapp_master_switch', true);
 
         return view('admin.dashboard', compact(
             'totalStudents',
@@ -57,8 +61,12 @@ class AdminController extends Controller
     {
         $query = User::where('role', 'student')
             ->with([
-                'examAttempts' => fn($q) => $q->with('answers')->latest()->limit(1),
-                'enrollments.level.course'
+                'examAttempts' => fn ($q) => $q->with('answers')->latest()->limit(1),
+                'enrollments.level.course',
+                'enrollments.approver',
+                'enrollments.revoker',
+                'approver',
+                'revoker',
             ])
             ->latest();
 
@@ -66,10 +74,10 @@ class AdminController extends Controller
             $s = trim($request->search);
             $query->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('student_code', 'like', "%{$s}%")
-                  ->orWhere('user_code', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%")
-                  ->orWhere('phone_whatsapp', 'like', "%{$s}%");
+                    ->orWhere('student_code', 'like', "%{$s}%")
+                    ->orWhere('user_code', 'like', "%{$s}%")
+                    ->orWhere('email', 'like', "%{$s}%")
+                    ->orWhere('phone_whatsapp', 'like', "%{$s}%");
             });
         }
 
@@ -104,12 +112,14 @@ class AdminController extends Controller
         $student = User::findOrFail($id);
         $level = Level::findOrFail($request->level_id);
 
-        // 1. تسجيل الطالب في المستوى
+        // 1. تسجيل الطالب في المستوى مع توثيق من اعتمد الطالب وتاريخ الاعتماد
         StudentEnrollment::create([
             'user_id' => $student->id,
             'level_id' => $level->id,
             'status' => 'active',
             'enrolled_at' => now(),
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
         ]);
 
         // 2. جدولة القسط الدراسي المالي
@@ -129,16 +139,21 @@ class AdminController extends Controller
             $studentAccount->increment('current_balance', $level->fee_amount);
         }
 
-        // 4. تفعيل حساب الطالب بالكامل
+        // 4. تفعيل حساب الطالب بالكامل وتوثيق من اعتمد وتاريخ الاعتماد وتصفير أي إلغاء سابق
         $student->update([
-            'status' => 'active'
+            'status' => 'active',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+            'revoked_by' => null,
+            'revoked_at' => null,
+            'revoke_reason' => null,
         ]);
 
         // 5. إرسال إشعار الواتساب التلقائي المعتمد
-        $schoolName = \App\Models\SiteSetting::get('school_name', 'منصة ASOTS');
+        $schoolName = SiteSetting::get('school_name', 'منصة ASOTS');
         $msgBody = "مرحباً {$student->name}، تهانينا! 🎓\n\nتم اعتماد مستواك الأكاديمي رسمياً: [{$level->name}] في {$schoolName}.\nيمكنك الآن تسجيل الدخول لمنصتك ومتابعة محاضراتك ودروسك فوراً.\n\nنتمنى لك دوام التفوق والنجاح!";
-        
-        \App\Services\WhatsAppService::send(
+
+        WhatsAppService::send(
             $student->phone_whatsapp ?: '',
             $msgBody,
             null,
@@ -146,7 +161,119 @@ class AdminController extends Controller
             'announcement'
         );
 
+        // توثيق في سجل تدقيق النظام
+        SystemAuditLog::record(
+            'student.level_assigned',
+            "تم اعتماد المستوى الأكاديمي [{$level->name}] للطالب [{$student->name}] ({$student->student_code}) ورسم دراسي {$level->fee_amount} {$level->currency} بواسطة (".auth()->user()->name.')',
+            $student,
+            [
+                'level_id' => $level->id,
+                'level_name' => $level->name,
+                'fee_amount' => $level->fee_amount,
+                'approved_by' => auth()->id(),
+                'approved_by_name' => auth()->user()->name,
+                'approved_at' => now()->toDateTimeString(),
+            ]
+        );
+
         return back()->with('success', "تم اعتماد الطالب وتخصيص المستوى [{$level->name}] بنجاح، وتفعيل حسابه المالي والأكاديمي وإشعاره عبر الواتساب.");
+    }
+
+    /**
+     * إلغاء اعتماد وتسكين المستوى للطالب الجديد (ما دام لم يدرس أي دورات أو حصص)
+     */
+    public function revokeLevelApproval(Request $request, $id)
+    {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('students.revoke_approval')) {
+            return back()->with('error', 'عذراً، ليس لديك صلاحية إلغاء اعتماد وتسكين مستويات الطلاب.');
+        }
+
+        $student = User::with(['enrollments.level', 'financialAccount'])->findOrFail($id);
+
+        if ($student->role !== 'student') {
+            return back()->with('error', 'هذه العملية مخصصة لحسابات الطلاب فقط.');
+        }
+
+        if ($student->status !== 'active' && ! $student->enrollments()->where('status', 'active')->exists()) {
+            return back()->with('error', 'هذا الطالب ليس معتمداً حالياً أو ليس لديه تسكين نشط ليتم إلغاؤه.');
+        }
+
+        // 1. فحص النزاهة الأكاديمية: التحقق الصارم هل الطالب جديد ولم يدرس أي دورات أو حصص؟
+        if ($student->hasStudiedAnyCourses()) {
+            return back()->with('error', "لا يمكن إلغاء اعتماد الطالب ({$student->name}) لأنه بدأ الدراسة بالفعل ولديه سجلات أكاديمية (حصص، تقييمات يومية، أو درجات) مسجلة في النظام.");
+        }
+
+        // 2. فحص النزاهة المالية: هل لديه سندات قبض مالية مقبوضة ومسجلة باسمه؟
+        $hasPaidReceipt = false;
+        if ($student->financialAccount) {
+            $hasPaidReceipt = Voucher::where('account_id', $student->financialAccount->id)
+                ->where('voucher_type', 'receipt')
+                ->exists();
+        }
+        if ($hasPaidReceipt) {
+            return back()->with('error', "لا يمكن إلغاء الاعتماد لوجود سند قبض مالي مسجل باسم الطالب ({$student->name})، يرجى مراجعة الإدارة المالية أو إلغاء السند أولاً.");
+        }
+
+        $reason = trim($request->input('reason', 'إلغاء الاعتماد من الإدارة/الإشراف الأكاديمي لإعادة المراجعة والتسكين'));
+
+        // 3. إلغاء القيود النشطة في student_enrollments مع توثيق من ألغى وتاريخ الإلغاء
+        $activeEnrollments = StudentEnrollment::where('user_id', $student->id)->where('status', 'active')->get();
+        $totalRevokedFees = 0;
+        $revokedLevelsNames = [];
+
+        foreach ($activeEnrollments as $enr) {
+            $enr->update([
+                'status' => 'revoked',
+                'revoked_by' => auth()->id(),
+                'revoked_at' => now(),
+                'revoke_reason' => $reason,
+            ]);
+            if ($enr->level) {
+                $totalRevokedFees += (float) $enr->level->fee_amount;
+                $revokedLevelsNames[] = $enr->level->name;
+            }
+        }
+
+        // 4. حذف الأقساط غير المسددة المجدولة للمستوى الملغي
+        StudentInstallment::where('user_id', $student->id)->where('status', 'unpaid')->delete();
+
+        // 5. تصحيح الحساب المالي للطالب (عكس الرسوم التي قُيّدت عند الاعتماد لأن الطالب لم يدرس)
+        if ($student->financialAccount && $totalRevokedFees > 0) {
+            $currentBal = (float) $student->financialAccount->current_balance;
+            $newBal = max(0, $currentBal - $totalRevokedFees);
+            $student->financialAccount->update(['current_balance' => $newBal]);
+        }
+
+        // 6. حذف الطالب من أي قوائم مجموعات تم ربطه بها مسبقاً قبل بدء الدراسة
+        DB::table('study_group_students')->where('student_id', $student->id)->delete();
+
+        // 7. إعادة حالة الطالب إلى "بانتظار الاعتماد" وتوثيق من ألغى الاعتماد والوقت والسبب
+        $student->update([
+            'status' => 'pending_approval',
+            'revoked_by' => auth()->id(),
+            'revoked_at' => now(),
+            'revoke_reason' => $reason,
+        ]);
+
+        // 8. توثيق في سجل تدقيق النظام الشامل
+        $levelsStr = ! empty($revokedLevelsNames) ? implode('، ', $revokedLevelsNames) : 'المستوى الحالي';
+        SystemAuditLog::record(
+            'student.approval_revoked',
+            "تم إلغاء اعتماد وتسكين الطالب [{$student->name}] ({$student->student_code}) للمستوى [{$levelsStr}] وإعادته لحالة بانتظار الاعتماد بواسطة (".auth()->user()->name."). السبب: {$reason}",
+            $student,
+            [
+                'student_id' => $student->id,
+                'student_name' => $student->name,
+                'revoked_by' => auth()->id(),
+                'revoked_by_name' => auth()->user()->name,
+                'revoked_at' => now()->toDateTimeString(),
+                'reason' => $reason,
+                'revoked_levels' => $revokedLevelsNames,
+                'reversed_amount' => $totalRevokedFees,
+            ]
+        );
+
+        return back()->with('success', "تم إلغاء اعتماد الطالب ({$student->name}) بنجاح وإعادته لقائمة مراجعة وتخصيص المستويات بانتظار الاعتماد.");
     }
 
     // 3. عرض وإدارة المستخدمين مع تبويبات منفصلة لكل فئة (إدارة النظام، المعلمون، الطلاب، أولياء الأمور، وطلبات استعادة كلمة المرور)
@@ -165,8 +292,8 @@ class AdminController extends Controller
             if ($search) {
                 $reqQuery->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('identifier', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
+                        ->orWhere('identifier', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
                 });
             }
             $passwordRequests = $reqQuery->paginate(15)->withQueryString();
@@ -186,7 +313,7 @@ class AdminController extends Controller
                     'childrenProfiles.user.enrollments.level',
                     'childrenProfiles.user.studyGroups',
                     'children.enrollments.level',
-                    'children.studyGroups'
+                    'children.studyGroups',
                 ]);
             }
 
@@ -197,11 +324,11 @@ class AdminController extends Controller
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('name_en', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('phone_whatsapp', 'like', "%{$search}%")
-                      ->orWhere('user_code', 'like', "%{$search}%")
-                      ->orWhere('student_code', 'like', "%{$search}%");
+                        ->orWhere('name_en', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone_whatsapp', 'like', "%{$search}%")
+                        ->orWhere('user_code', 'like', "%{$search}%")
+                        ->orWhere('student_code', 'like', "%{$search}%");
                 });
             }
 
@@ -209,6 +336,7 @@ class AdminController extends Controller
             $users->getCollection()->transform(function ($u) {
                 $u->integrity_reasons = $u->checkDeletionIntegrity();
                 $u->can_be_deleted = empty($u->integrity_reasons);
+
                 return $u;
             });
         }
@@ -217,7 +345,6 @@ class AdminController extends Controller
             ->select('id', 'name', 'name_en', 'user_code', 'student_code', 'phone_whatsapp')
             ->orderBy('name')
             ->get();
-
 
         $roleCounts = [
             'staff' => User::whereIn('role', ['admin', 'supervisor', 'accountant'])->count(),
@@ -230,15 +357,15 @@ class AdminController extends Controller
 
         $availablePermissions = User::availablePermissions();
         $permissionGroups = PermissionGroup::withCount('users')->latest('is_system')->oldest('id')->get();
+        $reviewerUser = User::where('email', 'demo.reviewer@asots.com')->first();
 
-        return view('admin.users.index', compact('users', 'passwordRequests', 'pendingResetCount', 'roleCounts', 'tab', 'search', 'availablePermissions', 'permissionGroups', 'selectedGroupId', 'allStudents'));
+        return view('admin.users.index', compact('users', 'passwordRequests', 'pendingResetCount', 'roleCounts', 'tab', 'search', 'availablePermissions', 'permissionGroups', 'selectedGroupId', 'allStudents', 'reviewerUser'));
     }
-
 
     // 4. إضافة مستخدم أو موظف جديد للنظام مع تحديد صلاحياته
     public function storeUser(Request $request)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_users')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_users')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة مستخدمين للنظام.');
         }
 
@@ -263,7 +390,7 @@ class AdminController extends Controller
 
         // تحديد مجموعة الصلاحيات
         $permissionGroupId = $validated['permission_group_id'] ?? null;
-        if (!$permissionGroupId) {
+        if (! $permissionGroupId) {
             $defaultSlug = match ($validated['role']) {
                 'admin' => 'admin',
                 'supervisor' => 'supervisors',
@@ -287,12 +414,12 @@ class AdminController extends Controller
             'gender' => $validated['gender'] ?? 'male',
             'email' => $validated['email'],
             'phone_whatsapp' => $validated['phone_whatsapp'],
-            'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
+            'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
             'permission_group_id' => $permissionGroupId,
             'permissions' => $permissions,
             'status' => $status,
-            'must_change_password' => $request->has('must_change_password') ? $request->boolean('must_change_password') : false,
+            'must_change_password' => $request->boolean('must_change_password'),
             'theme_preference' => 'professional_navy',
             'locale' => 'ar',
         ]);
@@ -301,8 +428,8 @@ class AdminController extends Controller
         if ($validated['role'] === 'student') {
             FinancialAccount::create([
                 'user_id' => $user->id,
-                'account_code' => '21' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
-                'account_name' => 'حساب الطالب: ' . $user->name,
+                'account_code' => '21'.str_pad($user->id, 4, '0', STR_PAD_LEFT),
+                'account_name' => 'حساب الطالب: '.$user->name,
                 'account_type' => 'student',
                 'opening_balance' => 0.00,
                 'current_balance' => 0.00,
@@ -311,8 +438,8 @@ class AdminController extends Controller
         } elseif ($validated['role'] === 'teacher') {
             FinancialAccount::create([
                 'user_id' => $user->id,
-                'account_code' => '22' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
-                'account_name' => 'حساب المعلم: ' . $user->name,
+                'account_code' => '22'.str_pad($user->id, 4, '0', STR_PAD_LEFT),
+                'account_name' => 'حساب المعلم: '.$user->name,
                 'account_type' => 'teacher',
                 'opening_balance' => 0.00,
                 'current_balance' => 0.00,
@@ -321,8 +448,8 @@ class AdminController extends Controller
         } elseif (in_array($validated['role'], ['supervisor', 'accountant', 'staff', 'admin'])) {
             FinancialAccount::create([
                 'user_id' => $user->id,
-                'account_code' => '22' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
-                'account_name' => 'حساب الكادر: ' . $user->name,
+                'account_code' => '22'.str_pad($user->id, 4, '0', STR_PAD_LEFT),
+                'account_name' => 'حساب الكادر: '.$user->name,
                 'account_type' => 'teacher',
                 'opening_balance' => 0.00,
                 'current_balance' => 0.00,
@@ -331,12 +458,12 @@ class AdminController extends Controller
         }
 
         // إرسال رسالة ترحيبية فورية عبر الواتساب إذا كانت مفعلة
-        if (!empty($user->phone_whatsapp) && \App\Models\SiteSetting::get('whatsapp_auto_welcome_enabled', true) && \App\Models\SiteSetting::get('wa_template_welcome_enabled', true)) {
-            $welcomeText = \App\Services\WhatsAppService::renderTemplate(
-                \App\Models\SiteSetting::get('wa_template_welcome_body', "أهلاً وسهلاً بك {name} في {school_name}! 🎓✨"),
+        if (! empty($user->phone_whatsapp) && SiteSetting::get('whatsapp_auto_welcome_enabled', true) && SiteSetting::get('wa_template_welcome_enabled', true)) {
+            $welcomeText = WhatsAppService::renderTemplate(
+                SiteSetting::get('wa_template_welcome_body', 'أهلاً وسهلاً بك {name} في {school_name}! 🎓✨'),
                 ['{name}' => $user->name, '{phone}' => $user->phone_whatsapp]
             );
-            \App\Services\WhatsAppService::send($user->phone_whatsapp, $welcomeText, null, $user->id, 'welcome');
+            WhatsAppService::send($user->phone_whatsapp, $welcomeText, null, $user->id, 'welcome');
         }
 
         $roleLabels = [
@@ -355,7 +482,7 @@ class AdminController extends Controller
     // 5. تعديل بيانات وصلاحيات المستخدم
     public function updateUser(Request $request, $id)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_users')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_users')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل المستخدمين والصلاحيات.');
         }
 
@@ -366,7 +493,7 @@ class AdminController extends Controller
             'name_en' => 'nullable|string|max:255',
             'birth_date' => 'nullable|date',
             'gender' => 'required|string|in:male,female',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
             'phone_whatsapp' => 'required|string|max:30',
             'role' => 'required|string|in:teacher,student,supervisor,accountant,parent,admin',
             'permission_group_id' => 'nullable|exists:permission_groups,id',
@@ -378,18 +505,17 @@ class AdminController extends Controller
             'gender.required' => 'يرجى تحديد الجنس (ذكر أو أنثى).',
         ]);
 
-        $permissionGroupId = $validated['permission_group_id'] ?? null;
-        if ($validated['role'] === 'admin') {
-            $adminGroupId = PermissionGroup::where('slug', 'admin')->value('id');
-            if ($adminGroupId) {
-                $permissionGroupId = $adminGroupId;
-            }
-        } elseif ($validated['role'] === 'parent' && empty($permissionGroupId)) {
+        $permissionGroupId = ! empty($validated['permission_group_id']) ? $validated['permission_group_id'] : null;
+        if ($validated['role'] === 'parent' && empty($permissionGroupId)) {
             $parentGroupId = PermissionGroup::where('slug', 'parents')->value('id');
             if ($parentGroupId) {
                 $permissionGroupId = $parentGroupId;
             }
         }
+
+        $mustChange = ($user->isReviewer() || $user->email === 'demo.reviewer@asots.com')
+            ? false
+            : $request->boolean('must_change_password');
 
         $data = [
             'name' => $validated['name'],
@@ -401,21 +527,20 @@ class AdminController extends Controller
             'role' => $validated['role'],
             'permission_group_id' => $permissionGroupId,
             'status' => $validated['status'],
+            'must_change_password' => $mustChange,
         ];
 
-        if ($request->has('must_change_password')) {
-            $data['must_change_password'] = $request->boolean('must_change_password');
+        if (! empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
         }
 
-        if (!empty($validated['password'])) {
-            $data['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
-            // عند تغيير كلمة المرور من قبل الإدارة، يتم إجباره على تغييرها عند تسجيل الدخول إلا إذا حدد خلاف ذلك
-            $data['must_change_password'] = $request->has('must_change_password') ? $request->boolean('must_change_password') : true;
-        }
-
-        // تحديث الصلاحيات: إذا أرسلت في النموذج يتم تخزينها، إذا لم تُرسل (فارغة للموظفين) نحدد مصفوفة فارغة
-        if (in_array($validated['role'], ['admin', 'supervisor', 'accountant'])) {
-            $data['permissions'] = $validated['permissions'] ?? [];
+        // تحديث الصلاحيات: إذا أرسلت في النموذج يتم تخزينها مع الحفاظ على خصائص حساب الاستعراض إن وجدت
+        if (in_array($validated['role'], ['admin', 'supervisor', 'accountant', 'teacher'])) {
+            $submittedPerms = $validated['permissions'] ?? [];
+            if ($user->isReviewer() || ! empty($user->permissions['is_reviewer'])) {
+                $submittedPerms['is_reviewer'] = '1';
+            }
+            $data['permissions'] = $submittedPerms;
         }
 
         $user->update($data);
@@ -426,7 +551,7 @@ class AdminController extends Controller
     // 5.1 تغيير كلمة مرور المستخدم مباشرة من قبل الإدارة مع إجبار التغيير عند أول تسجيل دخول
     public function changeUserPassword(Request $request, $id)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_users')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_users')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل كلمات المرور.');
         }
 
@@ -440,10 +565,12 @@ class AdminController extends Controller
         ]);
 
         $user = User::findOrFail($id);
-        $force = $request->has('force_change') ? $request->boolean('force_change') : true;
+        $force = ($user->isReviewer() || $user->email === 'demo.reviewer@asots.com')
+            ? false
+            : $request->boolean('force_change');
 
         $user->update([
-            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'password' => Hash::make($request->password),
             'must_change_password' => $force,
         ]);
 
@@ -458,13 +585,14 @@ class AdminController extends Controller
             ]);
 
         $forceMsg = $force ? 'مع إلزامه بتغيير كلمة المرور فور أول تسجيل دخول لحسابه.' : 'دون إلزامه بتغييرها.';
+
         return back()->with('success', "تم تغيير كلمة المرور للمستخدم ({$user->name}) بنجاح {$forceMsg} 🔑");
     }
 
     // 5.2 معالجة طلب استرجاع كلمة المرور المقدم من المستخدم (قبول وإعادة تعيين / أو رفض)
     public function handlePasswordResetRequest(Request $request, $id)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_users')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_users')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية معالجة طلبات كلمات المرور.');
         }
 
@@ -491,7 +619,7 @@ class AdminController extends Controller
         ]);
 
         $user = $resetReq->user;
-        if (!$user) {
+        if (! $user) {
             $user = User::where('email', $resetReq->identifier)
                 ->orWhere('user_code', $resetReq->identifier)
                 ->orWhere('student_code', $resetReq->identifier)
@@ -499,13 +627,13 @@ class AdminController extends Controller
                 ->first();
         }
 
-        if (!$user) {
+        if (! $user) {
             return back()->with('error', 'تعذر العثور على حساب مستخدم مطابق لهذا المعرف. يرجى التحقق من البريد أو الرقم الفريد.');
         }
 
         // تحديث كلمة مرور المستخدم وإجباره على التغيير عند أول تسجيل دخول
         $user->update([
-            'password' => \Illuminate\Support\Facades\Hash::make($request->new_password),
+            'password' => Hash::make($request->new_password),
             'must_change_password' => true,
         ]);
 
@@ -520,11 +648,10 @@ class AdminController extends Controller
         return back()->with('success', "تم تعيين كلمة المرور المؤقتة بنجاح للمستخدم ({$user->name}) وإجباره على تغييرها عند أول تسجيل دخول.");
     }
 
-
     // 6. تبديل حالة الحساب (تنشيط / إيقاف)
     public function toggleUserStatus($id)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_users')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_users')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل حالة المستخدمين.');
         }
 
@@ -555,17 +682,17 @@ class AdminController extends Controller
     public function deleteUser($id)
     {
         // التحقق من الصلاحيات العامة وصلاحيات الأدوار
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('system.users_delete') && !auth()->user()->hasPermission('manage_users')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('system.users_delete') && ! auth()->user()->hasPermission('manage_users')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية حذف المستخدمين من النظام.');
         }
 
         $user = User::with(['financialAccount'])->findOrFail($id);
 
         // التحقق من صلاحيات حذف الطلاب أو المعلمين إن وجدت
-        if ($user->role === 'student' && !auth()->user()->isAdmin() && !auth()->user()->hasPermission('students.delete') && !auth()->user()->hasPermission('system.users_delete')) {
+        if ($user->role === 'student' && ! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('students.delete') && ! auth()->user()->hasPermission('system.users_delete')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية حذف حسابات الطلاب.');
         }
-        if ($user->role === 'teacher' && !auth()->user()->isAdmin() && !auth()->user()->hasPermission('teachers.delete') && !auth()->user()->hasPermission('system.users_delete')) {
+        if ($user->role === 'teacher' && ! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('teachers.delete') && ! auth()->user()->hasPermission('system.users_delete')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية حذف حسابات المعلمين.');
         }
 
@@ -582,7 +709,7 @@ class AdminController extends Controller
         // فحص قيود وسجل العمليات المحاسبية والأكاديمية والإدارية
         $integrityReasons = $user->checkDeletionIntegrity();
 
-        if (!empty($integrityReasons)) {
+        if (! empty($integrityReasons)) {
             // تسجيل محاولة الحذف المحظورة في سجل تدقيق النظام
             SystemAuditLog::record(
                 'user.delete_blocked',
@@ -601,7 +728,7 @@ class AdminController extends Controller
                 'user_role' => $user->role,
                 'user_status' => $user->status,
                 'reasons' => $integrityReasons,
-                'message' => "حفاظاً على نزاهة البيانات المحاسبية وسلامة القيود والتقارير، يمنع النظام حذف هذا المستخدم لوجود عمليات مرتبطة به ({$summaryList}). يرجى إيقاف الحساب بدلاً من حذفه لمنع دخوله مع بقاء السجلات."
+                'message' => "حفاظاً على نزاهة البيانات المحاسبية وسلامة القيود والتقارير، يمنع النظام حذف هذا المستخدم لوجود عمليات مرتبطة به ({$summaryList}). يرجى إيقاف الحساب بدلاً من حذفه لمنع دخوله مع بقاء السجلات.",
             ])->with('error', "لا يمكن حذف المستخدم ({$user->name}) نظراً لارتباطه بعمليات وسجلات في النظام ({$summaryList}). يوصى بإيقاف وتعطيل الحساب بدلاً من الحذف.");
         }
 
@@ -640,7 +767,7 @@ class AdminController extends Controller
     // 8. شاشة إدارة المناهج والدورات وأسعار الباقات والمستويات والحصص
     public function courses(?Request $request = null)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_courses') && !auth()->user()->hasPermission('manage_packages')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses') && ! auth()->user()->hasPermission('manage_packages')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إدارة المناهج والأسعار.');
         }
 
@@ -657,7 +784,7 @@ class AdminController extends Controller
 
     public function storeCourse(Request $request)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_courses')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة الدورات.');
         }
 
@@ -697,7 +824,7 @@ class AdminController extends Controller
 
     public function updateCourse(Request $request, $id)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_courses')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل الدورات.');
         }
 
@@ -717,17 +844,17 @@ class AdminController extends Controller
         $nameAr = $request->filled('name_ar') ? trim($request->name_ar) : null;
         $fullName = $nameAr ? "{$nameEn} ({$nameAr})" : $nameEn;
 
-        $oldFee = (float)$course->fee_amount;
-        $newFee = (float)$validated['fee_amount'];
-        $oldHours = (int)$course->hours;
-        $newHours = (int)$validated['hours'];
+        $oldFee = (float) $course->fee_amount;
+        $newFee = (float) $validated['fee_amount'];
+        $oldHours = (int) $course->hours;
+        $newHours = (int) $validated['hours'];
         $oldCurrency = $course->currency;
         $newCurrency = $validated['currency'];
 
         $validated['name_en'] = $nameEn;
         $validated['name_ar'] = $nameAr;
         $validated['name'] = $fullName;
-        $validated['is_active'] = $request->has('is_active') ? (bool)$request->is_active : true;
+        $validated['is_active'] = $request->has('is_active') ? (bool) $request->is_active : true;
         $validated['updated_by'] = auth()->id();
 
         $course->update($validated);
@@ -736,21 +863,21 @@ class AdminController extends Controller
             $feeDiff = $newFee - $oldFee;
             SystemAuditLog::record(
                 'course.pricing_update',
-                "تعديل تسعيرة وساعات الدورة [{$fullName}] من ({$oldHours} ساعة - " . number_format($oldFee, 2) . " {$oldCurrency}) إلى ({$newHours} ساعة - " . number_format($newFee, 2) . " {$newCurrency})",
+                "تعديل تسعيرة وساعات الدورة [{$fullName}] من ({$oldHours} ساعة - ".number_format($oldFee, 2)." {$oldCurrency}) إلى ({$newHours} ساعة - ".number_format($newFee, 2)." {$newCurrency})",
                 $course,
                 [
                     'old_values' => [
                         'الدورة' => $course->name,
                         'الساعات السابقة' => "{$oldHours} ساعة",
-                        'الرسوم السابقة' => number_format($oldFee, 2) . " {$oldCurrency}",
+                        'الرسوم السابقة' => number_format($oldFee, 2)." {$oldCurrency}",
                     ],
                     'new_values' => [
                         'الدورة' => $fullName,
                         'الساعات الجديدة' => "{$newHours} ساعة",
-                        'الرسوم الجديدة' => number_format($newFee, 2) . " {$newCurrency}",
+                        'الرسوم الجديدة' => number_format($newFee, 2)." {$newCurrency}",
                     ],
                     'diff' => [
-                        'فارق الرسوم' => ($feeDiff > 0 ? '+' : '') . number_format($feeDiff, 2) . " {$newCurrency}",
+                        'فارق الرسوم' => ($feeDiff > 0 ? '+' : '').number_format($feeDiff, 2)." {$newCurrency}",
                     ],
                     'old_fee' => $oldFee,
                     'new_fee' => $newFee,
@@ -769,7 +896,7 @@ class AdminController extends Controller
 
     public function storeLevel(Request $request)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_courses')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة المستويات.');
         }
 
@@ -808,7 +935,7 @@ class AdminController extends Controller
 
     public function updateLevel(Request $request, $id)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_courses')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل أسعار ومستويات الدورات.');
         }
 
@@ -825,8 +952,8 @@ class AdminController extends Controller
         $nameAr = $request->filled('name_ar') ? trim($request->name_ar) : null;
         $fullName = $nameAr ? "{$nameAr} ({$nameEn})" : $nameEn;
 
-        $oldFee = (float)$level->fee_amount;
-        $newFee = (float)$validated['fee_amount'];
+        $oldFee = (float) $level->fee_amount;
+        $newFee = (float) $validated['fee_amount'];
         $oldCurrency = $level->currency;
         $newCurrency = $validated['currency'];
 
@@ -841,19 +968,19 @@ class AdminController extends Controller
             $feeDiff = $newFee - $oldFee;
             SystemAuditLog::record(
                 'level.pricing_update',
-                "تعديل تسعيرة ورسوم المستوى الأكاديمي [{$fullName}] من (" . number_format($oldFee, 2) . " {$oldCurrency}) إلى (" . number_format($newFee, 2) . " {$newCurrency})",
+                "تعديل تسعيرة ورسوم المستوى الأكاديمي [{$fullName}] من (".number_format($oldFee, 2)." {$oldCurrency}) إلى (".number_format($newFee, 2)." {$newCurrency})",
                 $level,
                 [
                     'old_values' => [
                         'المستوى' => $level->name,
-                        'الرسوم السابقة' => number_format($oldFee, 2) . " {$oldCurrency}",
+                        'الرسوم السابقة' => number_format($oldFee, 2)." {$oldCurrency}",
                     ],
                     'new_values' => [
                         'المستوى' => $fullName,
-                        'الرسوم الجديدة' => number_format($newFee, 2) . " {$newCurrency}",
+                        'الرسوم الجديدة' => number_format($newFee, 2)." {$newCurrency}",
                     ],
                     'diff' => [
-                        'فارق الرسوم' => ($feeDiff > 0 ? '+' : '') . number_format($feeDiff, 2) . " {$newCurrency}",
+                        'فارق الرسوم' => ($feeDiff > 0 ? '+' : '').number_format($feeDiff, 2)." {$newCurrency}",
                     ],
                     'old_fee' => $oldFee,
                     'new_fee' => $newFee,
@@ -870,7 +997,7 @@ class AdminController extends Controller
 
     public function storeLesson(Request $request)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_courses')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة الحصص والدروس.');
         }
 
@@ -884,12 +1011,13 @@ class AdminController extends Controller
         ]);
 
         Lesson::create($validated);
+
         return back()->with('success', "تمت إضافة الدرس والحصة التعليمية [{$validated['title']}] بنجاح.");
     }
 
     public function updatePackage(Request $request, $id)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_packages')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_packages')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل أسعار الباقات.');
         }
 
@@ -902,8 +1030,8 @@ class AdminController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $oldPrice = (float)$package->price;
-        $newPrice = (float)$validated['price'];
+        $oldPrice = (float) $package->price;
+        $newPrice = (float) $validated['price'];
         $oldCurrency = $package->currency;
         $newCurrency = $validated['currency'];
 
@@ -914,21 +1042,21 @@ class AdminController extends Controller
             $priceDiff = $newPrice - $oldPrice;
             SystemAuditLog::record(
                 'package.pricing_update',
-                "تعديل تسعيرة الباقة التدريبية [{$package->title}] من (" . number_format($oldPrice, 2) . " {$oldCurrency}) إلى (" . number_format($newPrice, 2) . " {$newCurrency})",
+                "تعديل تسعيرة الباقة التدريبية [{$package->title}] من (".number_format($oldPrice, 2)." {$oldCurrency}) إلى (".number_format($newPrice, 2)." {$newCurrency})",
                 $package,
                 [
                     'old_values' => [
                         'الباقة' => $package->title,
-                        'السعر السابق' => number_format($oldPrice, 2) . " {$oldCurrency}",
-                        'عدد الحصص' => $package->lessons_count . ' حصة',
+                        'السعر السابق' => number_format($oldPrice, 2)." {$oldCurrency}",
+                        'عدد الحصص' => $package->lessons_count.' حصة',
                     ],
                     'new_values' => [
                         'الباقة' => $validated['title'],
-                        'السعر الجديد' => number_format($newPrice, 2) . " {$newCurrency}",
-                        'عدد الحصص' => $validated['lessons_count'] . ' حصة',
+                        'السعر الجديد' => number_format($newPrice, 2)." {$newCurrency}",
+                        'عدد الحصص' => $validated['lessons_count'].' حصة',
                     ],
                     'diff' => [
-                        'فارق السعر' => ($priceDiff > 0 ? '+' : '') . number_format($priceDiff, 2) . " {$newCurrency}",
+                        'فارق السعر' => ($priceDiff > 0 ? '+' : '').number_format($priceDiff, 2)." {$newCurrency}",
                     ],
                     'old_price' => $oldPrice,
                     'new_price' => $newPrice,
@@ -945,7 +1073,7 @@ class AdminController extends Controller
 
     public function storePackage(Request $request)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_packages')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_packages')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة باقات جديدة.');
         }
 
@@ -973,7 +1101,7 @@ class AdminController extends Controller
     // ربط طالب بحساب ولي أمر
     public function linkStudentToParent(Request $request, $parentId)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_users') && !auth()->user()->hasPermission('students.edit') && !auth()->user()->hasPermission('system.users_manage')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_users') && ! auth()->user()->hasPermission('students.edit') && ! auth()->user()->hasPermission('system.users_manage')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية ربط الطلاب بأولياء الأمور.');
         }
 
@@ -1009,7 +1137,7 @@ class AdminController extends Controller
     // إلغاء ربط طالب من حساب ولي أمر
     public function unlinkStudentFromParent(Request $request, $parentId, $studentId)
     {
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('manage_users') && !auth()->user()->hasPermission('students.edit') && !auth()->user()->hasPermission('system.users_manage')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_users') && ! auth()->user()->hasPermission('students.edit') && ! auth()->user()->hasPermission('system.users_manage')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إلغاء ربط الطلاب بأولياء الأمور.');
         }
 
@@ -1034,6 +1162,6 @@ class AdminController extends Controller
             return redirect()->route('admin.users.index', ['tab' => 'parents'])->with('success', "تم إلغاء ربط الطالب [{$student->name}] من حساب ولي الأمر [{$parent->name}] بنجاح.");
         }
 
-        return redirect()->route('admin.users.index', ['tab' => 'parents'])->with('info', "هذا الطالب غير مرتبط بهذا الحساب حالياً.");
+        return redirect()->route('admin.users.index', ['tab' => 'parents'])->with('info', 'هذا الطالب غير مرتبط بهذا الحساب حالياً.');
     }
 }

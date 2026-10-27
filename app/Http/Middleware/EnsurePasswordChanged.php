@@ -12,14 +12,14 @@ class EnsurePasswordChanged
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
             $user = Auth::user();
 
-            if ($user->must_change_password) {
+            if ($user->must_change_password && ! $user->isReviewer()) {
                 // السماح بالوصول فقط لصفحة تغيير كلمة المرور وتسجيل الخروج
                 $allowedRoutes = [
                     'password.force_change',
@@ -27,7 +27,7 @@ class EnsurePasswordChanged
                     'logout',
                 ];
 
-                if (!$request->routeIs($allowedRoutes)) {
+                if (! $request->routeIs($allowedRoutes)) {
                     return redirect()->route('password.force_change')
                         ->with('warning', 'عزيزي المستخدم: تم تغيير كلمة المرور لحسابك من قبل إدارة النظام. للحفاظ على أمان حسابك، يجب عليك تعيين كلمة مرور جديدة خاصة بك الآن للمتابعة.');
                 }

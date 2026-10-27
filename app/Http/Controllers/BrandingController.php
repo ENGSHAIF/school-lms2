@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PlatformLicense;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -9,15 +10,16 @@ use Illuminate\Support\Str;
 
 class BrandingController extends Controller
 {
-    // عرض لوحة إدارة الهوية البصرية وخلفيات وشعارات ونصوص الموقع
+    // عرض لوحة إدارة الهوية البصرية وخلفيات وشعارات ونصوص الموقع والتراخيص الرسمية
     public function index()
     {
         $user = Auth::user();
-        if (!$user->isAdmin()) {
+        if (! $user->isAdmin()) {
             abort(403, 'غير مصرح لك بإدارة الهوية البصرية وخلفية الموقع.');
         }
 
         $settings = SiteSetting::allCached();
+        $licenses = PlatformLicense::orderBy('sort_order')->latest()->get();
 
         // مكتبة خلفيات تعليمية جاهزة للاختيار الفوري
         $presets = [
@@ -59,7 +61,7 @@ class BrandingController extends Controller
             ],
         ];
 
-        return view('admin.branding.index', compact('settings', 'presets'));
+        return view('admin.branding.index', compact('settings', 'presets', 'licenses'));
     }
 
     // 1. تحديث أو رفع خلفية الموقع
@@ -78,10 +80,10 @@ class BrandingController extends Controller
         // في حال رفع ملف جديد
         if ($request->hasFile('background_file')) {
             $file = $request->file('background_file');
-            $fileName = 'bg_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $fileName = 'bg_'.time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
             $destination = public_path('uploads/branding');
 
-            if (!file_exists($destination)) {
+            if (! file_exists($destination)) {
                 mkdir($destination, 0777, true);
             }
 
@@ -92,8 +94,8 @@ class BrandingController extends Controller
             }
 
             $file->move($destination, $fileName);
-            $bgUrl = 'uploads/branding/' . $fileName;
-        } elseif (!empty($request->preset_url)) {
+            $bgUrl = 'uploads/branding/'.$fileName;
+        } elseif (! empty($request->preset_url)) {
             $bgUrl = $request->preset_url;
         }
 
@@ -132,10 +134,10 @@ class BrandingController extends Controller
         ]);
 
         $file = $request->file('logo_file');
-        $fileName = 'logo_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+        $fileName = 'logo_'.time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
         $destination = public_path('uploads/branding');
 
-        if (!file_exists($destination)) {
+        if (! file_exists($destination)) {
             mkdir($destination, 0777, true);
         }
 
@@ -145,7 +147,7 @@ class BrandingController extends Controller
         }
 
         $file->move($destination, $fileName);
-        $logoPath = 'uploads/branding/' . $fileName;
+        $logoPath = 'uploads/branding/'.$fileName;
 
         SiteSetting::set('site_logo', $logoPath, 'branding');
         if ($request->has('logo_text')) {
@@ -182,18 +184,58 @@ class BrandingController extends Controller
             'hero_cta_primary' => 'nullable|string|max:100',
             'hero_cta_secondary' => 'nullable|string|max:100',
             'whatsapp_number' => 'nullable|string|max:50',
+            'whatsapp_number_2' => 'nullable|string|max:50',
             'contact_email' => 'nullable|email|max:100',
+            'session_duration_value' => 'nullable|string|max:50',
+            'session_duration_label' => 'nullable|string|max:100',
+            'stats_sessions_value' => 'nullable|string|max:50',
+            'stats_satisfaction_value' => 'nullable|string|max:50',
+            'stats_ai_value' => 'nullable|string|max:50',
         ]);
 
         foreach ($validated as $k => $val) {
             SiteSetting::set($k, (string) $val, 'texts');
         }
 
-        if (!empty($validated['whatsapp_number'])) {
+        if (! empty($validated['whatsapp_number'])) {
             SiteSetting::set('whatsapp_platform_number', (string) $validated['whatsapp_number'], 'whatsapp');
         }
 
+        if (isset($validated['whatsapp_number_2'])) {
+            SiteSetting::set('whatsapp_number_2', (string) $validated['whatsapp_number_2'], 'texts');
+        }
+
         return back()->with('success', 'تم حفظ وتحديث نصوص وشعارات المنصة بنجاح! 📝');
+    }
+
+    // 6. تحديث محتويات وسيرة وبيانات القيادة الأكاديمية
+    public function updateLeadership(Request $request)
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->isAdmin()) {
+            abort(403, 'عذراً، تعديل بيانات وسيرة القيادة الأكاديمية مخصص لمدير النظام فقط.');
+        }
+
+        $validated = $request->validate([
+            'leadership_name_ar' => 'required|string|max:190',
+            'leadership_name_en' => 'nullable|string|max:190',
+            'leadership_title_ar' => 'required|string|max:190',
+            'leadership_title_en' => 'nullable|string|max:190',
+            'leadership_role_ar' => 'required|string|max:255',
+            'leadership_role_en' => 'nullable|string|max:255',
+            'leadership_years_badge' => 'nullable|string|max:100',
+            'leadership_direct_phone_1' => 'nullable|string|max:50',
+            'leadership_direct_phone_2' => 'nullable|string|max:50',
+            'leadership_bio_summary_ar' => 'required|string',
+            'leadership_vision_statement_ar' => 'nullable|string',
+            'leadership_specialties_text' => 'nullable|string',
+        ]);
+
+        foreach ($validated as $k => $val) {
+            SiteSetting::set($k, (string) $val, 'leadership');
+        }
+
+        return back()->with('success', 'تم حفظ وتحديث بيانات وسيرة القيادة الأكاديمية بنجاح! 🎓');
     }
 
     // 6. استعادة كافة النصوص والشعارات الافتراضية
@@ -217,5 +259,100 @@ class BrandingController extends Controller
         }
 
         return back()->with('success', 'تمت استعادة كافة النصوص والشعارات الافتراضية الأصلية للمنصة.');
+    }
+
+    // 4. رفع وإرفاق وثيقة ترخيص رسمية جديدة (خاص بمدير النظام)
+    public function storeLicense(Request $request)
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->isAdmin()) {
+            abort(403, 'عذراً، رفع وإدارة التراخيص مخصصة لمدير النظام فقط.');
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'license_number' => 'nullable|string|max:100',
+            'issuing_authority' => 'nullable|string|max:255',
+            'license_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:12288',
+            'issue_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $file = $request->file('license_image');
+        $fileName = 'license_'.time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
+        $destination = public_path('uploads/licenses');
+
+        if (! file_exists($destination)) {
+            mkdir($destination, 0777, true);
+        }
+
+        $file->move($destination, $fileName);
+        $imagePath = 'uploads/licenses/'.$fileName;
+
+        PlatformLicense::create([
+            'title' => $request->title,
+            'license_number' => $request->license_number,
+            'issuing_authority' => $request->issuing_authority,
+            'image_path' => $imagePath,
+            'issue_date' => $request->issue_date,
+            'expiry_date' => $request->expiry_date,
+            'notes' => $request->notes,
+            'status' => 'active',
+            'created_by' => $user->id,
+        ]);
+
+        return back()->with('success', 'تم رفع وإرفاق وثيقة الترخيص بنجاح، وهي الآن جاهزة في العارض الآمن المحمي.');
+    }
+
+    // 5. تبديل حالة ظهور الترخيص (نشط / مخفي)
+    public function toggleLicenseStatus($id)
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->isAdmin()) {
+            abort(403, 'عذراً، هذه الصلاحية لمدير النظام فقط.');
+        }
+
+        $license = PlatformLicense::findOrFail($id);
+        $license->status = ($license->status === 'active') ? 'hidden' : 'active';
+        $license->save();
+
+        $statusMsg = ($license->status === 'active') ? 'تم تنشيط وإظهار الترخيص' : 'تم إخفاء الترخيص مؤقتاً';
+
+        return back()->with('success', $statusMsg);
+    }
+
+    // 6. حذف وثيقة ترخيص رسمية
+    public function destroyLicense($id)
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->isAdmin()) {
+            abort(403, 'عذراً، حذف التراخيص مقتصر على مدير النظام.');
+        }
+
+        $license = PlatformLicense::findOrFail($id);
+        if ($license->image_path && file_exists(public_path($license->image_path))) {
+            @unlink(public_path($license->image_path));
+        }
+        $license->delete();
+
+        return back()->with('success', 'تم حذف وثيقة الترخيص بنجاح.');
+    }
+
+    // 7. استعراض التراخيص بالعارض الرقمي الآمن فائق الحماية (صلاحية مشروطة مع حماية مانعة للتحميل والنسخ والتصوير)
+    public function viewLicenses(Request $request)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return redirect()->route('login')->with('error', 'يرجى تسجيل الدخول بحساب معتمد للاطلاع على وثائق التراخيص والاعتمادات الرسمية.');
+        }
+
+        if (! $user->isAdmin() && ! $user->hasPermission('system.licenses_view') && ! $user->hasPermission('view_licenses')) {
+            return redirect()->route('home')->with('error', 'عذراً، ليس لديك الصلاحية المعتمدة لاستعراض وثائق وتراخيص المنصة.');
+        }
+
+        $licenses = PlatformLicense::active()->orderBy('sort_order')->latest()->get();
+
+        return view('public.licenses_viewer', compact('licenses'));
     }
 }

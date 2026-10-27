@@ -3,26 +3,26 @@
 @section('content')
 <div class="space-y-16 py-4">
 
-    <!-- بطل الصفحة (Pricing Hero) -->
-    <section class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden border border-slate-800">
+    <!-- بطل الصفحة بتدرج الهوية الرسمية الأزرق الداكن والبرتقالي (Pricing Hero) -->
+    <section class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden border border-[#0066A1]/40">
         <div class="max-w-3xl space-y-4 relative z-10">
-            <span class="inline-block bg-emerald-500/20 text-emerald-300 text-xs px-3.5 py-1 rounded-full font-bold border border-emerald-400/30 font-mono">
-                المعايير المحاسبية المالية المعتمدة
+            <span class="inline-block bg-[#F58220]/25 text-[#F58220] text-xs px-3.5 py-1 rounded-full font-black border border-[#F58220]/40 font-mono">
+                المعايير المحاسبية المالية المعتمدة ⭐
             </span>
-            <h1 class="text-3xl sm:text-4xl font-black">باقات الحصص الفردية والأسعار الرسمية</h1>
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+            <h1 class="text-3xl sm:text-4xl font-black text-white">باقات الحصص الفردية والأسعار الرسمية</h1>
+            <p class="text-xs sm:text-sm text-slate-100 leading-relaxed font-medium">
                 نقدم باقات مرنة لحصص الـ 25 دقيقة الفردية (1-on-1) بأسعار عادلة وشفافة. كل عملية دفع يصدر بها سند قبض رسمي مفقط باللغة العربية وبرقم تسلسلي معتمد يضاف فوراً إلى كشف حسابك المالي.
             </p>
             <div class="pt-2 flex flex-wrap gap-3">
-                <a href="{{ route('onboarding') }}" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-6 py-3 rounded-xl shadow-md transition">
+                <a href="{{ route('onboarding') }}" class="bg-gradient-to-r from-[#F58220] to-[#d96e14] hover:from-[#d96e14] hover:to-[#b85807] text-white font-black text-xs px-6 py-3.5 rounded-xl shadow-lg transition">
                     ابدأ بحصة تجريبية مجانية 1-on-1 🎁
                 </a>
-                <a href="{{ route('student.booking') }}" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-6 py-3 rounded-xl border border-white/20 transition">
+                <a href="{{ route('student.booking') }}" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-6 py-3.5 rounded-xl border border-white/25 transition backdrop-blur-sm">
                     جدول الحصص المتاح 📅
                 </a>
             </div>
         </div>
-        <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-[#0066A1]/30 rounded-full blur-3xl pointer-events-none"></div>
     </section>
 
     <!-- بطاقات الباقات المتاحة (Packages Grid) -->
@@ -74,7 +74,7 @@
                     <form action="{{ route('packages.subscribe') }}" method="POST">
                         @csrf
                         <input type="hidden" name="package_id" value="{{ $pkg->id }}">
-                        <button type="submit" class="w-full bg-slate-900 hover:bg-indigo-600 text-white font-bold text-xs py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                        <button type="submit" class="w-full bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] hover:from-[#004e7c] hover:to-[#0066A1] text-white font-bold text-xs py-3.5 rounded-xl transition shadow-md flex items-center justify-center gap-2">
                             <span>شحن الباقة وإصدار السند فوراً</span>
                             <span>💳</span>
                         </button>
@@ -84,33 +84,33 @@
         </div>
     </section>
 
-    <!-- شريط المعايير المالية لالمعايير المحاسبية (YemenSoft Standards) -->
-    <section class="bg-slate-50 border border-slate-200 rounded-3xl p-8 sm:p-10 space-y-6">
+    <!-- شريط المعايير المالية المعتمدة وفق هوية المنصة الرسمية -->
+    <section class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white rounded-3xl p-8 sm:p-10 shadow-xl border border-[#0066A1]/40 space-y-6">
         <div class="text-center max-w-xl mx-auto">
-            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-wider border border-emerald-200">
-                الشفافية والتوثيق المحاسبي
+            <span class="text-xs font-black text-[#F58220] bg-[#F58220]/25 px-3.5 py-1 rounded-full uppercase tracking-wider border border-[#F58220]/40">
+                الشفافية والتوثيق المحاسبي المعتمد ⭐
             </span>
-            <h2 class="text-xl sm:text-2xl font-black text-slate-900 mt-2">معايير النظام المالي لمكتب النجم الآسيوي (ASOTS)</h2>
-            <p class="text-xs text-slate-500 mt-1">مطابق للأنظمة والمعايير المحاسبية المعتمدة لسندات القبض والصرف</p>
+            <h2 class="text-xl sm:text-2xl font-black text-white mt-2">معايير النظام المالي لمكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)</h2>
+            <p class="text-xs text-slate-100 mt-1">مطابق للأنظمة والمعايير المحاسبية المعتمدة لسندات القبض والصرف</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+            <div class="bg-[#002b45]/85 p-6 rounded-2xl border border-white/15 shadow-lg space-y-2 text-white">
                 <div class="text-2xl">🧾</div>
-                <h4 class="font-black text-sm text-slate-900">سندات قبض برقم تسلسلي آلي</h4>
-                <p class="text-xs text-slate-600 leading-relaxed">توليد سند قبض غير قابل للتكرار لكل دفعة، مع التفقيط الكامل للمبلغ باللغة العربية (مثال: مائة وعشرون دولار أمريكي فقط لا غير).</p>
+                <h4 class="font-black text-sm text-white">سندات قبض برقم تسلسلي آلي</h4>
+                <p class="text-xs text-slate-200 leading-relaxed">توليد سند قبض غير قابل للتكرار لكل دفعة، مع التفقيط الكامل للمبلغ باللغة العربية (مثال: مائة وعشرون دولار أمريكي فقط لا غير).</p>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+            <div class="bg-[#002b45]/85 p-6 rounded-2xl border border-white/15 shadow-lg space-y-2 text-white">
                 <div class="text-2xl">📊</div>
-                <h4 class="font-black text-sm text-slate-900">كشف حساب تفصيلي للطالب</h4>
-                <p class="text-xs text-slate-600 leading-relaxed">سجل مالي يوضح الحركات الدائنة والمدينة والرصيد التراكمي وتواريخ الحصص، متاح للتحميل والطباعة كـ PDF في أي لحظة.</p>
+                <h4 class="font-black text-sm text-white">كشف حساب تفصيلي للطالب</h4>
+                <p class="text-xs text-slate-200 leading-relaxed">سجل مالي يوضح الحركات الدائنة والمدينة والرصيد التراكمي وتواريخ الحصص، متاح للتحميل والطباعة كـ PDF في أي لحظة.</p>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+            <div class="bg-[#002b45]/85 p-6 rounded-2xl border border-white/15 shadow-lg space-y-2 text-white">
                 <div class="text-2xl">💱</div>
-                <h4 class="font-black text-sm text-slate-900">تعدد العملات وطرق السداد</h4>
-                <p class="text-xs text-slate-600 leading-relaxed">دعم السداد بالدولار (USD)، والريال السعودي (SAR)، والريال اليمني (YER) عبر الكريمي، النجم، والتحويلات المصرفية.</p>
+                <h4 class="font-black text-sm text-white">تعدد العملات وطرق السداد</h4>
+                <p class="text-xs text-slate-200 leading-relaxed">دعم السداد بالدولار (USD)، والريال السعودي (SAR)، والريال اليمني (YER) عبر الكريمي، النجم، والتحويلات المصرفية.</p>
             </div>
         </div>
     </section>

@@ -4,17 +4,17 @@
 <div class="space-y-16 py-4">
 
     <!-- بطل الصفحة (Curriculum Hero) -->
-    <section class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl border border-slate-800 relative overflow-hidden">
+    <section class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white rounded-3xl p-8 sm:p-12 shadow-xl border border-white/20 relative overflow-hidden">
         <div class="max-w-3xl space-y-4 relative z-10">
-            <span class="inline-block bg-indigo-500/20 text-indigo-300 text-xs px-3.5 py-1 rounded-full font-bold border border-indigo-400/30">
+            <span class="inline-block bg-white/10 text-white text-xs px-3.5 py-1 rounded-full font-bold border border-white/20">
                 المعايير الدولية الأوروبية (CEFR Framework)
             </span>
             <h1 class="text-3xl sm:text-4xl font-black">المناهج الدراسية وخريطة المستويات الأكاديمية</h1>
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                في مكتب النجم الآسيوي (ASOTS)، قمنا بتصميم مناهجنا وفق أحدث المعايير الدولية للإطار الأوروبي المرجعي المشترك للغات (CEFR) ونموذج ASOTS المعتمد عالمياً، مع مسار خاص ومتقدم للاستعداد لاختبار التوفل TOEFL iBT.
+            <p class="text-xs sm:text-sm text-sky-100 leading-relaxed">
+                في مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)، قمنا بتصميم مناهجنا وفق أحدث المعايير الدولية للإطار الأوروبي المرجعي المشترك للغات (CEFR) ونموذج ASOTS المعتمد عالمياً، مع مسار خاص ومتقدم للاستعداد لاختبار التوفل TOEFL iBT.
             </p>
             <div class="pt-2 flex flex-wrap gap-3">
-                <a href="{{ route('onboarding') }}" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs px-6 py-3 rounded-xl shadow-md transition">
+                <a href="{{ route('onboarding') }}" class="bg-[#F58220] hover:bg-[#d96e14] text-white font-black text-xs px-6 py-3 rounded-xl shadow-md transition">
                     حدد مستواك مجاناً الآن 🎯
                 </a>
                 <a href="{{ route('packages.index') }}" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-6 py-3 rounded-xl border border-white/20 transition">
@@ -22,7 +22,7 @@
                 </a>
             </div>
         </div>
-        <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
     </section>
 
     <!-- خريطة المستويات الستة المتدرجة (CEFR Roadmap Cards) -->
@@ -128,12 +128,12 @@
     </section>
 
     <!-- شريط الختام -->
-    <section class="bg-gradient-to-r from-amber-500 to-indigo-600 text-slate-950 rounded-3xl p-8 sm:p-10 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
+    <section class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white rounded-3xl p-8 sm:p-10 shadow-xl border border-white/20 flex flex-col md:flex-row justify-between items-center gap-6">
         <div class="space-y-1 text-center md:text-right">
             <h3 class="text-xl sm:text-2xl font-black">لست متأكداً من مستواك المناسب؟</h3>
-            <p class="text-xs sm:text-sm font-semibold text-slate-900">خض اختبار القبول الذكي وفحص النطق الآن وسيقوم مشرفنا الأكاديمي بتوجيهك فوراً للمنهج الصحيح.</p>
+            <p class="text-xs sm:text-sm font-semibold text-sky-100">خض اختبار القبول الذكي وفحص النطق الآن وسيقوم مشرفنا الأكاديمي بتوجيهك فوراً للمنهج الصحيح.</p>
         </div>
-        <a href="{{ route('onboarding') }}" class="bg-slate-950 hover:bg-slate-800 text-white font-black text-xs px-8 py-3.5 rounded-2xl shadow-md transition whitespace-nowrap">
+        <a href="{{ route('onboarding') }}" class="bg-[#F58220] hover:bg-[#d96e14] text-white font-black text-xs px-8 py-3.5 rounded-2xl shadow-md transition whitespace-nowrap">
             ابدأ اختبار القبول مجاناً 🚀
         </a>
     </section>

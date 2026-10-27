@@ -38,7 +38,7 @@
                     تعليم لغوي متكامل يوازن بين الدقة اللغوية والطلاقة التواصلية
                 </h2>
                 <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    صُمم برنامج اللغة الإنجليزية العامة في <strong>ASOTS</strong> بإشراف الأستاذ الدكتور/ فخر الدين الصوفي لتمكين المتعلمين من جميع المستويات من التحدث والاستماع والقراءة والكتابة بثقة كاملة، بالاعتماد على نموذج الحصص التفاعلية الفردية (25 دقيقة) وتقييم مخارج الحروف بالذكاء الاصطناعي.
+                    صُمم برنامج اللغة الإنجليزية العامة في <strong>ASOTS</strong> بإشراف الدكتور/ فخر الدين ناجي ردمان عبده الصوفي لتمكين المتعلمين من جميع المستويات من التحدث والاستماع والقراءة والكتابة بثقة كاملة، بالاعتماد على نموذج الحصص التفاعلية الفردية (25 دقيقة) وتقييم مخارج الحروف بالذكاء الاصطناعي.
                 </p>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-center text-xs font-bold text-slate-700">
@@ -62,16 +62,16 @@
             </div>
 
             <!-- بطاقة الكتاب المعتمد Interchange -->
-            <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-white rounded-3xl p-6 border border-indigo-500/30 text-center space-y-3 shadow-lg">
-                <span class="text-[10px] font-black uppercase text-amber-400 bg-amber-400/20 px-3 py-1 rounded-full border border-amber-300/30">
+            <div class="bg-gradient-to-br from-[#003859] via-[#004e7c] to-[#0066A1] text-white rounded-3xl p-6 border border-white/20 text-center space-y-3 shadow-lg">
+                <span class="text-[10px] font-black uppercase text-[#F58220] bg-[#F58220]/20 px-3 py-1 rounded-full border border-[#F58220]/30">
                     المنهج الدراسي المعتمد
                 </span>
                 <div class="text-4xl my-2">📚</div>
                 <h3 class="text-base font-black text-white font-sans" dir="ltr">Interchange – Fifth Edition</h3>
-                <p class="text-[11px] text-slate-300 leading-relaxed">
+                <p class="text-[11px] text-sky-100 leading-relaxed">
                     جامعة كامبريدج (Cambridge University Press) — السلسلة الأوسع انتشاراً عالمياً لتنمية مهارات التحدث والتواصل الواقعي.
                 </p>
-                <div class="pt-2 text-[10px] text-amber-300 font-mono">
+                <div class="pt-2 text-[10px] text-amber-200 font-mono">
                     مستويات متدرجة من Pre-A1 إلى C1
                 </div>
             </div>
@@ -160,11 +160,11 @@
         <!-- أزرار الإجراءات الفورية -->
         <div class="pt-8 border-t border-slate-100 flex flex-wrap gap-4 items-center justify-between">
             <div class="flex flex-wrap gap-3">
-                <a href="{{ route('onboarding') }}" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 text-slate-950 font-black text-xs shadow-lg transition flex items-center gap-2">
+                <a href="{{ route('onboarding') }}" class="px-6 py-3.5 rounded-xl bg-[#F58220] hover:bg-[#d96e14] text-white font-black text-xs shadow-lg transition flex items-center gap-2">
                     <span>بدء اختبار تحديد المستوى المجاني والتسجيل</span>
                     <span>🚀</span>
                 </a>
-                <a href="{{ route('packages.index') }}" class="px-6 py-3.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition">
+                <a href="{{ route('packages.index') }}" class="px-6 py-3.5 rounded-xl bg-[#0066A1] hover:bg-[#004e7c] text-white font-bold text-xs transition">
                     استعراض باقات الحصص والأسعار
                 </a>
             </div>

@@ -63,7 +63,7 @@
             <!-- 1. الترويسة الرسمية للمركز -->
             <div class="border-b-2 border-slate-900 pb-6 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="text-right space-y-1">
-                    <h2 class="text-lg font-black text-slate-900">مكتب النجم الآسيوي للترجمة والتدريب والاستشارات</h2>
+                    <h2 class="text-lg font-black text-slate-900">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات</h2>
                     <h3 class="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider">The Asian Star Office for Translation, Training, & Consultancy Services (ASOTS)</h3>
                     <p class="text-[11px] text-slate-500 font-bold">الإدارة الأكاديمية وشؤون الطلاب • التقرير الإحصائي والكشف العام للترم</p>
                 </div>

@@ -112,6 +112,70 @@
     <!-- 1. جدول مستخدمي النظام والإدارة (Staff: Admin, Supervisor, Accountant) -->
     <!-- =============================================================== -->
     @if($tab === 'staff')
+        @if(isset($reviewerUser) && $reviewerUser)
+            <!-- بطاقة إدارة حساب الاستعراض والمراجعة المؤقت (Reviewer Mode) -->
+            <div class="bg-gradient-to-br from-amber-50 via-white to-orange-50 border-2 {{ $reviewerUser->status === 'active' ? 'border-amber-300' : 'border-slate-300' }} rounded-3xl p-6 shadow-sm space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl {{ $reviewerUser->status === 'active' ? 'bg-amber-500 text-slate-950' : 'bg-slate-200 text-slate-500' }} flex items-center justify-center text-2xl font-black shadow-sm flex-shrink-0">
+                            👁️
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="text-base font-black text-slate-900">حساب الاستعراض والدورة المستندية (Read-Only Reviewer)</h3>
+                                @if($reviewerUser->status === 'active')
+                                    <span class="inline-flex items-center gap-1.5 text-[11px] font-black text-emerald-700 bg-emerald-100 px-3 py-0.5 rounded-full border border-emerald-300">
+                                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                        مفعّل وجاهز للاستعراض
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 text-[11px] font-black text-red-700 bg-red-100 px-3 py-0.5 rounded-full border border-red-300">
+                                        <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                                        موقوف حالياً (مغلق)
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-xs text-slate-600 mt-0.5">
+                                حساب مخصص للضيوف والمراجعين للاطلاع على كافة شاشات المنصة والدورة المستندية والتقارير المالية دون إمكانية تعديل أو حذف أي بيان.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- زر الإيقاف / التفعيل المباشر -->
+                    <form action="{{ route('admin.users.toggle_status', $reviewerUser->id) }}" method="POST">
+                        @csrf
+                        @if($reviewerUser->status === 'active')
+                            <button type="submit" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-xl shadow transition flex items-center gap-2">
+                                <span>⏸️</span>
+                                <span>إيقاف الحساب الآن (تعطيل الدخول)</span>
+                            </button>
+                        @else
+                            <button type="submit" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow transition flex items-center gap-2">
+                                <span>▶️</span>
+                                <span>تفعيل الحساب الآن (تمكين الدخول)</span>
+                            </button>
+                        @endif
+                    </form>
+                </div>
+
+                <!-- بيانات تسجيل الدخول السريعة لنسخها وإرسالها للمراجع -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-amber-200/60 text-xs">
+                    <div class="bg-white/80 p-3 rounded-xl border border-amber-200 flex flex-col justify-between">
+                        <span class="text-slate-500 text-[11px] font-bold">البريد الإلكتروني للدخول:</span>
+                        <span class="font-mono font-black text-slate-800 text-xs mt-1" dir="ltr">{{ $reviewerUser->email }}</span>
+                    </div>
+                    <div class="bg-white/80 p-3 rounded-xl border border-amber-200 flex flex-col justify-between">
+                        <span class="text-slate-500 text-[11px] font-bold">رمز المستخدم (كود الدخول):</span>
+                        <span class="font-mono font-black text-slate-800 text-xs mt-1" dir="ltr">{{ $reviewerUser->user_code }}</span>
+                    </div>
+                    <div class="bg-white/80 p-3 rounded-xl border border-amber-200 flex flex-col justify-between">
+                        <span class="text-slate-500 text-[11px] font-bold">كلمة المرور الافتراضية:</span>
+                        <span class="font-mono font-black text-indigo-700 text-xs mt-1" dir="ltr">Viewer@2026</span>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <div>
@@ -177,7 +241,11 @@
                                     {{ $user->phone_whatsapp ?? '-' }}
                                 </td>
                                 <td class="p-4">
-                                    @if($user->role === 'admin')
+                                    @if($user->isReviewer())
+                                        <span class="px-3 py-1 rounded-full text-[11px] font-black bg-amber-500 text-slate-950 border border-amber-600 flex items-center gap-1 w-max">
+                                            <span>👁️</span> حساب استعراض ومراجعة
+                                        </span>
+                                    @elseif($user->role === 'admin')
                                         <span class="px-3 py-1 rounded-full text-[11px] font-black bg-slate-900 text-amber-400 border border-slate-800 flex items-center gap-1 w-max">
                                             <span>👑</span> مدير نظام (Full Admin)
                                         </span>
@@ -193,7 +261,12 @@
                                     <span class="text-[10px] text-slate-400 block mt-1 font-bold">{{ $user->gender_label }}</span>
                                 </td>
                                 <td class="p-4">
-                                    @if($user->role === 'admin' || optional($user->permissionGroup)->isAdminGroup())
+                                    @if($user->isReviewer())
+                                        <span class="text-[11px] font-black text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-300 flex items-center gap-1 w-max">
+                                            <span>👁️</span>
+                                            <span>استعراض شامل مقيد (Read-Only)</span>
+                                        </span>
+                                    @elseif($user->role === 'admin' || optional($user->permissionGroup)->isAdminGroup())
                                         <span class="text-[11px] font-black text-rose-800 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 flex items-center gap-1 w-max">
                                             <span>👑</span>
                                             <span>كامل صلاحيات النظام تلقائياً 100%</span>
@@ -1701,7 +1774,8 @@
         document.getElementById('changePassUserName').innerText = 'تغيير كلمة المرور: ' + user.name;
         document.getElementById('changePassUserSub').innerText = 'الرقم الفريد: ' + (user.user_code || user.student_code || ('USR-' + user.id)) + ' | البريد: ' + user.email;
         generateRandomPass('adminNewPassInput');
-        document.getElementById('adminForceChangeCb').checked = true;
+        const isRev = (user.email === 'demo.reviewer@asots.com' || user.is_reviewer || user.role === 'reviewer');
+        document.getElementById('adminForceChangeCb').checked = isRev ? false : (user.must_change_password == 1 || user.must_change_password === true);
         document.getElementById('adminChangePasswordModal').classList.remove('hidden');
     }
 
@@ -1781,7 +1855,8 @@
             pgSelect.value = user.permission_group_id || '';
         }
         document.getElementById('editStatusSelect').value = (user.status === 'suspended' || user.status === 'inactive') ? 'suspended' : 'active';
-        document.getElementById('editMustChangePass').checked = (user.must_change_password == 1 || user.must_change_password === true);
+        const isRevEdit = (user.email === 'demo.reviewer@asots.com' || user.is_reviewer || user.role === 'reviewer');
+        document.getElementById('editMustChangePass').checked = isRevEdit ? false : (user.must_change_password == 1 || user.must_change_password === true);
 
         // إخفاء أو ضبط زر الحذف وفق حالة الحساب وقيود العمليات
         const delBtn = document.getElementById('editDeleteBtn');

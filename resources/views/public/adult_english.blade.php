@@ -4,26 +4,26 @@
 <div class="space-y-16 py-4">
 
     <!-- بطل الصفحة (Adults & TOEFL Hero) -->
-    <section class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden border border-slate-700">
+    <section class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden border border-white/20">
         <div class="max-w-3xl space-y-6 relative z-10">
-            <div class="inline-flex items-center gap-2 bg-amber-400/20 text-amber-300 text-xs px-4 py-1 rounded-full font-bold border border-amber-400/30">
+            <div class="inline-flex items-center gap-2 bg-[#F58220]/20 text-[#F58220] text-xs px-4 py-1 rounded-full font-bold border border-[#F58220]/30">
                 <span>💼</span>
                 <span>برامج اللغة الإنجليزية المهنية، الأكاديمية، والتحضير للتوفل الدولي</span>
             </div>
 
             <h1 class="text-3xl sm:text-5xl font-black leading-tight">
                 إنجليزية الكبار والتوفل الدولي
-                <span class="block text-2xl sm:text-3xl text-amber-400 font-extrabold mt-1">
+                <span class="block text-2xl sm:text-3xl text-[#F58220] font-extrabold mt-1">
                     TOEFL iBT & Professional Business English
                 </span>
             </h1>
 
-            <p class="text-sm sm:text-base text-slate-300 leading-relaxed font-medium">
-                سواء كنت تسعى لاجتياز اختبار TOEFL iBT بدرجة عالية للحصول على قبول جامعي أو منحة دولية، أو ترغب في تطوير مهاراتك لمقابلات العمل والاجتماعات الدولية، صممنا لك في مكتب النجم الآسيوي (ASOTS) برامج فردية مكثفة 1-on-1 مع نخبة من المدربين المعتمدين دولياً.
+            <p class="text-sm sm:text-base text-sky-100 leading-relaxed font-medium">
+                سواء كنت تسعى لاجتياز اختبار TOEFL iBT بدرجة عالية للحصول على قبول جامعي أو منحة دولية، أو ترغب في تطوير مهاراتك لمقابلات العمل والاجتماعات الدولية، صممنا لك في مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS) برامج فردية مكثفة 1-on-1 مع نخبة من المدربين المعتمدين دولياً.
             </p>
 
             <div class="flex flex-wrap items-center gap-4 pt-2">
-                <a href="{{ route('onboarding') }}" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs sm:text-sm px-8 py-3.5 rounded-2xl shadow-xl transition flex items-center gap-2">
+                <a href="{{ route('onboarding') }}" class="bg-[#F58220] hover:bg-[#d96e14] text-white font-black text-xs sm:text-sm px-8 py-3.5 rounded-2xl shadow-xl transition flex items-center gap-2">
                     <span>🚀</span>
                     <span>احجز استشارتك وحصتك الفردية التجريبية</span>
                 </a>
@@ -32,7 +32,7 @@
                 </a>
             </div>
         </div>
-        <div class="absolute -top-10 -right-10 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -top-10 -right-10 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
     </section>
 
     <!-- الأركان الأربعة لبرنامج الكبار (4 Core Pillars) -->

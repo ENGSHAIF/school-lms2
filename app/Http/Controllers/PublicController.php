@@ -2,27 +2,88 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Package;
+use App\Models\Banner;
 use App\Models\Course;
 use App\Models\Level;
-use App\Models\User;
-use Illuminate\Http\Request;
-
+use App\Models\Package;
 use App\Models\Testimonial;
+use Illuminate\Http\Request;
 
 class PublicController extends Controller
 {
+    // دمج الإعدادات المخصصة للقيادة الأكاديمية والمؤشرات المحفوظة بقاعدة البيانات مع إعدادات asots
+    protected function getEnrichedAsotsConfig(): array
+    {
+        $info = config('asots');
+        if ($val = site_setting('leadership_name_ar')) {
+            $info['leadership']['name_ar'] = $val;
+        }
+        if ($val = site_setting('leadership_name_en')) {
+            $info['leadership']['name_en'] = $val;
+        }
+        if ($val = site_setting('leadership_title_ar')) {
+            $info['leadership']['title_ar'] = $val;
+        }
+        if ($val = site_setting('leadership_title_en')) {
+            $info['leadership']['title_en'] = $val;
+        }
+        if ($val = site_setting('leadership_role_ar')) {
+            $info['leadership']['role_ar'] = $val;
+        }
+        if ($val = site_setting('leadership_role_en')) {
+            $info['leadership']['role_en'] = $val;
+        }
+        if ($val = site_setting('leadership_bio_summary_ar')) {
+            $info['leadership']['bio_summary_ar'] = $val;
+        }
+        if ($val = site_setting('leadership_vision_statement_ar')) {
+            $info['leadership']['vision_statement_ar'] = $val;
+        }
+        if ($val = site_setting('leadership_specialties_text')) {
+            $lines = array_filter(array_map('trim', explode("\n", $val)));
+            if (! empty($lines)) {
+                $info['leadership']['specialties_ar'] = array_values($lines);
+            }
+        }
+
+        // تخصيص مؤشرات الأداء وتصفية المؤشرات المحذوفة
+        $info['stats'] = array_values(array_filter($info['stats'] ?? [], function ($st) {
+            $txt = ($st['value'] ?? '').' '.($st['label'] ?? '');
+
+            return ! str_contains($txt, '25 دقيقة')
+                && ! str_contains($txt, 'مدة الحصة')
+                && ! str_contains($txt, '15,000')
+                && ! str_contains($txt, 'حصة تدريبية منجزة');
+        }));
+        if ($passVal = site_setting('stats_satisfaction_value')) {
+            foreach ($info['stats'] as &$st) {
+                if (str_contains($st['label'], 'نسبة رضا')) {
+                    $st['value'] = $passVal;
+                }
+            }
+        }
+        if ($aiVal = site_setting('stats_ai_value')) {
+            foreach ($info['stats'] as &$st) {
+                if (str_contains($st['label'], 'مخارج الحروف')) {
+                    $st['value'] = $aiVal;
+                }
+            }
+        }
+
+        return $info;
+    }
+
     // 1. الصفحة الرئيسية الشاملة (11 قسماً معيارياً)
     public function home()
     {
-        $info = config('asots');
+        $info = $this->getEnrichedAsotsConfig();
         $packages = Package::where('is_active', true)->take(4)->get();
         $levels = Level::with('courses')->where('is_active', true)->orderBy('level_order')->get();
         $courses = Course::with('level')->where('is_active', true)->get();
         $teachers = $info['featured_teachers'];
         $testimonials = Testimonial::where('is_approved', true)->latest()->get();
 
-        if ($testimonials->isEmpty() && !empty($info['testimonials'])) {
+        if ($testimonials->isEmpty() && ! empty($info['testimonials'])) {
             $testimonials = collect($info['testimonials'])->map(function ($t) {
                 return (object) [
                     'name' => $t['name'],
@@ -71,7 +132,7 @@ class PublicController extends Controller
         };
 
         if ($user && $user->isParent() && $user->children->isNotEmpty()) {
-            $role = 'ولي أمر (' . $user->children->first()->name . ')';
+            $role = 'ولي أمر ('.$user->children->first()->name.')';
         }
 
         $avatar = match ($userType) {
@@ -88,8 +149,8 @@ class PublicController extends Controller
             'avatar' => $avatar,
             'title' => $validated['title'] ?? 'تجربتي ومقالي عن المنصة',
             'content' => $validated['content'],
-            'score' => $validated['score'] ?: ($validated['rating'] . ' نجوم ⭐'),
-            'rating' => (int)$validated['rating'],
+            'score' => $validated['score'] ?: ($validated['rating'].' نجوم ⭐'),
+            'rating' => (int) $validated['rating'],
             'is_approved' => true,
             'is_featured' => true,
         ]);
@@ -97,17 +158,22 @@ class PublicController extends Controller
         return back()->with('success', 'شكراً لمشاركتك! تم نشر مقالك وتجربتك بنجاح، وستتحرك الآن دورياً في شريط التجارب الملهمة بالصفحة الرئيسية! 🎉');
     }
 
-    // 2. القيادة الأكاديمية (Academic Leadership) - أ.د. فخر الدين الصوفي
+    // 2. القيادة الأكاديمية (Academic Leadership) - الدكتور/ فخر الدين ناجي ردمان عبده الصوفي
     public function leadership()
     {
-        $info = config('asots');
-        return view('public.leadership', compact('info'));
+        $info = $this->getEnrichedAsotsConfig();
+        $yearsBadge = site_setting('leadership_years_badge', 'أكثر من 26 عامًا من العطاء');
+        $directPhone1 = site_setting('leadership_direct_phone_1', '+967 775342886');
+        $directPhone2 = site_setting('leadership_direct_phone_2', '+967 735999101');
+
+        return view('public.leadership', compact('info', 'yearsBadge', 'directPhone1', 'directPhone2'));
     }
 
     // 3. الجودة والتميز وشؤون الطلاب (AQED)
     public function quality()
     {
         $info = config('asots');
+
         return view('public.quality', compact('info'));
     }
 
@@ -115,6 +181,7 @@ class PublicController extends Controller
     public function translationServices()
     {
         $info = config('asots');
+
         return view('public.translation_services', compact('info'));
     }
 
@@ -122,6 +189,7 @@ class PublicController extends Controller
     public function consultancyServices()
     {
         $info = config('asots');
+
         return view('public.consultancy_services', compact('info'));
     }
 
@@ -129,11 +197,12 @@ class PublicController extends Controller
     public function curriculum()
     {
         $info = config('asots');
-        $levels = Level::with(['courses' => fn($q) => $q->where('is_active', true)->orderBy('course_order')])
+        $levels = Level::with(['courses' => fn ($q) => $q->where('is_active', true)->orderBy('course_order')])
             ->where('is_active', true)
             ->orderBy('level_order')
             ->get();
         $courses = Course::with('level')->where('is_active', true)->get();
+
         return view('public.curriculum', compact('info', 'levels', 'courses'));
     }
 
@@ -142,6 +211,7 @@ class PublicController extends Controller
     {
         $info = config('asots');
         $packages = Package::where('is_active', true)->get();
+
         return view('public.adult_english', compact('info', 'packages'));
     }
 
@@ -150,6 +220,7 @@ class PublicController extends Controller
     {
         $info = config('asots');
         $packages = Package::where('is_active', true)->get();
+
         return view('public.pricing', compact('info', 'packages'));
     }
 
@@ -157,6 +228,7 @@ class PublicController extends Controller
     public function about()
     {
         $info = config('asots');
+
         return view('public.about', compact('info'));
     }
 
@@ -164,6 +236,7 @@ class PublicController extends Controller
     public function services()
     {
         $info = config('asots');
+
         return view('public.services', compact('info'));
     }
 
@@ -171,6 +244,7 @@ class PublicController extends Controller
     public function contact()
     {
         $info = config('asots');
+
         return view('public.contact', compact('info'));
     }
 
@@ -179,6 +253,7 @@ class PublicController extends Controller
     {
         $info = config('asots');
         $packages = Package::where('is_active', true)->get();
+
         return view('public.general_english', compact('info', 'packages'));
     }
 
@@ -186,6 +261,7 @@ class PublicController extends Controller
     public function policies()
     {
         $info = config('asots');
+
         return view('public.policies', compact('info'));
     }
 
@@ -206,7 +282,7 @@ class PublicController extends Controller
                     'course_name' => 'General English Programme (Interchange Level 2)',
                     'grade' => '94% (ممتاز مرتفع - A+)',
                     'issue_date' => '2026-10-01',
-                    'issuer' => 'قسم الجودة والتميز AQED — إشراف أ.د. فخر الدين الصوفي',
+                    'issuer' => 'قسم الجودة والتميز AQED — إشراف الدكتور/ فخر الدين ناجي ردمان عبده الصوفي',
                     'status' => 'معتمدة وموثقة رسمياً في سجلات المنصة',
                 ];
             } else {
@@ -219,5 +295,24 @@ class PublicController extends Controller
         }
 
         return view('public.verify_certificate', compact('info', 'code', 'certData'));
+    }
+
+    // 15. مركز الإعلانات والحملات الترويجية (Announcements & Dynamic Ads)
+    public function announcements()
+    {
+        $info = $this->getEnrichedAsotsConfig();
+        $announcements = Banner::active()->orderBy('sort_order')->latest()->get();
+
+        return view('public.announcements', compact('info', 'announcements'));
+    }
+
+    // 16. تفاصيل إعلان وحملة محددة
+    public function showAnnouncement($id)
+    {
+        $info = $this->getEnrichedAsotsConfig();
+        $announcement = Banner::active()->findOrFail($id);
+        $otherAnnouncements = Banner::active()->where('id', '!=', $id)->take(3)->get();
+
+        return view('public.announcement_detail', compact('info', 'announcement', 'otherAnnouncements'));
     }
 }

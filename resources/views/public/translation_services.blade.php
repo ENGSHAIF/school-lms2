@@ -24,15 +24,15 @@
     <div class="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm space-y-12">
 
         <!-- الإشراف الأكاديمي والضمانات -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-6 p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-6 p-6 rounded-2xl bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white border border-white/20 shadow-md">
             <div class="space-y-2 text-center sm:text-right">
-                <span class="text-xs font-black text-amber-400 block uppercase">ضمان الدقة والنزاهة الأكاديمية</span>
+                <span class="text-xs font-black text-[#F58220] block uppercase">ضمان الدقة والنزاهة الأكاديمية</span>
                 <h2 class="text-lg font-black text-white">إشراف مباشر من أستاذ اللسانيات التطبيقية والترجمة</h2>
-                <p class="text-xs text-slate-300">
+                <p class="text-xs text-sky-100">
                     تخضع جميع الأعمال لتدقيق مزدوج من مترجمين محترفين وأكاديميين متخصصين في اللسانيات والتواصل بين الثقافات.
                 </p>
             </div>
-            <a href="{{ route('leadership') }}" class="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-950 hover:bg-amber-300 font-black text-xs whitespace-nowrap transition">
+            <a href="{{ route('leadership') }}" class="px-5 py-2.5 rounded-xl bg-[#F58220] text-white hover:bg-[#d96e14] font-black text-xs whitespace-nowrap transition">
                 عن القيادة الأكاديمية
             </a>
         </div>

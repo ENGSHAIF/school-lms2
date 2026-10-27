@@ -1,7 +1,11 @@
 <?php
 
-require_once __DIR__ . '/../app/helpers.php';
+require_once __DIR__.'/../app/helpers.php';
 
+use App\Http\Middleware\BlockAiAndScrapersMiddleware;
+use App\Http\Middleware\EnforceReadOnlyReviewer;
+use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\EnsureStaffOrAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,9 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordChanged::class);
+        $middleware->prependToGroup('web', BlockAiAndScrapersMiddleware::class);
+        $middleware->appendToGroup('web', EnsurePasswordChanged::class);
+        $middleware->appendToGroup('web', EnforceReadOnlyReviewer::class);
         $middleware->alias([
-            'staff' => \App\Http\Middleware\EnsureStaffOrAdmin::class,
+            'staff' => EnsureStaffOrAdmin::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'webhook/*',

@@ -62,13 +62,13 @@ class PermissionGroup extends Model
         }
 
         // التحقق المباشر من الصلاحية
-        if (in_array($permission, $perms, true) || !empty($perms[$permission])) {
+        if (in_array($permission, $perms, true) || ! empty($perms[$permission])) {
             return true;
         }
 
         // التحقق من صلاحية الوحدة الشاملة (مثل finance.*)
         $parts = explode('.', $permission);
-        if (count($parts) > 1 && in_array($parts[0] . '.*', $perms, true)) {
+        if (count($parts) > 1 && in_array($parts[0].'.*', $perms, true)) {
             return true;
         }
 
@@ -76,7 +76,7 @@ class PermissionGroup extends Model
         $aliases = static::legacyAliases();
         if (isset($aliases[$permission])) {
             foreach ($aliases[$permission] as $alias) {
-                if (in_array($alias, $perms, true) || !empty($perms[$alias])) {
+                if (in_array($alias, $perms, true) || ! empty($perms[$alias])) {
                     return true;
                 }
             }
@@ -84,7 +84,6 @@ class PermissionGroup extends Model
 
         return false;
     }
-
 
     /**
      * خريطة التوافقية مع المفاتيح القديمة
@@ -266,6 +265,12 @@ class PermissionGroup extends Model
                         'desc' => 'اعتماد نتائج فحص المستوى وتسكين الطالب في المستوى المناسب',
                         'badge' => 'اعتماد ✅',
                         'type' => 'approve',
+                    ],
+                    'students.revoke_approval' => [
+                        'label' => 'إلغاء اعتماد وتسكين المستويات للطلاب الجدد',
+                        'desc' => 'إلغاء الاعتماد للطالب وإعادته لحالة بانتظار الاعتماد ما دام طالباً جديداً لم يبدأ دراسة دورات أو حضور حصص',
+                        'badge' => 'إلغاء اعتماد ↩️',
+                        'type' => 'revoke',
                     ],
                     'students.statement' => [
                         'label' => 'استعراض وطباعة كشف حساب وحركة الطالب الكاملة',
@@ -687,6 +692,12 @@ class PermissionGroup extends Model
                         'desc' => 'تعديل اسم المدرسة، أرقام التواصل، وبيانات الاتصال والاعتماد',
                         'badge' => 'إعدادات ⚙️',
                         'type' => 'settings',
+                    ],
+                    'system.licenses_view' => [
+                        'label' => 'استعراض التراخيص والاعتمادات الرسمية للمنصة',
+                        'desc' => 'صلاحية النقر على زر استعراض صور وتراخيص الموقع في العارض الآمن المحمي',
+                        'badge' => 'تراخيص 📜',
+                        'type' => 'licenses',
                     ],
                 ],
             ],

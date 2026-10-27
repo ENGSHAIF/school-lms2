@@ -10,7 +10,7 @@
             <div class="flex justify-between items-start">
                 <div>
                     <h2 class="text-base font-black text-slate-900">The Asian Star Office for Translation, Training, & Consultancy Services (ASOTS)</h2>
-                    <span class="text-xs text-slate-500 block font-bold">مكتب النجم الآسيوي للترجمة والتدريب والاستشارات • كشف حساب طالب (المعايير المحاسبية المعتمدة)</span>
+                    <span class="text-xs text-slate-500 block font-bold">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات • كشف حساب طالب (المعايير المحاسبية المعتمدة)</span>
                 </div>
                 <div class="text-left print:hidden">
                     <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">

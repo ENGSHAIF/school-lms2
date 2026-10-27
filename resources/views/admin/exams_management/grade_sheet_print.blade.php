@@ -70,7 +70,7 @@
                         The Asian Star Office for Translation, Training, & Consultancy Services (ASOTS)
                     </h1>
                     <span class="text-xs text-slate-700 block font-bold">
-                        مكتب النجم الآسيوي للترجمة والتدريب وخدمات الاستشارات • إدارة الشؤون الأكاديمية والامتحانات
+                        مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات • إدارة الشؤون الأكاديمية والامتحانات
                     </span>
                     <span class="text-[11px] text-slate-500 block font-medium">
                         قسم شؤون الطلاب والكنترول والشهائد المعتمدة

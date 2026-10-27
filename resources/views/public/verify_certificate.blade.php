@@ -26,7 +26,7 @@
                 The Asian Star Office for Translation, Training, & Consultancy Services
             </h1>
             <p class="text-xs sm:text-sm text-slate-400 font-medium">
-                مكتب النجم الآسيوي للترجمة والتدريب وخدمات الاستشارات الأكاديمية (ASOTS)
+                مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)
             </p>
         </div>
 
@@ -108,7 +108,7 @@
                 </div>
                 <h2 class="text-lg font-black text-white">لم يتم العثور على شهادة بهذا الرقم</h2>
                 <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-                    الرقم التسلسلي المدخل <strong class="text-amber-400 font-mono">«{{ $serial }}»</strong> غير مسجل في قاعدة بيانات الشهائد الأكاديمية المعتمدة لدى مكتب النجم الآسيوي (ASOTS).
+                    الرقم التسلسلي المدخل <strong class="text-amber-400 font-mono">«{{ $serial }}»</strong> غير مسجل في قاعدة بيانات الشهائد الأكاديمية المعتمدة لدى مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS).
                 </p>
                 <div class="pt-2">
                     <a href="{{ route('home') }}" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition inline-block">

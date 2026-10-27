@@ -121,20 +121,21 @@ return [
 
         'professional_navy' => [
             'id' => 'professional_navy',
-            'name_ar' => 'كحلي احترافي (الافتراضي)',
-            'name_en' => 'Professional Navy',
-            'desc_ar' => 'المظهر الرسمي المعتمد لمكتب النجم الآسيوي يجمع الفخامة والانضباط.',
-            'primary' => '#0f172a',
-            'primary_hover' => '#1e293b',
-            'cta' => '#4f46e5',
-            'bg' => '#f8fafc',
+            'name_ar' => 'الهوية الرسمية المعتمدة (أزرق وبرتقالي)',
+            'name_en' => 'Official ASOTS (Ocean Blue & Orange)',
+            'desc_ar' => 'المظهر الرسمي المعتمد لمكتب النجم الآسيوي المتناسق تماماً مع الشعار بألوان الأزرق والبرتقالي.',
+            'primary' => '#0066A1',
+            'primary_hover' => '#004e7c',
+            'cta' => '#F58220',
+            'cta_hover' => '#d96e14',
+            'bg' => '#f4f8fb',
             'card' => '#ffffff',
             'text_main' => '#0f172a',
-            'text_muted' => '#64748b',
-            'border' => '#e2e8f0',
+            'text_muted' => '#475569',
+            'border' => '#d4e5f0',
             'radius' => '1rem',
-            'badge' => '#e0e7ff',
-            'badge_text' => '#3730a3',
+            'badge' => '#e0f0f8',
+            'badge_text' => '#0066A1',
         ],
 
         'fresh_teal' => [
@@ -190,5 +191,5 @@ return [
             'badge' => '#fef3c7',
             'badge_text' => '#78350f',
         ],
-    ]
+    ],
 ];

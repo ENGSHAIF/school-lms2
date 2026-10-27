@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\FinancialAccount;
 use App\Models\PasswordResetRequest;
+use App\Models\SiteSetting;
 use App\Models\SystemAuditLog;
 use App\Models\User;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -62,8 +64,8 @@ class AuthController extends Controller
                 ['user_id' => $user->id, 'role' => $user->role, 'email' => $user->email]
             );
 
-            // في حال تم تغيير كلمة المرور من قبل الإدارة، يجبر النظام المستخدم على تغييرها فوراً
-            if ($user->must_change_password) {
+            // في حال تم تغيير كلمة المرور من قبل الإدارة، يجبر النظام المستخدم على تغييرها فوراً (يستثنى حساب الاستعراض للقراءة فقط)
+            if ($user->must_change_password && ! $user->isReviewer()) {
                 return redirect()->route('password.force_change')->with('warning', 'عزيزي المستخدم: تم تغيير كلمة المرور لحسابك من قبل الإدارة. حرصاً على خصوصيتك وأمان حسابك، يجب عليك تعيين كلمة مرور جديدة خاصة بك الآن للمتابعة.');
             }
 
@@ -116,6 +118,7 @@ class AuthController extends Controller
     public function showForceChangePassword()
     {
         $user = Auth::user();
+
         return view('auth.force_change_password', compact('user'));
     }
 
@@ -207,7 +210,7 @@ class AuthController extends Controller
 
         // توليد كود الطالب التلقائي ورقم المستخدم الفريد
         $latestId = User::max('id') ?? 0;
-        $studentCode = 'STU-' . date('Y') . '-' . str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
+        $studentCode = 'STU-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
 
         $user = User::create([
             'name' => $validated['name'],
@@ -226,8 +229,8 @@ class AuthController extends Controller
 
         // فتح حساب مالي للطالب (وفق المعايير المحاسبية المعتمدة)
         FinancialAccount::create([
-            'account_code' => '21' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
-            'account_name' => 'حساب الطالب: ' . $user->name,
+            'account_code' => '21'.str_pad($user->id, 4, '0', STR_PAD_LEFT),
+            'account_name' => 'حساب الطالب: '.$user->name,
             'account_type' => 'student',
             'user_id' => $user->id,
             'currency' => 'YER',
@@ -238,9 +241,9 @@ class AuthController extends Controller
         Auth::login($user);
 
         // إرسال رسالة ترحيبية آلية عبر الواتساب للطالب الجديد
-        if (!empty($user->phone_whatsapp)) {
-            $welcomeText = \App\Services\WhatsAppService::renderTemplate(
-                \App\Models\SiteSetting::get('wa_template_welcome_body', "أهلاً وسهلاً بك عزيزنا {name} في {school_name}! 🎓✨\n\nيسرنا انضمامك إلينا لمواصلة رحلتك التعليمية المتميزة. يمكنك الآن تسجيل الدخول لمنصتك التعليمية ومتابعة دروسك واختباراتك بكل سهولة.\n\n🔗 كود الدخول الخاص بك: {student_code}\n📱 هاتف الدعم والاستفسار: {platform_phone}\n\nنتمنى لك تجربة ممتعة وتفوقاً مستمراً!"),
+        if (! empty($user->phone_whatsapp)) {
+            $welcomeText = WhatsAppService::renderTemplate(
+                SiteSetting::get('wa_template_welcome_body', "أهلاً وسهلاً بك عزيزنا {name} في {school_name}! 🎓✨\n\nيسرنا انضمامك إلينا لمواصلة رحلتك التعليمية المتميزة. يمكنك الآن تسجيل الدخول لمنصتك التعليمية ومتابعة دروسك واختباراتك بكل سهولة.\n\n🔗 كود الدخول الخاص بك: {student_code}\n📱 هاتف الدعم والاستفسار: {platform_phone}\n\nنتمنى لك تجربة ممتعة وتفوقاً مستمراً!"),
                 [
                     '{name}' => $user->name,
                     '{student_code}' => $user->student_code ?? $user->user_code,
@@ -248,7 +251,7 @@ class AuthController extends Controller
                 ]
             );
 
-            \App\Services\WhatsAppService::send(
+            WhatsAppService::send(
                 $user->phone_whatsapp,
                 $welcomeText,
                 null,
@@ -258,7 +261,7 @@ class AuthController extends Controller
         }
 
         // توجيهه فوراً لاختبار تحديد المستوى
-        return redirect()->route('placement.test')->with('success', 'أهلاً بك! رقمك الفريد للدخول هو: [' . $user->user_code . ']. يرجى أداء اختبار تحديد المستوى للبدء.');
+        return redirect()->route('placement.test')->with('success', 'أهلاً بك! رقمك الفريد للدخول هو: ['.$user->user_code.']. يرجى أداء اختبار تحديد المستوى للبدء.');
     }
 
     public function logout(Request $request)
@@ -280,4 +283,3 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 }
-

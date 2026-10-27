@@ -289,7 +289,7 @@
                 <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                     تم إنشاء حسابك وتخصيص مسارك التعليمي بنجاح
                 </span>
-                <h2 class="text-3xl font-black text-slate-900" id="resUserName">أهلاً بك في مكتب النجم الآسيوي ASOTS!</h2>
+                <h2 class="text-3xl font-black text-slate-900" id="resUserName">أهلاً بك في مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)!</h2>
                 <p class="text-xs text-slate-500" id="resCode"></p>
             </div>
 

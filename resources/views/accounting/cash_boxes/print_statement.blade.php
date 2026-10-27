@@ -49,7 +49,7 @@
             <div class="flex justify-between items-start border-b-2 border-slate-900 pb-5">
                 <div>
                     <h1 class="text-base font-black tracking-wide text-slate-900">The Asian Star Office for Translation, Training, & Consultancy Services (ASOTS)</h1>
-                    <span class="text-xs text-slate-700 block font-bold mt-0.5">مكتب النجم الآسيوي للترجمة والتدريب وخدمات الاستشارات</span>
+                    <span class="text-xs text-slate-700 block font-bold mt-0.5">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات</span>
                     <span class="text-[11px] text-slate-500 block">الإدارة المالية العامة • دائرة الحسابات والخزينة • النظام المحاسبي الموحد</span>
                 </div>
                 <div class="text-left font-mono text-xs">

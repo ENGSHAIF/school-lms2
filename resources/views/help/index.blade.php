@@ -1,27 +1,62 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8" dir="rtl">
+<style>
+    /* منع الطباعة نهائياً وتفريغ المحتوى لحماية الدليل */
+    @media print {
+        body, html, * {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+    }
+
+    /* حماية من التحديد والنسخ والسحب */
+    .protected-manual {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    /* علامة مائية جنائية رقمية في خلفية الدليل */
+    .manual-watermark-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 40;
+        opacity: 0.045;
+        background-repeat: repeat;
+        background-size: 420px 220px;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='420' height='220' viewBox='0 0 420 220'><text x='20' y='60' fill='%23000' font-family='sans-serif' font-size='12' font-weight='bold' transform='rotate(-22 20 60)'>ASOTS PROPRIETARY &amp; CONFIDENTIAL</text><text x='30' y='90' fill='%23000' font-family='sans-serif' font-size='10' transform='rotate(-22 30 90)'>{{ auth()->check() ? auth()->user()->name : 'CONFIDENTIAL DEMO' }} • {{ request()->ip() }}</text></svg>");
+    }
+</style>
+
+<div class="manual-watermark-overlay"></div>
+
+<div class="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8 protected-manual" dir="rtl">
     <div class="max-w-6xl mx-auto space-y-8">
 
-        <!-- 1. ترويسة مركز المساعدة والبحث -->
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-8 sm:p-10 shadow-2xl border border-indigo-900/40">
+        <!-- 1. ترويسة مركز المساعدة والبحث بتدرج الهوية الرسمية -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white p-8 sm:p-10 shadow-2xl border border-[#0066A1]/40">
             <!-- خلفية إشعاعية تجميلية -->
-            <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-[#F58220]/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div class="relative z-10 max-w-3xl space-y-4">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-black">
-                    <span>📖 مركز المساعدة والتوثيق التشغيلي</span>
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#F58220]/20 border border-[#F58220]/40 text-[#F58220] text-xs font-black">
+                    <span>📖 مركز المساعدة والتوثيق التشغيلي المحمي (DRM Protected)</span>
                     <span>•</span>
                     @if($isStaff)
-                        <span class="text-amber-400">كادر الإدارة والتعليم الكامل</span>
+                        <span class="text-white">كادر الإدارة والتعليم الكامل</span>
                     @elseif($userRole === 'student')
-                        <span class="text-emerald-400">دليل الطالب الأكاديمي</span>
+                        <span class="text-emerald-300">دليل الطالب الأكاديمي</span>
                     @elseif($userRole === 'parent')
-                        <span class="text-amber-300">دليل ولي الأمر</span>
+                        <span class="text-amber-200">دليل ولي الأمر</span>
                     @else
-                        <span class="text-slate-300">دليل الزوار والطلاب الجدد</span>
+                        <span class="text-slate-100">دليل الزوار والطلاب الجدد</span>
                     @endif
                 </div>
 
@@ -389,5 +424,39 @@
             }
         }
     }
+
+    // =========================================================================
+    // حماية الدليل من النسخ والاستنساخ والذكاء الاصطناعي (Anti-Theft Protection)
+    // =========================================================================
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    document.addEventListener('copy', function(e) {
+        e.preventDefault();
+        const notice = '⚠️ تنبيه أمني وقانوني: محتوى ودليل نظام وتشغيل مكتب النجم الآسيوي (ASOTS) محمي بموجب قوانين حماية المصنفات والملكية الفكرية. يمنع منعاً باتاً النسخ أو التداول أو التغذية لأنظمة وبرمجيات الذكاء الاصطناعي.';
+        if (e.clipboardData) {
+            e.clipboardData.setData('text/plain', notice);
+        }
+        alert('⚠️ محتوى الدليل التشغيلي محمي ضد النسخ والاستنساخ حفاظاً على حقوق الملكية الفكرية.');
+        return false;
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            const key = (e.key || '').toLowerCase();
+            // منع Ctrl+C, Ctrl+X, Ctrl+U (عرض المصدر), Ctrl+P (طباعة), Ctrl+S (حفظ), Ctrl+A (تحديد الكل)
+            if (['c', 'x', 'u', 'p', 's', 'a'].includes(key) || (e.shiftKey && ['i', 'j', 'c'].includes(key))) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        // منع F12 أدوات المطورين
+        if (e.keyCode === 123) {
+            e.preventDefault();
+            return false;
+        }
+    });
 </script>
 @endsection

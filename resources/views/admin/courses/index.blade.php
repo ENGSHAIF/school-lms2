@@ -3,36 +3,36 @@
 @section('content')
 <div class="space-y-8">
 
-    <!-- ترويسة الصفحة وإحصائيات الهيكل الأكاديمي -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
+    <!-- ترويسة الصفحة وإحصائيات الهيكل الأكاديمي بتدرج الهوية الرسمية الأزرق الداكن -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] p-6 sm:p-8 rounded-3xl border border-[#0066A1]/40 shadow-xl text-white">
         <div>
             <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+                <span class="text-xs font-black text-white bg-white/15 px-3 py-1 rounded-full border border-white/20">
                     الهيكل الأكاديمي والتسعيرة • Curriculum & Academic Levels
                 </span>
-                <span class="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    معتمد رسمياً في ASOTS
+                <span class="text-xs font-black text-[#F58220] bg-[#F58220]/25 px-2.5 py-0.5 rounded-full border border-[#F58220]/40">
+                    معتمد رسمياً في ASOTS ⭐
                 </span>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-black text-slate-900">إدارة المستويات والدورات والمناهج والأسعار</h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            <h1 class="text-2xl sm:text-3xl font-black text-white">إدارة المستويات والدورات والمناهج والأسعار</h1>
+            <p class="text-xs sm:text-sm text-slate-100 mt-1 max-w-2xl leading-relaxed">
                 كل مستوى أكاديمي يحتوي على مجموعة دورات بساعات وتكاليف معتمدة، مع بنك مناهج رقمي متكامل (كتب، صوتيات، فيديوهات، صور، أنشطة، وكويزات) لكل دورة.
             </p>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-            <a href="{{ route('help.index') }}" title="دليل وشرح استخدام هذه الشاشة" class="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-black rounded-xl transition flex items-center gap-1.5 shadow-2xs">
+            <a href="{{ route('help.index') }}" title="دليل وشرح استخدام هذه الشاشة" class="px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-black rounded-xl transition flex items-center gap-1.5 shadow-2xs">
                 <span>📖</span>
                 <span>دليل الشاشة</span>
             </a>
-            <a href="{{ route('admin.users.index') }}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+            <a href="{{ route('admin.users.index') }}" class="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-slate-100 border border-white/20 text-xs font-bold rounded-xl transition">
                 ← المستخدمين والصلاحيات
             </a>
-            <button type="button" onclick="openAddLevelModal()" class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5">
+            <button type="button" onclick="openAddLevelModal()" class="px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/25 text-xs font-black rounded-xl shadow-xs transition flex items-center gap-1.5">
                 <span>➕</span>
                 <span>إضافة مستوى جديد</span>
             </button>
-            <button type="button" onclick="openAddCourseModal()" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-md transition flex items-center gap-1.5">
+            <button type="button" onclick="openAddCourseModal()" class="px-5 py-2.5 bg-gradient-to-r from-[#F58220] to-[#d96e14] hover:from-[#d96e14] hover:to-[#b85807] text-white text-xs font-black rounded-xl shadow-md transition flex items-center gap-1.5">
                 <span>➕</span>
                 <span>إضافة دورة لمستوى</span>
             </button>
@@ -168,22 +168,22 @@
             @foreach($levels as $lvl)
                 <div class="bg-white rounded-3xl border-2 border-slate-200 hover:border-indigo-400 transition shadow-sm overflow-hidden">
                     
-                    <!-- ترويسة المستوى الأكاديمي -->
-                    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-7 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 transition hover:bg-slate-900/90">
+                    <!-- ترويسة المستوى الأكاديمي بتدرج الهوية الرسمية الأزرق الداكن -->
+                    <div class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white p-6 sm:p-7 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 transition hover:brightness-105 border-b border-[#0066A1]/40">
                         
                         <!-- معلومات المستوى مع إمكانية الضغط على العنوان للفتح/الإغلاق -->
                         <div class="space-y-1.5 max-w-2xl cursor-pointer select-none group/title" onclick="toggleLevelCourses({{ $lvl->id }})" title="اضغط لاستعراض أو إخفاء دورات هذا المستوى">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <span class="w-8 h-8 rounded-xl bg-amber-400 text-slate-950 font-black flex items-center justify-center text-sm shadow-sm group-hover/title:scale-105 transition">
+                                <span class="w-8 h-8 rounded-xl bg-[#F58220] text-slate-950 font-black flex items-center justify-center text-sm shadow-sm group-hover/title:scale-105 transition">
                                     #{{ $lvl->level_order }}
                                 </span>
-                                <span class="px-2.5 py-0.5 rounded-full bg-white/10 text-amber-300 font-mono font-bold text-xs border border-white/10" dir="ltr">
+                                <span class="px-2.5 py-0.5 rounded-full bg-white/15 text-amber-200 font-mono font-bold text-xs border border-white/20" dir="ltr">
                                     {{ $lvl->name_en }}
                                 </span>
-                                <span class="text-xs font-bold text-slate-300 bg-white/10 px-2.5 py-0.5 rounded-full">
+                                <span class="text-xs font-bold text-white bg-white/10 px-2.5 py-0.5 rounded-full">
                                     {{ $lvl->courses->count() }} دورات تابعة
                                 </span>
-                                <span class="text-xs font-mono font-bold text-amber-300 bg-amber-400/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+                                <span class="text-xs font-mono font-bold text-amber-200 bg-[#F58220]/25 px-2.5 py-0.5 rounded-full border border-[#F58220]/40">
                                     ⏱️ {{ $lvl->total_hours }} ساعة إجمالية
                                 </span>
                             </div>
@@ -193,7 +193,7 @@
                             </h3>
 
                             @if($lvl->description)
-                                <p class="text-xs text-slate-300 leading-relaxed max-w-2xl">
+                                <p class="text-xs text-slate-100 leading-relaxed max-w-2xl">
                                     {{ $lvl->description }}
                                 </p>
                             @endif
@@ -202,24 +202,24 @@
                         <!-- تسعيرة المستوى وإجراءات الإدارة وزر العرض/الإخفاء بالنهاية -->
                         <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 border-white/10 pt-4 lg:pt-0 flex-wrap shrink-0">
                             <div class="text-right lg:text-left font-mono">
-                                <span class="text-[10px] text-slate-400 block font-bold">رسوم المستوى الشاملة:</span>
-                                <span class="text-xl font-black text-amber-400 block">{{ $lvl->formatted_fee }}</span>
-                                <span class="text-[10px] text-slate-300 block">{{ $lvl->currency_name }}</span>
+                                <span class="text-[10px] text-slate-200 block font-bold">رسوم المستوى الشاملة:</span>
+                                <span class="text-xl font-black text-[#F58220] block font-mono">{{ $lvl->formatted_fee }}</span>
+                                <span class="text-[10px] text-slate-200 block">{{ $lvl->currency_name }}</span>
                             </div>
 
                             <div class="flex items-center gap-2 flex-wrap">
-                                <button type="button" onclick="openAddCourseModal({{ $lvl->id }}, '{{ addslashes($lvl->name_en) }}')" class="px-3 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs rounded-xl shadow-sm transition flex items-center gap-1">
+                                <button type="button" onclick="openAddCourseModal({{ $lvl->id }}, '{{ addslashes($lvl->name_en) }}')" class="px-3.5 py-2 bg-gradient-to-r from-[#F58220] to-[#d96e14] hover:from-[#d96e14] hover:to-[#b85807] text-white font-black text-xs rounded-xl shadow-sm transition flex items-center gap-1">
                                     <span>➕</span>
                                     <span>إضافة دورة</span>
                                 </button>
 
-                                <button type="button" onclick='openEditLevelModal(@json($lvl))' class="px-2.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs border border-white/15 transition flex items-center gap-1 shadow-2xs" title="تعديل الرسوم">
+                                <button type="button" onclick='openEditLevelModal(@json($lvl))' class="px-2.5 py-2 bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl text-xs border border-white/20 transition flex items-center gap-1 shadow-2xs" title="تعديل الرسوم">
                                     <span>✏️</span>
                                     <span>تعديل السعر</span>
                                 </button>
 
                                 <!-- زر العرض / الإخفاء في نهاية شريط المستوى بناءً على طلب المستخدم -->
-                                <button type="button" onclick="toggleLevelCourses({{ $lvl->id }})" id="btn-toggle-lvl-{{ $lvl->id }}" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer border border-indigo-400/40">
+                                <button type="button" onclick="toggleLevelCourses({{ $lvl->id }})" id="btn-toggle-lvl-{{ $lvl->id }}" class="px-3.5 py-2 bg-[#002b45] hover:bg-[#001f33] text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer border border-white/20">
                                     <span id="txt-toggle-lvl-{{ $lvl->id }}">عرض الدورات ({{ $lvl->courses->count() }})</span>
                                     <span id="icon-toggle-lvl-{{ $lvl->id }}" class="font-mono text-xs">▼</span>
                                 </button>

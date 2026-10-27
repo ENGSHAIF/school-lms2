@@ -35,8 +35,8 @@
         <!-- الترويسة الرسمية -->
         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-5">
             <div>
-                <h1 class="text-lg font-black text-slate-900">مكتب النجم الآسيوي للترجمة والتدريب والاستشارات</h1>
-                <span class="text-[11px] text-slate-500 font-mono block">THE ASIAN STAR OFFICE FOR TRANSLATION & TRAINING</span>
+                <h1 class="text-lg font-black text-slate-900">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات</h1>
+                <span class="text-[11px] text-slate-500 font-mono block">THE ASIAN STAR OFFICE FOR TRANSLATION, TRAINING, & CONSULTANCY SERVICES (ASOTS)</span>
                 <span class="text-xs font-bold text-indigo-700 block mt-1">الإدارة المالية والحسابات العامة</span>
             </div>
             <div class="text-left">

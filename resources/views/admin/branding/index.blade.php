@@ -4,20 +4,20 @@
 <div class="space-y-8 max-w-7xl mx-auto my-4">
 
     <!-- شريط الترويسة الرئيسي -->
-    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-800">
+    <div class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-white/20">
         <div>
-            <div class="inline-flex items-center gap-2 bg-pink-500/20 text-pink-300 text-xs px-3.5 py-1 rounded-full font-bold border border-pink-400/30 mb-2">
+            <div class="inline-flex items-center gap-2 bg-[#F58220]/20 text-[#F58220] text-xs px-3.5 py-1 rounded-full font-bold border border-[#F58220]/30 mb-2">
                 <span>🎨</span>
                 <span>تخصيص الهوية البصرية • Visual Identity & Backgrounds</span>
             </div>
             <h1 class="text-2xl sm:text-3xl font-black">إدارة خلفيات وشعارات ونصوص المنصة</h1>
-            <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            <p class="text-xs sm:text-sm text-sky-100 mt-1 max-w-2xl leading-relaxed">
                 تحكم كامل في خلفية الموقع (إضافة صور تعبر عن المنصة أو إزالتها والعودة للشكل الطبيعي)، تخصيص شعار المنصة، وتعديل النصوص والشعارات الترويجية بسهولة.
             </p>
         </div>
 
         <div class="flex items-center gap-3">
-            <a href="{{ route('home') }}" target="_blank" class="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition flex items-center gap-2">
+            <a href="{{ route('home') }}" target="_blank" class="px-5 py-3 rounded-2xl bg-[#F58220] hover:bg-[#d96e14] text-white font-black text-xs sm:text-sm shadow-lg transition flex items-center gap-2">
                 <span>👁️</span>
                 <span>معاينة الموقع الآن ↗</span>
             </a>
@@ -259,14 +259,7 @@
                         </div>
                     </div>
 
-                    @if($currentLogo)
-                        <form method="POST" action="{{ route('admin.branding.logo.remove') }}" onsubmit="return confirm('هل تريد إزالة الشعار المخصص والعودة للشعار المؤسسي الافتراضي للمنصة؟');">
-                            @csrf
-                            <button type="submit" class="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-200 hover:text-white font-bold text-xs transition border border-rose-500/30">
-                                ✕ إزالة الشعار واستعادة الافتراضي
-                            </button>
-                        </form>
-                    @endif
+
                 </div>
 
                 <!-- نموذج رفع الشعار الجديد -->
@@ -313,12 +306,6 @@
                         <p class="text-[11px] text-slate-500 mt-0.5">تعديل العبارات الترويجية وعناوين الواجهة</p>
                     </div>
                     
-                    <form method="POST" action="{{ route('admin.branding.texts.reset') }}" onsubmit="return confirm('هل تريد استعادة كافة النصوص والشعارات الافتراضية الأصلية للمنصة؟');">
-                        @csrf
-                        <button type="submit" title="استعادة النصوص الافتراضية الأصلية" class="text-[10px] text-slate-400 hover:text-amber-600 font-bold underline">
-                            استعادة الافتراضي ↩
-                        </button>
-                    </form>
                 </div>
 
                 <form action="{{ route('admin.branding.texts.update') }}" method="POST" class="space-y-4 text-xs">
@@ -371,10 +358,54 @@
                         <input type="text" name="hero_cta_secondary" value="{{ $settings['hero_cta_secondary'] ?? '💳 استعراض باقات الحصص والأسعار' }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
                     </div>
 
-                    <!-- رقم الواتساب المعتمد للمنصة -->
-                    <div class="space-y-1">
-                        <label class="block font-bold text-slate-700">رقم الواتساب الرسمي المعتمد للتواصل:</label>
-                        <input type="text" name="whatsapp_number" dir="ltr" value="{{ $settings['whatsapp_platform_number'] ?? ($settings['whatsapp_number'] ?? '+967735999101') }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold font-mono text-slate-800 text-right">
+                    <!-- أرقام الواتساب المعتمدة للمنصة -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-200">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-800">رقم الواتساب الأول / الرئيسي (WhatsApp 1):</label>
+                            <input type="text" name="whatsapp_number" dir="ltr" value="{{ $settings['whatsapp_platform_number'] ?? ($settings['whatsapp_number'] ?? '+967 775 342 886') }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold font-mono text-slate-800 text-right" placeholder="+967 775 342 886">
+                            <span class="text-[10px] text-slate-500">يظهر في التذييل والأزرار السريعة</span>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-800">رقم الواتساب الإضافي / الثاني (WhatsApp 2):</label>
+                            <input type="text" name="whatsapp_number_2" dir="ltr" value="{{ $settings['whatsapp_number_2'] ?? '+967 735 999 101' }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold font-mono text-slate-800 text-right" placeholder="+967 735 999 101">
+                            <span class="text-[10px] text-slate-500">يظهر كرقم إضافي في تذييل المنصة</span>
+                        </div>
+                    </div>
+
+                    <!-- مؤشرات الثقة ومدة الحصص التفاعلية في الواجهة الرئيسية -->
+                    <div class="bg-sky-50/70 p-4 rounded-2xl border border-sky-200 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">⏱️</span>
+                            <strong class="text-xs text-sky-950 font-black">مدة الحصص التفاعلية ومؤشرات الأداء بالصفحة الرئيسية:</strong>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="block font-bold text-slate-800">مدة الحصة التفاعلية (القيمة الظاهرة):</label>
+                                <input type="text" name="session_duration_value" value="{{ $settings['session_duration_value'] ?? '25 دقيقة' }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800" placeholder="مثال: 25 دقيقة أو 30 دقيقة">
+                                <span class="text-[10px] text-slate-500">تظهر في بطاقات الحصص، مؤشرات الإحصائيات، ونصوص الواجهة</span>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block font-bold text-slate-800">وصف مؤشر مدة الحصة:</label>
+                                <input type="text" name="session_duration_label" value="{{ $settings['session_duration_label'] ?? 'مدة الحصة التفاعلية المركزة' }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800" placeholder="مثال: مدة الحصة التفاعلية المركزة">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-sky-200/60">
+                            <div class="space-y-1">
+                                <label class="block font-bold text-slate-700 text-[11px]">عدد الحصص المنجزة:</label>
+                                <input type="text" name="stats_sessions_value" value="{{ $settings['stats_sessions_value'] ?? '+15,000' }}" class="w-full p-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="block font-bold text-slate-700 text-[11px]">نسبة رضا واجتياز التوفل:</label>
+                                <input type="text" name="stats_satisfaction_value" value="{{ $settings['stats_satisfaction_value'] ?? '98.6%' }}" class="w-full p-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="block font-bold text-slate-700 text-[11px]">تقييم الذكاء الاصطناعي للنطق:</label>
+                                <input type="text" name="stats_ai_value" value="{{ $settings['stats_ai_value'] ?? 'AI Powered' }}" class="w-full p-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
+                            </div>
+                        </div>
                     </div>
 
                     <button type="submit" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs shadow-md transition flex items-center justify-center gap-2">
@@ -382,6 +413,241 @@
                         <span>حفظ كافة النصوص والشعارات</span>
                     </button>
                 </form>
+            </div>
+
+            <!-- ==================== 3.5. بطاقة تعديل بيانات وسيرة القيادة الأكاديمية (Academic Leadership) ==================== -->
+            <div id="leadership-section" class="bg-white rounded-3xl border-2 border-indigo-200 shadow-md p-6 sm:p-8 space-y-6 scroll-mt-6">
+                <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🎓</span>
+                            <h2 class="text-base font-black text-indigo-950">بيانات وسيرة القيادة الأكاديمية (Academic Leadership)</h2>
+                            <span class="text-[10px] bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded-full border border-amber-300">خاص بمدير النظام 👑</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">تعديل الاسم واللقب الأكاديمي والنبذة التعريفية وأرقام التواصل المباشرة الخاصة بالقيادة الأكاديمية.</p>
+                    </div>
+
+                    <a href="{{ route('leadership') }}" target="_blank" class="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black border border-indigo-200 shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
+                        <span>👁️</span>
+                        <span>استعراض صفحة القيادة العامة</span>
+                    </a>
+                </div>
+
+                <form action="{{ route('admin.branding.leadership.update') }}" method="POST" class="space-y-4 text-xs">
+                    @csrf
+
+                    <!-- الاسم بالعربي والإنجليزي -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">اسم القيادة الأكاديمية (عربي) *:</label>
+                            <input type="text" name="leadership_name_ar" required value="{{ $settings['leadership_name_ar'] ?? config('asots.leadership.name_ar', 'الدكتور/ فخر الدين ناجي ردمان عبده الصوفي') }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">الاسم بالإنجليزية (English Name):</label>
+                            <input type="text" name="leadership_name_en" dir="ltr" value="{{ $settings['leadership_name_en'] ?? config('asots.leadership.name_en', 'Prof. Dr. Fakhraddin Naji Radman Abdo Al-Sofi, PhD') }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold font-sans text-slate-800">
+                        </div>
+                    </div>
+
+                    <!-- اللقب الأكاديمي بالعربي والإنجليزي -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">اللقب والدرجة الأكاديمية (عربي) *:</label>
+                            <input type="text" name="leadership_title_ar" required value="{{ $settings['leadership_title_ar'] ?? config('asots.leadership.title_ar', 'أستاذ اللسانيات التطبيقية الحديثة') }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">اللقب الأكاديمي (English Title):</label>
+                            <input type="text" name="leadership_title_en" dir="ltr" value="{{ $settings['leadership_title_en'] ?? config('asots.leadership.title_en', 'Professor of Modern Applied Linguistics') }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold font-sans text-slate-800">
+                        </div>
+                    </div>
+
+                    <!-- الدور المؤسسي -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">الصفة المؤسسية والمنصب (عربي) *:</label>
+                            <input type="text" name="leadership_role_ar" required value="{{ $settings['leadership_role_ar'] ?? config('asots.leadership.role_ar', 'مؤسس ومدير — مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)') }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">الصفة المؤسسية (English Role):</label>
+                            <input type="text" name="leadership_role_en" dir="ltr" value="{{ $settings['leadership_role_en'] ?? config('asots.leadership.role_en', 'Founder & Director — The Asian Star Office for Translation, Training, & Consultancy Services (ASOTS)') }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold font-sans text-slate-800">
+                        </div>
+                    </div>
+
+                    <!-- شارة سنوات العطاء وأرقام التواصل المباشر -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">شارة الخبرة والعطاء:</label>
+                            <input type="text" name="leadership_years_badge" value="{{ $settings['leadership_years_badge'] ?? 'أكثر من 26 عامًا من العطاء' }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-amber-700">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">📞 هاتف التواصل المباشر (1):</label>
+                            <input type="text" name="leadership_direct_phone_1" dir="ltr" value="{{ $settings['leadership_direct_phone_1'] ?? '+967 775342886' }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold font-mono text-slate-800 text-right">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">📞 هاتف التواصل المباشر (2):</label>
+                            <input type="text" name="leadership_direct_phone_2" dir="ltr" value="{{ $settings['leadership_direct_phone_2'] ?? '+967 735999101' }}" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold font-mono text-slate-800 text-right">
+                        </div>
+                    </div>
+
+                    <!-- النبذة التعريفية والسيرة الأكاديمية المختصرة -->
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700">النبذة التعريفية والسيرة الأكاديمية (Bio Summary) *:</label>
+                        <textarea name="leadership_bio_summary_ar" rows="8" required class="w-full p-3 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 leading-relaxed font-sans">{{ $settings['leadership_bio_summary_ar'] ?? "الدكتور/ فخر الدين الصوفي، PhD\n\nأستاذ اللسانيات التطبيقية الحديثة، حاصل على الدكتوراه من جامعة محمد الخامس بالرباط، المملكة المغربية، ومتخصص في مجال التواصل بين الثقافات والتداولية وتحليل الخطاب والترجمة وتعليم اللغة الإنجليزية كلغة أجنبية (TEFL/TESOL).\n\nالمجالات المهنية والقيادية:\n\n• أستاذ جامعي لدى عدد من الجامعات الحكومية والخاصة.\n• مستشار أكاديمي وتربوي ومدرب معتمد للمعلمين لدى وزارة التربية والتعليم.\n• خبير في مجال التواصل والترجمة والتدريب والتطوير المهني.\n• مؤسس ومدير مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS).\n\nأكثر من 26 عامًا من العطاء\n\n📞 للتواصل المباشر:\n\n+967 775342886\n+967 735999101" }}</textarea>
+                        <span class="text-[10px] text-slate-500">تظهر هذه السيرة بشكل بارز في صفحة القيادة الأكاديمية والبطاقة التعريفية بالرئيسية.</span>
+                    </div>
+
+                    <!-- بيان الرؤية الأكاديمية -->
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700">بيان الرؤية الأكاديمية للقيادة:</label>
+                        <textarea name="leadership_vision_statement_ar" rows="2" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs text-slate-800 leading-relaxed">{{ $settings['leadership_vision_statement_ar'] ?? config('asots.leadership.vision_statement_ar') }}</textarea>
+                    </div>
+
+                    <!-- مجالات التخصص والخبرات (سطر لكل تخصص) -->
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700">مجالات التخصص والخبرات الأكاديمية (سطر لكل مجال):</label>
+                        @php
+                            $defaultSpecs = implode("\n", config('asots.leadership.specialties_ar', []));
+                        @endphp
+                        <textarea name="leadership_specialties_text" rows="5" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs text-slate-800 leading-relaxed font-mono">{{ $settings['leadership_specialties_text'] ?? $defaultSpecs }}</textarea>
+                    </div>
+
+                    <button type="submit" class="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md transition flex items-center justify-center gap-2">
+                        <span>💾</span>
+                        <span>حفظ بيانات وسيرة القيادة الأكاديمية</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- ==================== 4. بطاقة إرفاق تراخيص واعتمادات الموقع (خاص بمدير النظام) ==================== -->
+            <div id="licenses-section" class="bg-white rounded-3xl border-2 border-[#0066A1]/30 shadow-md p-6 sm:p-8 space-y-6">
+                <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">📜</span>
+                            <h2 class="text-base font-black text-[#0066A1]">تراخيص واعتمادات الموقع الرسمية</h2>
+                            <span class="text-[10px] bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded-full border border-amber-300">خاص بمدير النظام 👑</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">رفع وإدارة صور وثائق التراخيص والاعتمادات لعرضها في العارض الآمن المحمي ضد التحميل والنسخ والتصوير.</p>
+                    </div>
+
+                    <a href="{{ route('licenses.viewer') }}" target="_blank" class="px-4 py-2 rounded-xl bg-[#0066A1] hover:bg-[#004e7c] text-white text-xs font-black shadow transition flex items-center gap-1.5 whitespace-nowrap">
+                        <span>👁️</span>
+                        <span>استعراض التراخيص بالعارض الآمن</span>
+                    </a>
+                </div>
+
+                <!-- نموذج رفع ترخيص جديد -->
+                <form action="{{ route('admin.branding.licenses.store') }}" method="POST" enctype="multipart/form-data" class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-4 text-xs">
+                    @csrf
+                    <span class="text-xs font-black text-slate-900 block">➕ إرفاق وثيقة ترخيص جديدة:</span>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">عنوان الترخيص أو الوثيقة *:</label>
+                            <input type="text" name="title" required placeholder="مثال: ترخيص وزارة التربية والتعليم / السجل التجاري" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">رقم الترخيص أو القيد (اختياري):</label>
+                            <input type="text" name="license_number" placeholder="مثال: LIC-2026-9901" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-mono text-slate-800">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">الجهة المصدرة (اختياري):</label>
+                            <input type="text" name="issuing_authority" placeholder="مثال: وزارة التربية والتعليم والبحث العلمي" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">تاريخ الإصدار (اختياري):</label>
+                            <input type="date" name="issue_date" class="w-full p-2 rounded-xl border border-slate-300 text-xs text-slate-800 font-mono">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700">تاريخ الانتهاء (اختياري):</label>
+                            <input type="date" name="expiry_date" class="w-full p-2 rounded-xl border border-slate-300 text-xs text-slate-800 font-mono">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700">صورة وثيقة الترخيص (JPG, PNG, WEBP - حتى 12MB) *:</label>
+                        <input type="file" name="license_image" accept="image/*" required class="w-full p-2 rounded-xl border border-dashed border-[#0066A1]/40 bg-white text-xs text-slate-700 file:ml-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#0066A1] file:text-white file:font-bold file:text-xs hover:file:bg-[#004e7c]">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700">ملاحظات أو بيان الاعتماد (اختياري):</label>
+                        <textarea name="notes" rows="2" placeholder="أي تفاصيل أو نبذة عن الترخيص ومجالات اعتماده..." class="w-full p-2.5 rounded-xl border border-slate-300 text-xs text-slate-800"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 rounded-2xl bg-[#0066A1] hover:bg-[#004e7c] text-white font-black text-xs shadow-md transition flex items-center justify-center gap-2">
+                        <span>📎</span>
+                        <span>رفع وتوثيق وثيقة الترخيص الآن</span>
+                    </button>
+                </form>
+
+                <!-- قائمة التراخيص المرفوعة مسبقاً -->
+                <div class="space-y-3 pt-2">
+                    <span class="text-xs font-black text-slate-900 block">📑 التراخيص المسجلة حالياً بالمنصة ({{ $licenses->count() }}):</span>
+
+                    @if($licenses->isEmpty())
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
+                            لم يتم رفع أي تراخيص بعد. استخدم النموذج أعلاه لرفع التراخيص الرسمية.
+                        </div>
+                    @else
+                        <div class="space-y-3">
+                            @foreach($licenses as $lic)
+                                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-14 h-14 rounded-xl bg-white border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+                                            <img src="{{ asset($lic->image_path) }}" alt="{{ $lic->title }}" class="w-full h-full object-cover rounded-lg">
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-xs text-slate-900">{{ $lic->title }}</h4>
+                                            <div class="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap mt-0.5">
+                                                @if($lic->license_number)
+                                                    <span class="font-mono text-slate-700 font-bold">#{{ $lic->license_number }}</span>
+                                                @endif
+                                                @if($lic->issuing_authority)
+                                                    <span>{{ $lic->issuing_authority }}</span>
+                                                @endif
+                                                <span class="text-[10px] text-slate-400 font-mono">{{ $lic->created_at->format('Y-m-d') }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 self-end sm:self-center">
+                                        <!-- تبديل الحالة -->
+                                        <form action="{{ route('admin.branding.licenses.toggle', $lic->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition {{ $lic->status === 'active' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-200 text-slate-700 hover:bg-slate-300' }}">
+                                                {{ $lic->status === 'active' ? '👁️ مفعّل وظاهر' : '🙈 مخفي' }}
+                                            </button>
+                                        </form>
+
+                                        <!-- حذف -->
+                                        <form action="{{ route('admin.branding.licenses.destroy', $lic->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف وثيقة الترخيص هذه نهائياً؟');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition" title="حذف الترخيص">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-[11px] text-amber-900 leading-relaxed flex items-center gap-2">
+                    <span>🔒</span>
+                    <span><strong>ملاحظة أمنية:</strong> العارض الرقمي مزود بنظام حماية مشدد لمنع التحميل أو الحفظ أو النسخ أو التعديل، مع تظليل تلقائي عند محاولة التقاط الشاشة لضمان أقصى حماية لوثائق التراخيص.</span>
+                </div>
             </div>
 
             <!-- معلومات وإرشادات المظهر -->

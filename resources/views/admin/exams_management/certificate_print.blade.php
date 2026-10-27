@@ -128,7 +128,7 @@
                         The Asian Star Office for Translation, Training, & Consultancy Services
                     </h1>
                     <h2 class="font-amiri text-base font-bold text-slate-700">
-                        مكتب النجم الآسيوي للترجمة والتدريب وخدمات الاستشارات الأكاديمية المعتمدة
+                        مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)
                     </h2>
 
                     <!-- شريط العنوان للشهادة -->
@@ -155,7 +155,7 @@
                 <!-- 2. جسم الشهادة والنصوص المركزية -->
                 <div class="relative z-10 text-center my-auto space-y-3 py-2">
                     <p class="font-amiri text-sm sm:text-base text-slate-600 font-bold">
-                        يشهد مكتب النجم الآسيوي للتدريب والاستشارات بأن الطالب / الطالبة:
+                        يشهد مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات بأن الطالب / الطالبة:
                     </p>
                     <p class="font-cinzel text-xs text-slate-400 tracking-widest">
                         This is to proudly certify that

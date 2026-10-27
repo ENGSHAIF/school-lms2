@@ -10,7 +10,7 @@
             <span>دليل البرامج والخدمات الشامل • Programmes & Services Directory</span>
         </span>
         <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            برامج وخدمات مكتب النجم الآسيوي (ASOTS)
+            برامج وخدمات مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)
         </h1>
         <p class="text-xs sm:text-sm font-semibold text-slate-600 font-sans tracking-wide max-w-3xl mx-auto" dir="ltr">
             {{ $info['descriptive_title_en'] ?? $info['definition_en'] }}
@@ -31,27 +31,27 @@
     </div>
 
     <!-- بانر برنامج الإطلاق التشغيلي الأول: اللغة الإنجليزية العامة (General English) -->
-    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-indigo-500/30 space-y-6">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6 border-b border-indigo-500/20">
+    <div class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/20 space-y-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6 border-b border-white/15">
             <div class="space-y-2">
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-black bg-emerald-500 text-slate-950 px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                    <span class="text-xs font-black bg-[#F58220] text-white px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                         برنامج الإطلاق التشغيلي الأول • Launched & Active
                     </span>
-                    <span class="text-xs font-bold text-amber-300 bg-amber-400/20 px-3 py-1 rounded-full border border-amber-300/30 font-sans" dir="ltr">
+                    <span class="text-xs font-bold text-amber-200 bg-white/10 px-3 py-1 rounded-full border border-white/20 font-sans" dir="ltr">
                         Interchange – Fifth Edition
                     </span>
                 </div>
                 <h2 class="text-2xl sm:text-3xl font-black text-white">
                     برنامج اللغة الإنجليزية العامة (General English)
                 </h2>
-                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-3xl">
+                <p class="text-xs sm:text-sm text-sky-100 leading-relaxed max-w-3xl">
                     "{{ $info['english_tagline_ar'] }}" — برنامج مكثف ومتدرج من المبتدئ إلى المتقدم يغطي المهارات الأربع (الاستماع، التحدث، القراءة، والكتابة) مع التركيز الكامل على النطق والطلاقة والتواصل التفاعلي بنظام 1-on-1 (جلسات 25 دقيقة) عبر الفصول الذكية وZoom.
                 </p>
             </div>
 
             <div class="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0 w-full sm:w-auto">
-                <a href="{{ route('onboarding') }}" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg transition text-center whitespace-nowrap">
+                <a href="{{ route('onboarding') }}" class="px-6 py-3.5 rounded-xl bg-[#F58220] hover:bg-[#d96e14] text-white font-black text-xs shadow-lg transition text-center whitespace-nowrap">
                     بدء اختبار تحديد المستوى والتسجيل 🚀
                 </a>
                 <a href="{{ route('packages.index') }}" class="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition text-center whitespace-nowrap">

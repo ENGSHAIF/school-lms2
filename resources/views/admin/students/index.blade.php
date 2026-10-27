@@ -38,6 +38,10 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap shrink-0">
+            <a href="{{ route('admin.exams.all_attempts') }}" class="px-4 py-2.5 rounded-xl bg-[#F58220] hover:bg-[#e07519] text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                <span>📑</span>
+                <span>سجل نتائج ومحاولات الاختبارات</span>
+            </a>
             <a href="{{ route('accounting.dashboard') }}" class="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
                 <span>💼</span>
                 <span>النظام المحاسبي والسندات</span>
@@ -173,10 +177,52 @@
                                             المستوى: {{ $activeEnrollment->level->name }}
                                         </span>
                                     @endif
+
+                                    <!-- بيانات من اعتمد الطالب وتاريخ الاعتماد -->
+                                    @if($student->approver || $student->approved_at || ($activeEnrollment && $activeEnrollment->approved_at))
+                                        <div class="mt-1.5 p-1.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-[10px] space-y-0.5 max-w-[200px]">
+                                            <div class="flex items-center gap-1 font-bold text-emerald-900">
+                                                <span>👤</span>
+                                                <span>معتمد بواسطة:</span>
+                                                <span class="text-emerald-700">{{ $student->approver?->name ?? ($activeEnrollment?->approver?->name ?? 'مدير النظام') }}</span>
+                                            </div>
+                                            @php
+                                                $appDate = $student->approved_at ?? $activeEnrollment?->approved_at;
+                                            @endphp
+                                            @if($appDate)
+                                                <span class="block text-[10px] text-emerald-700 font-mono" dir="ltr">
+                                                    📅 {{ $appDate->format('Y-m-d H:i') }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @endif
+
                                 @elseif($student->status === 'pending_approval')
                                     <span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 border border-amber-200 animate-pulse">
                                         أنهى الاختبار (بانتظار الاعتماد) ⏳
                                     </span>
+
+                                    <!-- إذا كان الطالب ملغي اعتماده سابقاً -->
+                                    @if($student->revoker || $student->revoked_at)
+                                        <div class="mt-1.5 p-1.5 rounded-xl bg-rose-50 border border-rose-200 text-[10px] space-y-0.5 max-w-[220px]">
+                                            <div class="flex items-center gap-1 font-black text-rose-800">
+                                                <span>↩️</span>
+                                                <span>أُلغي اعتماده سابقاً بواسطة:</span>
+                                            </div>
+                                            <span class="block font-bold text-rose-700">{{ $student->revoker?->name ?? 'الإشراف الأكاديمي' }}</span>
+                                            @if($student->revoked_at)
+                                                <span class="block text-[9px] text-rose-600 font-mono" dir="ltr">
+                                                    📅 {{ $student->revoked_at->format('Y-m-d H:i') }}
+                                                </span>
+                                            @endif
+                                            @if($student->revoke_reason)
+                                                <div class="text-[9px] text-slate-700 bg-white/80 p-1 rounded border border-rose-100 mt-0.5 leading-snug">
+                                                    <span class="font-bold">السبب:</span> {{ $student->revoke_reason }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+
                                 @else
                                     <span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                         لم يؤد الاختبار بعد 📝
@@ -185,7 +231,7 @@
                             </td>
                             <td class="p-4">
                                 @if($attempt)
-                                    <div class="space-y-0.5">
+                                    <div class="space-y-1">
                                         <span class="font-black text-indigo-700 text-xs block font-mono">
                                             {{ $attempt->total_score }} / {{ $attempt->exam?->total_points ?? 100 }}
                                         </span>
@@ -194,6 +240,16 @@
                                                 المقترح: {{ $attempt->suggestedLevel->name }}
                                             </span>
                                         @endif
+                                        <div class="flex items-center gap-1 pt-0.5 flex-wrap">
+                                            <a href="{{ route('admin.exams.review_attempt', $attempt->id) }}" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 rounded transition flex items-center gap-0.5" title="استعراض وتدقيق إجابات الطالب">
+                                                <span>🔍</span>
+                                                <span>تدقيق الإجابات</span>
+                                            </a>
+                                            <a href="{{ route('admin.exams.attempts.error_report', $attempt->id) }}" target="_blank" class="text-[10px] font-bold text-amber-900 hover:text-amber-950 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-1.5 py-0.5 rounded transition flex items-center gap-0.5" title="كشف مراجعة الأخطاء والشفافية">
+                                                <span>🖨️</span>
+                                                <span>تقرير الأخطاء</span>
+                                            </a>
+                                        </div>
                                     </div>
                                 @else
                                     <span class="text-slate-400 text-xs font-mono">-</span>
@@ -240,7 +296,7 @@
                                 @endif
                             </td>
                             <td class="p-4">
-                                <div class="flex items-center justify-center gap-2">
+                                <div class="flex items-center justify-center gap-2 flex-wrap">
                                     @if($student->status !== 'active')
                                         <form action="{{ route('admin.assign_level', $student->id) }}" method="POST" class="flex items-center gap-1.5">
                                             @csrf
@@ -252,13 +308,14 @@
                                                     </option>
                                                 @endforeach
                                             </select>
-                                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs px-3.5 py-1.5 rounded-lg shadow-sm transition shrink-0">
-                                                اعتماد وتفعيل
+                                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs px-3.5 py-1.5 rounded-lg shadow-sm transition shrink-0 flex items-center gap-1">
+                                                <span>🚀</span>
+                                                <span>اعتماد وتفعيل</span>
                                             </button>
                                         </form>
                                     @else
-                                        <div class="flex items-center gap-2">
-                                            <a href="{{ route('accounting.statement', $student->id) }}" class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                                        <div class="flex items-center gap-2 flex-wrap justify-center">
+                                            <a href="{{ route('accounting.statement', $student->id) }}" class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
                                                 <span>📄</span>
                                                 <span>كشف الحساب</span>
                                             </a>
@@ -272,6 +329,31 @@
                                                     @endforeach
                                                 </select>
                                             </form>
+
+                                            <!-- سجل اختبارات ونتائج الطالب -->
+                                            <a href="{{ route('admin.students.exam_attempts', $student->id) }}" 
+                                               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 hover:border-indigo-600 transition flex items-center gap-1 shadow-2xs" 
+                                               title="استعراض سجل ونتائج كافة اختبارات وكويزات الطالب">
+                                                <span>📝</span>
+                                                <span>سجل الاختبارات</span>
+                                            </a>
+
+                                            <!-- خاصية إلغاء اعتماد الطالب لأي مستوى ما دام لم يدرس دورات -->
+                                            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('students.revoke_approval'))
+                                                @if(!$student->hasStudiedAnyCourses())
+                                                    <button type="button" 
+                                                            onclick="openRevokeApprovalModal({{ $student->id }}, @json($student->name), @json($activeEnrollment?->level?->name ?? 'المستوى المعتمد'))" 
+                                                            class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 transition flex items-center gap-1 shadow-2xs" 
+                                                            title="إلغاء اعتماد الطالب وإعادته لقائمة المراجعة">
+                                                        <span>↩️</span>
+                                                        <span>إلغاء الاعتماد</span>
+                                                    </button>
+                                                @else
+                                                    <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md border border-slate-200" title="بدأ الطالب دراسة دورات وحصص وفصول مسجلة ولا يمكن إلغاء اعتماده لحماية النزاهة الأكاديمية">
+                                                        🔒 بدأ الدراسة
+                                                    </span>
+                                                @endif
+                                            @endif
                                         </div>
                                     @endif
                                 </div>
@@ -416,5 +498,76 @@
             alert('متصفحك لا يدعم نطق الذكاء الاصطناعي المباشر.');
         }
     }
+
+    // إدارة مودال إلغاء اعتماد الطالب
+    function openRevokeApprovalModal(studentId, studentName, levelName) {
+        document.getElementById('revokeStudentName').innerText = studentName;
+        document.getElementById('revokeCurrentLevel').innerText = levelName;
+        document.getElementById('revokeApprovalForm').action = '/admin/students/' + studentId + '/revoke-approval';
+        document.getElementById('revokeApprovalModal').classList.remove('hidden');
+    }
+
+    function closeRevokeApprovalModal() {
+        document.getElementById('revokeApprovalModal').classList.add('hidden');
+    }
 </script>
+
+<!-- ================= مودال تأكيد إلغاء اعتماد الطالب ================= -->
+<div id="revokeApprovalModal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-rose-100 animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2.5">
+                <span class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center text-xl font-black">↩️</span>
+                <div>
+                    <h3 class="font-black text-slate-900 text-base">إلغاء اعتماد وتسكين الطالب</h3>
+                    <p class="text-[11px] text-slate-500">إعادة الطالب لحالة (بانتظار الاعتماد) لتغيير المستوى أو إعادة التقييم</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeRevokeApprovalModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition">✕</button>
+        </div>
+
+        <form id="revokeApprovalForm" method="POST" action="" class="space-y-4">
+            @csrf
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-slate-500 font-bold">اسم الطالب:</span>
+                    <strong class="text-slate-900 font-black" id="revokeStudentName">-</strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500 font-bold">المستوى المقيد به حالياً:</span>
+                    <span class="text-indigo-700 font-bold" id="revokeCurrentLevel">-</span>
+                </div>
+            </div>
+
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-[11px] text-amber-900 space-y-1 leading-relaxed">
+                <span class="font-black block flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>ضوابط وإجراءات إلغاء الاعتماد:</span>
+                </span>
+                <ul class="list-disc list-inside space-y-0.5 text-amber-800">
+                    <li>مسموح فقط للطلاب الجدد الذين لم يدرسوا أي دورات أو يحضروا حصصاً بعد.</li>
+                    <li>سيتم إلغاء التسكين في المستوى وعكس قيد الرسوم المالية والأقساط غير المسددة.</li>
+                    <li>سيعود الطالب مباشرة لقائمة مراجعة المستويات بانتظار الاعتماد.</li>
+                    <li>سيتم توثيق اسمك وتاريخ ووقت الإلغاء والسبب في سجل الطالب وسجل تدقيق النظام.</li>
+                </ul>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700">سبب إلغاء الاعتماد (يُوثق في سجل الطالب):</label>
+                <textarea name="reason" rows="3" required placeholder="مثال: رغبة الطالب في تعديل المستوى بعد مراجعة نطق الصوت، أو خطأ في اختيار المستوى، إلخ..." class="w-full text-xs p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-rose-500 outline-none leading-relaxed"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeRevokeApprovalModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition">
+                    تراجع
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md transition flex items-center gap-1.5">
+                    <span>↩️</span>
+                    <span>تأكيد إلغاء الاعتماد وإعادة للمراجعة</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

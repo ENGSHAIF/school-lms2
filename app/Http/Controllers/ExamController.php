@@ -14,7 +14,6 @@ use App\Models\StudyGroup;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class ExamController extends Controller
 {
@@ -50,7 +49,7 @@ class ExamController extends Controller
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('title', 'like', "%{$s}%")
-                  ->orWhere('description', 'like', "%{$s}%");
+                    ->orWhere('description', 'like', "%{$s}%");
             });
         }
 
@@ -87,7 +86,7 @@ class ExamController extends Controller
     public function store(Request $request, $levelId = null)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && !$user->hasPermission('manage_courses') && !$user->hasPermission('upload_level_resources') && $user->role !== 'teacher') {
+        if (! $user->isAdmin() && ! $user->hasPermission('manage_courses') && ! $user->hasPermission('upload_level_resources') && $user->role !== 'teacher') {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إنشاء كويزات واختبارات.');
         }
 
@@ -110,7 +109,7 @@ class ExamController extends Controller
         $targetLevelId = $levelId ?: ($validated['level_id'] ?? null);
         $targetCourseId = $validated['course_id'] ?? null;
 
-        if ($targetLevelId && !$targetCourseId) {
+        if ($targetLevelId && ! $targetCourseId) {
             $lvl = Level::find($targetLevelId);
             $targetCourseId = $lvl?->course_id;
         }
@@ -140,7 +139,7 @@ class ExamController extends Controller
             'level_id' => $targetLevelId,
             'title' => $exam->title,
             'type' => 'quiz',
-            'description' => $exam->description ?: ('كويز وتقييم: ' . $exam->quiz_period_label),
+            'description' => $exam->description ?: ('كويز وتقييم: '.$exam->quiz_period_label),
             'duration_minutes' => $exam->duration_minutes,
             'exam_id' => $exam->id,
             'is_active' => true,
@@ -161,8 +160,12 @@ class ExamController extends Controller
         $levels = Level::where('is_active', true)->orderBy('level_order')->get();
 
         $studyGroups = StudyGroup::where(function ($q) use ($exam) {
-            if ($exam->level_id) $q->where('level_id', $exam->level_id);
-            if ($exam->course_id) $q->orWhere('course_id', $exam->course_id);
+            if ($exam->level_id) {
+                $q->where('level_id', $exam->level_id);
+            }
+            if ($exam->course_id) {
+                $q->orWhere('course_id', $exam->course_id);
+            }
         })->where('status', 'active')->get();
 
         if ($studyGroups->isEmpty()) {
@@ -197,7 +200,7 @@ class ExamController extends Controller
 
         $courseId = $validated['course_id'] ?? null;
         $levelId = $validated['level_id'] ?? null;
-        if ($levelId && !$courseId) {
+        if ($levelId && ! $courseId) {
             $lvl = Level::find($levelId);
             $courseId = $lvl?->course_id;
         }
@@ -312,6 +315,7 @@ class ExamController extends Controller
 
         if ($importedCount > 0) {
             $this->syncExamTotalPoints($exam);
+
             return back()->with('success', "تم استيراد وإضافة ({$importedCount}) سؤال بنجاح إلى بنك الاختبار!");
         }
 
@@ -342,7 +346,7 @@ class ExamController extends Controller
             'type' => $validated['type'] ?? $question->type,
             'options' => $cleanedOptions,
             'correct_answer' => trim($validated['correct_answer']),
-            'points' => (float)$validated['points'],
+            'points' => (float) $validated['points'],
             'context_passage' => $validated['context_passage'] ?? null,
         ]);
 
@@ -382,7 +386,7 @@ class ExamController extends Controller
 
         // التأكد من وجود مورد في بنك المستوى مربوط بهذا الاختبار
         $resource = LevelResource::where('exam_id', $exam->id)->first();
-        if (!$resource) {
+        if (! $resource) {
             $resource = LevelResource::create([
                 'level_id' => $exam->level_id,
                 'created_by' => Auth::id(),
@@ -469,7 +473,7 @@ class ExamController extends Controller
      */
     public function reviewAttempt($attemptId)
     {
-        $attempt = ExamAttempt::with(['exam.questions', 'user', 'studyGroup', 'reviewer', 'answers.question'])
+        $attempt = ExamAttempt::with(['exam.questions', 'exam.course', 'exam.level.course', 'user.studentProfile', 'studyGroup', 'reviewer', 'suggestedLevel.course', 'answers.question'])
             ->findOrFail($attemptId);
 
         $exam = $attempt->exam;
@@ -484,7 +488,7 @@ class ExamController extends Controller
     {
         $attempt = ExamAttempt::findOrFail($attemptId);
 
-        $totalScore = $request->has('adjusted_score') ? (float)$request->adjusted_score : $attempt->total_score;
+        $totalScore = $request->has('adjusted_score') ? (float) $request->adjusted_score : $attempt->total_score;
         $teacherNotes = $request->input('teacher_notes', $attempt->teacher_notes);
 
         $attempt->update([
@@ -516,6 +520,271 @@ class ExamController extends Controller
             ]);
 
         return back()->with('success', "تم اعتماد وإصدار كافة النتائج لـ ({$updated}) طالب بنجاح!");
+    }
+
+    /**
+     * استعراض كافة محاولات ونتائج الاختبارات والكويزات وتحديد المستوى لجميع الطلاب
+     * متاح لمدير النظام والمشرف الأكاديمي ولأصحاب الصلاحيات للمراجعة والشفافية
+     */
+    public function allAttempts(Request $request)
+    {
+        $user = Auth::user();
+        if (! $user->isAdmin() && ! $user->isSupervisor() && ! $user->hasPermission('exams.view') && ! $user->hasPermission('exams.grade')) {
+            abort(403, 'غير مصرح لك باستعراض سجل نتائج الاختبارات.');
+        }
+
+        $query = ExamAttempt::with(['exam.course', 'exam.level.course', 'user.studentProfile', 'studyGroup', 'reviewer', 'answers']);
+
+        // فلترة بنوع الاختبار / الفترة (تحديد مستوى، كويز، نصفي، نهائي)
+        if ($request->filled('quiz_period') && $request->quiz_period !== 'all') {
+            $period = $request->quiz_period;
+            $query->whereHas('exam', function ($q) use ($period) {
+                if ($period === 'placement') {
+                    $q->where('type', 'placement_test')->orWhere('quiz_period', 'placement');
+                } else {
+                    $q->where('quiz_period', $period);
+                }
+            });
+        }
+
+        // فلترة بحالة النتيجة (معلنة / بانتظار الاعتماد)
+        if ($request->filled('status') && $request->status !== 'all') {
+            if ($request->status === 'published') {
+                $query->where('is_published', true);
+            } elseif ($request->status === 'pending_publish') {
+                $query->where('is_published', false);
+            } else {
+                $query->where('status', $request->status);
+            }
+        }
+
+        // فلترة بالدورة
+        if ($request->filled('course_id')) {
+            $query->whereHas('exam', fn ($q) => $q->where('course_id', $request->course_id));
+        }
+
+        // فلترة بالمستوى
+        if ($request->filled('level_id')) {
+            $query->whereHas('exam', fn ($q) => $q->where('level_id', $request->level_id));
+        }
+
+        // فلترة بالمجموعة الدراسية
+        if ($request->filled('study_group_id')) {
+            $query->where('study_group_id', $request->study_group_id);
+        }
+
+        // البحث باسم الطالب أو الكود أو عنوان الاختبار
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function ($q) use ($s) {
+                $q->whereHas('user', function ($uq) use ($s) {
+                    $uq->where('name', 'like', "%{$s}%")
+                        ->orWhere('student_code', 'like', "%{$s}%")
+                        ->orWhere('user_code', 'like', "%{$s}%")
+                        ->orWhere('email', 'like', "%{$s}%");
+                })->orWhereHas('exam', function ($eq) use ($s) {
+                    $eq->where('title', 'like', "%{$s}%");
+                });
+            });
+        }
+
+        $attempts = $query->latest('submitted_at')->paginate(20)->appends($request->query());
+
+        // إحصائيات عامة
+        $totalAttempts = ExamAttempt::count();
+        $publishedCount = ExamAttempt::where('is_published', true)->count();
+        $pendingPublishCount = ExamAttempt::where('is_published', false)->count();
+        $placementCount = ExamAttempt::whereHas('exam', fn ($q) => $q->where('type', 'placement_test')->orWhere('quiz_period', 'placement'))->count();
+        $avgScore = $totalAttempts > 0 ? round(ExamAttempt::avg('total_score'), 1) : 0;
+
+        $courses = Course::where('is_active', true)->orderBy('course_order')->get();
+        $levels = Level::with('course')->where('is_active', true)->orderBy('level_order')->get();
+        $groups = StudyGroup::orderBy('name')->get();
+
+        return view('admin.exams.all_attempts', compact(
+            'attempts',
+            'totalAttempts',
+            'publishedCount',
+            'pendingPublishCount',
+            'placementCount',
+            'avgScore',
+            'courses',
+            'levels',
+            'groups'
+        ));
+    }
+
+    /**
+     * سجل شامل لكافة اختبارات وكويزات طالب محدد (نتائج ومحاولات)
+     */
+    public function studentAttempts(Request $request, $studentId)
+    {
+        $user = Auth::user();
+        if (! $user->isAdmin() && ! $user->isSupervisor() && ! $user->hasPermission('exams.view') && ! $user->hasPermission('students.view')) {
+            abort(403, 'غير مصرح لك باستعراض سجل اختبارات الطالب.');
+        }
+
+        $student = User::with(['studentProfile', 'financialAccount'])->findOrFail($studentId);
+
+        $query = ExamAttempt::where('user_id', $studentId)
+            ->with(['exam.course', 'exam.level.course', 'studyGroup', 'reviewer', 'answers']);
+
+        if ($request->filled('quiz_period') && $request->quiz_period !== 'all') {
+            $period = $request->quiz_period;
+            $query->whereHas('exam', function ($q) use ($period) {
+                if ($period === 'placement') {
+                    $q->where('type', 'placement_test')->orWhere('quiz_period', 'placement');
+                } else {
+                    $q->where('quiz_period', $period);
+                }
+            });
+        }
+
+        $attempts = $query->latest('submitted_at')->get();
+
+        $totalAttempts = $attempts->count();
+        $passedCount = $attempts->filter(function ($a) {
+            $passScore = $a->exam?->passing_score ?? 50;
+
+            return $a->total_score >= $passScore;
+        })->count();
+        $passRate = $totalAttempts > 0 ? round(($passedCount / $totalAttempts) * 100, 1) : 0;
+        $avgScore = $totalAttempts > 0 ? round($attempts->avg('total_score'), 1) : 0;
+
+        return view('admin.students.exam_attempts', compact(
+            'student',
+            'attempts',
+            'totalAttempts',
+            'passedCount',
+            'passRate',
+            'avgScore'
+        ));
+    }
+
+    /**
+     * تقرير كشف أخطاء ومراجعة نتائج الطالب في الاختبار (مخصص للطباعة والشفافية الأكاديمية)
+     */
+    public function errorReport($attemptId)
+    {
+        $user = Auth::user();
+        if (! $user->isAdmin() && ! $user->isSupervisor() && ! $user->hasPermission('exams.view') && ! $user->hasPermission('exams.grade') && $user->role !== 'teacher') {
+            abort(403, 'غير مصرح لك باستعراض تقرير أخطاء الاختبار.');
+        }
+
+        $attempt = ExamAttempt::with([
+            'exam.questions',
+            'exam.course',
+            'exam.level.course',
+            'user.studentProfile',
+            'studyGroup',
+            'reviewer',
+            'suggestedLevel.course',
+            'answers.question',
+        ])->findOrFail($attemptId);
+
+        $exam = $attempt->exam;
+
+        // استخراج الأسئلة بالترتيب الذي ظهر للطالب
+        $questionIds = $attempt->questions_order ?: $exam->questions->pluck('id')->all();
+        $questions = ExamQuestion::whereIn('id', $questionIds)->get()->sortBy(function ($q) use ($questionIds) {
+            return array_search($q->id, $questionIds);
+        });
+
+        $answersMap = $attempt->answers->keyBy('question_id');
+
+        // إحصائيات تفصيلية للأخطاء والصواب
+        $totalQuestions = $questions->count();
+        $correctCount = 0;
+        $incorrectCount = 0;
+        $unansweredCount = 0;
+        $pointsEarned = 0;
+        $totalPoints = $exam->total_points > 0 ? $exam->total_points : $questions->sum('points');
+
+        $questionsAnalysis = [];
+
+        foreach ($questions as $q) {
+            $ans = $answersMap->get($q->id);
+            $studentAnswer = $ans?->student_answer;
+            $isCorrect = (bool) ($ans?->is_correct);
+            $points = $ans?->points_awarded ?? 0;
+            $isUnanswered = empty($studentAnswer) && empty($ans?->recorded_audio_path);
+
+            if ($q->type === 'speaking_ai') {
+                $hasVoice = ! empty($ans?->recorded_audio_path);
+                $accuracy = $ans?->speech_accuracy ?? 0;
+                $isCorrect = $accuracy >= 70;
+            }
+
+            if ($isCorrect) {
+                $correctCount++;
+            } elseif ($isUnanswered) {
+                $unansweredCount++;
+                $incorrectCount++;
+            } else {
+                $incorrectCount++;
+            }
+
+            $pointsEarned += $points;
+
+            $questionsAnalysis[] = [
+                'question' => $q,
+                'answer' => $ans,
+                'student_answer' => $studentAnswer,
+                'is_correct' => $isCorrect,
+                'is_unanswered' => $isUnanswered,
+                'points_awarded' => $points,
+            ];
+        }
+
+        $scorePercentage = $totalPoints > 0 ? round(($attempt->total_score / $totalPoints) * 100, 1) : 0;
+        $isPassed = $attempt->total_score >= ($exam->passing_score ?? 50);
+
+        return view('admin.exams.error_report', compact(
+            'attempt',
+            'exam',
+            'questionsAnalysis',
+            'totalQuestions',
+            'correctCount',
+            'incorrectCount',
+            'unansweredCount',
+            'pointsEarned',
+            'totalPoints',
+            'scorePercentage',
+            'isPassed'
+        ));
+    }
+
+    /**
+     * واجهة الطالب / ولي الأمر لاستعراض وطباعة تقرير تدقيق أخطاء الاختبار
+     */
+    public function studentErrorReport($attemptId)
+    {
+        $user = Auth::user();
+        $attempt = ExamAttempt::with([
+            'exam.questions',
+            'exam.course',
+            'exam.level.course',
+            'user.studentProfile',
+            'studyGroup',
+            'reviewer',
+            'suggestedLevel.course',
+            'answers.question',
+        ])->findOrFail($attemptId);
+
+        // التحقق من هوية الطالب أو ولي أمره أو كادر الإشراف
+        $isOwnerStudent = ($attempt->user_id === $user->id);
+        $isParentOfStudent = ($user->isParent() && $user->children()->where('users.id', $attempt->user_id)->exists());
+        $isStaff = ($user->isAdmin() || $user->isSupervisor() || $user->role === 'teacher' || $user->hasPermission('exams.view'));
+
+        if (! $isOwnerStudent && ! $isParentOfStudent && ! $isStaff) {
+            abort(403, 'غير مصرح لك باستعراض تقرير هذا الاختبار.');
+        }
+
+        if (! $isStaff && ! $attempt->isResultVisibleToStudent()) {
+            return redirect()->route('student.exam.result', $attempt->id)->with('warning', 'النتيجة وتقرير الأخطاء محجوبان حتى اعتماد النتيجة رسمياً من الإدارة.');
+        }
+
+        return $this->errorReport($attemptId);
     }
 
     // =========================================================================
@@ -558,7 +827,7 @@ class ExamController extends Controller
             ->where('status', 'in_progress')
             ->first();
 
-        if ($inProgressAttempt && !empty($inProgressAttempt->questions_order)) {
+        if ($inProgressAttempt && ! empty($inProgressAttempt->questions_order)) {
             $orderedIds = $inProgressAttempt->questions_order;
             $questionsToPresent = $allQuestions->whereIn('id', $orderedIds)->sortBy(function ($q) use ($orderedIds) {
                 return array_search($q->id, $orderedIds);
@@ -618,7 +887,7 @@ class ExamController extends Controller
             ->latest()
             ->first();
 
-        if (!$attempt) {
+        if (! $attempt) {
             $attempt = ExamAttempt::create([
                 'user_id' => $user->id,
                 'exam_id' => $exam->id,
@@ -638,7 +907,7 @@ class ExamController extends Controller
         $maxPossibleScore = $questions->sum('points') ?: 100;
 
         foreach ($questions as $question) {
-            $ansKey = 'q_' . $question->id;
+            $ansKey = 'q_'.$question->id;
             $studentAnswer = $request->input($ansKey);
 
             $isCorrect = false;
@@ -648,7 +917,7 @@ class ExamController extends Controller
                 // مقارنة الإجابة غير حساسة للمسافات
                 $isCorrect = (trim(mb_strtolower($studentAnswer)) === trim(mb_strtolower($question->correct_answer)));
                 if ($isCorrect) {
-                    $pointsAwarded = (float)$question->points;
+                    $pointsAwarded = (float) $question->points;
                     $totalScore += $pointsAwarded;
                 }
             }
@@ -669,7 +938,7 @@ class ExamController extends Controller
         // حساب نسبة النتيجة المئوية إن كان المجموع مختلف عن 100
         $finalScore = $totalScore;
 
-        $shouldPublishNow = (bool)$exam->show_result_immediately;
+        $shouldPublishNow = (bool) $exam->show_result_immediately;
 
         $attempt->update([
             'total_score' => $finalScore,
@@ -691,13 +960,17 @@ class ExamController extends Controller
         $attempt = ExamAttempt::with(['exam.questions', 'answers.question', 'reviewer'])
             ->findOrFail($attemptId);
 
-        // التأكد من أن الطالب صاحب المحاولة أو مشرف/أدمن
-        if ($attempt->user_id !== $user->id && !$user->isAdmin() && $user->role !== 'teacher') {
+        // التأكد من أن الطالب صاحب المحاولة أو ولي أمره أو مشرف/أدمن
+        $isOwnerStudent = ($attempt->user_id === $user->id);
+        $isParentOfStudent = ($user->isParent() && $user->children()->where('users.id', $attempt->user_id)->exists());
+        $isStaff = ($user->isAdmin() || $user->isSupervisor() || $user->role === 'teacher' || $user->hasPermission('exams.view'));
+
+        if (! $isOwnerStudent && ! $isParentOfStudent && ! $isStaff) {
             abort(403, 'غير مصرح باستعراض نتيجة هذا الاختبار.');
         }
 
         $exam = $attempt->exam;
-        $isResultVisible = $attempt->isResultVisibleToStudent() || $user->isAdmin() || $user->role === 'teacher';
+        $isResultVisible = $attempt->isResultVisibleToStudent() || $isStaff;
 
         return view('student.exams.result', compact('attempt', 'exam', 'isResultVisible'));
     }
@@ -733,7 +1006,7 @@ class ExamController extends Controller
         $orderIndex = ($exam->questions()->max('order_index') ?? 0) + 1;
 
         $saveCurrent = function () use (&$currentQuestion, &$currentPassage, &$currentOptions, &$currentAnswer, &$currentPoints, &$orderIndex, &$imported, $exam) {
-            if ($currentQuestion && !empty($currentOptions)) {
+            if ($currentQuestion && ! empty($currentOptions)) {
                 // استخراج الإجابة الصحيحة
                 $cleanAnswer = $currentAnswer ?: $currentOptions[0];
                 // إذا كانت الإجابة المحددة هي حرف الخيار (مثلاً: A أو B أو أ)
@@ -776,12 +1049,14 @@ class ExamController extends Controller
             // 1. فحص إجابة السؤال (Answer / Correct / الإجابة / الحل)
             if (preg_match('/^(?:Answer|Ans|Correct|الإجابة|الحل)[\s\:\-]+(.+)$/ui', $trimmed, $m)) {
                 $currentAnswer = trim($m[1]);
+
                 continue;
             }
 
             // 2. فحص درجة السؤال (Points / Mark / الدرجة)
             if (preg_match('/^(?:Points|Point|Marks|Degree|الدرجة)[\s\:\-]+([0-9\.]+)$/ui', $trimmed, $m)) {
-                $currentPoints = (float)$m[1];
+                $currentPoints = (float) $m[1];
+
                 continue;
             }
 
@@ -789,19 +1064,21 @@ class ExamController extends Controller
             if (preg_match('/^(?:(?:سؤال|question|q)\s*\d*|\d+)\s*[\.\:\-\)]\s*(.+)$/ui', $trimmed, $m)) {
                 $saveCurrent();
                 $currentQuestion = trim($m[1]);
+
                 continue;
             }
 
             // 4. فحص خيارات الإجابة: A) أو A. أو أ) أو أ- أو (A) أو (أ) أو 1)
             if (preg_match('/^(?:\(?([A-Ea-eأ-د])\)?|[1-5]\))\s*[\.\)\-\:\s]\s*(.+)$/u', $trimmed, $m)) {
                 $currentOptions[] = trim($m[2]);
+
                 continue;
             }
 
             // إذا لم يكن خياراً ولا إجابة وكان هناك سؤال نشط، قد يكون تكملة لنص السؤال
             if ($currentQuestion && empty($currentOptions)) {
-                $currentQuestion .= ' ' . $trimmed;
-            } elseif (!$currentQuestion) {
+                $currentQuestion .= ' '.$trimmed;
+            } elseif (! $currentQuestion) {
                 // سطر جديد نعتبره سؤالاً
                 $saveCurrent();
                 $currentQuestion = $trimmed;
@@ -820,7 +1097,7 @@ class ExamController extends Controller
     {
         $text = '';
         if (class_exists('ZipArchive')) {
-            $zip = new \ZipArchive();
+            $zip = new \ZipArchive;
             if ($zip->open($filePath) === true) {
                 $xml = $zip->getFromName('word/document.xml');
                 $zip->close();
@@ -829,6 +1106,7 @@ class ExamController extends Controller
                 }
             }
         }
+
         return $text;
     }
 }

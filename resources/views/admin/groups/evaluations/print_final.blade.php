@@ -34,8 +34,8 @@
         <!-- ترويسة المدرسة الرسمية -->
         <div class="border-b-2 border-slate-900 pb-4 flex justify-between items-center text-right">
             <div>
-                <h1 class="text-2xl font-black text-slate-950">مكتب النجم الآسيوي للخدمات التعليمية والترجمة (ASOTS)</h1>
-                <span class="text-xs font-bold text-indigo-700 block mt-0.5">The Asian Star Office for Educational Services & Translation</span>
+                <h1 class="text-2xl font-black text-slate-950">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)</h1>
+                <span class="text-xs font-bold text-indigo-700 block mt-0.5">The Asian Star Office for Translation, Training, & Consultancy Services</span>
                 <span class="text-xs text-slate-600 block font-bold mt-1">كشف درجات التقييم التراكمي النهائي لاعتماد شهادات ودبلومات اللغة</span>
             </div>
             <div class="text-left font-mono text-xs text-slate-600 space-y-1">

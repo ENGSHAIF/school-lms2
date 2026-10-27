@@ -65,7 +65,7 @@
                     <img src="{{ asset('images/logo.png') }}" alt="ASOTS Logo" class="w-14 h-14 object-contain rounded-xl border border-slate-200 p-0.5 shrink-0">
                     <div>
                         <h1 class="text-base font-black tracking-wide text-slate-900">The Asian Star Office for Translation, Training, & Consultancy Services (ASOTS)</h1>
-                        <span class="text-xs text-slate-600 block font-bold">مكتب النجم الآسيوي للترجمة والتدريب وخدمات الاستشارات • الإدارة المالية والحسابات</span>
+                        <span class="text-xs text-slate-600 block font-bold">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات • الإدارة المالية والحسابات</span>
                     </div>
                 </div>
                 <div class="text-left font-mono">

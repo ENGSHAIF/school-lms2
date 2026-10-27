@@ -30,6 +30,10 @@
                 <span>➕</span>
                 <span>تصميم كويز أو اختبار جديد</span>
             </a>
+            <a href="{{ route('admin.exams.all_attempts') }}" class="px-4 py-2.5 bg-[#0066A1] hover:bg-[#004e7c] text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md border border-white/20">
+                <span>📑</span>
+                <span>سجل نتائج ومحاولات الطلاب الشامل</span>
+            </a>
             @if($level)
                 <a href="{{ route('admin.levels.resources', $level->id) }}" class="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition">
                     ← بنك موارد المستوى

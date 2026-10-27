@@ -44,7 +44,7 @@
                     {{ $info['definition_en'] }}
                 </p>
                 <p class="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-200">
-                    يُعد <strong>مكتب النجم الآسيوي (ASOTS)</strong> منصة رقمية دولية متكاملة ذات قيادة أكاديمية رصينة، تجمع بين التعليم اللغوي التفاعلي الحديث (وفق نموذج ASOTS للحصص الفردية 25 دقيقة)، والتواصل بين الثقافات، والترجمة والترجمة الشفوية المعتمدة، وإعداد المعلمين وتأهيلهم (TEFL/TESOL)، والاستشارات الأكاديمية والمهنية، ضمن منظومة مالية وإدارية منضبطة ترتكز على معايير الأنظمة المالية القياسية.
+                    يُعد <strong>مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)</strong> منصة رقمية دولية متكاملة ذات قيادة أكاديمية رصينة، تجمع بين التعليم اللغوي التفاعلي الحديث (وفق نموذج ASOTS للحصص الفردية 25 دقيقة)، والتواصل بين الثقافات، والترجمة والترجمة الشفوية المعتمدة، وإعداد المعلمين وتأهيلهم (TEFL/TESOL)، والاستشارات الأكاديمية والمهنية، ضمن منظومة مالية وإدارية منضبطة ترتكز على معايير الأنظمة المالية القياسية.
                 </p>
             </div>
         </div>
@@ -67,12 +67,12 @@
         </div>
 
         <!-- المبدأ الحاكم للمشروع -->
-        <div class="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white space-y-2">
-            <div class="flex items-center gap-2 text-amber-400 font-black text-xs uppercase">
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white space-y-2 border border-white/20 shadow-md">
+            <div class="flex items-center gap-2 text-[#F58220] font-black text-xs uppercase">
                 <span>⚖️</span>
                 <span>المبدأ الحاكم للمشروع (The Guiding Principle)</span>
             </div>
-            <p class="text-xs sm:text-sm text-slate-200 leading-relaxed font-bold">
+            <p class="text-xs sm:text-sm text-sky-100 leading-relaxed font-bold">
                 "{{ $info['core_principle_ar'] }}"
             </p>
         </div>
@@ -159,6 +159,12 @@
                 <a href="{{ route('curriculum') }}" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition">
                     دليل المناهج وCEFR
                 </a>
+                @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('system.licenses_view') || auth()->user()->hasPermission('view_licenses')))
+                    <a href="{{ route('licenses.viewer') }}" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm">
+                        <span>📜</span>
+                        <span>التراخيص والاعتمادات الرسمية</span>
+                    </a>
+                @endif
             </div>
 
             <a href="{{ route('contact') }}" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md transition">

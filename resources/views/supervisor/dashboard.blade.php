@@ -21,6 +21,178 @@
         </div>
     </div>
 
+    <!-- ================= شريط الاختصارات والوصول السريع للشاشات الممنوحة ================= -->
+    <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+            <div>
+                <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+                    <span class="text-lg">⚡</span>
+                    <span>مركز الوصول السريع والشاشات الممنوحة للمشرف</span>
+                </h2>
+                <p class="text-xs text-slate-500">تم تفعيل الشاشات والصلاحيات التالية لحسابك وفق مجموعة الصلاحيات المخصصة لك</p>
+            </div>
+            <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>الصلاحيات الأكاديمية مفعلة</span>
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('curriculum.view') || auth()->user()->hasPermission('manage_courses') || auth()->user()->hasPermission('curriculum.create') || auth()->user()->hasPermission('curriculum.edit'))
+                <a href="{{ route('admin.courses.index') }}" class="group bg-gradient-to-br from-emerald-50 to-teal-50/40 hover:from-emerald-100 hover:to-teal-100 border border-emerald-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">📚</span>
+                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md font-mono">مفعل</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-emerald-800 transition">إدارة المناهج والأسعار</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">إضافة وتعديل الدورات، رفع الكتب والصوتيات والفيديوهات، وضبط الأسعار والساعات.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-emerald-200/60 flex items-center justify-between text-xs font-bold text-emerald-700">
+                        <span>فتح الشاشة والموارد</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('students.view') || auth()->user()->hasPermission('students.create'))
+                <a href="{{ route('admin.students.index') }}" class="group bg-gradient-to-br from-blue-50 to-indigo-50/40 hover:from-blue-100 hover:to-indigo-100 border border-blue-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">🎓</span>
+                            <span class="text-[10px] font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-md font-mono">مفعل</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-blue-800 transition">إدارة الطلاب والقبول</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">سجلات الطلاب المسجلين، التحقق من بياناتهم، وتسكينهم وتفعيل حساباتهم.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-blue-200/60 flex items-center justify-between text-xs font-bold text-blue-700">
+                        <span>فتح شاشة الطلاب</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('groups.view'))
+                <a href="{{ route('admin.groups.index') }}" class="group bg-gradient-to-br from-indigo-50 to-purple-50/40 hover:from-indigo-100 hover:to-purple-100 border border-indigo-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">👥</span>
+                            <span class="text-[10px] font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md font-mono">مفعل</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-indigo-800 transition">المجموعات والفصول</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">إدارة الفصول الافتراضية، إسناد المعلمين، ومتابعة الطلاب في الدفعات.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-indigo-200/60 flex items-center justify-between text-xs font-bold text-indigo-700">
+                        <span>فتح شاشة المجموعات</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('evaluations.view'))
+                <a href="{{ route('admin.groups.evaluations.index') }}" class="group bg-gradient-to-br from-amber-50 to-yellow-50/40 hover:from-amber-100 hover:to-yellow-100 border border-amber-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">📋</span>
+                            <span class="text-[10px] font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md font-mono">مفعل</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-amber-800 transition">سجلات التقييم والحضور</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">متابعة تقييم الطلاب اليومي، تسجيل الحضور والغياب، ومؤشرات التحصيل.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-amber-200/60 flex items-center justify-between text-xs font-bold text-amber-700">
+                        <span>فتح شاشة التقييم</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('exams.view'))
+                <a href="{{ route('admin.exams.index') }}" class="group bg-gradient-to-br from-rose-50 to-pink-50/40 hover:from-rose-100 hover:to-pink-100 border border-rose-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">🎯</span>
+                            <span class="text-[10px] font-bold text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded-md font-mono">مفعل</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-rose-800 transition">بنك الأسئلة والكويزات</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">إدارة كويزات تحديد المستوى، بنك الأسئلة المتعددة، ومراجعة الإجابات.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-rose-200/60 flex items-center justify-between text-xs font-bold text-rose-700">
+                        <span>فتح بنك الكويزات</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('exams.view'))
+                <a href="{{ route('admin.exams.all_attempts') }}" class="group bg-gradient-to-br from-indigo-50 to-blue-50/40 hover:from-indigo-100 hover:to-blue-100 border border-indigo-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-[#0066A1] text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">📑</span>
+                            <span class="text-[10px] font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md font-mono">سجل النتائج</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-indigo-800 transition">سجل نتائج ومحاولات الاختبارات</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">استعراض وتدقيق إجابات الطلاب، كشف الأخطاء، وطباعة تقارير الشفافية الأكاديمية.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-indigo-200/60 flex items-center justify-between text-xs font-bold text-indigo-700">
+                        <span>فتح سجل النتائج</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('exams_management.view'))
+                <a href="{{ route('admin.exams_management.index') }}" class="group bg-gradient-to-br from-violet-50 to-purple-50/40 hover:from-violet-100 hover:to-purple-100 border border-violet-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">🎓</span>
+                            <span class="text-[10px] font-bold text-violet-700 bg-violet-100/80 px-2 py-0.5 rounded-md font-mono">مفعل</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-violet-800 transition">الاختبارات والشهائد الرقمية</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">سلالم الدرجات، رصد نتائج الاختبارات الشاملة، وطباعة الشهائد المعتمدة.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-violet-200/60 flex items-center justify-between text-xs font-bold text-violet-700">
+                        <span>فتح شاشة الشهائد</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('reports.academic') || auth()->user()->hasPermission('reports.financial'))
+                <a href="{{ route('admin.reports.index') }}" class="group bg-gradient-to-br from-orange-50 to-amber-50/40 hover:from-orange-100 hover:to-amber-100 border border-orange-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-[#F58220] text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">📊</span>
+                            <span class="text-[10px] font-bold text-orange-700 bg-orange-100/80 px-2 py-0.5 rounded-md font-mono">مفعل</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-orange-800 transition">مركز التقارير والإحصائيات</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">تقارير أكاديمية تفصيلية، كشوفات المقارنة بين الفصول، وطباعة السجلات.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-orange-200/60 flex items-center justify-between text-xs font-bold text-orange-700">
+                        <span>فتح شاشة التقارير</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+
+            @if(auth()->user()->isAdmin() || auth()->user()->hasPermission('finance.view'))
+                <a href="{{ route('accounting.dashboard') }}" class="group bg-gradient-to-br from-teal-50 to-emerald-50/40 hover:from-teal-100 hover:to-emerald-100 border border-teal-200/80 rounded-2xl p-4 transition-all duration-200 transform hover:-translate-y-1 shadow-xs hover:shadow-md flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition">💼</span>
+                            <span class="text-[10px] font-bold text-teal-700 bg-teal-100/80 px-2 py-0.5 rounded-md font-mono">مفعل</span>
+                        </div>
+                        <h3 class="font-black text-sm text-slate-900 group-hover:text-teal-800 transition">الإدارة المالية والمحاسبة</h3>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">سندات القبض والصرف، كشوفات الحسابات، ومتابعة مدفوعات الطلاب.</p>
+                    </div>
+                    <div class="pt-3 mt-3 border-t border-teal-200/60 flex items-center justify-between text-xs font-bold text-teal-700">
+                        <span>فتح شاشة المحاسبة</span>
+                        <span>←</span>
+                    </div>
+                </a>
+            @endif
+        </div>
+    </div>
+
     <!-- البطاقات الإحصائية الأربعة -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -97,28 +269,70 @@
                                 </div>
                                 <div>
                                     <h3 class="font-black text-sm text-slate-900">{{ $st->name }}</h3>
-                                    <div class="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+                                    <div class="flex items-center gap-2 text-[11px] text-slate-500 font-mono flex-wrap">
                                         <span>{{ $st->student_code }}</span>
                                         <span>•</span>
                                         <span>{{ $st->email }}</span>
                                         <span>•</span>
                                         <span>{{ $st->phone_whatsapp }}</span>
+                                        <span>•</span>
+                                        <a href="{{ route('admin.students.exam_attempts', $st->id) }}" class="text-[11px] font-bold text-[#0066A1] hover:underline flex items-center gap-1 font-sans">
+                                            <span>📝</span>
+                                            <span>سجل الاختبارات</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                                     {{ $st->studentProfile?->grade_substage ?? 'مسار تجريبي' }}
                                 </span>
+                                @if($st->revoker || $st->revoked_at)
+                                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1 shadow-2xs">
+                                        <span>↩️</span>
+                                        <span>أُلغي اعتماده سابقاً بواسطة: {{ $st->revoker?->name ?? 'الإشراف' }}</span>
+                                        @if($st->revoked_at)
+                                            <span class="font-mono text-[10px]">({{ $st->revoked_at->format('Y-m-d H:i') }})</span>
+                                        @endif
+                                    </span>
+                                @endif
                             </div>
                         </div>
 
+                        <!-- تنبيه إذا كان الطالب ملغي اعتماده سابقاً -->
+                        @if($st->revoker || $st->revoked_at)
+                            <div class="p-3 bg-rose-50/80 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2">
+                                <span class="text-sm">⚠️</span>
+                                <div class="space-y-0.5">
+                                    <span class="font-black text-rose-800 block">سجل إلغاء الاعتماد السابق للطالب:</span>
+                                    <p class="text-[11px] text-rose-700 leading-relaxed">
+                                        تم إلغاء اعتماده بواسطة <strong>{{ $st->revoker?->name ?? 'الإشراف الأكاديمي' }}</strong> بتاريخ <span class="font-mono">{{ $st->revoked_at?->format('Y-m-d H:i') }}</span>.
+                                        @if($st->revoke_reason)
+                                            <span class="block text-slate-700 mt-0.5 font-sans"><strong>السبب المدوّن:</strong> {{ $st->revoke_reason }}</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
+
                         <!-- درجات الفحص والذكاء الاصطناعي -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                            <div class="bg-white p-3 rounded-xl border border-slate-200">
-                                <span class="text-slate-400 block text-[11px]">الدرجة التحريرية:</span>
-                                <strong class="text-slate-900 font-mono text-sm">{{ $latestAttempt ? $latestAttempt->total_score . ' نقطة' : 'لم يختبر بعد' }}</strong>
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
+                                <span class="text-slate-400 block text-[11px]">الدرجة التحريرية للاختبار:</span>
+                                <strong class="text-slate-900 font-mono text-sm block">{{ $latestAttempt ? $latestAttempt->total_score . ' نقطة' : 'لم يختبر بعد' }}</strong>
+                                @if($latestAttempt)
+                                    <div class="flex items-center gap-1.5 pt-1 flex-wrap">
+                                        <a href="{{ route('admin.exams.review_attempt', $latestAttempt->id) }}" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-md transition flex items-center gap-1" title="استعراض وتدقيق الإجابات والدرجة">
+                                            <span>🔍</span>
+                                            <span>تدقيق الإجابات</span>
+                                        </a>
+                                        <a href="{{ route('admin.exams.attempts.error_report', $latestAttempt->id) }}" target="_blank" class="text-[10px] font-bold text-amber-900 hover:text-amber-950 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2 py-0.5 rounded-md transition flex items-center gap-1" title="كشف الأخطاء للشفافية والطباعة">
+                                            <span>🖨️</span>
+                                            <span>تقرير الأخطاء</span>
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="bg-white p-3 rounded-xl border border-slate-200">

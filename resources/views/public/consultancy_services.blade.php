@@ -16,7 +16,7 @@
             The Asian Star Office for Translation, Training, & Consultancy Services (ASOTS)
         </p>
         <p class="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            خبرة أكاديمية وبحثية استثنائية يقدمها الأستاذ الدكتور/ فخر الدين الصوفي ونخبة من الخبراء لدعم الأفراد والجامعات والمؤسسات التعليمية والشركات في بناء المناهج، وتطوير الكوادر، وتحقيق التميز.
+            خبرة أكاديمية وبحثية استثنائية يقدمها الدكتور/ فخر الدين ناجي ردمان عبده الصوفي ونخبة من الخبراء لدعم الأفراد والجامعات والمؤسسات التعليمية والشركات في بناء المناهج، وتطوير الكوادر، وتحقيق التميز.
         </p>
     </div>
 
@@ -24,15 +24,15 @@
     <div class="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm space-y-12">
 
         <!-- الإشراف الاستشاري -->
-        <div class="p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="p-8 rounded-2xl bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white flex flex-col md:flex-row items-center justify-between gap-6 border border-white/20 shadow-md">
             <div class="space-y-2 text-center md:text-right">
-                <span class="text-xs font-black text-amber-400 block uppercase">استشارات مبنية على رصيد أكاديمي وبحثي</span>
-                <h2 class="text-xl font-black text-white">إشراف وتوجيه مباشر من أ.د. فخر الدين الصوفي</h2>
-                <p class="text-xs text-slate-300">
+                <span class="text-xs font-black text-[#F58220] block uppercase">استشارات مبنية على رصيد أكاديمي وبحثي</span>
+                <h2 class="text-xl font-black text-white">إشراف وتوجيه مباشر من الدكتور/ فخر الدين ناجي ردمان عبده الصوفي</h2>
+                <p class="text-xs text-sky-100">
                     أستاذ اللسانيات التطبيقية الحديثة، والتواصل بين الثقافات، وخبير التطوير المهني وتدريب المعلمين.
                 </p>
             </div>
-            <a href="{{ route('leadership') }}" class="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-950 hover:bg-amber-300 font-black text-xs whitespace-nowrap transition">
+            <a href="{{ route('leadership') }}" class="px-5 py-2.5 rounded-xl bg-[#F58220] text-white hover:bg-[#d96e14] font-black text-xs whitespace-nowrap transition">
                 السيرة الأكاديمية للقيادة
             </a>
         </div>

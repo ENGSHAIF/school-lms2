@@ -3,24 +3,24 @@
 @section('content')
 <div class="space-y-8 max-w-5xl mx-auto my-4">
 
-    <!-- الترويسة -->
-    <div class="text-center max-w-2xl mx-auto">
-        <span class="bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full font-bold inline-block mb-3">
-            باقات حصص ASOTS المعتمدة
+    <!-- الترويسة بتدرج الهوية الرسمية الأزرق الداكن -->
+    <div class="bg-gradient-to-r from-[#003859] via-[#004e7c] to-[#0066A1] text-white p-8 sm:p-10 rounded-3xl border border-[#0066A1]/40 shadow-xl text-center max-w-4xl mx-auto space-y-2">
+        <span class="bg-[#F58220]/25 text-[#F58220] border border-[#F58220]/40 text-xs px-3.5 py-1 rounded-full font-black inline-block">
+            باقات حصص ASOTS المعتمدة ⭐
         </span>
-        <h1 class="text-3xl font-black text-slate-900 mb-2">اختر باقة الحصص المناسبة لمستواك</h1>
-        <p class="text-slate-500 text-xs">
-            جميع الحصص هي جلسات فردية حية ومباشرة (1-on-1) مدة كل جلسة 25 دقيقة مع تقييم نطق وتوفل مباشر.
+        <h1 class="text-2xl sm:text-3xl font-black text-white">اختر باقة الحصص الفردية المناسبة لمستواك</h1>
+        <p class="text-slate-100 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
+            جميع الحصص هي جلسات فردية حية ومباشرة (1-on-1) مدة كل جلسة 25 دقيقة مع تقييم نطق وتوفل مباشر وسند قبض محاسبي معتمد.
         </p>
     </div>
 
     <!-- شبكة الباقات -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach($packages as $pkg)
-            <div class="bg-white rounded-3xl border {{ $pkg->lessons_count >= 24 ? 'border-indigo-500 shadow-xl ring-2 ring-indigo-500/20' : 'border-slate-200 shadow-sm' }} p-6 flex flex-col justify-between relative overflow-hidden">
+            <div class="bg-white rounded-3xl border {{ $pkg->lessons_count >= 24 ? 'border-[#0066A1] shadow-xl ring-2 ring-[#0066A1]/20' : 'border-slate-200 shadow-sm' }} p-6 flex flex-col justify-between relative overflow-hidden">
                 
                 @if($pkg->lessons_count >= 24)
-                    <div class="absolute top-0 left-0 bg-indigo-600 text-white text-[10px] font-black px-4 py-1 rounded-br-2xl uppercase tracking-wider">
+                    <div class="absolute top-0 left-0 bg-[#F58220] text-white text-[10px] font-black px-4 py-1 rounded-br-2xl uppercase tracking-wider">
                         الأكثر طلباً للتوفل ⭐
                     </div>
                 @endif
@@ -75,7 +75,7 @@
                     </div>
 
                     <button type="submit" 
-                        class="w-full py-3 {{ $pkg->lessons_count >= 24 ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white' }} font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                        class="w-full py-3 {{ $pkg->lessons_count >= 24 ? 'bg-gradient-to-r from-[#F58220] to-[#d96e14] hover:from-[#d96e14] hover:to-[#b85807] text-white' : 'bg-gradient-to-r from-[#0066A1] to-[#004e7c] hover:from-[#005587] hover:to-[#003859] text-white' }} font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
                         <span>⚡</span>
                         <span>شراء الباقة وشحن الحصص فوراً</span>
                     </button>

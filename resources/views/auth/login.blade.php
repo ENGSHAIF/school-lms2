@@ -5,11 +5,12 @@
     <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8">
         
         <div class="text-center mb-6">
-            <div class="w-20 h-20 bg-white rounded-3xl p-2 mx-auto mb-3 shadow-xl border border-slate-100 flex items-center justify-center ring-4 ring-indigo-50">
+            <div class="w-24 h-24 bg-white rounded-3xl p-2 mx-auto mb-3 shadow-xl border border-slate-100 flex items-center justify-center ring-4 ring-[#0271a6]/20">
                 <img src="{{ asset('images/logo.png') }}" alt="ASOTS Logo" class="w-full h-full object-contain">
             </div>
             <h1 class="text-2xl font-black text-slate-900">بوابة الدخول | ASOTS</h1>
-            <p class="text-slate-500 text-xs mt-1">The Asian Star Office for Translation, Training, & Consultancy Services</p>
+            <p class="text-slate-700 text-xs mt-1.5 font-bold">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات</p>
+            <p class="text-slate-400 text-[11px] mt-0.5">The Asian Star Office for Translation, Training, & Consultancy Services</p>
         </div>
 
         @if(session('success_reset_request'))
@@ -81,36 +82,6 @@
             <a href="{{ route('register') }}" class="text-xs font-bold text-indigo-600 hover:underline mr-1">أنشئ حسابك وقدم اختبار القبول</a>
         </div>
 
-        <!-- أزرار الدخول السريع للاختبار والتجربة بالبريد وبالرقم الفريد -->
-        <div class="mt-6 pt-5 border-t border-slate-100">
-            <div class="flex items-center justify-between mb-2.5">
-                <span class="text-xs font-bold text-slate-500">حسابات تجريبية سريعة:</span>
-                <div class="flex gap-1 text-[10px] font-bold">
-                    <button type="button" onclick="setDemoMode('email')" id="btnDemoEmail" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold">بالإيميل</button>
-                    <button type="button" onclick="setDemoMode('code')" id="btnDemoCode" class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200">بالرقم الفريد 🆔</button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 text-xs">
-                <button type="button" onclick="fillDemo(demoAccounts.admin)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 py-2 px-2.5 rounded-xl font-bold text-center transition flex flex-col items-center">
-                    <span>👑 مدير النظام</span>
-                    <span class="text-[10px] text-slate-400 font-mono demo-badge" data-email="admin@school.com" data-code="ADM-2026-0001">admin@school.com</span>
-                </button>
-                <button type="button" onclick="fillDemo(demoAccounts.accountant)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 py-2 px-2.5 rounded-xl font-bold text-center transition flex flex-col items-center">
-                    <span>💼 المحاسب المالي</span>
-                    <span class="text-[10px] text-slate-400 font-mono demo-badge" data-email="accountant@school.com" data-code="ACC-2026-0002">accountant@school.com</span>
-                </button>
-                <button type="button" onclick="fillDemo(demoAccounts.teacher)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 py-2 px-2.5 rounded-xl font-bold text-center transition flex flex-col items-center">
-                    <span>👨‍🏫 المعلم</span>
-                    <span class="text-[10px] text-slate-400 font-mono demo-badge" data-email="teacher@school.com" data-code="TEA-2026-0003">teacher@school.com</span>
-                </button>
-                <button type="button" onclick="fillDemo(demoAccounts.student)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 py-2 px-2.5 rounded-xl font-bold text-center transition flex flex-col items-center">
-                    <span>🎒 طالب تجريبي</span>
-                    <span class="text-[10px] text-slate-400 font-mono demo-badge" data-email="student@school.com" data-code="STU-2026-0001">student@school.com</span>
-                </button>
-            </div>
-        </div>
-
     </div>
 </div>
 
@@ -175,38 +146,6 @@
 </div>
 
 <script>
-let currentDemoMode = 'email'; // 'email' or 'code'
-
-const demoAccounts = {
-    admin: { email: 'admin@school.com', code: 'ADM-2026-0001' },
-    accountant: { email: 'accountant@school.com', code: 'ACC-2026-0002' },
-    teacher: { email: 'teacher@school.com', code: 'TEA-2026-0003' },
-    student: { email: 'student@school.com', code: 'STU-2026-0001' }
-};
-
-function setDemoMode(mode) {
-    currentDemoMode = mode;
-    const btnEmail = document.getElementById('btnDemoEmail');
-    const btnCode = document.getElementById('btnDemoCode');
-    const badges = document.querySelectorAll('.demo-badge');
-
-    if (mode === 'email') {
-        btnEmail.className = 'px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-bold';
-        btnCode.className = 'px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200';
-        badges.forEach(b => b.innerText = b.getAttribute('data-email'));
-    } else {
-        btnCode.className = 'px-2 py-0.5 rounded bg-indigo-600 text-white font-bold';
-        btnEmail.className = 'px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200';
-        badges.forEach(b => b.innerText = b.getAttribute('data-code'));
-    }
-}
-
-function fillDemo(acc) {
-    const val = (currentDemoMode === 'email') ? acc.email : acc.code;
-    document.getElementById('loginInput').value = val;
-    document.getElementById('password').value = 'password123';
-}
-
 function openResetModal() {
     document.getElementById('resetRequestModal').classList.remove('hidden');
 }

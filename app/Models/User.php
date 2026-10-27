@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -30,6 +31,11 @@ class User extends Authenticatable
         'avatar',
         'theme_preference',
         'locale',
+        'approved_by',
+        'approved_at',
+        'revoked_by',
+        'revoked_at',
+        'revoke_reason',
     ];
 
     protected $hidden = [
@@ -46,6 +52,8 @@ class User extends Authenticatable
             'birth_date' => 'date',
             'must_change_password' => 'boolean',
             'whatsapp_notifications_enabled' => 'boolean',
+            'approved_at' => 'datetime',
+            'revoked_at' => 'datetime',
         ];
     }
 
@@ -62,7 +70,7 @@ class User extends Authenticatable
                     default => 'STU',
                 };
                 $latestId = static::max('id') ?? 0;
-                $code = $prefix . '-' . date('Y') . '-' . str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
+                $code = $prefix.'-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
                 $user->user_code = $code;
                 if (empty($user->student_code)) {
                     $user->student_code = $code;
@@ -97,6 +105,16 @@ class User extends Authenticatable
     public function groupEvaluations()
     {
         return $this->hasMany(GroupStudentEvaluation::class, 'student_id');
+    }
+
+    public function studentSurveys()
+    {
+        return $this->hasMany(StudentSurvey::class, 'student_id');
+    }
+
+    public function teacherSurveys()
+    {
+        return $this->hasMany(StudentSurvey::class, 'teacher_id');
     }
 
     public function taughtSessions()
@@ -134,10 +152,10 @@ class User extends Authenticatable
         // 4. التحقق من الصلاحيات المخصصة الفردية للمستخدم (كاستثناء خاص)
         $perms = $this->permissions;
         if (is_array($perms)) {
-            if (in_array('*', $perms, true) || !empty($perms['*'])) {
+            if (in_array('*', $perms, true) || ! empty($perms['*'])) {
                 return true;
             }
-            if (!empty($perms[$permission]) || in_array($permission, $perms, true)) {
+            if (! empty($perms[$permission]) || in_array($permission, $perms, true)) {
                 return true;
             }
 
@@ -145,7 +163,7 @@ class User extends Authenticatable
             $aliases = PermissionGroup::legacyAliases();
             if (isset($aliases[$permission])) {
                 foreach ($aliases[$permission] as $alias) {
-                    if (!empty($perms[$alias]) || in_array($alias, $perms, true)) {
+                    if (! empty($perms[$alias]) || in_array($alias, $perms, true)) {
                         return true;
                     }
                 }
@@ -154,8 +172,6 @@ class User extends Authenticatable
 
         return false;
     }
-
-
 
     public static function defaultPermissionsForRole(string $role): array
     {
@@ -178,7 +194,7 @@ class User extends Authenticatable
         return match ($role) {
             'admin' => ['*'],
             'supervisor' => [
-                'students.view', 'students.create', 'students.edit', 'students.approve', 'students.statement',
+                'students.view', 'students.create', 'students.edit', 'students.approve', 'students.revoke_approval', 'students.statement',
                 'curriculum.view', 'curriculum.edit', 'curriculum.resources_manage', 'curriculum.resources_share',
                 'groups.view', 'groups.create', 'groups.edit', 'groups.live', 'groups.activities',
                 'evaluations.view', 'evaluations.create', 'evaluations.print_daily', 'evaluations.print_final',
@@ -218,6 +234,19 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isReviewer(): bool
+    {
+        if ($this->email === 'demo.reviewer@asots.com' || $this->user_code === 'REV-2026-0001') {
+            return true;
+        }
+        $perms = $this->permissions;
+        if (is_array($perms) && (! empty($perms['is_reviewer']) || in_array('is_reviewer', $perms, true))) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function isAccountant(): bool
     {
         return $this->role === 'accountant';
@@ -253,6 +282,62 @@ class User extends Authenticatable
     public function enrollments()
     {
         return $this->hasMany(StudentEnrollment::class, 'user_id');
+    }
+
+    // علاقة المستخدم الذي اعتمد الطالب
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // علاقة المستخدم الذي ألغى اعتماد الطالب
+    public function revoker()
+    {
+        return $this->belongsTo(User::class, 'revoked_by');
+    }
+
+    /**
+     * فحص هل بدأ الطالب دراسة أي دورات أو حضور حصص أو رُصدت له درجات
+     * (إذا كان طالباً جديداً لم يدرس، يمكن إلغاء اعتماده وتسكينه بحرية)
+     */
+    public function hasStudiedAnyCourses(): bool
+    {
+        // 1. حضور أو تقييمات يومية في المجموعات
+        if (GroupStudentEvaluation::where('student_id', $this->id)->exists()) {
+            return true;
+        }
+
+        // 2. تقارير حصص فردية أو ملاحظات معلمين
+        if (LessonReport::where('student_id', $this->id)->exists()) {
+            return true;
+        }
+
+        // 3. حجوزات حصص مكتملة
+        if (Booking::where('student_id', $this->id)->where('status', 'completed')->exists()) {
+            return true;
+        }
+
+        // 4. درجات دبلوم أو مقررات
+        if (StudentCourseGrade::where('student_id', $this->id)->exists()) {
+            return true;
+        }
+
+        // 5. شهائد أكاديمية صادرة
+        if (Certificate::where('student_id', $this->id)->exists()) {
+            return true;
+        }
+
+        // 6. اختبارات دورات أكاديمية (غير اختبار تحديد المستوى)
+        $hasCourseExams = ExamAttempt::where('user_id', $this->id)
+            ->whereHas('exam', function ($q) {
+                $q->where('type', '!=', 'placement');
+            })->exists();
+
+        if ($hasCourseExams) {
+            return true;
+        }
+
+        return false;
     }
 
     // محاولات الاختبارات
@@ -415,7 +500,7 @@ class User extends Authenticatable
             if ($accountVouchers > 0) {
                 $reasons['account_vouchers'] = "مرتبط بـ {$accountVouchers} حركة وقيد مالي في شجرة الحسابات";
             }
-            if (abs((float)$this->financialAccount->current_balance) > 0.001) {
+            if (abs((float) $this->financialAccount->current_balance) > 0.001) {
                 $curr = $this->financialAccount->currency ?? 'YER';
                 $bal = number_format($this->financialAccount->current_balance, 2);
                 $reasons['account_balance'] = "حسابه المالي لديه رصيد حالي غير صفري ({$bal} {$curr})";
@@ -476,18 +561,18 @@ class User extends Authenticatable
 
         // 9. تدريس أو إشراف أو قيد في المجموعات الدراسية
         $teachingCount = StudyGroup::where('teacher_id', $this->id)->count()
-            + \Illuminate\Support\Facades\DB::table('study_group_teachers')->where('user_id', $this->id)->count();
+            + DB::table('study_group_teachers')->where('user_id', $this->id)->count();
         if ($teachingCount > 0) {
             $reasons['teaching_groups'] = "معلم ومسند إليه التدريس في {$teachingCount} مجموعة دراسية";
         }
 
         $supervisingCount = StudyGroup::where('supervisor_id', $this->id)->count()
-            + \Illuminate\Support\Facades\DB::table('study_group_supervisors')->where('user_id', $this->id)->count();
+            + DB::table('study_group_supervisors')->where('user_id', $this->id)->count();
         if ($supervisingCount > 0) {
             $reasons['supervising_groups'] = "مشرف أكاديمي على {$supervisingCount} مجموعة دراسية";
         }
 
-        $enrolledCount = \Illuminate\Support\Facades\DB::table('study_group_students')->where('student_id', $this->id)->count();
+        $enrolledCount = DB::table('study_group_students')->where('student_id', $this->id)->count();
         if ($enrolledCount > 0) {
             $reasons['enrolled_groups'] = "مسكن ومقيد في {$enrolledCount} مجموعة دراسية";
         }
@@ -525,7 +610,7 @@ class User extends Authenticatable
         // 15. عقود معلمين
         $contractsCount = TeacherContract::where('teacher_id', $this->id)->count();
         if ($contractsCount > 0) {
-            $reasons['teacher_contracts'] = "مسجل له عقد مالي وإداري كمعلم";
+            $reasons['teacher_contracts'] = 'مسجل له عقد مالي وإداري كمعلم';
         }
 
         // 16. حجوزات حصص خاصة
@@ -548,7 +633,7 @@ class User extends Authenticatable
      */
     public function hasSystemOperations(): bool
     {
-        return !empty($this->checkDeletionIntegrity());
+        return ! empty($this->checkDeletionIntegrity());
     }
 
     public function courseGrades()

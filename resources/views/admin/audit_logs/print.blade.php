@@ -52,7 +52,7 @@
                     <img src="{{ asset('images/logo.png') }}" alt="ASOTS Logo" class="w-16 h-16 object-contain rounded-2xl border border-slate-300 p-1 bg-white shrink-0">
                     <div>
                         <h1 class="text-lg font-black text-slate-900 tracking-tight">
-                            {{ \App\Models\SiteSetting::get('school_name', 'مكتب النجم الآسيوي للترجمة والتدريب وخدمات الاستشارات') }}
+                            {{ \App\Models\SiteSetting::get('school_name', 'مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات') }}
                         </h1>
                         <span class="text-xs text-slate-600 font-bold block mt-0.5">
                             إدارة الرقابة الداخلية وتدقيق العمليات • وحدة الأمان المالي والإداري

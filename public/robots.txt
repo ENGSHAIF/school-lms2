@@ -1,2 +1,63 @@
+# ==============================================================================
+# ASOTS Cyber Shield - Robots & AI Bot Blocking Policy
+# The Asian Star Office for Translation, Training, & Consultancy Services (ASOTS)
+# Intellectual Property & Architecture Protection
+# ==============================================================================
+
+# 1. Strict Prohibition of ALL Artificial Intelligence Crawlers & Scraping Agents
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: Anthropic-ai
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Bytespider
+User-agent: CCBot
+User-agent: cohere-ai
+User-agent: Diffbot
+User-agent: FacebookBot
+User-agent: Meta-ExternalAgent
+User-agent: Omgilibot
+User-agent: Scrapy
+User-agent: Amazonbot
+User-agent: Applebot-Extended
+User-agent: Kangaroo Bot
+User-agent: Timpibot
+User-agent: VelenPublicWebCrawler
+User-agent: Webzio-Extended
+Disallow: /
+
+# 2. General Crawlers & Search Engines (Restrict System & Proprietary Documentation)
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /help/
+Disallow: /accounting/
+Disallow: /student/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /classroom/
+Disallow: /licenses/
+Disallow: /api/
+Disallow: /onboarding/
+Disallow: /login
+Disallow: /register
+Disallow: /storage/
+Disallow: /uploads/licenses/
+
+# Allow only public landing pages for organic human discovery
+Allow: /
+Allow: /about
+Allow: /services
+Allow: /pricing
+Allow: /packages
+Allow: /curriculum
+Allow: /general-english
+Allow: /adult-english
+Allow: /translation-services
+Allow: /consultancy-services
+Allow: /leadership
+Allow: /quality
+Allow: /contact
+Allow: /policies
+Allow: /verify-certificate

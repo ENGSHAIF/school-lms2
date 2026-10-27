@@ -174,43 +174,74 @@
                             </div>
                         @endif
 
-                        <!-- خيارات الإجابة -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            @foreach($q->options ?? [] as $optIdx => $optText)
-                                @php
-                                    $isStudentChoice = (trim(mb_strtolower($studentChoice)) === trim(mb_strtolower($optText)));
-                                    $isCorrectAnswer = (trim(mb_strtolower($q->correct_answer)) === trim(mb_strtolower($optText)));
-                                    
-                                    $boxStyle = 'bg-slate-50 border-slate-200 text-slate-700';
-                                    if ($isCorrectAnswer && $isStudentChoice) {
-                                        $boxStyle = 'bg-emerald-50 border-emerald-500 text-emerald-950 font-bold ring-2 ring-emerald-500/30';
-                                    } elseif ($isStudentChoice && !$isCorrectAnswer) {
-                                        $boxStyle = 'bg-rose-50 border-rose-500 text-rose-950 font-bold ring-2 ring-rose-500/30';
-                                    } elseif ($isCorrectAnswer) {
-                                        $boxStyle = 'bg-emerald-50/70 border-emerald-400 text-emerald-900 border-dashed font-bold';
-                                    }
-                                @endphp
-
-                                <div class="p-3 rounded-2xl border flex items-center justify-between {{ $boxStyle }}">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-6 h-6 rounded-lg bg-white border border-slate-300 flex items-center justify-center font-bold text-[11px] font-mono shrink-0">
-                                            {{ chr(65 + $optIdx) }}
-                                        </span>
-                                        <span>{{ $optText }}</span>
+                        @if($q->type === 'speaking_ai')
+                            <div class="bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 text-xs space-y-3">
+                                <div>
+                                    <span class="text-[11px] font-bold text-slate-500 block mb-1">النص الصوتي المطلوب قراءته:</span>
+                                    <p class="font-serif font-bold text-sm text-indigo-950 bg-white p-2.5 rounded-xl border border-indigo-100">
+                                        "{{ $q->expected_speech_text ?? 'Learning English opens great opportunities for communication and global success.' }}"
+                                    </p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-white p-2.5 rounded-xl border border-indigo-100">
+                                        <span class="text-[10px] text-slate-400 block">دقة النطق:</span>
+                                        <strong class="text-sm font-black text-indigo-700 font-mono">
+                                            {{ $ans?->speech_accuracy ?? ($attempt->speech_feedback['accuracy_score'] ?? 85) }}%
+                                        </strong>
                                     </div>
-
-                                    <div class="text-[10px] font-black shrink-0">
-                                        @if($isStudentChoice && $isCorrectAnswer)
-                                            <span class="text-emerald-700">إجابتك (صحيحة ✓)</span>
-                                        @elseif($isStudentChoice && !$isCorrectAnswer)
-                                            <span class="text-rose-700">إجابتك (غير صحيحة ✕)</span>
-                                        @elseif($isCorrectAnswer)
-                                            <span class="text-emerald-700">الإجابة الصحيحة ✓</span>
-                                        @endif
+                                    <div class="bg-white p-2.5 rounded-xl border border-indigo-100">
+                                        <span class="text-[10px] text-slate-400 block">الدرجة المحققة:</span>
+                                        <strong class="text-sm font-black text-emerald-600 font-mono">
+                                            {{ $ans?->points_awarded ?? 0 }} / {{ $q->points }}
+                                        </strong>
                                     </div>
                                 </div>
-                            @endforeach
-                        </div>
+                                @if($ans?->recorded_audio_path)
+                                    <div class="pt-1">
+                                        <span class="text-[10px] font-bold text-slate-500 block mb-1">تسجيلك الصوتي:</span>
+                                        <audio controls class="w-full h-8 rounded" src="{{ asset('storage/' . $ans->recorded_audio_path) }}"></audio>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <!-- خيارات الإجابة -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                @foreach($q->options ?? [] as $optIdx => $optText)
+                                    @php
+                                        $isStudentChoice = (trim(mb_strtolower($studentChoice)) === trim(mb_strtolower($optText)));
+                                        $isCorrectAnswer = (trim(mb_strtolower($q->correct_answer)) === trim(mb_strtolower($optText)));
+                                        
+                                        $boxStyle = 'bg-slate-50 border-slate-200 text-slate-700';
+                                        if ($isCorrectAnswer && $isStudentChoice) {
+                                            $boxStyle = 'bg-emerald-50 border-emerald-500 text-emerald-950 font-bold ring-2 ring-emerald-500/30';
+                                        } elseif ($isStudentChoice && !$isCorrectAnswer) {
+                                            $boxStyle = 'bg-rose-50 border-rose-500 text-rose-950 font-bold ring-2 ring-rose-500/30';
+                                        } elseif ($isCorrectAnswer) {
+                                            $boxStyle = 'bg-emerald-50/70 border-emerald-400 text-emerald-900 border-dashed font-bold';
+                                        }
+                                    @endphp
+
+                                    <div class="p-3 rounded-2xl border flex items-center justify-between {{ $boxStyle }}">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded-lg bg-white border border-slate-300 flex items-center justify-center font-bold text-[11px] font-mono shrink-0">
+                                                {{ chr(65 + $optIdx) }}
+                                            </span>
+                                            <span>{{ $optText }}</span>
+                                        </div>
+
+                                        <div class="text-[10px] font-black shrink-0">
+                                            @if($isStudentChoice && $isCorrectAnswer)
+                                                <span class="text-emerald-700">إجابتك (صحيحة ✓)</span>
+                                            @elseif($isStudentChoice && !$isCorrectAnswer)
+                                                <span class="text-rose-700">إجابتك (غير صحيحة ✕)</span>
+                                            @elseif($isCorrectAnswer)
+                                                <span class="text-emerald-700">الإجابة الصحيحة ✓</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
 
                     </div>
                 @endforeach
@@ -218,15 +249,21 @@
         </div>
 
         <!-- أزرار الإجراءات والعودة -->
-        <div class="flex items-center justify-between pt-4">
+        <div class="flex items-center justify-between pt-4 flex-wrap gap-2">
             <a href="{{ route('student.portal') }}" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm transition">
                 ← العودة لبوابة الطالب
             </a>
 
-            <button type="button" onclick="window.print()" class="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
-                <span>🖨️</span>
-                <span>طباعة النتيجة</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('student.exam.error_report', $attempt->id) }}" target="_blank" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
+                    <span>📑</span>
+                    <span>تقرير تدقيق الأخطاء والشفافية الأكاديمية</span>
+                </a>
+                <button type="button" onclick="window.print()" class="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
+                    <span>🖨️</span>
+                    <span>طباعة سريعة</span>
+                </button>
+            </div>
         </div>
 
     @endif

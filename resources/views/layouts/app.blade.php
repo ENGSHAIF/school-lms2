@@ -30,9 +30,10 @@
     $customLogo = site_setting('site_logo');
     $customLogoText = site_setting('logo_text', 'ASOTS');
     $siteNameAr = site_setting('site_name_ar', config('asots.name_ar'));
-    $siteNameEn = site_setting('site_name_en', config('asots.name_en'));
-    $whatsappNumber = site_setting('whatsapp_platform_number') ?: site_setting('whatsapp_number', config('asots.contact.phone_whatsapp', '+967 735 999 101'));
+    $whatsappNumber = site_setting('whatsapp_platform_number') ?: site_setting('whatsapp_number', '+967 775 342 886');
     $cleanWhatsapp = preg_replace('/[^0-9]/', '', $whatsappNumber);
+    $whatsappNumber2 = site_setting('whatsapp_number_2', '+967 735 999 101');
+    $cleanWhatsapp2 = preg_replace('/[^0-9]/', '', $whatsappNumber2);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $currentLocale }}" dir="{{ $currentLocale === 'en' ? 'ltr' : 'rtl' }}">
@@ -40,6 +41,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? ($siteNameAr . ' - المنصة التعليمية والاستشارية') }}</title>
+    @if(auth()->check() || request()->is('admin*', 'help*', 'accounting*', 'student*', 'teacher*', 'parent*', 'classroom*', 'licenses*'))
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
+        <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+    @endif
+    <meta name="ai-content-declaration" content="no-ai-train, no-scrape">
     <!-- Favicon & App Icons -->
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
@@ -52,21 +58,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --theme-primary: {{ $themeData['primary'] }};
-            --theme-primary-hover: {{ $themeData['primary_hover'] }};
-            --theme-cta: {{ $themeData['cta'] }};
-            --theme-bg: {{ $themeData['bg'] }};
-            --theme-card: {{ $themeData['card'] }};
-            --theme-text-main: {{ $themeData['text_main'] }};
-            --theme-text-muted: {{ $themeData['text_muted'] }};
-            --theme-border: {{ $themeData['border'] }};
-            --theme-badge: {{ $themeData['badge'] }};
-            --theme-badge-text: {{ $themeData['badge_text'] }};
+            --theme-primary: #0066A1;
+            --theme-primary-hover: #004e7c;
+            --theme-cta: #F58220;
+            --theme-cta-hover: #d96e14;
+            --theme-bg: {{ $themeData['bg'] ?? '#f4f8fb' }};
+            --theme-card: {{ $themeData['card'] ?? '#ffffff' }};
+            --theme-text-main: {{ $themeData['text_main'] ?? '#0f172a' }};
+            --theme-text-muted: {{ $themeData['text_muted'] ?? '#475569' }};
+            --theme-border: {{ $themeData['border'] ?? '#d4e5f0' }};
+            --theme-badge: {{ $themeData['badge'] ?? '#e0f0f8' }};
+            --theme-badge-text: {{ $themeData['badge_text'] ?? '#0066A1' }};
+            --brand-blue: #0066A1;
+            --brand-blue-hover: #004e7c;
+            --brand-blue-dark: #003859;
+            --brand-orange: #F58220;
+            --brand-orange-hover: #d96e14;
         }
         body {
             font-family: {!! $currentFontFamily !!} !important;
             @if($applyBodyBg && $bgImageUrl)
-                background-image: linear-gradient(rgba(15, 23, 42, {{ $overlayOpacity }}), rgba(15, 23, 42, {{ $overlayOpacity }})), url('{{ $bgImageUrl }}') !important;
+                background-image: linear-gradient(rgba(0, 102, 161, {{ $overlayOpacity }}), rgba(0, 78, 124, {{ $overlayOpacity }})), url('{{ $bgImageUrl }}') !important;
                 background-attachment: fixed !important;
                 background-position: center !important;
                 background-repeat: no-repeat !important;
@@ -77,12 +89,40 @@
             color: var(--theme-text-main) !important;
         }
 
-        /* ربط ألوان الـ Theme ديناميكياً لتغيير المظهر بالكامل عبر الموقع */
-        .bg-indigo-600, .bg-indigo-700 { background-color: var(--theme-primary) !important; }
-        .hover\:bg-indigo-600:hover, .hover\:bg-indigo-700:hover { background-color: var(--theme-primary-hover) !important; }
-        .text-indigo-600, .text-indigo-700 { color: var(--theme-primary) !important; }
-        .border-indigo-600, .border-indigo-500 { border-color: var(--theme-primary) !important; }
+        /* ربط ألوان الـ Theme ديناميكياً لتغيير المظهر بالكامل عبر الموقع بتناغم مع الهوية */
+        .bg-indigo-600, .bg-indigo-700, .bg-blue-600, .bg-blue-700 { background-color: var(--theme-primary) !important; color: #FFFFFF !important; }
+        .hover\:bg-indigo-600:hover, .hover\:bg-indigo-700:hover, .hover\:bg-blue-600:hover { background-color: var(--theme-primary-hover) !important; }
+        .text-indigo-600, .text-indigo-700, .text-blue-600 { color: var(--theme-primary) !important; }
+        .border-indigo-600, .border-indigo-500, .border-blue-600 { border-color: var(--theme-primary) !important; }
         .ring-indigo-600, .ring-indigo-500 { --tw-ring-color: var(--theme-primary) !important; }
+
+        /* تناسق الأزرار واللمسات البرتقالية والذهبية الخاصة بهوية الشعار */
+        .bg-amber-500, .bg-amber-600, .bg-orange-500, .bg-orange-600 { background-color: var(--theme-cta) !important; color: #FFFFFF !important; }
+        .hover\:bg-amber-600:hover, .hover\:bg-orange-600:hover { background-color: var(--theme-cta-hover) !important; }
+        .text-amber-400, .text-amber-500, .text-orange-500, .text-orange-600 { color: var(--theme-cta) !important; }
+        .hover\:text-amber-300:hover, .hover\:text-orange-400:hover { color: #fbd38d !important; }
+        .border-amber-400, .border-amber-500, .border-orange-500 { border-color: var(--theme-cta) !important; }
+
+        /* توحيد وتطبيق هوية الشعار الرسمية (الأزرق الداكن والبرتقالي) على كافة البانرات والمقاطع بالمنصة */
+        .bg-gradient-to-r.from-slate-900,
+        .bg-gradient-to-r.from-slate-950,
+        .bg-gradient-to-r.from-indigo-900,
+        .bg-gradient-to-r.from-indigo-950,
+        .bg-gradient-to-br.from-slate-900,
+        .bg-gradient-to-br.from-slate-950,
+        .bg-gradient-to-br.from-indigo-900,
+        .bg-gradient-to-br.from-indigo-950 {
+            background-image: linear-gradient(135deg, #003859 0%, #004E7C 55%, #0066A1 100%) !important;
+            border-color: rgba(0, 102, 161, 0.45) !important;
+            color: #FFFFFF !important;
+        }
+
+        /* كروت المقاطع الداكنة داخل البانرات تتناسق مع الكحلي الداكن المعتمد */
+        .bg-slate-800\/80,
+        .bg-slate-800 {
+            background-color: rgba(0, 43, 69, 0.88) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+        }
 
         @if($activeThemeId === 'night_mode')
             .bg-white { background-color: #111827 !important; color: #f9fafb !important; }
@@ -95,21 +135,51 @@
 </head>
 <body class="min-h-screen flex flex-col transition-colors duration-200 overflow-x-hidden">
 
-    <!-- شريط التنقل العلوي المتجاوب (هيدر ذكي منظم على صفين للكمبيوتر لظهور كافة التبويبات) -->
-    <nav class="bg-slate-900 text-white shadow-xl sticky top-0 z-50">
+    @if(auth()->check() && auth()->user()->isReviewer())
+        <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-xs py-2 px-4 text-center shadow-md flex items-center justify-center gap-2 border-b border-amber-600">
+            <span>👁️</span>
+            <span>وضع الاستعراض والمشاهدة الشاملة (Read-Only) • يمكنك استعراض كافة أقسام النظام والتقارير والدورة المستندية بحرية، والعمليات التعديلية مقفلة للمشاهدة فقط.</span>
+        </div>
+        <!-- علامة مائية جنائية ديناميكية مشفرة لكامل جلسة الاستعراض -->
+        <div class="fixed inset-0 pointer-events-none z-50 opacity-[0.035] bg-repeat" style="background-size: 380px 200px; background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='380' height='200' viewBox='0 0 380 200'><text x='20' y='50' fill='%23000' font-family='sans-serif' font-size='12' font-weight='bold' transform='rotate(-20 20 50)'>ASOTS DEMO • CONFIDENTIAL</text><text x='30' y='80' fill='%23000' font-family='sans-serif' font-size='10' transform='rotate(-20 30 80)'>{{ auth()->user()->name }} [{{ auth()->user()->user_code ?? auth()->user()->email }}] • {{ request()->ip() }}</text></svg>&quot;);"></div>
+        <script>
+            // حماية وضع الاستعراض من النسخ وفحص الأكواد وأدوات المطورين
+            document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+            document.addEventListener('copy', function(e) {
+                e.preventDefault();
+                if (e.clipboardData) {
+                    e.clipboardData.setData('text/plain', '⚠️ تنبيه: نظام ومنصة مكتب النجم الآسيوي (ASOTS) محمي بموجب قوانين الملكية الفكرية. يمنع نسخ البيانات أو استنساخ البنية الهيكلية.');
+                }
+                return false;
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.keyCode === 123) { e.preventDefault(); return false; } // F12 DevTools
+                if (e.ctrlKey || e.metaKey) {
+                    const k = (e.key || '').toLowerCase();
+                    if (['c', 'u', 'p', 's', 'x'].includes(k) || (e.shiftKey && ['i', 'j', 'c'].includes(k))) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+        </script>
+    @endif
+
+    <!-- شريط التنقل العلوي المتجاوب المتناسق مع هوية الشعار باللونين الأزرق والبرتقالي -->
+    <nav class="text-white shadow-xl sticky top-0 z-50 border-b border-[#004e7c]" style="background: #0066A1;">
         <!-- الصف الأول: الشعار الرسمي + أدوات النظام والمستخدم ولوحات التحكم الإدارية -->
         <div class="w-full max-w-[1750px] mx-auto px-3 sm:px-4 lg:px-6">
             <div class="flex justify-between h-14 sm:h-16 items-center gap-2 sm:gap-3">
-                <!-- الشعار واسم المؤسسة -->
+                <!-- الشعار واسم المؤسسة الموحد -->
                 <a href="{{ route('home') }}" class="flex items-center gap-2.5 shrink-0 group">
                     @if($customLogo)
-                        <img src="{{ asset($customLogo) }}" alt="{{ $siteNameAr }}" class="h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-full bg-white p-0.5 shadow-md ring-2 ring-white/20 group-hover:scale-105 transition shrink-0">
+                        <img src="{{ asset($customLogo) }}" alt="{{ $siteNameAr }}" class="h-10 w-10 sm:h-11 sm:w-11 object-contain rounded-2xl bg-white p-1 shadow-md ring-2 ring-[#F58220]/50 group-hover:scale-105 transition shrink-0">
                     @else
-                        <img src="{{ asset('images/logo.png') }}" alt="{{ $siteNameAr }}" class="h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-full bg-white p-0.5 shadow-md ring-2 ring-white/20 group-hover:scale-105 transition shrink-0">
+                        <img src="{{ asset('images/logo.png') }}" alt="{{ $siteNameAr }}" class="h-10 w-10 sm:h-11 sm:w-11 object-contain rounded-2xl bg-white p-1 shadow-md ring-2 ring-[#F58220]/50 group-hover:scale-105 transition shrink-0">
                     @endif
                     <div class="flex items-baseline gap-1.5 shrink-0">
-                        <span class="font-black text-lg sm:text-xl tracking-wider text-amber-400 leading-tight">{{ $customLogoText }}</span>
-                        <span class="text-xs text-slate-300 font-bold hidden sm:inline whitespace-nowrap">• {{ Str::limit($siteNameAr, 26) }}</span>
+                        <span class="font-black text-lg sm:text-xl tracking-wider text-[#F58220] leading-tight">{{ $customLogoText }}</span>
+                        <span class="text-xs text-white font-bold hidden md:inline whitespace-nowrap">• مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات</span>
                     </div>
                 </a>
 
@@ -128,6 +198,24 @@
                                     <span>الطلاب والقبول</span>
                                 </a>
 
+                                <a href="{{ route('admin.student_applications.index') }}" class="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('admin.student_applications.*') ? 'bg-[#F58220] text-slate-950 shadow-md font-black' : 'bg-slate-800 text-amber-200 hover:bg-slate-700' }} transition border border-slate-700" title="استعراض وإدارة استمارات تسجيل الطلاب المتقدمين">
+                                    <span>📋</span>
+                                    <span>استمارات القبول</span>
+                                    @php
+                                        try {
+                                            $pendingAppsCount = \App\Models\StudentApplication::where('status', 'pending')->count();
+                                        } catch(\Exception $e) { $pendingAppsCount = 0; }
+                                    @endphp
+                                    @if($pendingAppsCount > 0)
+                                        <span class="bg-[#F58220] text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">{{ $pendingAppsCount }}</span>
+                                    @endif
+                                </a>
+
+                                <a href="{{ route('admin.surveys.index') }}" class="hidden lg:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('admin.surveys.*') ? 'bg-amber-500 text-slate-950 shadow-md font-black' : 'bg-slate-800 text-amber-300 hover:bg-slate-700' }} transition border border-slate-700" title="استبيانات وتقييمات الطلاب للمدرسين والدبلوم">
+                                    <span>📊</span>
+                                    <span>استبيانات الطلاب</span>
+                                </a>
+
                                 @php
                                     try {
                                         $pendingReqCountBadge = \App\Models\PasswordResetRequest::where('status', 'pending')->count();
@@ -142,11 +230,34 @@
                             </div>
                         @elseif(auth()->user()->isSupervisor())
                             <div class="hidden lg:flex items-center gap-1 bg-slate-950/70 p-1 rounded-xl border border-slate-800">
-                                <a href="{{ route('supervisor.dashboard') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold text-purple-200 hover:bg-slate-800">لوحة الإشراف</a>
-                                <a href="{{ route('admin.reports.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold text-amber-300 hover:bg-slate-800">التقارير 📊</a>
-                                <a href="{{ route('admin.groups.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-200 hover:bg-slate-800">المجموعات 👥</a>
-                                <a href="{{ route('admin.groups.evaluations.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold text-amber-300 hover:bg-slate-800">التقييم والحضور 📋</a>
-                                <a href="{{ route('admin.exams_management.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold text-rose-300 hover:bg-slate-800">الاختبارات والشهائد 🎓</a>
+                                <a href="{{ route('supervisor.dashboard') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('supervisor.dashboard') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-purple-200 hover:bg-slate-800' }}">لوحة الإشراف 🛡️</a>
+                                @if(auth()->user()->hasPermission('curriculum.view') || auth()->user()->hasPermission('manage_courses') || auth()->user()->hasPermission('curriculum.create') || auth()->user()->hasPermission('curriculum.edit'))
+                                    <a href="{{ route('admin.courses.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('admin.courses.*') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-emerald-300 hover:bg-slate-800' }}">المناهج والأسعار 📚</a>
+                                @endif
+                                @if(auth()->user()->hasPermission('students.view') || auth()->user()->hasPermission('students.create'))
+                                    <a href="{{ route('admin.students.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('admin.students.*') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-emerald-200 hover:bg-slate-800' }}">الطلاب 🎓</a>
+                                @endif
+                                @if(auth()->user()->hasPermission('groups.view'))
+                                    <a href="{{ route('admin.groups.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('admin.groups.index') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-indigo-200 hover:bg-slate-800' }}">المجموعات 👥</a>
+                                @endif
+                                @if(auth()->user()->hasPermission('evaluations.view'))
+                                    <a href="{{ route('admin.groups.evaluations.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('admin.groups.evaluations.*') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-amber-300 hover:bg-slate-800' }}">التقييم 📋</a>
+                                @endif
+                                @if(auth()->user()->hasPermission('exams_management.view'))
+                                    <a href="{{ route('admin.exams_management.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('admin.exams_management.*') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-rose-300 hover:bg-slate-800' }}">الاختبارات والشهائد 🎓</a>
+                                @endif
+                                @if(auth()->user()->hasPermission('exams.view'))
+                                    <a href="{{ route('admin.exams.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('admin.exams.index') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-rose-200 hover:bg-slate-800' }}">الكويزات 🎯</a>
+                                @endif
+                                @if(auth()->user()->hasPermission('reports.academic') || auth()->user()->hasPermission('reports.financial'))
+                                    <a href="{{ route('admin.reports.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('admin.reports.*') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-amber-300 hover:bg-slate-800' }}">التقارير 📊</a>
+                                @endif
+                                @if(auth()->user()->hasPermission('finance.view'))
+                                    <a href="{{ route('accounting.dashboard') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('accounting.*') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-teal-300 hover:bg-slate-800' }}">المحاسبة 💼</a>
+                                @endif
+                                @if(auth()->user()->hasPermission('system.users_view'))
+                                    <a href="{{ route('admin.users.index') }}" class="px-2.5 py-1 rounded-lg text-xs font-bold {{ request()->routeIs('admin.users.*') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-slate-200 hover:bg-slate-800' }}">المستخدمين 👥</a>
+                                @endif
                             </div>
                         @elseif(auth()->user()->isAccountant())
                             <div class="hidden lg:flex items-center gap-1 bg-slate-950/70 p-1 rounded-xl border border-slate-800">
@@ -161,7 +272,10 @@
                                 <a href="{{ route('admin.exams_management.index') }}" class="hidden sm:inline-block px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-400/30 hover:bg-rose-500/30">الاختبارات والشهائد 🎓</a>
                             </div>
                         @elseif(auth()->user()->isStudent())
-                            <a href="{{ route('student.portal') }}" class="hidden sm:inline-block px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600/30 text-indigo-200 border border-indigo-500/30 hover:bg-indigo-600/50">بوابة الطالب 🎓</a>
+                            <div class="flex items-center gap-1.5">
+                                <a href="{{ route('student.portal') }}" class="hidden sm:inline-block px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600/30 text-indigo-200 border border-indigo-500/30 hover:bg-indigo-600/50">بوابة الطالب 🎓</a>
+                                <a href="{{ route('student.surveys.index') }}" class="hidden sm:inline-block px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30" title="تقييم الحصة والأستاذ والدبلوم">تقييم الحصة والأستاذ ⭐</a>
+                            </div>
                         @elseif(auth()->user()->isParent())
                             <a href="{{ route('parent.dashboard') }}" class="hidden sm:inline-block px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/30 text-amber-200 border border-amber-500/30 hover:bg-amber-500/50">لوحة ولي الأمر 👨‍👧‍👦</a>
                         @endif
@@ -237,54 +351,74 @@
         </div>
 
         <!-- الصف الثاني: شريط التبويبات والمناهج والخدمات الكامل (مخصص بالكامل للكمبيوتر والشاشات الكبيرة) -->
-        <div class="hidden lg:block bg-slate-950/95 border-t border-slate-800 shadow-inner">
+        <div class="hidden lg:block border-t border-[#004e7c] shadow-inner" style="background: #005586;">
             <div class="w-full max-w-[1750px] mx-auto px-4 py-1.5">
                 <div class="flex items-center justify-center gap-1 xl:gap-2 flex-wrap">
-                    <a href="{{ route('home') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('home') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('home') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('home') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">🏠</span>
                         <span>الرئيسية</span>
                     </a>
-                    <a href="{{ route('leadership') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('leadership') ? 'bg-indigo-600 text-white shadow-sm' : 'text-amber-300 hover:text-amber-200 hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('leadership') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('leadership') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-amber-300 hover:text-amber-200 hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">🎓</span>
                         <span>القيادة الأكاديمية</span>
                     </a>
-                    <a href="{{ route('quality') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('quality') ? 'bg-indigo-600 text-white shadow-sm' : 'text-emerald-300 hover:text-emerald-200 hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('quality') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('quality') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-emerald-300 hover:text-emerald-200 hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">🛡️</span>
                         <span>الجودة AQED</span>
                     </a>
-                    <a href="{{ route('curriculum') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('curriculum') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('curriculum') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('curriculum') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">📖</span>
                         <span>المناهج وCEFR</span>
                     </a>
-                    <a href="{{ route('adult_english') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('adult_english') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('curriculum.view') || auth()->user()->hasPermission('manage_courses')))
+                        <a href="{{ route('admin.courses.index') }}" class="px-3 py-1.5 rounded-xl text-xs font-black {{ request()->routeIs('admin.courses.*') ? 'bg-[#F58220] text-slate-950 shadow-md' : 'bg-emerald-600/40 text-emerald-100 border border-emerald-400/40 hover:bg-emerald-600/60' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5" title="إدارة المناهج والدورات والأسعار والمستويات">
+                            <span class="text-xs">📚</span>
+                            <span>إدارة المناهج والأسعار</span>
+                        </a>
+                    @endif
+                    <a href="{{ route('adult_english') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('adult_english') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">🎯</span>
                         <span>التوفل والكبار</span>
                     </a>
-                    <a href="{{ route('translation_services') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('translation_services') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('translation_services') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('translation_services') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">🌐</span>
                         <span>الترجمة</span>
                     </a>
-                    <a href="{{ route('consultancy_services') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('consultancy_services') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('consultancy_services') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('consultancy_services') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">💼</span>
                         <span>الاستشارات</span>
                     </a>
-                    <a href="{{ route('packages.index') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('packages.index') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('packages.index') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('packages.index') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">💳</span>
                         <span>الباقات والأسعار</span>
                     </a>
-                    <a href="{{ route('student.booking') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('student.booking') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('student.booking') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('student.booking') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">🎙️</span>
                         <span>حجز المعلمين</span>
                     </a>
-                    <a href="{{ route('about') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('about') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('about') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('about') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">🏛️</span>
                         <span>عن المكتب</span>
                     </a>
-                    <a href="{{ route('contact') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('contact') ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    <a href="{{ route('student.registration') }}" class="px-3 py-1.5 rounded-xl text-xs font-black {{ request()->routeIs('student.registration') ? 'bg-[#F58220] text-slate-950 shadow-md font-black' : 'bg-emerald-600/40 text-emerald-100 border border-emerald-400/30 hover:bg-emerald-600/60' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                        <span class="text-xs">📋</span>
+                        <span>إستمارة التسجيل</span>
+                    </a>
+                    <a href="{{ route('contact') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('contact') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-white hover:text-[#F58220] hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">📞</span>
                         <span>اتصل بنا</span>
                     </a>
-                    <a href="{{ route('help.index') }}" class="px-3 py-1.5 rounded-xl text-xs font-black {{ request()->routeIs('help.*') ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-amber-300 hover:text-amber-200 hover:bg-slate-800/90' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                    @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('system.licenses_view') || auth()->user()->hasPermission('view_licenses')))
+                        <a href="{{ route('licenses.viewer') }}" class="px-3 py-1.5 rounded-xl text-xs font-black {{ request()->routeIs('licenses.viewer') ? 'bg-[#F58220] text-slate-950 shadow-md' : 'bg-emerald-600/40 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-600/60' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5" title="استعراض وثائق التراخيص الرسمية المحمية">
+                            <span class="text-xs">📜</span>
+                            <span>التراخيص والاعتمادات</span>
+                        </a>
+                    @endif
+                    <a href="{{ route('announcements.index') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold {{ request()->routeIs('announcements.*') ? 'bg-[#F58220] text-slate-950 font-black shadow-md' : 'text-amber-300 hover:text-amber-200 hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
+                        <span class="text-xs">📢</span>
+                        <span>الإعلانات</span>
+                    </a>
+                    <a href="{{ route('help.index') }}" class="px-3 py-1.5 rounded-xl text-xs font-black {{ request()->routeIs('help.*') ? 'bg-amber-400 text-slate-950 shadow-sm' : 'text-amber-300 hover:text-amber-200 hover:bg-[#004e7c]/70' }} transition-all duration-150 transform hover:scale-105 whitespace-nowrap flex items-center gap-1.5">
                         <span class="text-xs">📖</span>
                         <span>دليل النظام</span>
                     </a>
@@ -293,29 +427,56 @@
         </div>
 
         <!-- القائمة المتنقلة للشاشات الصغيرة (Mobile Drawer) -->
-        <div id="mobileMenu" class="hidden lg:hidden border-t border-slate-800 bg-slate-900/95 backdrop-blur px-4 py-3 space-y-1">
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-[#004e7c] bg-[#005586] px-4 py-3 space-y-1">
             @auth
-                <div class="pb-2 mb-2 border-b border-slate-800 grid grid-cols-2 gap-1.5 text-xs">
+                <div class="pb-2 mb-2 border-b border-white/15 grid grid-cols-2 gap-1.5 text-xs">
                     @if(auth()->user()->isAdmin())
-                        <a href="{{ route('admin.dashboard') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-indigo-600/30 text-indigo-200 text-center">لوحة الإدارة</a>
-                        <a href="{{ route('admin.reports.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-500/30 text-amber-200 text-center">التقارير 📊</a>
-                        <a href="{{ route('admin.permission_groups.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-purple-600/30 text-purple-200 text-center">الصلاحيات 🛡️</a>
-                        <a href="{{ route('admin.branding.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-pink-600/30 text-pink-200 text-center">الهوية والخلفيات 🖼️</a>
-                        <a href="{{ route('admin.users.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-blue-600/30 text-blue-200 text-center">المستخدمين 👥</a>
-                        <a href="{{ route('admin.courses.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-emerald-600/30 text-emerald-200 text-center">المناهج والأسعار 📚</a>
+                        <a href="{{ route('admin.dashboard') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-white/20 text-white text-center">لوحة الإدارة</a>
+                        <a href="{{ route('admin.student_applications.index') }}" class="px-2.5 py-1.5 rounded-lg font-black bg-[#F58220] text-slate-950 text-center">استمارات القبول 📋</a>
+                        <a href="{{ route('admin.reports.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-[#F58220]/40 text-white text-center">التقارير 📊</a>
+                        <a href="{{ route('admin.permission_groups.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-white/10 text-white text-center">الصلاحيات 🛡️</a>
+                        <a href="{{ route('admin.branding.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-[#F58220] text-slate-950 text-center font-black">الهوية والتراخيص 📜</a>
+                        <a href="{{ route('admin.users.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-white/20 text-white text-center">المستخدمين 👥</a>
+                        <a href="{{ route('admin.courses.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-white/10 text-white text-center">المناهج والأسعار 📚</a>
+                        <a href="{{ route('licenses.viewer') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-emerald-600/50 text-white text-center col-span-2">📜 عارض التراخيص المحمي</a>
                         <a href="{{ route('admin.exams.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-rose-600/30 text-rose-200 text-center">الكويزات 🎯</a>
                         <a href="{{ route('admin.exams_management.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-500/30 text-amber-200 text-center">الاختبارات والشهائد 🎓</a>
                         <a href="{{ route('accounting.dashboard') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-teal-600/30 text-teal-200 text-center">المحاسبة 💼</a>
                         <a href="{{ route('admin.whatsapp.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-emerald-600/30 text-emerald-200 text-center">الواتساب 💬</a>
                         <a href="{{ route('help.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-400 text-slate-950 text-center col-span-2 shadow-xs">دليل النظام الشامل 📖</a>
                     @elseif(auth()->user()->isSupervisor())
-                        <a href="{{ route('supervisor.dashboard') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-purple-600/30 text-purple-200 text-center">لوحة الإشراف</a>
-                        <a href="{{ route('admin.reports.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-500/30 text-amber-200 text-center">التقارير 📊</a>
-                        <a href="{{ route('admin.exams_management.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-rose-600/30 text-rose-200 text-center">الاختبارات والشهائد 🎓</a>
-                        <a href="{{ route('help.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-400 text-slate-950 text-center shadow-xs">دليل النظام 📖</a>
-                        @if(auth()->user()->hasPermission('manage_courses'))
-                            <a href="{{ route('admin.courses.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-emerald-600/30 text-emerald-200 text-center">المناهج والأسعار 📚</a>
+                        <a href="{{ route('supervisor.dashboard') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-[#F58220] text-slate-950 text-center font-black">لوحة الإشراف 🛡️</a>
+                        @if(auth()->user()->hasPermission('curriculum.view') || auth()->user()->hasPermission('manage_courses') || auth()->user()->hasPermission('curriculum.create') || auth()->user()->hasPermission('curriculum.edit'))
+                            <a href="{{ route('admin.courses.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-emerald-600/50 text-white text-center">المناهج والأسعار 📚</a>
                         @endif
+                        @if(auth()->user()->hasPermission('students.view') || auth()->user()->hasPermission('students.create'))
+                            <a href="{{ route('admin.students.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-blue-600/50 text-white text-center">الطلاب 🎓</a>
+                        @endif
+                        @if(auth()->user()->hasPermission('groups.view'))
+                            <a href="{{ route('admin.groups.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-indigo-600/50 text-white text-center">المجموعات 👥</a>
+                        @endif
+                        @if(auth()->user()->hasPermission('evaluations.view'))
+                            <a href="{{ route('admin.groups.evaluations.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-500/50 text-white text-center">التقييم والحضور 📋</a>
+                        @endif
+                        @if(auth()->user()->hasPermission('exams_management.view'))
+                            <a href="{{ route('admin.exams_management.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-rose-600/50 text-white text-center">الاختبارات والشهائد 🎓</a>
+                        @endif
+                        @if(auth()->user()->hasPermission('exams.view'))
+                            <a href="{{ route('admin.exams.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-rose-500/50 text-white text-center">الكويزات 🎯</a>
+                        @endif
+                        @if(auth()->user()->hasPermission('reports.academic') || auth()->user()->hasPermission('reports.financial'))
+                            <a href="{{ route('admin.reports.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-500/50 text-white text-center">التقارير 📊</a>
+                        @endif
+                        @if(auth()->user()->hasPermission('finance.view'))
+                            <a href="{{ route('accounting.dashboard') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-teal-600/50 text-white text-center">المحاسبة 💼</a>
+                        @endif
+                        @if(auth()->user()->hasPermission('system.users_view'))
+                            <a href="{{ route('admin.users.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-slate-700/80 text-white text-center">المستخدمين 👥</a>
+                        @endif
+                        @if(auth()->user()->hasPermission('system.licenses_view') || auth()->user()->hasPermission('view_licenses'))
+                            <a href="{{ route('licenses.viewer') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-emerald-600/50 text-white text-center col-span-2">📜 عارض التراخيص المحمي</a>
+                        @endif
+                        <a href="{{ route('help.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-400 text-slate-950 text-center col-span-2 shadow-xs">دليل النظام 📖</a>
                     @elseif(auth()->user()->isTeacher())
                         <a href="{{ route('teacher.dashboard') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-blue-600/30 text-blue-200 text-center">لوحة المعلم 👨‍🏫</a>
                         <a href="{{ route('admin.groups.evaluations.index') }}" class="px-2.5 py-1.5 rounded-lg font-bold bg-amber-500/30 text-amber-200 text-center">التقييم والحضور 📋</a>
@@ -339,6 +500,7 @@
             <a href="{{ route('packages.index') }}" class="block px-3 py-2 rounded-lg text-sm font-bold {{ request()->routeIs('packages.index') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800' }}">الباقات والأسعار</a>
             <a href="{{ route('student.booking') }}" class="block px-3 py-2 rounded-lg text-sm font-bold {{ request()->routeIs('student.booking') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800' }}">حجز المعلمين 🎙️</a>
             <a href="{{ route('about') }}" class="block px-3 py-2 rounded-lg text-sm font-bold {{ request()->routeIs('about') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800' }}">عن مكتب ASOTS</a>
+            <a href="{{ route('announcements.index') }}" class="block px-3 py-2 rounded-lg text-sm font-bold {{ request()->routeIs('announcements.*') ? 'bg-[#F58220] text-slate-950 font-black' : 'text-amber-300 hover:bg-slate-800' }}">📢 الإعلانات والعروض الترويجية</a>
             <a href="{{ route('contact') }}" class="block px-3 py-2 rounded-lg text-sm font-bold {{ request()->routeIs('contact') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800' }}">اتصل بنا</a>
             <a href="{{ route('help.index') }}" class="block px-3 py-2 rounded-lg text-sm font-black {{ request()->routeIs('help.*') ? 'bg-amber-500 text-slate-950' : 'text-amber-300 hover:bg-slate-800' }}">📖 دليل النظام ومركز المساعدة</a>
         </div>
@@ -476,25 +638,25 @@
         @yield('content')
     </main>
 
-    <!-- الفوتر المؤسسي الرسمي لمنصة ASOTS -->
-    <footer class="bg-slate-900 text-white border-t border-slate-800 pt-12 pb-8 mt-auto text-xs">
+    <!-- الفوتر المؤسسي الرسمي لمنصة ASOTS المتناسق مع ألوان الهوية -->
+    <footer class="text-white border-t-2 border-[#004e7c] pt-12 pb-8 mt-auto text-xs" style="background: #0066A1;">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- 1. الهوية المؤسسية والشعارات -->
                 <div class="space-y-3">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-10 h-10 bg-white rounded-xl p-1 flex items-center justify-center shadow-md shrink-0">
+                        <div class="w-12 h-12 bg-white rounded-2xl p-1 flex items-center justify-center shadow-md ring-2 ring-[#F58220]/50 shrink-0">
                             <img src="{{ asset('images/logo.png') }}" alt="ASOTS Logo" class="w-full h-full object-contain">
                         </div>
                         <div>
-                            <span class="font-extrabold text-base tracking-wider text-amber-400 block leading-tight">ASOTS</span>
-                            <span class="text-[11px] text-slate-300 font-bold">مكتب النجم الآسيوي</span>
+                            <span class="font-extrabold text-base tracking-wider text-[#F58220] block leading-tight">ASOTS</span>
+                            <span class="text-[11px] text-white font-bold">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات</span>
                         </div>
                     </div>
-                    <p class="text-slate-400 leading-relaxed text-[11px]">
+                    <p class="text-sky-100 leading-relaxed text-[11px]">
                         منصة دولية للتعليم اللغوي، والتواصل، والترجمة، والتعليم المهني والاستشارات.
                     </p>
-                    <div class="text-[11px] text-amber-300 font-bold bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+                    <div class="text-[11px] text-amber-200 font-bold bg-[#004e7c]/70 p-2.5 rounded-xl border border-white/20">
                         {{ config('asots.promise_ar') }}
                     </div>
                 </div>
@@ -505,13 +667,17 @@
                         <span>🎓</span>
                         <span>القيادة الأكاديمية والجودة</span>
                     </h4>
-                    <div class="space-y-1.5 text-[11px] text-slate-300">
-                        <strong class="text-amber-400 block font-bold">{{ config('asots.leadership.name_ar') }}</strong>
-                        <span class="text-slate-400 block">{{ config('asots.leadership.title_ar') }}</span>
+                    <div class="space-y-1.5 text-[11px] text-sky-100">
+                        <div>
+                            <span class="text-sky-300 text-[10px] block font-semibold">القيادة:</span>
+                            <strong class="text-[#F58220] block font-bold text-xs">{{ site_setting('leadership_name_ar', config('asots.leadership.name_ar', 'الدكتور/ فخر الدين ناجي ردمان عبده الصوفي')) }}</strong>
+                        </div>
+                        <span class="text-white/90 block font-semibold">{{ site_setting('leadership_title_ar', config('asots.leadership.title_ar', 'أستاذ اللسانيات التطبيقية الحديثة')) }}</span>
+                        <span class="text-amber-200/90 block text-[10.5px] leading-snug">{{ site_setting('leadership_role_ar', config('asots.leadership.role_ar', 'مؤسس ومدير — مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)')) }}</span>
                     </div>
-                    <div class="pt-2 border-t border-slate-800 text-[11px] space-y-1">
-                        <a href="{{ route('leadership') }}" class="text-indigo-400 hover:text-indigo-300 block font-bold">← بيان القيادة الأكاديمية</a>
-                        <a href="{{ route('quality') }}" class="text-emerald-400 hover:text-emerald-300 block font-bold">← قسم الجودة والتميز (AQED)</a>
+                    <div class="pt-2 border-t border-white/15 text-[11px] space-y-1">
+                        <a href="{{ route('leadership') }}" class="text-amber-300 hover:text-white block font-bold">← بيان القيادة الأكاديمية</a>
+                        <a href="{{ route('quality') }}" class="text-emerald-300 hover:text-white block font-bold">← قسم الجودة والتميز (AQED)</a>
                     </div>
                 </div>
 
@@ -521,8 +687,8 @@
                         <span>🌐</span>
                         <span>الخدمات والبرامج</span>
                     </h4>
-                    <ul class="space-y-1.5 text-[11px] text-slate-400">
-                        <li><a href="{{ route('general_english') }}" class="text-amber-400 hover:text-amber-300 font-bold transition">برنامج الإنجليزية العامة (Interchange) 🚀</a></li>
+                    <ul class="space-y-1.5 text-[11px] text-sky-100">
+                        <li><a href="{{ route('general_english') }}" class="text-[#F58220] hover:text-amber-200 font-bold transition">برنامج الإنجليزية العامة (Interchange) 🚀</a></li>
                         <li><a href="{{ route('curriculum') }}" class="hover:text-white transition">المناهج وخارطة مستويات CEFR</a></li>
                         <li><a href="{{ route('adult_english') }}" class="hover:text-white transition">برامج التوفل وإعداد الكبار</a></li>
                         <li><a href="{{ route('translation_services') }}" class="hover:text-white transition">خدمات الترجمة المعتمدة والشفوية</a></li>
@@ -531,28 +697,34 @@
                     </ul>
                 </div>
 
-                <!-- 4. النزاهة والانضباط المالي والتواصل -->
+                <!-- 4. النزاهة والانضباط المالي والتواصل والتراخيص -->
                 <div class="space-y-3">
                     <h4 class="font-black text-sm text-white flex items-center gap-2">
                         <span>🛡️</span>
                         <span>النزاهة والتواصل المؤسسي</span>
                     </h4>
-                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                    <p class="text-[11px] text-sky-100 leading-relaxed">
                         نظام محاسبي معتمد (وفق المعايير المحاسبية المعتمدة) يوثق كل معاملة بسند قبض رسمي فوري. لا ادعاء بالجودة دون دليل.
                     </p>
-                    <div class="pt-1 text-[11px] text-slate-300 space-y-1">
-                        <div>📞 واتساب: <a href="https://wa.me/{{ $cleanWhatsapp }}?text={{ urlencode('مرحباً، أود الاستفسار عن برامج وخدمات منصة ASOTS') }}" target="_blank" class="text-amber-400 hover:text-amber-300 font-mono hover:underline inline-flex items-center gap-1" dir="ltr"><span>{{ $whatsappNumber }}</span> ↗</a></div>
-                        <div>✉️ البريد: <a href="mailto:{{ site_setting('contact_email') ?: config('asots.contact.email') }}" class="text-indigo-300 hover:text-indigo-200 font-mono hover:underline">{{ site_setting('contact_email') ?: config('asots.contact.email') }}</a></div>
+                    <div class="pt-1 text-[11px] text-sky-100 space-y-1.5">
+                        <div>📞 واتساب (1): <a href="https://wa.me/{{ $cleanWhatsapp }}?text={{ urlencode('مرحباً، أود الاستفسار عن برامج وخدمات منصة ASOTS') }}" target="_blank" class="text-amber-300 hover:text-white font-mono hover:underline inline-flex items-center gap-1" dir="ltr"><span>{{ $whatsappNumber }}</span> ↗</a></div>
+                        @if(!empty($whatsappNumber2))
+                            <div>📞 واتساب (2): <a href="https://wa.me/{{ $cleanWhatsapp2 }}?text={{ urlencode('مرحباً، أود الاستفسار عن برامج وخدمات منصة ASOTS') }}" target="_blank" class="text-amber-300 hover:text-white font-mono hover:underline inline-flex items-center gap-1" dir="ltr"><span>{{ $whatsappNumber2 }}</span> ↗</a></div>
+                        @endif
+                        <div>✉️ البريد: <a href="mailto:{{ site_setting('contact_email') ?: config('asots.contact.email') }}" class="text-white hover:underline font-mono">{{ site_setting('contact_email') ?: config('asots.contact.email') }}</a></div>
                     </div>
-                    <div class="pt-2 border-t border-slate-800 text-[11px] space-y-1">
-                        <a href="{{ route('policies') }}" class="text-indigo-400 hover:text-indigo-300 block font-bold">← السياسات والشروط والنزاهة</a>
-                        <a href="{{ route('verify_certificate') }}" class="text-emerald-400 hover:text-emerald-300 block font-bold">← التحقق من صحة الشهادات الرقمية</a>
+                    <div class="pt-2 border-t border-white/15 text-[11px] space-y-1.5">
+                        <a href="{{ route('policies') }}" class="text-sky-200 hover:text-white block font-bold">← السياسات والشروط والنزاهة</a>
+                        <a href="{{ route('verify_certificate') }}" class="text-emerald-300 hover:text-white block font-bold">← التحقق من صحة الشهادات الرقمية</a>
+                        @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('system.licenses_view') || auth()->user()->hasPermission('view_licenses')))
+                            <a href="{{ route('licenses.viewer') }}" class="text-[#F58220] hover:text-amber-200 font-black block">📜 ← استعراض التراخيص والاعتمادات الرسمية (محمي)</a>
+                        @endif
                     </div>
                 </div>
             </div>
 
             <!-- السطر الختامي للحقوق -->
-            <div class="pt-8 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-3 text-slate-500 text-[11px]">
+            <div class="pt-8 border-t border-white/15 flex flex-col sm:flex-row justify-between items-center gap-3 text-sky-200 text-[11px]">
                 <p>
                     {{ config('asots.name_en') }} • جميع الحقوق محفوظة © {{ date('Y') }}
                 </p>

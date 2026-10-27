@@ -35,7 +35,7 @@
                 <span>فلسفة الجودة في منصة ASOTS الدولية</span>
             </h2>
             <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                انطلاقاً من توجيهات القيادة الأكاديمية ممثلة بالأستاذ الدكتور/ فخر الدين الصوفي، ترفض منصة <strong>ASOTS</strong> الادعاءات التسويقية الفضفاضة وتلتزم بنموذج الجودة القائم على الأدلة الرقمية والتوثيق المباشر. كل حصة دراسية، وكل اختبار، وكل سند مالي هو جزء من منظومة موثقة بالكامل تخضع للرقابة والتدقيق الأكاديمي والتحسين المستمر.
+                انطلاقاً من توجيهات القيادة الأكاديمية ممثلة بالدكتور/ فخر الدين ناجي ردمان عبده الصوفي، ترفض منصة <strong>ASOTS</strong> الادعاءات التسويقية الفضفاضة وتلتزم بنموذج الجودة القائم على الأدلة الرقمية والتوثيق المباشر. كل حصة دراسية، وكل اختبار، وكل سند مالي هو جزء من منظومة موثقة بالكامل تخضع للرقابة والتدقيق الأكاديمي والتحسين المستمر.
             </p>
         </div>
 
@@ -57,11 +57,11 @@
                         </p>
                     </div>
                 @endforeach
-                <div class="p-5 rounded-2xl bg-gradient-to-br from-indigo-900 to-slate-900 text-white flex items-center gap-3">
+                <div class="p-5 rounded-2xl bg-gradient-to-br from-[#003859] via-[#004e7c] to-[#0066A1] text-white flex items-center gap-3 border border-white/20 shadow-md">
                     <span class="text-2xl">📈</span>
                     <div>
-                        <strong class="text-xs block text-amber-400 font-black">حلقة التحسين المغلقة</strong>
-                        <span class="text-[11px] text-slate-300">ملاحظة الطالب ← تقرير الجودة ← تدريب وتطوير المعلم فوراً.</span>
+                        <strong class="text-xs block text-[#F58220] font-black">حلقة التحسين المغلقة</strong>
+                        <span class="text-[11px] text-sky-100">ملاحظة الطالب ← تقرير الجودة ← تدريب وتطوير المعلم فوراً.</span>
                     </div>
                 </div>
             </div>

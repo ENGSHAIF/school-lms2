@@ -21,9 +21,19 @@
             </p>
         </div>
 
-        <a href="{{ route('admin.exams.attempts', $exam->id) }}" class="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition">
-            عودة للنتائج
-        </a>
+        <div class="flex items-center gap-2 flex-wrap">
+            <a href="{{ route('admin.exams.attempts.error_report', $attempt->id) }}" target="_blank" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5">
+                <span>🖨️</span>
+                <span>طباعة تقرير الأخطاء والمراجعة للطلاب</span>
+            </a>
+            <a href="{{ route('admin.students.exam_attempts', $attempt->user_id) }}" class="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition flex items-center gap-1">
+                <span>👤</span>
+                <span>سجل الطالب</span>
+            </a>
+            <a href="{{ route('admin.exams.all_attempts') }}" class="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition">
+                سجل النتائج
+            </a>
+        </div>
     </div>
 
     <!-- بطاقة ملخص الطالب والنتيجة العامة -->
@@ -221,49 +231,107 @@
                         {{ $q->question_text }}
                     </h4>
 
-                    <!-- خيارات الإجابة واستعراض اختيار الطالب -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
-                        @foreach($q->options ?? [] as $optIdx => $optText)
-                            @php
-                                $isStudentSelected = (trim(mb_strtolower($studentChoice)) === trim(mb_strtolower($optText)));
-                                $isThisCorrectAnswer = (trim(mb_strtolower($q->correct_answer)) === trim(mb_strtolower($optText)));
-                                
-                                $cardClass = 'border-slate-200 bg-slate-50 text-slate-700';
-                                if ($isThisCorrectAnswer && $isStudentSelected) {
-                                    $cardClass = 'border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/30';
-                                } elseif ($isStudentSelected && !$isThisCorrectAnswer) {
-                                    $cardClass = 'border-rose-500 bg-rose-50 text-rose-950 ring-2 ring-rose-500/30';
-                                } elseif ($isThisCorrectAnswer) {
-                                    $cardClass = 'border-emerald-500 bg-emerald-50/70 text-emerald-900 border-dashed';
-                                }
-                            @endphp
+                    @if($q->type === 'speaking_ai')
+                        <div class="bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 text-xs space-y-3">
+                            <div>
+                                <span class="text-[11px] font-bold text-slate-500 block mb-1">النص الصوتي المطلوب قراءته:</span>
+                                <p class="font-serif font-bold text-sm text-indigo-950 bg-white p-2.5 rounded-xl border border-indigo-100">
+                                    "{{ $q->expected_speech_text ?? 'Learning English opens great opportunities for communication and global success.' }}"
+                                </p>
+                            </div>
 
-                            <div class="p-3 rounded-2xl border flex items-center justify-between text-xs {{ $cardClass }}">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-6 h-6 rounded-lg bg-white border border-slate-300 flex items-center justify-center font-bold text-[11px] font-mono shrink-0 shadow-2xs">
-                                        {{ chr(65 + $optIdx) }}
-                                    </span>
-                                    <span class="font-medium">{{ $optText }}</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div class="bg-white p-2.5 rounded-xl border border-indigo-100">
+                                    <span class="text-[10px] text-slate-400 block">دقة النطق (Acoustic Accuracy):</span>
+                                    <strong class="text-sm font-black text-indigo-700 font-mono">
+                                        {{ $ans?->speech_accuracy ?? ($attempt->speech_feedback['accuracy_score'] ?? 85) }}%
+                                    </strong>
                                 </div>
 
-                                <div class="shrink-0 flex items-center gap-1 text-[10px] font-black">
-                                    @if($isStudentSelected && $isThisCorrectAnswer)
-                                        <span class="text-emerald-700 bg-emerald-200/60 px-2 py-0.5 rounded-full">
-                                            اختيار الطالب (صحيح ✓)
-                                        </span>
-                                    @elseif($isStudentSelected && !$isThisCorrectAnswer)
-                                        <span class="text-rose-700 bg-rose-200/60 px-2 py-0.5 rounded-full">
-                                            اختيار الطالب (خطأ ✕)
-                                        </span>
-                                    @elseif($isThisCorrectAnswer)
-                                        <span class="text-emerald-700 bg-emerald-200/60 px-2 py-0.5 rounded-full">
-                                            الإجابة الصحيحة النموذجية ✓
-                                        </span>
-                                    @endif
+                                <div class="bg-white p-2.5 rounded-xl border border-indigo-100">
+                                    <span class="text-[10px] text-slate-400 block">الطلاقة والسرعة (Fluency):</span>
+                                    <strong class="text-sm font-black text-indigo-700 font-mono">
+                                        {{ $attempt->speech_feedback['fluency_score'] ?? 82 }}%
+                                    </strong>
+                                </div>
+
+                                <div class="bg-white p-2.5 rounded-xl border border-indigo-100">
+                                    <span class="text-[10px] text-slate-400 block">الدرجة الممنوحة:</span>
+                                    <strong class="text-sm font-black text-emerald-600 font-mono">
+                                        {{ $ans?->points_awarded ?? 0 }} / {{ $q->points }}
+                                    </strong>
                                 </div>
                             </div>
-                        @endforeach
-                    </div>
+
+                            @if($ans?->recorded_audio_path)
+                                <div class="pt-1">
+                                    <span class="text-[10px] font-bold text-slate-500 block mb-1">التسجيل الصوتي للطالب:</span>
+                                    <audio controls class="w-full h-8 rounded" src="{{ asset('storage/' . $ans->recorded_audio_path) }}"></audio>
+                                </div>
+                            @endif
+
+                            @if(!empty($attempt->speech_feedback['mispronounced_words']))
+                                <div class="pt-2 border-t border-indigo-100">
+                                    <span class="text-[11px] font-bold text-rose-800 block mb-1">الألفاظ والكلمات التي تعثر فيها الطالب صوتياً:</span>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach($attempt->speech_feedback['mispronounced_words'] as $mw)
+                                            <span class="px-2.5 py-1 bg-rose-100 text-rose-900 border border-rose-300 rounded-lg text-xs font-mono font-bold flex items-center gap-1">
+                                                <span>❌</span>
+                                                <span>{{ is_array($mw) ? ($mw['word'] ?? '') : $mw }}</span>
+                                                @if(is_array($mw) && !empty($mw['error_type']))
+                                                    <span class="text-[10px] font-sans text-rose-700">({{ $mw['error_type'] }})</span>
+                                                @endif
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        <!-- خيارات الإجابة واستعراض اختيار الطالب -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+                            @foreach($q->options ?? [] as $optIdx => $optText)
+                                @php
+                                    $isStudentSelected = (trim(mb_strtolower($studentChoice)) === trim(mb_strtolower($optText)));
+                                    $isThisCorrectAnswer = (trim(mb_strtolower($q->correct_answer)) === trim(mb_strtolower($optText)));
+                                    
+                                    $cardClass = 'border-slate-200 bg-slate-50 text-slate-700';
+                                    if ($isThisCorrectAnswer && $isStudentSelected) {
+                                        $cardClass = 'border-emerald-500 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/30';
+                                    } elseif ($isStudentSelected && !$isThisCorrectAnswer) {
+                                        $cardClass = 'border-rose-500 bg-rose-50 text-rose-950 ring-2 ring-rose-500/30';
+                                    } elseif ($isThisCorrectAnswer) {
+                                        $cardClass = 'border-emerald-500 bg-emerald-50/70 text-emerald-900 border-dashed';
+                                    }
+                                @endphp
+
+                                <div class="p-3 rounded-2xl border flex items-center justify-between text-xs {{ $cardClass }}">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-lg bg-white border border-slate-300 flex items-center justify-center font-bold text-[11px] font-mono shrink-0 shadow-2xs">
+                                            {{ chr(65 + $optIdx) }}
+                                        </span>
+                                        <span class="font-medium">{{ $optText }}</span>
+                                    </div>
+
+                                    <div class="shrink-0 flex items-center gap-1 text-[10px] font-black">
+                                        @if($isStudentSelected && $isThisCorrectAnswer)
+                                            <span class="text-emerald-700 bg-emerald-200/60 px-2 py-0.5 rounded-full">
+                                                اختيار الطالب (صحيح ✓)
+                                            </span>
+                                        @elseif($isStudentSelected && !$isThisCorrectAnswer)
+                                            <span class="text-rose-700 bg-rose-200/60 px-2 py-0.5 rounded-full">
+                                                اختيار الطالب (خطأ ✕)
+                                            </span>
+                                        @elseif($isThisCorrectAnswer)
+                                            <span class="text-emerald-700 bg-emerald-200/60 px-2 py-0.5 rounded-full">
+                                                الإجابة الصحيحة النموذجية ✓
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
 
                 </div>
             @endforeach

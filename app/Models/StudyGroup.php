@@ -40,6 +40,7 @@ class StudyGroup extends Model
         if ($this->name_ar && $this->name_en) {
             return "{$this->name_ar} ({$this->name_en})";
         }
+
         return $this->name_ar ?: ($this->name ?: ($this->name_en ?: ''));
     }
 
@@ -56,7 +57,7 @@ class StudyGroup extends Model
     {
         static::creating(function ($group) {
             if (empty($group->room_id)) {
-                $group->room_id = 'asots-grp-' . strtolower(Str::random(8));
+                $group->room_id = 'asots-grp-'.strtolower(Str::random(8));
             }
         });
     }
@@ -101,6 +102,7 @@ class StudyGroup extends Model
     public function primaryTeacher()
     {
         $primary = $this->teachers->where('pivot.is_primary', true)->first();
+
         return $primary ?: $this->teacher;
     }
 
@@ -110,10 +112,16 @@ class StudyGroup extends Model
         return $this->teachers->where('pivot.is_primary', false);
     }
 
+    public function surveys()
+    {
+        return $this->hasMany(StudentSurvey::class, 'study_group_id');
+    }
+
     // جلب المشرف الرئيسي
     public function primarySupervisor()
     {
         $primary = $this->supervisors->where('pivot.is_primary', true)->first();
+
         return $primary ?: $this->supervisor;
     }
 

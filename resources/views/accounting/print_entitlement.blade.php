@@ -60,7 +60,7 @@
             <!-- رأس الإشعار -->
             <div class="flex flex-col sm:flex-row justify-between items-start border-b-2 border-slate-900 pb-5 gap-4">
                 <div>
-                    <h1 class="text-base sm:text-lg font-black text-slate-900">مكتب النجم الآسيوي للترجمة والتدريب والاستشارات (ASOTS)</h1>
+                    <h1 class="text-base sm:text-lg font-black text-slate-900">مكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات (ASOTS)</h1>
                     <span class="text-xs font-bold text-slate-500 block">The Asian Star Office for Translation, Training, & Consultancy Services</span>
                     <span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md inline-block mt-1 border border-indigo-200">
                         الإدارة المالية والحسابات • قسم مستحقات وأجور الكادر التدريسي
