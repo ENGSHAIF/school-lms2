@@ -24,6 +24,12 @@ class SmartBotService
 
         $normalized = self::normalizeText($raw);
 
+        // 0. الجدار الأمني الصارم لحماية سرية العمليات وأسرار العمل والبيانات الشخصية
+        $securityCheck = self::checkSecurityAndPrivacyGuardrails($normalized, $raw);
+        if ($securityCheck) {
+            return $securityCheck;
+        }
+
         // 1. الاستعلام عن كود طالب أو رصيد مالي (إذا أدخل الطالب كوده STU-XXXX)
         if (preg_match('/(STU-[\w\-]+|PAR-[\w\-]+)/i', $raw, $matches)) {
             return self::handleUserCodeLookup($matches[1], $user);
@@ -34,74 +40,120 @@ class SmartBotService
             return self::handleStudentFinancialInquiry($user);
         }
 
-        // 3. الاستفسار عن هوية المكتب والمنصة ومن هو ASOTS والدكتور فخر الدين الصوفي
+        // 3. الاستفسار عن أعمدة وركائز مكتب النجم الآسيوي (ASOTS Pillars)
+        if (self::matchesAny($normalized, ['اعمدة', 'الاعمدة', 'اعمدة المكتب', 'اعمدة المنصة', 'ركائز', 'الركائز', 'الاقسام الرئيسية', 'اقسام المنصة', 'اقسام المكتب', 'مجالات المكتب'])) {
+            return self::handlePillarsInquiry();
+        }
+
+        // 4. الاستفسار عن سبب اختيار المنصة ومميزات ASOTS التنافسية (Why ASOTS)
+        if (self::matchesAny($normalized, ['لماذا asots', 'لماذا هذه المنصة', 'ليش المنصة', 'ليش اختار', 'لماذا اختار', 'ما الذي يميزكم', 'مميزات المنصة', 'وجه التميز', 'ماذا يميز asots', 'ما يميز asots', 'لماذا المكتب', 'ليش asots', 'مميزاتها', 'مميزاتكم', 'ما هي مميزات', 'ما مميزات'])) {
+            return self::handleWhyAsotsInquiry();
+        }
+
+        // 5. الاستفسار عما تقدمه المنصة للمتعلمين والمجتمع (What ASOTS Offers)
+        if (self::matchesAny($normalized, ['ايش تقدم المنصة', 'ماذا تقدم المنصة', 'ماذا يقدم المكتب', 'ايش يقدم المكتب', 'ايش عندكم', 'الخدمات المتاحة', 'خدماتكم', 'ما هي خدماتكم'])) {
+            return self::handleWhatPlatformOffers();
+        }
+
+        // 6. الاستفسار عن تفاصيل وعدد المستويات لكل دورة وتوزيع الكورسات
+        if (self::matchesAny($normalized, ['كم المستويات', 'كم المستويات لكل دورة', 'كم دورة في كل مستوى', 'كم مستوى في المنصة', 'تفاصيل المستويات', 'دورات المستويات', 'خطة المستويات', 'توزيع الدورات', 'كم دورة', 'كم كورس', 'مستويات الدبلوم'])) {
+            return self::handleLevelCourseBreakdown($normalized);
+        }
+
+        // 7. الاستفسار عن خارطة الطريق ومنهج كامبريدج Interchange وإطار CEFR
+        if (self::matchesAny($normalized, ['خارطة الطريق', 'خارطه الطريق', 'الخارطة', 'خريطة الطريق', 'مسار التعلم', 'المنهج', 'الكتاب', 'الكتب', 'سلسلة الكتب', 'interchange', 'انترشينج', 'كامبريدج', 'cefr', 'رحلة المتعلم', 'خطوات التعلم'])) {
+            return self::handleRoadmapAndCurriculumInquiry($normalized);
+        }
+
+        // 8. الاستفسار عن مسارات التعلم التفاعلية (أطفال، مدرسة، توفل، إنجليزية أعمال)
+        if (self::matchesAny($normalized, ['مسارات التعلم', 'مسار الاطفال', 'مسار الكبار', 'انجليزية الاعمال', 'مسار الناشئة', 'مسار التوفل', 'فئات الطلاب', 'الاعمار'])) {
+            return self::handleLearningPathsInquiry($normalized);
+        }
+
+        // 9. الاستفسار عن هوية المكتب والمنصة ومن هو ASOTS والدكتور فخر الدين الصوفي
         if (self::matchesAny($normalized, ['من asots', 'ما هو asots', 'ما هي asots', 'عن asots', 'من هو asots', 'ما معنى asots', 'اختصار asots', 'من انتم', 'من نحن', 'عن المنصة', 'عن المكتب', 'نبذة عن المنصة', 'نبذة عن المكتب', 'مكتب النجم', 'النجم الاسيوي', 'المدير', 'من هو المدير', 'فخر الدين', 'الدكتور فخر', 'الصوفي', 'مؤسس المنصة', 'من اسس', 'تاريخ المنصة', 'كم سنة خبرة', 'الخبرة'])) {
             return self::handleAboutAsotsInquiry();
         }
 
-        // 4. الاستفسار عن الإعلانات والعروض والحملات والفعاليات المنشورة ديناميكياً
+        // 10. الاستفسار عن الإعلانات والعروض والحملات والفعاليات المنشورة ديناميكياً
         if (self::matchesAny($normalized, ['اعلان', 'اعلانات', 'الاعلانات', 'اخر الاعلانات', 'احدث الاعلانات', 'العروض', 'عرض', 'التخفيضات', 'الخصومات', 'خصم', 'التاهيل عن بعد', 'التأهيل عن بعد', 'الترم 39', 'الترم 40', 'ترم 39', 'ترم 40', 'عرض التوفل', 'الحملات', 'الفعاليات', 'حفلات التخرج', 'معرض الصور', 'الحفل'])) {
             return self::handleBannersAndAdsInquiry($normalized);
         }
 
-        // 5. الاستفسار عن خدمات المنصة والمميزات وطريقة ومتطلبات الدراسة
-        if (self::matchesAny($normalized, ['خدماتكم', 'ما هي خدماتكم', 'ايش تقدموا', 'ايش تقدم المنصة', 'خدمات المكتب', 'الترجمة', 'ترجمة معتمدة', 'الاستشارات', 'مميزات المنصة', 'لماذا asots', 'ليش اختاركم', 'طريقة التدريب', 'كيف تتم الدراسة', 'نظام الدراسة', 'المواعيد', 'اوقات الدراسة', 'متطلبات الدراسة', 'مدة الدورة', 'مدة البرنامج', 'المتطلبات التقنية'])) {
+        // 11. الاستفسار عن طريقة ومتطلبات ومواعيد ومدة الدراسة
+        if (self::matchesAny($normalized, ['طريقة التدريب', 'كيف تتم الدراسة', 'نظام الدراسة', 'المواعيد', 'اوقات الدراسة', 'متطلبات الدراسة', 'مدة الدورة', 'مدة البرنامج', 'المتطلبات التقنية'])) {
             return self::handleServicesAndFeaturesInquiry();
         }
 
-        // 6. الاستفسار عن استمارة التسجيل وكيفية الالتحاق
+        // 12. الاستفسار عن استمارة التسجيل وكيفية الالتحاق
         if (self::matchesAny($normalized, ['كيف اسجل', 'طريقة التسجيل', 'رابط التسجيل', 'استمارة التسجيل', 'شروط القبول', 'تسجيل جديد', 'اريد اسجل', 'حابب اسجل', 'بدي اسجل', 'سجلني', 'التحاق'])) {
             return self::handleRegistrationInquiry();
         }
 
-        // 7. الاستفسار العام عن أسعار الدورات أو قائمة الكورسات
+        // 13. الاستفسار عن الأسئلة الشائعة والسياسات والجودة (FAQs)
+        if (self::matchesAny($normalized, ['اسئلة شائعة', 'سؤال شائع', 'سند القبض', 'سندات القبض', 'كشف الحساب المالي', 'فحص النطق', 'قسم الجودة', 'aqed', 'برامج معقدة', 'الدخول للفصل', 'air class', 'تثبيت برامج'])) {
+            return self::handleFaqsInquiry($normalized);
+        }
+
+        // 14. الاستفسار عن القيم الجوهرية والرؤية والرسالة
+        if (self::matchesAny($normalized, ['القيم الجوهرية', 'قيم المنصة', 'رؤية المنصة', 'رسالة المنصة', 'اهداف المنصة'])) {
+            return self::handleCoreValuesInquiry();
+        }
+
+        // 15. الاستفسار العام عن أسعار الدورات أو قائمة الكورسات
         if (self::matchesAny($normalized, ['اسعار الدورات', 'كم اسعار', 'قائمة الاسعار', 'اسعار الكورسات', 'تكلفة الدورات', 'اسعاركم', 'بكم الكورسات', 'قائمة الدورات', 'الدورات المتاحة', 'ايش الدورات', 'ما هي الدورات', 'جميع الدورات', 'كل الدورات'])) {
             return self::handleAllCoursesPricing();
         }
 
-        // 8. دليل تشغيل النظام والمساعدة التفاعلية بحسب الصلاحيات (System Handbook & How-To Guides)
+        // 16. دليل تشغيل النظام والمساعدة التفاعلية بحسب الصلاحيات (System Handbook & How-To Guides)
         $helpGuide = SystemHandbookService::searchHelp($raw, $user);
         if ($helpGuide) {
             return $helpGuide;
         }
 
-        // 9. البحث عن دورة محددة وسعرها في قاعدة البيانات
+        // 17. البحث عن دورة محددة وسعرها في قاعدة البيانات
         $courseMatch = self::searchSpecificCourse($raw, $normalized);
         if ($courseMatch) {
             return $courseMatch;
         }
 
-        // 10. الاستفسار عن المستويات الأكاديمية
+        // 18. الاستفسار عن المستويات الأكاديمية
         if (self::matchesAny($normalized, ['المستويات', 'مستويات', 'المستوى التمهيدي', 'المستوى الاول', 'المستوى الثاني', 'المستوى الثالث', 'نظام المستويات', 'الدبلوم'])) {
             return self::handleLevelsInquiry($normalized);
         }
 
-        // 11. الاستفسار عن باقات الحصص والتدريب
+        // 19. الاستفسار عن باقات الحصص والتدريب
         if (self::matchesAny($normalized, ['باقة', 'باقات', 'باقات الحصص', 'حزم الحصص', 'باقه', 'اسعار الباقات'])) {
             return self::handlePackagesInquiry();
         }
 
-        // 12. الاستفسار عن اختبار تحديد المستوى والقبول
-        if (self::matchesAny($normalized, ['تحديد مستوى', 'اختبار القبول', 'فحص النطق', 'حصة تجريبية', 'تجريبي'])) {
+        // 20. الاستفسار عن اختبار تحديد المستوى والقبول
+        if (self::matchesAny($normalized, ['تحديد مستوى', 'اختبار القبول', 'حصة تجريبية', 'تجريبي'])) {
             return self::handlePlacementTestInquiry();
         }
 
-        // 13. الاستفسار عن الشهائد المعتمدة وكود التحقق
+        // 21. الاستفسار عن الشهائد المعتمدة وكود التحقق
         if (self::matchesAny($normalized, ['شهادة', 'شهائد', 'الشهادات', 'معتمدة', 'كود التحقق', 'باركود الشهادة', 'توثيق الشهادة'])) {
             return self::handleCertificatesInquiry();
         }
 
-        // 14. الاستفسار عن بيانات التواصل، رقم الهاتف، والواتساب
+        // 22. الاستفسار عن بيانات التواصل، رقم الهاتف، والواتساب
         if (self::matchesAny($normalized, ['تواصل', 'رقم', 'واتس', 'واتساب', 'موقعكم', 'عنوانكم', 'اتصال', 'ادارة', 'خدمة العملاء', 'اكلم موظف', 'رقم الهاتف'])) {
             return self::handleContactInquiry();
         }
 
-        // 15. التحية والترحيب
+        // 23. التحية والترحيب
         if (self::matchesAny($normalized, ['مرحبا', 'السلام عليكم', 'سلام', 'صباح الخير', 'مساء الخير', 'هلا', 'يا هلا', 'اهلين', 'أهلا', 'الو', 'هاي', 'hello', 'hi'])) {
             return self::defaultWelcomeResponse($user);
         }
 
-        // 16. رد ذكي افتراضي عند عدم التعرف على النية، مع اقتراح الخيارات المتاحة
+        // 24. البحث المعرفي الشامل الذكي في كافة نصوص ومحتويات المنصة
+        $universalMatch = self::searchUniversalKnowledgeBase($raw, $normalized);
+        if ($universalMatch) {
+            return $universalMatch;
+        }
+
+        // 25. رد ذكي افتراضي عند عدم التعرف على النية، مع اقتراح الخيارات المتاحة
         return self::handleFallbackResponse($raw);
     }
 
@@ -516,6 +568,496 @@ class SmartBotService
             'matched_intent' => 'code_lookup_privacy_protected',
             'suggestions' => ['🔐 تسجيل الدخول لحسابي', '💬 تواصل مع الإدارة'],
         ];
+    }
+
+    /**
+     * الجدار الأمني لحماية سرية العمليات والبيانات الشخصية وأسرار العمل
+     */
+    protected static function checkSecurityAndPrivacyGuardrails(string $normalized, string $raw): ?array
+    {
+        // 1. استفسارات عن رواتب ومستحقات ومبالغ الكادر التعليمي والموظفين
+        $salaryTerms = [
+            'راتب', 'رواتب', 'مستحقات المعلمين', 'مبالغ المعلمين', 'اجور المعلمين',
+            'اجر المعلم', 'راتب المعلم', 'رواتب الموظفين', 'مستحقات الموظفين',
+            'حساب المعلم', 'كم يستلم المعلم', 'كم يستلم المدرس', 'مبالغ عن معلمين',
+        ];
+        if (self::matchesAny($normalized, $salaryTerms)) {
+            return self::blockedSecurityResponse('البيانات المالية الخاصة برواتب ومستحقات الكادر التعليمي سرية ومشفرة وخاصة بالإدارة المالية والمحاسبية للمنصة.');
+        }
+
+        // 2. استفسارات عن كلمات المرور وبيانات الاعتماد
+        $credTerms = [
+            'كلمة سر', 'كلمات المرور', 'كلمة المرور', 'باسورد', 'باسوورد',
+            'password', 'passwords', 'تسريب حسابات', 'اختراق', 'بيانات الدخول',
+        ];
+        if (self::matchesAny($normalized, $credTerms)) {
+            return self::blockedSecurityResponse('كلمات المرور وبيانات تسجيل الدخول مشفرة بنظام تجزئة أحادي الاتجاه (Bcrypt Hashing) لحماية أمان وحسابات المستخدمين.');
+        }
+
+        // 3. استفسارات عن أرقام هواتف أو إيميلات أو قوائم خاصة بالطلاب والمعلمين
+        $privacyTerms = [
+            'ارقام المعلمين', 'هواتف المعلمين', 'تلفونات المعلمين', 'ايميلات المعلمين',
+            'ارقام هواتف المعلمين', 'ارقام هواتف الطلاب', 'بيانات الطلاب الشخصية',
+            'ارقام الطلاب', 'تلفونات الطلاب', 'ايميلات الطلاب', 'اسماء الطلاب وارقامهم',
+            'قائمة الطلاب', 'قائمة المعلمين', 'بيانات المستخدمين', 'ارقام هواتفهم',
+            'ارقامهم', 'تلفوناتهم', 'اسماء مستخدمين', 'اسماء المستخدمين',
+        ];
+        if (self::matchesAny($normalized, $privacyTerms)) {
+            return self::blockedSecurityResponse('أرقام الهواتف الشخصية والإيميلات الخاصة بالطلاب والمعلمين سرية ومحمية وفق سياسة الخصوصية وقانون حماية البيانات الشخصية.');
+        }
+
+        // 4. استفسارات عن أسئلة الامتحانات أو تسريب الاختبارات وبنك الأسئلة
+        $examTerms = [
+            'اسئلة الامتحان', 'اسئلة الاختبار', 'تسريب الاسئلة', 'تسريب الامتحانات',
+            'تسريب الاختبار', 'اجابات الامتحان', 'اجوبة الاختبار', 'حل الامتحان مقدما',
+            'بنك الاسئلة السري', 'بنك الاسئلة', 'اسئلة التوفل السرية', 'تسريب اسئلة',
+        ];
+        if (self::matchesAny($normalized, $examTerms)) {
+            return self::blockedSecurityResponse('بنك الأسئلة الامتحانية ومفاتيح الإجابة تخضع لإجراءات النزاهة الأكاديمية المشددة، ويتم خوض الاختبارات حصرياً من قاعات الاختبار المعتمدة برقم جلوس رسمي.');
+        }
+
+        // 5. استفسارات عن أسرار الشغل والقيود المحاسبية الداخلية والأرباح
+        $secretTerms = [
+            'اسرار الشغل', 'اسرار المنصة', 'اسرار العمل', 'الارباح الشهرية', 'صافي ارباح',
+            'ارباح المنصة', 'ارباح', 'ارباحكم', 'المحاسبية السرية', 'محاسبية سرية',
+            'القيود المحاسبية الداخلية', 'كشوفات المحاسبة الداخلية', 'كشوفات المحاسبة',
+            'معلومات احصائية سرية', 'احصائيات سرية', 'مبالغ سرية',
+        ];
+        if (self::matchesAny($normalized, $secretTerms)) {
+            return self::blockedSecurityResponse('السجلات المحاسبية والبيانات التشغيلية الداخلية مصنفة كأسرار عمل مؤسسية للإدارة العليا فقط.');
+        }
+
+        return null;
+    }
+
+    /**
+     * رد الجدار الأمني الموحد
+     */
+    protected static function blockedSecurityResponse(string $reason): array
+    {
+        $reply = "🔒 **تنبيه أمني وحماية السرية والخصوصية المؤسسية:**\n\n";
+        $reply .= "عذراً، {$reason}\n\n";
+        $reply .= "🛡️ تلتزم منصة ومكتب ASOTS بأعلى معايير الأمان والنزاهة المؤسسية، ولا يُسمح إطلاقاً بالإفصاح عن البيانات الشخصية، أو كلمات المرور، أو الأسئلة الامتحانية، أو العمليات الحسابية الداخلية.\n\n";
+        $reply .= "💡 يسعدني إجابتك بحرية تامة عن أي استفسار حول:\n";
+        $reply .= "• **أعمدة وركائز المنصة** وبرامج التعليم والترجمة والاستشارات.\n";
+        $reply .= "• **خارطة الطريق ومستويات الدورات** وسلسلة Interchange الدولية.\n";
+        $reply .= "• **أحدث الإعلانات والعروض** وبرنامج التأهيل عن بعد (خصم 75%).\n";
+        $reply .= '• **قائمة أسعار الدورات التدريبية** واستمارة التسجيل الرسمية.';
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'security_guardrail_blocked',
+            'suggestions' => [
+                '🏛️ أعمدة وركائز المنصة',
+                '🗺️ خارطة الطريق والمستويات',
+                '📢 أحدث الإعلانات والعروض',
+                '💰 أسعار الدورات المعتمدة',
+            ],
+        ];
+    }
+
+    /**
+     * الاستفسار عن أعمدة وركائز مكتب النجم الآسيوي (ASOTS Pillars)
+     */
+    protected static function handlePillarsInquiry(): array
+    {
+        $pillars = config('asots.pillars', []);
+
+        $reply = "🏛️ **أعمدة وركائز مكتب النجم الآسيوي (ASOTS Pillars):**\n\n";
+        $reply .= "يقوم مكتب ومنصة ASOTS على **6 ركائز أكاديمية وتدريبية متخصصة** تجمع بين التعليم اللغوي، الترجمة، والاستشارات الدولية:\n\n";
+
+        foreach ($pillars as $idx => $p) {
+            $num = $idx + 1;
+            $reply .= "{$p['icon']} **الركيزة {$num}: {$p['title']}**\n";
+            $reply .= "   {$p['desc']}\n\n";
+        }
+
+        $reply .= "💡 **البرنامج الأساسي المعتمد:** برنامج تعليم اللغة الإنجليزية من الصفر حتى الاحتراف هو العمود الأساسي الذي تنطلق منه كافة المستويات.\n";
+        $reply .= '👉 هل ترغب بمعرفة تفاصيل أي من هذه الأعمدة أو التسجيل فيها؟';
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'asots_pillars',
+            'suggestions' => [
+                '🌟 لماذا هذه المنصة؟ (Why ASOTS)',
+                '🗺️ خارطة الطريق والمستويات',
+                '📢 أحدث الإعلانات والعروض الحالية',
+                '📋 استمارة التسجيل في البرنامج',
+            ],
+        ];
+    }
+
+    /**
+     * الاستفسار عن سبب اختيار المنصة ومميزات ASOTS التنافسية
+     */
+    protected static function handleWhyAsotsInquiry(): array
+    {
+        $yearsExp = SiteSetting::get('leadership_years_badge', 'أكثر من 26 عاماً من الخبرة والعطاء');
+
+        $reply = "🌟 **لماذا منصة ASOTS؟ (Why ASOTS):**\n\n";
+        $reply .= "نحن في مكتب النجم الآسيوي لا نعلّم اللغة فحسب... بل نبني مستقبلاً واعداً! إليك أبرز المزايا التي تجعلنا الخيار الأول:\n\n";
+        $reply .= "1️⃣ **الخبرة الأكاديمية العريقة:** {$yearsExp} بقيادة البروفيسور د. فخر الدين الصوفي (PhD جامعة محمد الخامس).\n";
+        $reply .= "2️⃣ **تخفيضات كبرى تصل إلى 75%:** رسوم تنافسية ورمزية لتيسير التعليم للجميع، مع خصم خاص للأشقاء (+3 مسجلين).\n";
+        $reply .= "3️⃣ **حصص تفاعلية مباشرة:** تدريب حي بالصوت والصورة والفيديو يضمن التفاعل والمشاركة الفعالة.\n";
+        $reply .= "4️⃣ **بيئة تعليمية مخصصة ومستقلة:** مجموعات خاصة بالطلاب وأخرى مستقلة بالطالبات لضمان الخصوصية والراحة التامة.\n";
+        $reply .= "5️⃣ **حقيبة متكاملة وامتحان مجاني:** حقيبة كتب كاملة بصيغة (PDF) مجاناً + اختبار لتحديد المستوى الفعلي مجاناً.\n";
+        $reply .= "6️⃣ **تقييم نطق بالذكاء الاصطناعي:** فحص فوري لمخارج الحروف والطلاقة الصوتية لتصحيح الأخطاء أولاً بأول.\n";
+        $reply .= "7️⃣ **أوقات دراسة مرنة:** فترات صباحية ومسائية تناسب مختلف الطلاب والموظفين في كافة الدول.\n";
+        $reply .= "8️⃣ **مدة البرنامج شهر واحد مكثف:** 4 أسابيع متتالية (5 أيام أسبوعياً من السبت إلى الأربعاء).\n";
+        $reply .= "9️⃣ **شهادات معتمدة برمز QR:** توثيق رقمي رسمي يمكن التحقق منه فورياً من أي جهة توظيف أو جامعة.\n\n";
+        $reply .= '🚀 انضم الآن واستفد من العروض الحالية بحجز مقعدك في الدفعة الجديدة.';
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'why_asots',
+            'suggestions' => [
+                '🏛️ أعمدة وركائز المنصة',
+                '📢 أحدث الإعلانات والعروض',
+                '💰 أسعار الدورات المتاحة',
+                '📋 فتح استمارة التسجيل الآن',
+            ],
+        ];
+    }
+
+    /**
+     * الاستفسار عما تقدمه المنصة (What ASOTS Offers)
+     */
+    protected static function handleWhatPlatformOffers(): array
+    {
+        $reply = "🎁 **ماذا تقدم منصة ومكتب النجم الآسيوي (ASOTS)؟**\n\n";
+        $reply .= "تقدم المنصة منظومة تعليمية ومهنية متكاملة تشمل:\n\n";
+        $reply .= "1️⃣ **دبلومات وبرامج اللغة الإنجليزية الشاملة:** من المستوى التمهيدي وحتى المتقدم وبرامج التوفل والآيلتس (TOEFL / IELTS).\n";
+        $reply .= "2️⃣ **البرامج النوعية التخصصية:**\n";
+        $reply .= "   • اللغة الإنجليزية للأعمال (Business English) والمراسلات التجارية.\n";
+        $reply .= "   • الذكاء الاصطناعي للجميع (AI for All).\n";
+        $reply .= "   • المصطلحات الطبية باللغة الإنجليزية (Medical Terminology).\n";
+        $reply .= "   • دورات تدريب واعتماد معلمي اللغة (TESOL / TEFL).\n";
+        $reply .= "3️⃣ **خدمات الترجمة المعتمدة والترجمة الشفوية:** ترجمة موثقة رسمياً لكافة الوثائق والشهادات.\n";
+        $reply .= "4️⃣ **دورات اللغة العربية للناطقين بغيرها:** تأهيل مكثف في النطق، المحادثة، القراءة، والكتابة.\n";
+        $reply .= "5️⃣ **الاستشارات الأكاديمية والمهنية:** استشارات المناهج وتأهيل الكوادر وتطوير المؤسسات.\n";
+        $reply .= "6️⃣ **أدوات رقمية متقدمة:** قاعات تفاعلية حية (Air Class)، فحص النطق بالذكاء الاصطناعي، وسندات قبض إلكترونية معتمدة.\n\n";
+        $reply .= '👉 يمكنك استعراض أسعار أي برنامج أو التسجيل فيه فوراً.';
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'what_asots_offers',
+            'suggestions' => [
+                '🌟 لماذا هذه المنصة؟ (Why ASOTS)',
+                '🗺️ كم المستويات لكل دورة؟',
+                '💰 أسعار كافة الدورات',
+                '📋 استمارة التسجيل',
+            ],
+        ];
+    }
+
+    /**
+     * الاستفسار عن تفاصيل المستويات وتوزيع الدورات وعدد ساعاتها ورسومها
+     */
+    protected static function handleLevelCourseBreakdown(string $normalized): array
+    {
+        $levels = Level::with('courses')->orderBy('level_order')->get();
+        if ($levels->isEmpty()) {
+            return self::handleLevelsInquiry($normalized);
+        }
+
+        $totalCourses = $levels->sum(fn ($lvl) => $lvl->courses->count());
+
+        $reply = "📊 **خارطة المستويات وتوزيع الدورات في منصة ASOTS:**\n\n";
+        $reply .= "تتكون المنظومة الأكاديمية من **{$levels->count()} مستويات رئيسية** تضم **{$totalCourses} دورة تدريبية تخصصية** متدرجة من الصفر حتى التوفل والبرامج النوعية:\n\n";
+
+        foreach ($levels as $lvl) {
+            $cCount = $lvl->courses->count();
+            $reply .= "🎓 **{$lvl->name}** ({$cCount} دورات):\n";
+            foreach ($lvl->courses as $c) {
+                $curr = $c->currency === 'YER' ? 'ريال يمني' : $c->currency;
+                $fee = number_format($c->fee_amount, 0);
+                $reply .= "   • **{$c->name_ar}** ({$c->name_en}) — {$c->hours} ساعة | `{$fee} {$curr}`\n";
+            }
+            $reply .= "\n";
+        }
+
+        $reply .= "💡 **نظام التسكين في المستويات:** يتم تسكين الطالب في المستوى المناسب لقدراته بدقة بناءً على **اختبار تحديد المستوى المجاني**.\n";
+        $reply .= '👉 هل ترغب بمعرفة تفاصيل دورة محددة أو التسجيل فيها؟';
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'levels_courses_breakdown',
+            'suggestions' => [
+                '🗺️ خارطة الطريق والمنهج المعتمد',
+                '💰 أسعار كافة الدورات',
+                '🚀 بدء اختبار تحديد المستوى المجاني',
+                '📋 استمارة التسجيل للدفعة الجديدة',
+            ],
+        ];
+    }
+
+    /**
+     * الاستفسار عن خارطة الطريق، منهج كامبريدج Interchange، وإطار CEFR
+     */
+    protected static function handleRoadmapAndCurriculumInquiry(string $normalized): array
+    {
+        $coursebook = config('asots.general_english_spec.coursebook', 'Interchange – Fifth Edition (Cambridge University Press)');
+        $skills = config('asots.general_english_spec.skills');
+        $roadmap = config('asots.cefr_roadmap', []);
+        $journey = config('asots.general_english_spec.learner_journey', []);
+
+        $reply = "🗺️ **خارطة الطريق الأكاديمية والمنهج المعتمد (ASOTS Learning Roadmap):**\n\n";
+        $reply .= "📚 **المنهج وسلسلة الكتب المعتمدة:**\n";
+        $reply .= "نعتمد رسمياً سلسلة كتب **{$coursebook}**، المنهج العالمي الأشهر لتطوير المحادثة والطلاقة اللغوية.\n\n";
+
+        $reply .= "🎯 **المهارات المستهدفة:**\n";
+        $reply .= "المهارات الأربع المتكاملة: الاستماع، التحدث، القراءة، والكتابة، بالإضافة إلى مخارج الحروف، الطلاقة الصوتية، والمحادثة التفاعلية الحرة.\n\n";
+
+        if (! empty($roadmap)) {
+            $reply .= "📈 **مراحل الإطار الأوروبي المشترك (CEFR Roadmap):**\n";
+            foreach ($roadmap as $stage) {
+                $reply .= "• **{$stage['code']} ({$stage['title']}):** {$stage['outcomes']}\n";
+            }
+            $reply .= "\n";
+        }
+
+        if (! empty($journey)) {
+            $reply .= "🚀 **رحلة المتعلم في ASOTS (خطوات الانضمام والشهادة):**\n";
+            foreach ($journey as $step) {
+                $reply .= "{$step['step']}. {$step['title_ar']}\n";
+            }
+            $reply .= "\n";
+        }
+
+        $reply .= '💡 كل طالب يحصل مجاناً على حقيبة الكتب كاملة (PDF) لكل دورة يسجل فيها مع إمكانية الوصول إلى التسجيلات والمواد الإثرائية.';
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'roadmap_and_curriculum',
+            'suggestions' => [
+                '📊 كم المستويات لكل دورة؟',
+                '🌟 لماذا منصة ASOTS؟',
+                '💰 أسعار الدورات والمستويات',
+                '📋 استمارة التسجيل المعتمدة',
+            ],
+        ];
+    }
+
+    /**
+     * الاستفسار عن مسارات التعلم التفاعلية (أطفال، مدرسة، توفل، إنجليزية أعمال)
+     */
+    protected static function handleLearningPathsInquiry(string $normalized): array
+    {
+        $paths = config('asots.learning_paths', []);
+
+        $reply = "🛤️ **مسارات التعلم التفاعلية في منصة ASOTS:**\n\n";
+        $reply .= "صممت المنصة 4 مسارات تخصصية تراعي الفئات العمرية والاحتياجات المهنية:\n\n";
+
+        foreach ($paths as $idx => $p) {
+            $reply .= "{$p['icon']} **{$p['name']}**\n";
+            $reply .= "   📌 *{$p['headline']}*\n";
+            $reply .= "   📝 {$p['description']}\n";
+            if (! empty($p['features'])) {
+                $reply .= '   ✨ المزايا: '.implode(' • ', $p['features'])."\n";
+            }
+            $reply .= "\n";
+        }
+
+        $reply .= '👉 هل ترغب بمعرفة مسار معين أو التسجيل فيه؟ اكتب اسم المسار فقط!';
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'learning_paths',
+            'suggestions' => [
+                '📊 تفاصيل المستويات والدورات',
+                '💰 كم أسعار الدورات في كل مسار؟',
+                '🚀 اختبار تحديد المستوى المجاني',
+                '📋 فتح استمارة التسجيل',
+            ],
+        ];
+    }
+
+    /**
+     * الاستفسار عن الأسئلة الشائعة والسياسات والجودة
+     */
+    protected static function handleFaqsInquiry(string $normalized): array
+    {
+        $faqs = config('asots.faqs', []);
+
+        // محاولة مطابقة سؤال محدد
+        foreach ($faqs as $faq) {
+            $qNorm = self::normalizeText($faq['q']);
+            $tokens = preg_split('/[\s\?؟]+/u', $qNorm);
+            $matchCount = 0;
+            foreach ($tokens as $token) {
+                if (mb_strlen($token) >= 4 && str_contains($normalized, $token)) {
+                    $matchCount++;
+                }
+            }
+            if ($matchCount >= 2) {
+                $reply = "❓ **سؤال شائع:** {$faq['q']}\n\n";
+                $reply .= "💡 **الإجابة الرسمية:**\n{$faq['a']}\n\n";
+                $reply .= '👉 هل لديك أي سؤال آخر؟ يسعدني الرد عليك فوراً!';
+
+                return [
+                    'reply' => $reply,
+                    'matched_intent' => 'faq_matched',
+                    'suggestions' => [
+                        '🌟 لماذا هذه المنصة؟ (Why ASOTS)',
+                        '🗺️ خارطة الطريق والمنهج',
+                        '💰 قائمة أسعار الدورات',
+                        '💬 محادثة واتساب مع الإدارة',
+                    ],
+                ];
+            }
+        }
+
+        // عرض الأسئلة الشائعة العامة
+        $reply = "❓ **أبرز الأسئلة الشائعة حول منصة ومكتب ASOTS:**\n\n";
+        foreach ($faqs as $idx => $faq) {
+            $num = $idx + 1;
+            $reply .= "{$num}️⃣ **{$faq['q']}**\n";
+            $reply .= "   💡 {$faq['a']}\n\n";
+        }
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'all_faqs',
+            'suggestions' => [
+                '🌟 لماذا هذه المنصة؟',
+                '📋 كيف أسجل في استمارة القبول؟',
+                '💰 أسعار كافة الدورات',
+                '💬 تواصل مع الإدارة عبر الواتساب',
+            ],
+        ];
+    }
+
+    /**
+     * الاستفسار عن القيم الجوهرية والرؤية والرسالة
+     */
+    protected static function handleCoreValuesInquiry(): array
+    {
+        $vision = config('asots.about.vision');
+        $mission = config('asots.about.mission');
+        $principle = config('asots.core_principle_ar');
+        $values = config('asots.core_values', []);
+
+        $reply = "💎 **الرؤية، الرسالة، والقيم الجوهرية لمنصة ومكتب ASOTS:**\n\n";
+        if ($vision) {
+            $reply .= "👁️ **رؤيتنا:**\n{$vision}\n\n";
+        }
+        if ($mission) {
+            $reply .= "🎯 **رسالتنا:**\n{$mission}\n\n";
+        }
+        if ($principle) {
+            $reply .= "⚖️ **المبدأ المؤسسي الحاكم:**\n*\"{$principle}\"*\n\n";
+        }
+
+        if (! empty($values)) {
+            $reply .= "🌟 **القيم الجوهرية التسع (The 9 Core Values):**\n";
+            foreach (array_slice($values, 0, 9) as $v) {
+                $reply .= "• **{$v['title_ar']} ({$v['title_en']}):** {$v['desc_ar']}\n";
+            }
+        }
+
+        return [
+            'reply' => $reply,
+            'matched_intent' => 'core_values',
+            'suggestions' => [
+                '🏛️ أعمدة وركائز المنصة',
+                '🌟 لماذا منصة ASOTS؟',
+                '📢 أحدث الإعلانات والعروض',
+                '📋 استمارة التسجيل',
+            ],
+        ];
+    }
+
+    /**
+     * محرك البحث المعرفي الشامل في كافة نصوص ومحتويات المنصة
+     */
+    protected static function searchUniversalKnowledgeBase(string $raw, string $normalized): ?array
+    {
+        // 1. البحث في الإعلانات المنشورة (Banners)
+        $banners = Banner::where('is_active', true)->get();
+        foreach ($banners as $b) {
+            $bText = self::normalizeText($b->title.' '.($b->subtitle ?? '').' '.($b->content ?? ''));
+            $tokens = preg_split('/\s+/u', $normalized);
+            $matchCount = 0;
+            foreach ($tokens as $token) {
+                if (mb_strlen($token) >= 4 && str_contains($bText, $token)) {
+                    $matchCount++;
+                }
+            }
+            if ($matchCount >= 2) {
+                $cleanContent = strip_tags($b->content ?? $b->subtitle ?? '');
+                $reply = "📢 **معلومات متعلقة من إعلانات وحملات المنصة:**\n\n";
+                $reply .= "✨ **{$b->title}**\n";
+                if ($b->subtitle) {
+                    $reply .= "📌 *{$b->subtitle}*\n\n";
+                }
+                if ($cleanContent) {
+                    $reply .= '📝 '.Str::limit($cleanContent, 280)."\n\n";
+                }
+                $reply .= '👉 للمزيد من التفاصيل، يمكنك زيارة [مركز الإعلانات العام](/announcements) أو [استمارة التسجيل](/register/student).';
+
+                return [
+                    'reply' => $reply,
+                    'matched_intent' => 'universal_banner_match',
+                    'suggestions' => [
+                        '📢 أحدث الإعلانات والعروض',
+                        '💰 كم أسعار الدورات؟',
+                        '📋 استمارة التسجيل في البرنامج',
+                        '💬 محادثة واتساب مع الإدارة',
+                    ],
+                ];
+            }
+        }
+
+        // 2. البحث في الأسئلة الشائعة
+        $faqs = config('asots.faqs', []);
+        foreach ($faqs as $faq) {
+            $fText = self::normalizeText($faq['q'].' '.$faq['a']);
+            $tokens = preg_split('/\s+/u', $normalized);
+            $matchCount = 0;
+            foreach ($tokens as $token) {
+                if (mb_strlen($token) >= 4 && str_contains($fText, $token)) {
+                    $matchCount++;
+                }
+            }
+            if ($matchCount >= 2) {
+                return [
+                    'reply' => "💡 **معلومات توضيحية من منصة ASOTS:**\n\n❓ **{$faq['q']}**\n\n{$faq['a']}",
+                    'matched_intent' => 'universal_faq_match',
+                    'suggestions' => [
+                        '🌟 لماذا هذه المنصة؟',
+                        '📊 تفاصيل المستويات والدورات',
+                        '💰 أسعار كافة الدورات',
+                        '💬 تواصل مع الإدارة عبر الواتساب',
+                    ],
+                ];
+            }
+        }
+
+        // 3. البحث في أعمدة ومسارات المنصة
+        $pillars = config('asots.pillars', []);
+        foreach ($pillars as $p) {
+            $pText = self::normalizeText($p['title'].' '.$p['desc']);
+            $tokens = preg_split('/\s+/u', $normalized);
+            $matchCount = 0;
+            foreach ($tokens as $token) {
+                if (mb_strlen($token) >= 4 && str_contains($pText, $token)) {
+                    $matchCount++;
+                }
+            }
+            if ($matchCount >= 2) {
+                return [
+                    'reply' => "🏛️ **من أعمدة وخدمات منصة ASOTS:**\n\n{$p['icon']} **{$p['title']}**\n\n{$p['desc']}\n\n👉 هل ترغب بمعرفة تفاصيل الدورات أو الأسعار لهذا القسم؟",
+                    'matched_intent' => 'universal_pillar_match',
+                    'suggestions' => [
+                        '🏛️ استعراض كافة أعمدة المنصة',
+                        '💰 أسعار الدورات التدريبية',
+                        '📋 فتح استمارة التسجيل',
+                    ],
+                ];
+            }
+        }
+
+        return null;
     }
 
     /**

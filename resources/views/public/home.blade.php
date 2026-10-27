@@ -88,6 +88,11 @@
     <!-- ==================== بانر وسلايدر الإعلانات التفاعلي المتحرك (Dynamic Visual Announcements Carousel - الحجم المضاعف) ==================== -->
     @php
         $heroBanners = \App\Models\Banner::active()->ads()->placement('hero_slider')->orderBy('sort_order')->get();
+        if ($heroBanners->isEmpty()) {
+            $heroBanners = \App\Models\Banner::active()->ads()->where(function ($q) {
+                $q->whereNull('placement')->orWhere('placement', '!=', 'top_announcement');
+            })->orderBy('sort_order')->get();
+        }
     @endphp
     @if($heroBanners->count() > 0)
         <div class="space-y-4" id="adsCarouselSection">
@@ -280,6 +285,11 @@
     <!-- ==================== معرض صور الفعاليات وحفلات التخرج والتكريم (Events & Graduation Photo Gallery Slider) ==================== -->
     @php
         $eventGalleries = \App\Models\Banner::active()->events()->orderBy('sort_order')->latest()->get();
+        if ($eventGalleries->isEmpty()) {
+            $eventGalleries = \App\Models\Banner::active()->where(function ($q) {
+                $q->where('category', 'event_gallery')->orWhere('title', 'like', '%حفل تخرج%');
+            })->whereNotNull('image_path')->orderBy('sort_order')->latest()->get();
+        }
     @endphp
     @if($eventGalleries->count() > 0)
         <section class="space-y-6 pt-2 pb-4" id="graduationGallerySection">
