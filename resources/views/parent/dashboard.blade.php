@@ -838,7 +838,7 @@
             @csrf
             <div>
                 <label class="block font-bold text-slate-700 mb-1">اسم الطفل *</label>
-                <input type="text" name="name" required placeholder="مثال: الطفل التجريبي" 
+                <input type="text" name="name" required placeholder="محمد شائف عبدالواحد علي" 
                     class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-1 focus:ring-indigo-500">
             </div>
 

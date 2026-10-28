@@ -24,14 +24,14 @@
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">الاسم الكامل بالعربية <span class="text-rose-500">*</span></label>
                 <input type="text" name="name" value="{{ old('name') }}" required 
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition text-sm text-slate-800"
-                    placeholder="مثال: محمد علي العولقي">
+                    placeholder="محمد شائف عبدالواحد علي">
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">الاسم باللغة الإنجليزية (Full English Name) <span class="text-slate-400 font-normal">(اختياري)</span></label>
                 <input type="text" name="name_en" value="{{ old('name_en') }}" 
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition text-sm text-slate-800 font-medium"
-                    placeholder="e.g. Mohammed Ali Al-Awlaqi" dir="ltr">
+                    placeholder="mohammed shaif abdulwahid ali" dir="ltr">
             </div>
 
             <!-- الجنس (إجباري) وتاريخ الميلاد (اختياري) -->
@@ -68,7 +68,7 @@
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">رقم هاتف الواتساب (مهم جداً) <span class="text-rose-500">*</span></label>
                 <input type="text" name="phone_whatsapp" value="{{ old('phone_whatsapp') }}" required 
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition text-sm text-slate-800 font-mono"
-                    placeholder="+967735999101" dir="ltr">
+                    placeholder="+967 " dir="ltr">
                 <span class="text-[11px] text-slate-400 block mt-1">ستصلك سندات القبض ونتائج الاختبارات عبر هذا الرقم تلقائياً.</span>
             </div>
 

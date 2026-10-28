@@ -1093,12 +1093,12 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">الاسم الكامل بالعربية <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required placeholder="مثال: أستاذ/ أحمد محمد" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="text" name="name" required placeholder="محمد شائف عبدالواحد علي" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
 
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">الاسم بالإنجليزية (Full English Name) <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="text" name="name_en" placeholder="e.g. Ahmed Mohammed" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
+                        <input type="text" name="name_en" placeholder="mohammed shaif abdulwahid ali" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
                     </div>
 
                     <div>
@@ -1121,7 +1121,7 @@
 
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">رقم الهاتف والواتساب <span class="text-red-500">*</span></label>
-                        <input type="text" name="phone_whatsapp" required placeholder="+967735999101" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="text" name="phone_whatsapp" required placeholder="+967 " class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
                     <div>
@@ -1265,12 +1265,12 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">الاسم الكامل بالعربية <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" id="editName" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="text" name="name" id="editName" required placeholder="محمد شائف عبدالواحد علي" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
 
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">الاسم بالإنجليزية (Full English Name) <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="text" name="name_en" id="editNameEn" placeholder="e.g. John Doe" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
+                        <input type="text" name="name_en" id="editNameEn" placeholder="mohammed shaif abdulwahid ali" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
                     </div>
 
                     <div>
@@ -1293,7 +1293,7 @@
 
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">رقم الهاتف والواتساب <span class="text-red-500">*</span></label>
-                        <input type="text" name="phone_whatsapp" id="editPhone" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="text" name="phone_whatsapp" id="editPhone" required placeholder="+967 " class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
                     <div>

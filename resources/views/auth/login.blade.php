@@ -116,13 +116,13 @@
 
             <div>
                 <label class="block font-bold text-slate-700 mb-1">الاسم الكامل (اختياري)</label>
-                <input type="text" name="name" placeholder="اسمك المسجل في النظام"
+                <input type="text" name="name" placeholder="محمد شائف عبدالواحد علي"
                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-xs text-slate-800">
             </div>
 
             <div>
                 <label class="block font-bold text-slate-700 mb-1">رقم الهاتف والواتساب للتواصل (مهم)</label>
-                <input type="text" name="phone" placeholder="+967735999101"
+                <input type="text" name="phone" placeholder="+967 "
                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-xs text-slate-800 font-mono" dir="ltr">
             </div>
 

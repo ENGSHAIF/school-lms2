@@ -33,13 +33,13 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">الاسم الكامل *</label>
-                    <input type="text" id="inputName" required placeholder="مثال: محمد العولقي" 
+                    <input type="text" id="inputName" required placeholder="محمد شائف عبدالواحد علي" 
                         class="w-full border border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-indigo-500 outline-none">
                 </div>
 
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">رقم هاتف الواتساب (لإرسال التقارير والسندات) *</label>
-                    <input type="text" id="inputPhone" required placeholder="+967 ..." 
+                    <input type="text" id="inputPhone" required placeholder="+967 " 
                         class="w-full border border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-indigo-500 outline-none">
                 </div>
 

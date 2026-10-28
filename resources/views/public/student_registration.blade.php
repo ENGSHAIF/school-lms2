@@ -75,7 +75,7 @@
                         </label>
                         <input type="text" name="name_ar" id="input_name_ar" required 
                             value="{{ old('name_ar', auth()->user()?->name) }}"
-                            placeholder="مثال: أحمد محمد علي الصوفي" 
+                            placeholder="محمد شائف عبدالواحد علي" 
                             class="w-full bg-slate-50 border border-slate-300 rounded-2xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#0066A1] text-xs sm:text-sm font-bold text-slate-800 transition">
                         <span class="text-[11px] text-slate-400 block mt-1">يُرجى كتابة الاسم الثلاثي أو الرباعي كما في الهوية.</span>
                     </div>
@@ -86,7 +86,7 @@
                         </label>
                         <input type="text" name="name_en" id="input_name_en" dir="ltr"
                             value="{{ old('name_en', auth()->user()?->name_en) }}"
-                            placeholder="e.g. Ahmed Mohammed Ali Al-Sofi" 
+                            placeholder="mohammed shaif abdulwahid ali" 
                             class="w-full bg-slate-50 border border-slate-300 rounded-2xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#0066A1] text-xs sm:text-sm font-medium text-slate-800 transition">
                         <span class="text-[11px] text-slate-400 block mt-1">يُشترط مطابقته لجواز السفر لضمان صحة الشهادات الدولية.</span>
                     </div>
@@ -134,7 +134,7 @@
                         </label>
                         <input type="text" name="study_phone_whatsapp" id="input_study_phone" required dir="ltr"
                             value="{{ old('study_phone_whatsapp', auth()->user()?->phone_whatsapp) }}"
-                            placeholder="+967735999101" 
+                            placeholder="+967 " 
                             class="w-full bg-slate-50 border border-slate-300 rounded-2xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#0066A1] text-xs sm:text-sm font-mono text-slate-800 transition">
                         <span class="text-[11px] text-slate-400 block mt-1">الرقم المعتمد لإضافتك إلى المجموعة الدراسية وإرسال الروابط.</span>
                     </div>
@@ -145,7 +145,7 @@
                         </label>
                         <input type="text" name="parent_phone" id="input_parent_phone" dir="ltr"
                             value="{{ old('parent_phone') }}"
-                            placeholder="+967775342886" 
+                            placeholder="+967 " 
                             class="w-full bg-slate-50 border border-slate-300 rounded-2xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#0066A1] text-xs sm:text-sm font-mono text-slate-800 transition">
                         <span class="text-[11px] text-slate-400 block mt-1">خاص بمتابعة شؤون الطلاب والتواصل مع أولياء الأمور.</span>
                     </div>

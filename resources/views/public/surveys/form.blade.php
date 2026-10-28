@@ -144,7 +144,7 @@
                     </label>
                     <input type="tel" name="student_phone" dir="ltr"
                            value="{{ $currentUser ? $currentUser->phone_whatsapp : old('student_phone') }}"
-                           placeholder="+967..."
+                           placeholder="+967 "
                            class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 text-xs sm:text-sm text-slate-800 bg-slate-50 transition">
                 </div>
             </div>

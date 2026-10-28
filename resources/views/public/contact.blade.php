@@ -138,7 +138,7 @@
                             </label>
                             <input type="text" name="name_ar" id="c_name_ar" required 
                                 value="{{ old('name_ar', auth()->user()?->name) }}"
-                                placeholder="مثال: أحمد محمد علي الصوفي" 
+                                placeholder="محمد شائف عبدالواحد علي" 
                                 class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#0066A1] text-xs font-bold text-slate-800">
                         </div>
 
@@ -148,7 +148,7 @@
                             </label>
                             <input type="text" name="name_en" id="c_name_en" dir="ltr"
                                 value="{{ old('name_en', auth()->user()?->name_en) }}"
-                                placeholder="e.g. Ahmed Mohammed Ali Al-Sofi" 
+                                placeholder="mohammed shaif abdulwahid ali" 
                                 class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#0066A1] text-xs font-medium text-slate-800">
                         </div>
 
@@ -189,7 +189,7 @@
                                 </label>
                                 <input type="text" name="study_phone_whatsapp" id="c_study_phone" required dir="ltr"
                                     value="{{ old('study_phone_whatsapp', auth()->user()?->phone_whatsapp) }}"
-                                    placeholder="+967735999101" 
+                                    placeholder="+967 " 
                                     class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#0066A1] text-xs font-mono font-bold">
                             </div>
 
@@ -198,7 +198,7 @@
                                     * رقم ولي الأمر:
                                 </label>
                                 <input type="text" name="parent_phone" id="c_parent_phone" dir="ltr"
-                                    placeholder="+967775342886" 
+                                    placeholder="+967 " 
                                     class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#0066A1] text-xs font-mono font-bold">
                             </div>
                         </div>
@@ -288,11 +288,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block font-bold text-slate-700 mb-1 text-xs">الاسم الكامل *</label>
-                            <input type="text" required placeholder="مثال: أحمد محمد" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-1 focus:ring-[#0066A1] text-xs">
+                            <input type="text" required placeholder="محمد شائف عبدالواحد علي" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-1 focus:ring-[#0066A1] text-xs">
                         </div>
                         <div>
                             <label class="block font-bold text-slate-700 mb-1 text-xs">رقم هاتف الواتساب *</label>
-                            <input type="text" required placeholder="+967 ..." class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-1 focus:ring-[#0066A1] text-xs font-mono" dir="ltr">
+                            <input type="text" required placeholder="+967 " class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-1 focus:ring-[#0066A1] text-xs font-mono" dir="ltr">
                         </div>
                     </div>
 
