@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FinancialAccount;
-use App\Models\Voucher;
-use App\Models\User;
+use App\Helpers\ArabicCurrencyHelper;
+use App\Models\AccountingPeriod;
 use App\Models\Course;
-use App\Models\Level;
-use App\Models\StudyGroup;
 use App\Models\EducationalService;
+use App\Models\FinancialAccount;
+use App\Models\JournalEntry;
+use App\Models\Level;
+use App\Models\SiteSetting;
+use App\Models\StudentInstallment;
+use App\Models\StudentProfile;
+use App\Models\StudyGroup;
+use App\Models\SystemAuditLog;
 use App\Models\TeacherContract;
 use App\Models\TeacherEntitlement;
-use App\Models\StudentInstallment;
-use App\Models\WhatsAppLog;
-use App\Models\SystemAuditLog;
-use App\Models\JournalEntry;
-use App\Models\JournalEntryLine;
-use App\Models\CostCenter;
+use App\Models\User;
+use App\Models\Voucher;
+use App\Models\VoucherItem;
 use App\Services\GeneralLedgerService;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -48,8 +51,8 @@ class AccountingController extends Controller
             FinancialAccount::firstOrCreate(
                 ['user_id' => $t->id],
                 [
-                    'account_code' => '22' . str_pad($t->id, 4, '0', STR_PAD_LEFT),
-                    'account_name' => 'حساب الكادر: ' . $t->name,
+                    'account_code' => '22'.str_pad($t->id, 4, '0', STR_PAD_LEFT),
+                    'account_name' => 'حساب الكادر: '.$t->name,
                     'account_type' => 'teacher',
                     'currency' => 'YER',
                     'opening_balance' => 0.00,
@@ -58,7 +61,7 @@ class AccountingController extends Controller
             );
 
             // ضمان وجود عقد مالي / نمط تعاقد للمستخدم
-            if (!$t->teacherContract) {
+            if (! $t->teacherContract) {
                 TeacherContract::create([
                     'teacher_id' => $t->id,
                     'contract_type' => $t->role === 'supervisor' ? 'fixed_salary' : 'per_course',
@@ -123,9 +126,9 @@ class AccountingController extends Controller
     public function showStatement($studentId)
     {
         $user = Auth::user();
-        $isChildOfParent = ($user && $user->isParent() && $user->hasPermission('parent.finance_view') && \App\Models\StudentProfile::where('user_id', $studentId)->where('parent_id', $user->id)->exists());
+        $isChildOfParent = ($user && $user->isParent() && $user->hasPermission('parent.finance_view') && StudentProfile::where('user_id', $studentId)->where('parent_id', $user->id)->exists());
 
-        if (!$user->isAdmin() && !$user->hasPermission('print_statement') && !$user->hasPermission('finance.statements') && !$isChildOfParent) {
+        if (! $user->isAdmin() && ! $user->hasPermission('print_statement') && ! $user->hasPermission('finance.statements') && ! $isChildOfParent) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية استعراض وطباعة كشف الحساب.');
         }
 
@@ -141,8 +144,14 @@ class AccountingController extends Controller
 
     public function storeReceipt(Request $request)
     {
-        if (!Auth::user()->hasPermission('create_receipt_voucher')) {
+        if (! Auth::user()->hasPermission('create_receipt_voucher')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إصدار سند قبض مالي.');
+        }
+
+        // [يمن سوفت ERP] التحقق من الفترة المحاسبية المفتوحة
+        $strictPeriod = DB::table('site_settings')->where('key', 'accounting.strict_period_lock')->value('value');
+        if ($strictPeriod === '1' && ! AccountingPeriod::isDateAllowed(now())) {
+            return back()->with('error', 'فترة القبض المحاسبية مقفلة أو موقوفة وفق معايير يمن سوفت ERP. لا يمكن إضافة سندات جديدة.')->withInput();
         }
 
         $isBatch = $request->filled('items') && is_array($request->items) && count($request->items) > 0;
@@ -162,31 +171,31 @@ class AccountingController extends Controller
             ]);
 
             $filteredItems = array_values(array_filter($request->items, function ($it) {
-                return !empty($it['student_id']) && (float)($it['amount'] ?? 0) > 0;
+                return ! empty($it['student_id']) && (float) ($it['amount'] ?? 0) > 0;
             }));
 
             if (empty($filteredItems)) {
                 return back()->with('error', 'يرجى إضافة سطر تفصيلي واحد على الأقل مع تحديد الطالب والمبلغ.')->withInput();
             }
 
-            $detailSum = (float)collect($filteredItems)->sum('amount');
-            $masterAmount = (float)$request->amount;
+            $detailSum = (float) collect($filteredItems)->sum('amount');
+            $masterAmount = (float) $request->amount;
 
             // التحقق والتشييك الصارم من تطابق إجمالي الماستر مع مجموع الديتيل
             if (abs($masterAmount - $detailSum) > 0.01) {
-                return back()->with('error', "خطأ في المطابقة: المبلغ الإجمالي في الماستر (" . number_format($masterAmount, 2) . ") لا يطابق مجموع أسطر الديتيل (" . number_format($detailSum, 2) . "). الفارق: (" . number_format(abs($masterAmount - $detailSum), 2) . "). يجب أن يتطابقا تماماً!")->withInput();
+                return back()->with('error', 'خطأ في المطابقة: المبلغ الإجمالي في الماستر ('.number_format($masterAmount, 2).') لا يطابق مجموع أسطر الديتيل ('.number_format($detailSum, 2).'). الفارق: ('.number_format(abs($masterAmount - $detailSum), 2).'). يجب أن يتطابقا تماماً!')->withInput();
             }
 
             if ($request->filled('cash_or_bank_account_id')) {
                 $cashBox = FinancialAccount::findOrFail($request->cash_or_bank_account_id);
             } else {
-                $cashBox = FinancialAccount::receiptAllowed()->first() 
+                $cashBox = FinancialAccount::receiptAllowed()->first()
                     ?? FinancialAccount::where('account_type', 'cash_box')->first();
             }
 
             $count = Voucher::count() + 1;
-            $voucherNo = 'REC-' . date('Y') . '-' . str_pad($count, 5, '0', STR_PAD_LEFT);
-            $amountInWords = \App\Helpers\ArabicCurrencyHelper::tafqeet($masterAmount, $request->currency);
+            $voucherNo = 'REC-'.date('Y').'-'.str_pad($count, 5, '0', STR_PAD_LEFT);
+            $amountInWords = ArabicCurrencyHelper::tafqeet($masterAmount, $request->currency);
 
             $firstStudent = User::with('financialAccount')->find($filteredItems[0]['student_id']);
             $firstAccount = $firstStudent?->financialAccount;
@@ -215,11 +224,11 @@ class AccountingController extends Controller
                 if ($sAccount) {
                     $sAccount->decrement('current_balance', $it['amount']);
                 }
-                \App\Models\VoucherItem::create([
+                VoucherItem::create([
                     'voucher_id' => $voucher->id,
                     'account_id' => $sAccount?->id ?? $voucher->account_id,
                     'amount' => $it['amount'],
-                    'statement' => !empty($it['statement']) ? $it['statement'] : $request->statement,
+                    'statement' => ! empty($it['statement']) ? $it['statement'] : $request->statement,
                 ]);
             }
 
@@ -229,16 +238,16 @@ class AccountingController extends Controller
             }
 
             // توليد قيد اليومية العامة الآلي المزدوج
-            \App\Services\GeneralLedgerService::recordVoucherEntry($voucher);
+            GeneralLedgerService::recordVoucherEntry($voucher);
 
             SystemAuditLog::record(
                 'voucher.receipt_batch_create',
-                "إصدار سند قبض جماعي مركب رقم ({$voucherNo}) بمبلغ إجمالي {$masterAmount} {$request->currency} لعدد (" . count($filteredItems) . ") طلاب",
+                "إصدار سند قبض جماعي مركب رقم ({$voucherNo}) بمبلغ إجمالي {$masterAmount} {$request->currency} لعدد (".count($filteredItems).') طلاب',
                 $voucher,
                 ['master_amount' => $masterAmount, 'currency' => $request->currency, 'items_count' => count($filteredItems)]
             );
 
-            return back()->with('success', "تم إصدار سند القبض الجماعي رقم ({$voucherNo}) بمبلغ إجمالي (" . number_format($masterAmount, 2) . " {$request->currency}) وترحيله لحسابات الطلاب والصندوق بنجاح 🚀");
+            return back()->with('success', "تم إصدار سند القبض الجماعي رقم ({$voucherNo}) بمبلغ إجمالي (".number_format($masterAmount, 2)." {$request->currency}) وترحيله لحسابات الطلاب والصندوق بنجاح 🚀");
         }
 
         // 1.2 السند الفردي العادي (Single Mode)
@@ -259,14 +268,14 @@ class AccountingController extends Controller
         if ($request->filled('cash_or_bank_account_id')) {
             $cashBox = FinancialAccount::findOrFail($request->cash_or_bank_account_id);
         } else {
-            $cashBox = FinancialAccount::receiptAllowed()->first() 
+            $cashBox = FinancialAccount::receiptAllowed()->first()
                 ?? FinancialAccount::where('account_type', 'cash_box')->first();
         }
 
         // توليد رقم سند آلي متسلسل
         $count = Voucher::count() + 1;
-        $voucherNo = 'REC-' . date('Y') . '-' . str_pad($count, 5, '0', STR_PAD_LEFT);
-        $amountInWords = \App\Helpers\ArabicCurrencyHelper::tafqeet((float)$request->amount, $request->currency);
+        $voucherNo = 'REC-'.date('Y').'-'.str_pad($count, 5, '0', STR_PAD_LEFT);
+        $amountInWords = ArabicCurrencyHelper::tafqeet((float) $request->amount, $request->currency);
 
         $voucher = Voucher::create([
             'voucher_no' => $voucherNo,
@@ -285,7 +294,7 @@ class AccountingController extends Controller
             'created_by' => Auth::id() ?? 1,
         ]);
 
-        \App\Models\VoucherItem::create([
+        VoucherItem::create([
             'voucher_id' => $voucher->id,
             'account_id' => $studentAccount->id,
             'amount' => $request->amount,
@@ -301,15 +310,15 @@ class AccountingController extends Controller
         }
 
         // توليد قيد اليومية العامة الآلي المزدوج
-        \App\Services\GeneralLedgerService::recordVoucherEntry($voucher);
+        GeneralLedgerService::recordVoucherEntry($voucher);
 
-        $currencyArabic = \App\Helpers\ArabicCurrencyHelper::currencyName($request->currency);
+        $currencyArabic = ArabicCurrencyHelper::currencyName($request->currency);
         $formattedAmount = number_format($request->amount, 2);
 
         // إرسال إشعار وسند القبض عبر الواتساب للطالب
         $voucherUrl = route('accounting.voucher.print', $voucher->id);
-        $messageBody = \App\Services\WhatsAppService::renderTemplate(
-            \App\Models\SiteSetting::get('wa_template_receipt_voucher_body', "عزيزي الطالب {name}، تم استلام دفعة مالية بقيمة {amount}. سند القبض رقم ({voucher_no}) معتمد ومرفق بحسابك في {school_name}.\n\n📄 رابط استعراض وطباعة سند القبض المالي:\n{link}"),
+        $messageBody = WhatsAppService::renderTemplate(
+            SiteSetting::get('wa_template_receipt_voucher_body', "عزيزي الطالب {name}، تم استلام دفعة مالية بقيمة {amount}. سند القبض رقم ({voucher_no}) معتمد ومرفق بحسابك في {school_name}.\n\n📄 رابط استعراض وطباعة سند القبض المالي:\n{link}"),
             [
                 '{name}' => $student->name,
                 '{amount}' => "{$formattedAmount} {$currencyArabic}",
@@ -318,7 +327,7 @@ class AccountingController extends Controller
             ]
         );
 
-        $sendResult = \App\Services\WhatsAppService::send(
+        $sendResult = WhatsAppService::send(
             $student->phone_whatsapp ?: '',
             $messageBody,
             $voucherUrl,
@@ -326,7 +335,7 @@ class AccountingController extends Controller
             'receipt_voucher'
         );
 
-        if (!empty($sendResult['wa_url']) && ($sendResult['status'] ?? '') !== 'sent') {
+        if (! empty($sendResult['wa_url']) && ($sendResult['status'] ?? '') !== 'sent') {
             session()->flash('whatsapp_direct_url', $sendResult['wa_url']);
             session()->flash('whatsapp_recipient_name', $student->name);
             session()->flash('whatsapp_voucher_no', $voucherNo);
@@ -344,7 +353,7 @@ class AccountingController extends Controller
 
     public function storePayment(Request $request)
     {
-        if (!Auth::user()->hasPermission('create_payment_voucher')) {
+        if (! Auth::user()->hasPermission('create_payment_voucher')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إصدار سند صرف مالي.');
         }
 
@@ -365,37 +374,48 @@ class AccountingController extends Controller
             ]);
 
             $filteredItems = array_values(array_filter($request->items, function ($it) {
-                return !empty($it['teacher_id']) && (float)($it['amount'] ?? 0) > 0;
+                return ! empty($it['teacher_id']) && (float) ($it['amount'] ?? 0) > 0;
             }));
 
             if (empty($filteredItems)) {
                 return back()->with('error', 'يرجى إضافة سطر تفصيلي واحد على الأقل مع تحديد المستفيد والمبلغ.')->withInput();
             }
 
-            $detailSum = (float)collect($filteredItems)->sum('amount');
-            $masterAmount = (float)$request->amount;
+            $detailSum = (float) collect($filteredItems)->sum('amount');
+            $masterAmount = (float) $request->amount;
 
             // التحقق من تطابق إجمالي الماستر مع مجموع الديتيل
             if (abs($masterAmount - $detailSum) > 0.01) {
-                return back()->with('error', "خطأ في المطابقة: المبلغ الإجمالي في الماستر (" . number_format($masterAmount, 2) . ") لا يطابق مجموع أسطر الديتيل (" . number_format($detailSum, 2) . "). الفارق: (" . number_format(abs($masterAmount - $detailSum), 2) . "). يجب أن يتطابقا تماماً!")->withInput();
+                return back()->with('error', 'خطأ في المطابقة: المبلغ الإجمالي في الماستر ('.number_format($masterAmount, 2).') لا يطابق مجموع أسطر الديتيل ('.number_format($detailSum, 2).'). الفارق: ('.number_format(abs($masterAmount - $detailSum), 2).'). يجب أن يتطابقا تماماً!')->withInput();
             }
 
             if ($request->filled('cash_or_bank_account_id')) {
                 $cashBox = FinancialAccount::findOrFail($request->cash_or_bank_account_id);
             } else {
-                $cashBox = FinancialAccount::paymentAllowed()->first() 
+                $cashBox = FinancialAccount::paymentAllowed()->first()
                     ?? FinancialAccount::where('account_type', 'cash_box')->first();
             }
 
+            // [يمن سوفت ERP] التحقق من الفترة المحاسبية المفتوحة ومنع السحب على المكشوف
+            $strictPeriod = DB::table('site_settings')->where('key', 'accounting.strict_period_lock')->value('value');
+            if ($strictPeriod === '1' && ! AccountingPeriod::isDateAllowed(now())) {
+                return back()->with('error', 'فترة الصرف المحاسبية مقفلة أو موقوفة وفق معايير يمن سوفت ERP. لا يمكن إضافة سندات جديدة.')->withInput();
+            }
+
+            $preventOverdraft = DB::table('site_settings')->where('key', 'accounting.prevent_overdraft')->value('value');
+            if ($preventOverdraft === '1' && $cashBox && (float) $cashBox->current_balance < $masterAmount) {
+                return back()->with('error', 'خطأ في الصرف وفق نظام يمن سوفت ERP: رصيد الصندوق الحالي ('.number_format($cashBox->current_balance, 2).') غير كافٍ لصرف مبلغ ('.number_format($masterAmount, 2).'). خيار منع السحب على المكشوف مفعّل.')->withInput();
+            }
+
             $count = Voucher::count() + 1;
-            $voucherNo = 'PAY-' . date('Y') . '-' . str_pad($count, 5, '0', STR_PAD_LEFT);
-            $amountInWords = \App\Helpers\ArabicCurrencyHelper::tafqeet($masterAmount, $request->currency);
+            $voucherNo = 'PAY-'.date('Y').'-'.str_pad($count, 5, '0', STR_PAD_LEFT);
+            $amountInWords = ArabicCurrencyHelper::tafqeet($masterAmount, $request->currency);
 
             $firstTeacher = User::with('financialAccount')->find($filteredItems[0]['teacher_id']);
             $firstAccount = $firstTeacher?->financialAccount ?? FinancialAccount::create([
                 'user_id' => $firstTeacher->id,
-                'account_code' => '22' . str_pad($firstTeacher->id, 4, '0', STR_PAD_LEFT),
-                'account_name' => 'حساب المستفيد: ' . $firstTeacher->name,
+                'account_code' => '22'.str_pad($firstTeacher->id, 4, '0', STR_PAD_LEFT),
+                'account_name' => 'حساب المستفيد: '.$firstTeacher->name,
                 'account_type' => 'teacher',
                 'currency' => $request->currency,
                 'opening_balance' => 0.00,
@@ -423,8 +443,8 @@ class AccountingController extends Controller
                 $tUser = User::with('financialAccount')->find($it['teacher_id']);
                 $tAccount = $tUser?->financialAccount ?? FinancialAccount::create([
                     'user_id' => $tUser->id,
-                    'account_code' => '22' . str_pad($tUser->id, 4, '0', STR_PAD_LEFT),
-                    'account_name' => 'حساب المستفيد: ' . $tUser->name,
+                    'account_code' => '22'.str_pad($tUser->id, 4, '0', STR_PAD_LEFT),
+                    'account_name' => 'حساب المستفيد: '.$tUser->name,
                     'account_type' => 'teacher',
                     'currency' => $request->currency,
                     'opening_balance' => 0.00,
@@ -433,11 +453,11 @@ class AccountingController extends Controller
 
                 $tAccount->decrement('current_balance', $it['amount']);
 
-                \App\Models\VoucherItem::create([
+                VoucherItem::create([
                     'voucher_id' => $voucher->id,
                     'account_id' => $tAccount->id,
                     'amount' => $it['amount'],
-                    'statement' => !empty($it['statement']) ? $it['statement'] : $request->statement,
+                    'statement' => ! empty($it['statement']) ? $it['statement'] : $request->statement,
                 ]);
             }
 
@@ -447,16 +467,16 @@ class AccountingController extends Controller
             }
 
             // توليد قيد اليومية العامة الآلي المزدوج
-            \App\Services\GeneralLedgerService::recordVoucherEntry($voucher);
+            GeneralLedgerService::recordVoucherEntry($voucher);
 
             SystemAuditLog::record(
                 'voucher.payment_batch_create',
-                "إصدار سند صرف جماعي مركب رقم ({$voucherNo}) بمبلغ إجمالي {$masterAmount} {$request->currency} لعدد (" . count($filteredItems) . ") مستفيدين",
+                "إصدار سند صرف جماعي مركب رقم ({$voucherNo}) بمبلغ إجمالي {$masterAmount} {$request->currency} لعدد (".count($filteredItems).') مستفيدين',
                 $voucher,
                 ['master_amount' => $masterAmount, 'currency' => $request->currency, 'items_count' => count($filteredItems)]
             );
 
-            return back()->with('success', "تم إصدار سند الصرف الجماعي رقم ({$voucherNo}) بمبلغ إجمالي (" . number_format($masterAmount, 2) . " {$request->currency}) وخصمه من الصندوق بنجاح 💸");
+            return back()->with('success', "تم إصدار سند الصرف الجماعي رقم ({$voucherNo}) بمبلغ إجمالي (".number_format($masterAmount, 2)." {$request->currency}) وخصمه من الصندوق بنجاح 💸");
         }
 
         // 2.2 السند الفردي العادي (Single Mode)
@@ -473,8 +493,8 @@ class AccountingController extends Controller
         $teacher = User::with('financialAccount')->findOrFail($request->teacher_id);
         $teacherAccount = $teacher->financialAccount ?? FinancialAccount::create([
             'user_id' => $teacher->id,
-            'account_code' => '22' . str_pad($teacher->id, 4, '0', STR_PAD_LEFT),
-            'account_name' => 'حساب المعلم: ' . $teacher->name,
+            'account_code' => '22'.str_pad($teacher->id, 4, '0', STR_PAD_LEFT),
+            'account_name' => 'حساب المعلم: '.$teacher->name,
             'account_type' => 'teacher',
             'currency' => $request->currency,
             'opening_balance' => 0.00,
@@ -485,13 +505,13 @@ class AccountingController extends Controller
         if ($request->filled('cash_or_bank_account_id')) {
             $cashBox = FinancialAccount::findOrFail($request->cash_or_bank_account_id);
         } else {
-            $cashBox = FinancialAccount::paymentAllowed()->first() 
+            $cashBox = FinancialAccount::paymentAllowed()->first()
                 ?? FinancialAccount::where('account_type', 'cash_box')->first();
         }
 
         $count = Voucher::count() + 1;
-        $voucherNo = 'PAY-' . date('Y') . '-' . str_pad($count, 5, '0', STR_PAD_LEFT);
-        $amountInWords = \App\Helpers\ArabicCurrencyHelper::tafqeet((float)$request->amount, $request->currency);
+        $voucherNo = 'PAY-'.date('Y').'-'.str_pad($count, 5, '0', STR_PAD_LEFT);
+        $amountInWords = ArabicCurrencyHelper::tafqeet((float) $request->amount, $request->currency);
 
         $voucher = Voucher::create([
             'voucher_no' => $voucherNo,
@@ -510,7 +530,7 @@ class AccountingController extends Controller
             'created_by' => Auth::id() ?? 1,
         ]);
 
-        \App\Models\VoucherItem::create([
+        VoucherItem::create([
             'voucher_id' => $voucher->id,
             'account_id' => $teacherAccount->id,
             'amount' => $request->amount,
@@ -526,14 +546,14 @@ class AccountingController extends Controller
         $teacherAccount->decrement('current_balance', $request->amount);
 
         // توليد قيد اليومية العامة الآلي المزدوج
-        \App\Services\GeneralLedgerService::recordVoucherEntry($voucher);
+        GeneralLedgerService::recordVoucherEntry($voucher);
 
-        $currencyArabic = \App\Helpers\ArabicCurrencyHelper::currencyName($request->currency);
+        $currencyArabic = ArabicCurrencyHelper::currencyName($request->currency);
         $formattedAmount = number_format($request->amount, 2);
 
         $voucherUrl = route('accounting.voucher.print', $voucher->id);
-        $messageBody = \App\Services\WhatsAppService::renderTemplate(
-            \App\Models\SiteSetting::get('wa_template_payment_voucher_body', "أستاذنا الفاضل {name}، تم صرف مستحقاتكم المالية بمبلغ {amount} بموجب سند الصرف رقم ({voucher_no}) في {school_name}.\n\n📄 رابط استعراض وطباعة سند الصرف:\n{link}\n\nشكراً لجهودكم وعطائكم المستمر."),
+        $messageBody = WhatsAppService::renderTemplate(
+            SiteSetting::get('wa_template_payment_voucher_body', "أستاذنا الفاضل {name}، تم صرف مستحقاتكم المالية بمبلغ {amount} بموجب سند الصرف رقم ({voucher_no}) في {school_name}.\n\n📄 رابط استعراض وطباعة سند الصرف:\n{link}\n\nشكراً لجهودكم وعطائكم المستمر."),
             [
                 '{name}' => $teacher->name,
                 '{amount}' => "{$formattedAmount} {$currencyArabic}",
@@ -542,7 +562,7 @@ class AccountingController extends Controller
             ]
         );
 
-        $sendResult = \App\Services\WhatsAppService::send(
+        $sendResult = WhatsAppService::send(
             $teacher->phone_whatsapp ?: '',
             $messageBody,
             $voucherUrl,
@@ -550,7 +570,7 @@ class AccountingController extends Controller
             'payment_voucher'
         );
 
-        if (!empty($sendResult['wa_url']) && ($sendResult['status'] ?? '') !== 'sent') {
+        if (! empty($sendResult['wa_url']) && ($sendResult['status'] ?? '') !== 'sent') {
             session()->flash('whatsapp_direct_url', $sendResult['wa_url']);
             session()->flash('whatsapp_recipient_name', $teacher->name);
             session()->flash('whatsapp_voucher_no', $voucherNo);
@@ -568,7 +588,7 @@ class AccountingController extends Controller
 
     public function updateVoucher(Request $request, $id)
     {
-        if (!Auth::user()->hasPermission('edit_voucher')) {
+        if (! Auth::user()->hasPermission('edit_voucher')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل السندات المالية.');
         }
 
@@ -582,12 +602,12 @@ class AccountingController extends Controller
             'payment_method' => 'required|string',
         ]);
 
-        $oldAmount = (float)$voucher->amount;
-        $newAmount = (float)$request->amount;
+        $oldAmount = (float) $voucher->amount;
+        $newAmount = (float) $request->amount;
         $diff = $newAmount - $oldAmount;
 
-        $oldCashBoxId = (int)$voucher->cash_or_bank_account_id;
-        $newCashBoxId = (int)$request->cash_or_bank_account_id;
+        $oldCashBoxId = (int) $voucher->cash_or_bank_account_id;
+        $newCashBoxId = (int) $request->cash_or_bank_account_id;
 
         $oldCashBox = FinancialAccount::find($oldCashBoxId);
         $newCashBox = FinancialAccount::find($newCashBoxId);
@@ -601,8 +621,12 @@ class AccountingController extends Controller
                     $oldCashBox->increment('current_balance', $diff);
                 }
             } else {
-                if ($oldCashBox) $oldCashBox->decrement('current_balance', $oldAmount);
-                if ($newCashBox) $newCashBox->increment('current_balance', $newAmount);
+                if ($oldCashBox) {
+                    $oldCashBox->decrement('current_balance', $oldAmount);
+                }
+                if ($newCashBox) {
+                    $newCashBox->increment('current_balance', $newAmount);
+                }
             }
 
             // تعديل حساب الطرف الثاني (الطالب)
@@ -617,8 +641,12 @@ class AccountingController extends Controller
                     $oldCashBox->decrement('current_balance', $diff);
                 }
             } else {
-                if ($oldCashBox) $oldCashBox->increment('current_balance', $oldAmount);
-                if ($newCashBox) $newCashBox->decrement('current_balance', $newAmount);
+                if ($oldCashBox) {
+                    $oldCashBox->increment('current_balance', $oldAmount);
+                }
+                if ($newCashBox) {
+                    $newCashBox->decrement('current_balance', $newAmount);
+                }
             }
 
             // تعديل حساب الطرف الثاني (المعلم)
@@ -635,7 +663,7 @@ class AccountingController extends Controller
             ]);
         }
 
-        $amountInWords = \App\Helpers\ArabicCurrencyHelper::tafqeet($newAmount, $voucher->currency);
+        $amountInWords = ArabicCurrencyHelper::tafqeet($newAmount, $voucher->currency);
 
         $voucher->update([
             'amount' => $newAmount,
@@ -657,20 +685,20 @@ class AccountingController extends Controller
             [
                 'old_values' => [
                     'رقم السند' => $voucher->voucher_no,
-                    'المبلغ قبل التعديل' => number_format($oldAmount, 2) . " {$voucher->currency}",
+                    'المبلغ قبل التعديل' => number_format($oldAmount, 2)." {$voucher->currency}",
                     'الصندوق / الحساب' => $oldBoxName,
                     'البيان' => $oldStatement,
                     'طريقة السداد' => $voucher->payment_method ?? 'نقداً',
                 ],
                 'new_values' => [
                     'رقم السند' => $voucher->voucher_no,
-                    'المبلغ بعد التعديل' => number_format($newAmount, 2) . " {$voucher->currency}",
+                    'المبلغ بعد التعديل' => number_format($newAmount, 2)." {$voucher->currency}",
                     'الصندوق / الحساب' => $newBoxName,
                     'البيان' => $request->statement,
                     'طريقة السداد' => $request->payment_method ?? 'نقداً',
                 ],
                 'diff' => [
-                    'فارق المبلغ' => ($diff > 0 ? '+' : '') . number_format($diff, 2) . " {$voucher->currency}",
+                    'فارق المبلغ' => ($diff > 0 ? '+' : '').number_format($diff, 2)." {$voucher->currency}",
                 ],
                 'old_amount' => $oldAmount,
                 'new_amount' => $newAmount,
@@ -684,7 +712,7 @@ class AccountingController extends Controller
 
     public function destroyVoucher($id)
     {
-        if (!Auth::user()->hasPermission('delete_voucher')) {
+        if (! Auth::user()->hasPermission('delete_voucher')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية حذف أو إلغاء السندات المالية.');
         }
 
@@ -734,9 +762,9 @@ class AccountingController extends Controller
         }
 
         $voucherNo = $voucher->voucher_no;
-        $voucherAmount = (float)$voucher->amount;
+        $voucherAmount = (float) $voucher->amount;
         $voucherCurrency = $voucher->currency;
-        $voucherTypeAr = match($voucher->voucher_type) {
+        $voucherTypeAr = match ($voucher->voucher_type) {
             'receipt' => 'سند قبض مالي',
             'payment' => 'سند صرف مالي',
             default => 'سند قيد يومية',
@@ -746,13 +774,13 @@ class AccountingController extends Controller
 
         SystemAuditLog::record(
             'voucher.delete',
-            "إلغاء وحذف {$voucherTypeAr} رقم ({$voucherNo}) بمبلغ " . number_format($voucherAmount, 2) . " {$voucherCurrency} وعكس أثره المالي على الحسابات.",
+            "إلغاء وحذف {$voucherTypeAr} رقم ({$voucherNo}) بمبلغ ".number_format($voucherAmount, 2)." {$voucherCurrency} وعكس أثره المالي على الحسابات.",
             null,
             [
                 'old_values' => [
                     'رقم السند المحذوف' => $voucherNo,
                     'نوع السند' => $voucherTypeAr,
-                    'المبلغ المحذوف' => number_format($voucherAmount, 2) . " {$voucherCurrency}",
+                    'المبلغ المحذوف' => number_format($voucherAmount, 2)." {$voucherCurrency}",
                     'الحساب / المستفيد' => $beneficiary,
                     'الصندوق المتأثر' => $cashBoxName,
                     'تاريخ السند' => $voucher->voucher_date,
@@ -776,6 +804,7 @@ class AccountingController extends Controller
     public function printVoucher($id)
     {
         $voucher = Voucher::with(['account.user', 'creator', 'items.account.user', 'cashOrBankAccount'])->findOrFail($id);
+
         return view('accounting.print_voucher', compact('voucher'));
     }
 
@@ -785,7 +814,7 @@ class AccountingController extends Controller
     public function pricingAndServices()
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && !$user->hasPermission('curriculum.pricing') && !$user->hasPermission('finance.view')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('curriculum.pricing') && ! $user->hasPermission('finance.view')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية استعراض شاشة التسعير المالي.');
         }
 
@@ -800,7 +829,7 @@ class AccountingController extends Controller
 
         // ضمان وجود عقد مالي لكل معلم
         foreach ($teachers as $t) {
-            if (!$t->teacherContract) {
+            if (! $t->teacherContract) {
                 TeacherContract::create([
                     'teacher_id' => $t->id,
                     'contract_type' => 'per_course',
@@ -825,7 +854,7 @@ class AccountingController extends Controller
     public function updateCoursePricing(Request $request, $id)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && !$user->hasPermission('curriculum.pricing') && !$user->hasPermission('manage_courses') && !$user->hasPermission('finance.voucher_edit')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('curriculum.pricing') && ! $user->hasPermission('manage_courses') && ! $user->hasPermission('finance.voucher_edit')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل بيانات وتسعيرة الدورات.');
         }
 
@@ -851,16 +880,16 @@ class AccountingController extends Controller
             ? trim($request->name)
             : (($nameAr && $nameEn) ? "{$nameEn} ({$nameAr})" : ($nameAr ?: ($nameEn ?: $course->name)));
 
-        $hours = (int)$validated['hours'];
-        $teacherFee = (float)$validated['teacher_fee'];
-        
-        $teacherHourlyRate = $request->filled('teacher_hourly_rate') && (float)$request->teacher_hourly_rate > 0
-            ? (float)$request->teacher_hourly_rate
+        $hours = (int) $validated['hours'];
+        $teacherFee = (float) $validated['teacher_fee'];
+
+        $teacherHourlyRate = $request->filled('teacher_hourly_rate') && (float) $request->teacher_hourly_rate > 0
+            ? (float) $request->teacher_hourly_rate
             : ($hours > 0 ? round($teacherFee / $hours, 2) : 0.00);
 
-        $oldFee = (float)$course->fee_amount;
-        $oldTeacherFee = (float)$course->teacher_fee;
-        $oldHours = (int)$course->hours;
+        $oldFee = (float) $course->fee_amount;
+        $oldTeacherFee = (float) $course->teacher_fee;
+        $oldHours = (int) $course->hours;
         $oldCurrency = $course->currency;
         $oldCourseName = $course->name;
 
@@ -875,36 +904,36 @@ class AccountingController extends Controller
             'teacher_hourly_rate' => $teacherHourlyRate,
             'currency' => $validated['currency'],
             'description' => $validated['description'] ?? $course->description,
-            'is_active' => $request->has('is_active') ? (bool)$request->is_active : true,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
             'updated_by' => Auth::id(),
         ]);
 
-        $feeDiff = (float)$validated['fee_amount'] - $oldFee;
+        $feeDiff = (float) $validated['fee_amount'] - $oldFee;
         $teacherFeeDiff = $teacherFee - $oldTeacherFee;
 
         SystemAuditLog::record(
             'course.pricing_update',
-            "تحديث محتوى وتسعيرة الدورة [{$course->name}]: رسوم الطالب (" . number_format($oldFee, 2) . " -> " . number_format((float)$validated['fee_amount'], 2) . " {$validated['currency']})، أجر المعلم (" . number_format($oldTeacherFee, 2) . " -> " . number_format($teacherFee, 2) . " {$validated['currency']})",
+            "تحديث محتوى وتسعيرة الدورة [{$course->name}]: رسوم الطالب (".number_format($oldFee, 2).' -> '.number_format((float) $validated['fee_amount'], 2)." {$validated['currency']})، أجر المعلم (".number_format($oldTeacherFee, 2).' -> '.number_format($teacherFee, 2)." {$validated['currency']})",
             $course,
             [
                 'old_values' => [
                     'اسم الدورة' => $oldCourseName,
-                    'رسوم الطالب السابقة' => number_format($oldFee, 2) . " {$oldCurrency}",
-                    'أجر المعلم السابق' => number_format($oldTeacherFee, 2) . " {$oldCurrency}",
+                    'رسوم الطالب السابقة' => number_format($oldFee, 2)." {$oldCurrency}",
+                    'أجر المعلم السابق' => number_format($oldTeacherFee, 2)." {$oldCurrency}",
                     'عدد الساعات السابق' => "{$oldHours} ساعة",
                 ],
                 'new_values' => [
                     'اسم الدورة' => $fullName,
-                    'رسوم الطالب الجديدة' => number_format((float)$validated['fee_amount'], 2) . " {$validated['currency']}",
-                    'أجر المعلم الجديد' => number_format($teacherFee, 2) . " {$validated['currency']}",
+                    'رسوم الطالب الجديدة' => number_format((float) $validated['fee_amount'], 2)." {$validated['currency']}",
+                    'أجر المعلم الجديد' => number_format($teacherFee, 2)." {$validated['currency']}",
                     'عدد الساعات الجديد' => "{$hours} ساعة",
                 ],
                 'diff' => [
-                    'تغير رسم الطالب' => ($feeDiff > 0 ? '+' : '') . number_format($feeDiff, 2) . " {$validated['currency']}",
-                    'تغير أجر المعلم' => ($teacherFeeDiff > 0 ? '+' : '') . number_format($teacherFeeDiff, 2) . " {$validated['currency']}",
+                    'تغير رسم الطالب' => ($feeDiff > 0 ? '+' : '').number_format($feeDiff, 2)." {$validated['currency']}",
+                    'تغير أجر المعلم' => ($teacherFeeDiff > 0 ? '+' : '').number_format($teacherFeeDiff, 2)." {$validated['currency']}",
                 ],
                 'old_fee' => $oldFee,
-                'new_fee' => (float)$validated['fee_amount'],
+                'new_fee' => (float) $validated['fee_amount'],
             ]
         );
 
@@ -917,7 +946,7 @@ class AccountingController extends Controller
     public function storeCourseFromPricing(Request $request)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && !$user->hasPermission('curriculum.pricing') && !$user->hasPermission('manage_courses')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('curriculum.pricing') && ! $user->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة الدورات.');
         }
 
@@ -939,10 +968,10 @@ class AccountingController extends Controller
 
         $nextOrder = (Course::where('level_id', $validated['level_id'])->max('course_order') ?? 0) + 1;
 
-        $hours = (int)$validated['hours'];
-        $teacherFee = (float)$validated['teacher_fee'];
-        $hourly = $request->filled('teacher_hourly_rate') && (float)$validated['teacher_hourly_rate'] > 0
-            ? (float)$validated['teacher_hourly_rate']
+        $hours = (int) $validated['hours'];
+        $teacherFee = (float) $validated['teacher_fee'];
+        $hourly = $request->filled('teacher_hourly_rate') && (float) $validated['teacher_hourly_rate'] > 0
+            ? (float) $validated['teacher_hourly_rate']
             : ($hours > 0 ? round($teacherFee / $hours, 2) : 0.00);
 
         $course = Course::create([
@@ -977,7 +1006,7 @@ class AccountingController extends Controller
      */
     public function storeEducationalService(Request $request)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('finance.voucher_edit')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('finance.voucher_edit')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة خدمات تعليمية.');
         }
 
@@ -991,7 +1020,7 @@ class AccountingController extends Controller
         ]);
 
         $count = EducationalService::count() + 1;
-        $code = 'SRV-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $code = 'SRV-'.str_pad($count, 3, '0', STR_PAD_LEFT);
 
         $service = EducationalService::create([
             'service_code' => $code,
@@ -1020,7 +1049,7 @@ class AccountingController extends Controller
      */
     public function updateEducationalService(Request $request, $id)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('finance.voucher_edit')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('finance.voucher_edit')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل الخدمات.');
         }
 
@@ -1043,7 +1072,7 @@ class AccountingController extends Controller
             'currency' => $validated['currency'],
             'unit_type' => $validated['unit_type'],
             'description' => $validated['description'] ?? null,
-            'is_active' => $request->has('is_active') ? (bool)$request->is_active : true,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
             'updated_by' => Auth::id(),
         ]);
 
@@ -1055,7 +1084,7 @@ class AccountingController extends Controller
      */
     public function destroyEducationalService($id)
     {
-        if (!Auth::user()->isAdmin()) {
+        if (! Auth::user()->isAdmin()) {
             return back()->with('error', 'عذراً، حذف الخدمات مخصص للإدارة العليا فقط.');
         }
 
@@ -1063,6 +1092,7 @@ class AccountingController extends Controller
 
         if ($service->entitlements_count > 0) {
             $service->update(['is_active' => false]);
+
             return back()->with('warning', "تم تعطيل الخدمة [{$service->name}] بدلاً من حذفها لوجود مستحقات مرتبطة بها.");
         }
 
@@ -1077,7 +1107,7 @@ class AccountingController extends Controller
      */
     public function updateTeacherContract(Request $request, $teacherId)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('finance.voucher_edit')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('finance.voucher_edit')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل عقود المعلمين.');
         }
 
@@ -1127,7 +1157,7 @@ class AccountingController extends Controller
      */
     public function storeTeacherEntitlement(Request $request)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('finance.voucher_edit') && !Auth::user()->hasPermission('create_payment_voucher')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('finance.voucher_edit') && ! Auth::user()->hasPermission('create_payment_voucher')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إثبات مستحقات المعلمين.');
         }
 
@@ -1150,8 +1180,8 @@ class AccountingController extends Controller
         // التأكد من وجود حساب مالي للمعلم
         $teacherAccount = $teacher->financialAccount ?? FinancialAccount::create([
             'user_id' => $teacher->id,
-            'account_code' => '22' . str_pad($teacher->id, 4, '0', STR_PAD_LEFT),
-            'account_name' => 'حساب المعلم: ' . $teacher->name,
+            'account_code' => '22'.str_pad($teacher->id, 4, '0', STR_PAD_LEFT),
+            'account_name' => 'حساب المعلم: '.$teacher->name,
             'account_type' => 'teacher',
             'currency' => $validated['currency'],
             'opening_balance' => 0.00,
@@ -1160,12 +1190,12 @@ class AccountingController extends Controller
 
         // توليد رقم قيد متسلسل آلي
         $count = TeacherEntitlement::count() + 1;
-        $entitlementNo = 'ENT-' . date('Y') . '-' . str_pad($count, 5, '0', STR_PAD_LEFT);
+        $entitlementNo = 'ENT-'.date('Y').'-'.str_pad($count, 5, '0', STR_PAD_LEFT);
 
         // صياغة العنوان التلقائي الذكي
         $title = match ($validated['entitlement_type']) {
             'course_teaching' => 'أجر تدريس مجموعة / دورة',
-            'fixed_salary' => 'راتب شهري ثابت (' . ($validated['period'] ?: date('m/Y')) . ')',
+            'fixed_salary' => 'راتب شهري ثابت ('.($validated['period'] ?: date('m/Y')).')',
             'exam_prep' => 'أتعاب إعداد اختبار وبنك أسئلة',
             'grading' => 'أتعاب تصحيح ومراجعة كشوفات درجات',
             'supervision' => 'أتعاب إشراف أكاديمي',
@@ -1175,18 +1205,18 @@ class AccountingController extends Controller
             default => 'إثبات مستحقات مالية معتمدة',
         };
 
-        if (!empty($validated['study_group_id'])) {
+        if (! empty($validated['study_group_id'])) {
             $group = StudyGroup::find($validated['study_group_id']);
             if ($group) {
-                $title .= ' - مجموعة: ' . $group->name;
+                $title .= ' - مجموعة: '.$group->name;
                 if (empty($validated['course_id'])) {
                     $validated['course_id'] = $group->course_id;
                 }
             }
-        } elseif (!empty($validated['course_id'])) {
+        } elseif (! empty($validated['course_id'])) {
             $course = Course::find($validated['course_id']);
             if ($course) {
-                $title .= ' - دورة: ' . $course->name;
+                $title .= ' - دورة: '.$course->name;
             }
         }
 
@@ -1220,12 +1250,12 @@ class AccountingController extends Controller
             ['amount' => $validated['amount'], 'currency' => $validated['currency'], 'teacher_id' => $teacher->id]
         );
 
-        $currencyArabic = \App\Helpers\ArabicCurrencyHelper::currencyName($validated['currency']);
+        $currencyArabic = ArabicCurrencyHelper::currencyName($validated['currency']);
         $formattedAmount = number_format($validated['amount'], 2);
 
         $entitlementUrl = route('accounting.teacher_entitlement.print', $entitlement->id);
-        $messageBody = \App\Services\WhatsAppService::renderTemplate(
-            \App\Models\SiteSetting::get('wa_template_entitlement_body', "أستاذنا {name}، تم قيد مستحقات مالية بحسابكم برقم ({voucher_no}) بمبلغ {amount} عن: {statement} في {school_name}.\n\n📄 رابط كشف الحساب والمستند:\n{link}"),
+        $messageBody = WhatsAppService::renderTemplate(
+            SiteSetting::get('wa_template_entitlement_body', "أستاذنا {name}، تم قيد مستحقات مالية بحسابكم برقم ({voucher_no}) بمبلغ {amount} عن: {statement} في {school_name}.\n\n📄 رابط كشف الحساب والمستند:\n{link}"),
             [
                 '{name}' => $teacher->name,
                 '{amount}' => "{$formattedAmount} {$currencyArabic}",
@@ -1235,7 +1265,7 @@ class AccountingController extends Controller
             ]
         );
 
-        $sendResult = \App\Services\WhatsAppService::send(
+        $sendResult = WhatsAppService::send(
             $teacher->phone_whatsapp ?: '',
             $messageBody,
             $entitlementUrl,
@@ -1243,7 +1273,7 @@ class AccountingController extends Controller
             'entitlement'
         );
 
-        if (!empty($sendResult['wa_url']) && ($sendResult['status'] ?? '') !== 'sent') {
+        if (! empty($sendResult['wa_url']) && ($sendResult['status'] ?? '') !== 'sent') {
             session()->flash('whatsapp_direct_url', $sendResult['wa_url']);
             session()->flash('whatsapp_recipient_name', $teacher->name);
             session()->flash('whatsapp_voucher_no', $entitlementNo);
@@ -1257,7 +1287,7 @@ class AccountingController extends Controller
      */
     public function updateTeacherEntitlement(Request $request, $id)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('finance.voucher_edit')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('finance.voucher_edit')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل مستحقات المعلمين.');
         }
 
@@ -1272,8 +1302,8 @@ class AccountingController extends Controller
         ]);
 
         $teacher = User::with('financialAccount')->findOrFail($entitlement->teacher_id);
-        $oldAmount = (float)$entitlement->amount;
-        $newAmount = (float)$request->amount;
+        $oldAmount = (float) $entitlement->amount;
+        $newAmount = (float) $request->amount;
         $diff = $newAmount - $oldAmount;
 
         // تعديل رصيد استحقاق المعلم بالفرق
@@ -1304,7 +1334,7 @@ class AccountingController extends Controller
      */
     public function destroyTeacherEntitlement($id)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('finance.voucher_edit')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('finance.voucher_edit')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إلغاء مستحقات المعلمين.');
         }
 
@@ -1341,7 +1371,7 @@ class AccountingController extends Controller
             'account.user',
             'cashOrBankAccount',
             'creator',
-            'items.account.user'
+            'items.account.user',
         ])->findOrFail($id);
 
         // جلب قيد اليومية المرتبط أو إنشاؤه فورياً في حال كان السند قديماً قبل تفعيل القيود الآلية
@@ -1350,7 +1380,7 @@ class AccountingController extends Controller
             ->with(['lines.account', 'lines.costCenter', 'creator', 'poster'])
             ->first();
 
-        if (!$entry) {
+        if (! $entry) {
             $entry = GeneralLedgerService::recordVoucherEntry($voucher);
             $entry->load(['lines.account', 'lines.costCenter', 'creator', 'poster']);
         }
@@ -1432,7 +1462,7 @@ class AccountingController extends Controller
         $boxAccount = $voucher->cashOrBankAccount;
         $partyAccount = $voucher->account;
         $partyName = $voucher->is_compound
-            ? 'سند مركب (' . $voucher->items->count() . ' بنود)'
+            ? 'سند مركب ('.$voucher->items->count().' بنود)'
             : ($partyAccount?->user?->name ?? $partyAccount?->account_name ?? 'حساب غير محدد');
 
         return response()->json([
@@ -1475,16 +1505,15 @@ class AccountingController extends Controller
             'impact_summary' => [
                 'type' => $voucher->voucher_type,
                 'box_impact' => $voucher->voucher_type === 'receipt'
-                    ? "زيادة سيولة الصندوق بمبلغ + " . number_format($voucher->amount, 2) . " " . $voucher->currency_symbol
-                    : "صرف ونقص سيولة الصندوق بمبلغ - " . number_format($voucher->amount, 2) . " " . $voucher->currency_symbol,
+                    ? 'زيادة سيولة الصندوق بمبلغ + '.number_format($voucher->amount, 2).' '.$voucher->currency_symbol
+                    : 'صرف ونقص سيولة الصندوق بمبلغ - '.number_format($voucher->amount, 2).' '.$voucher->currency_symbol,
                 'party_impact' => $voucher->voucher_type === 'receipt'
-                    ? "تخفيض مديونية العميل / الطالب بمبلغ " . number_format($voucher->amount, 2) . " " . $voucher->currency_symbol
-                    : "سداد وتسوية مستحقات بمبلغ " . number_format($voucher->amount, 2) . " " . $voucher->currency_symbol,
+                    ? 'تخفيض مديونية العميل / الطالب بمبلغ '.number_format($voucher->amount, 2).' '.$voucher->currency_symbol
+                    : 'سداد وتسوية مستحقات بمبلغ '.number_format($voucher->amount, 2).' '.$voucher->currency_symbol,
                 'accounting_rule' => $voucher->voucher_type === 'receipt'
-                    ? "الطرف المدين (الصندوق المستلم) = الطرف الدائن (الحساب المقابل/العميل)"
-                    : "الطرف المدين (المستفيد/المصروف) = الطرف الدائن (الصندوق الصارف)",
+                    ? 'الطرف المدين (الصندوق المستلم) = الطرف الدائن (الحساب المقابل/العميل)'
+                    : 'الطرف المدين (المستفيد/المصروف) = الطرف الدائن (الصندوق الصارف)',
             ],
         ]);
     }
 }
-

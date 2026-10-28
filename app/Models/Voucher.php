@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class Voucher extends Model
@@ -20,8 +21,26 @@ class Voucher extends Model
         'amount_in_words',
         'payment_method',
         'statement',
+        'cheque_no',
+        'cheque_bank_name',
+        'cheque_due_date',
+        'is_posted',
+        'is_suspended',
+        'posted_at',
+        'posted_by',
         'pdf_path',
         'created_by',
+    ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'exchange_rate' => 'decimal:4',
+        'amount_local' => 'decimal:2',
+        'is_compound' => 'boolean',
+        'is_posted' => 'boolean',
+        'is_suspended' => 'boolean',
+        'cheque_due_date' => 'date',
+        'posted_at' => 'datetime',
     ];
 
     public function items()
@@ -51,16 +70,16 @@ class Voucher extends Model
 
     public function getCurrencyNameAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencyName($this->currency);
+        return ArabicCurrencyHelper::currencyName($this->currency);
     }
 
     public function getCurrencySymbolAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencySymbol($this->currency);
+        return ArabicCurrencyHelper::currencySymbol($this->currency);
     }
 
     public function getFormattedAmountAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->amount, $this->currency);
+        return ArabicCurrencyHelper::format($this->amount, $this->currency);
     }
 }

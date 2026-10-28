@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class FinancialAccount extends Model
@@ -26,6 +27,9 @@ class FinancialAccount extends Model
         'account_number',
         'opening_balance',
         'current_balance',
+        'min_balance',
+        'max_balance',
+        'report_type',
         'description',
         'is_active',
     ];
@@ -36,6 +40,8 @@ class FinancialAccount extends Model
         'allow_cost_center' => 'boolean',
         'opening_balance' => 'decimal:2',
         'current_balance' => 'decimal:2',
+        'min_balance' => 'decimal:2',
+        'max_balance' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
@@ -51,16 +57,24 @@ class FinancialAccount extends Model
             if (empty($account->parent_id) && $account->level != 1) {
                 if ($account->account_type === 'student') {
                     $parent = static::where('account_code', '1121')->first();
-                    if ($parent) $account->parent_id = $parent->id;
+                    if ($parent) {
+                        $account->parent_id = $parent->id;
+                    }
                 } elseif ($account->account_type === 'teacher') {
                     $parent = static::where('account_code', '2121')->first();
-                    if ($parent) $account->parent_id = $parent->id;
+                    if ($parent) {
+                        $account->parent_id = $parent->id;
+                    }
                 } elseif ($account->account_type === 'cash_box') {
                     $parent = static::where('account_code', '1111')->first();
-                    if ($parent) $account->parent_id = $parent->id;
+                    if ($parent) {
+                        $account->parent_id = $parent->id;
+                    }
                 } elseif ($account->account_type === 'bank') {
                     $parent = static::where('account_code', '1112')->first();
-                    if ($parent) $account->parent_id = $parent->id;
+                    if ($parent) {
+                        $account->parent_id = $parent->id;
+                    }
                 }
             }
 
@@ -85,7 +99,7 @@ class FinancialAccount extends Model
 
     public function isLeaf(): bool
     {
-        return $this->level === 5 && !$this->is_parent;
+        return $this->level === 5 && ! $this->is_parent;
     }
 
     public function scopePostable($query)
@@ -132,69 +146,70 @@ class FinancialAccount extends Model
     public function scopeReceiptAllowed($query)
     {
         return $query->whereIn('account_type', ['cash_box', 'bank'])
-                     ->whereIn('box_nature', ['both', 'receipt', 'pos'])
-                     ->where('is_active', true);
+            ->whereIn('box_nature', ['both', 'receipt', 'pos'])
+            ->where('is_active', true);
     }
 
     public function scopePaymentAllowed($query)
     {
         return $query->whereIn('account_type', ['cash_box', 'bank'])
-                     ->whereIn('box_nature', ['both', 'payment'])
-                     ->where('is_active', true);
+            ->whereIn('box_nature', ['both', 'payment'])
+            ->where('is_active', true);
     }
 
     // مسميات طبيعة وتصنيف الصندوق بالعربية
     public function getBoxNatureLabelAttribute(): string
     {
-        return match($this->box_nature) {
+        return match ($this->box_nature) {
             'receipt' => 'قبض فقط (تحصيل إيراد)',
             'payment' => 'صرف فقط (مصروفات وعُهد)',
-            'pos'     => 'نقطة بيع (كاشير استقبال)',
-            default   => 'قبض وصرف (عام)',
+            'pos' => 'نقطة بيع (كاشير استقبال)',
+            default => 'قبض وصرف (عام)',
         };
     }
 
     public function getBoxCategoryLabelAttribute(): string
     {
-        return match($this->box_category) {
-            'main_box'        => 'صندوق رئيسي',
-            'sub_box'         => 'صندوق فرعي',
+        return match ($this->box_category) {
+            'main_box' => 'صندوق رئيسي',
+            'sub_box' => 'صندوق فرعي',
             'general_revenue' => 'صندوق إيراد عام',
-            'pos'             => 'نقطة بيع / كاشير',
-            'bank'            => 'حساب بنكي',
+            'pos' => 'نقطة بيع / كاشير',
+            'bank' => 'حساب بنكي',
             'electronic_wallet' => 'محفظة إلكترونية',
-            default           => 'صندوق نقدي',
+            default => 'صندوق نقدي',
         };
     }
 
     public function getCurrencyNameAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencyName($this->currency);
+        return ArabicCurrencyHelper::currencyName($this->currency);
     }
 
     public function getCurrencySymbolAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencySymbol($this->currency);
+        return ArabicCurrencyHelper::currencySymbol($this->currency);
     }
 
     public function getFormattedBalanceAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->current_balance, $this->currency);
+        return ArabicCurrencyHelper::format($this->current_balance, $this->currency);
     }
 
     // احتساب إجمالي الرصيد التراكمي (يشمل أرصدة الصناديق الفرعية إذا كان صندوقاً رئيسياً)
     public function getTotalBalanceAttribute(): float
     {
-        $sum = (float)$this->current_balance;
+        $sum = (float) $this->current_balance;
         if ($this->children()->exists()) {
-            $sum += (float)$this->children()->sum('current_balance');
+            $sum += (float) $this->children()->sum('current_balance');
         }
+
         return $sum;
     }
 
     public function getFormattedTotalBalanceAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->total_balance, $this->currency);
+        return ArabicCurrencyHelper::format($this->total_balance, $this->currency);
     }
 
     public function journalLines()
@@ -204,13 +219,13 @@ class FinancialAccount extends Model
 
     public function getAccountCategoryLabelAttribute(): string
     {
-        return match($this->account_category) {
-            'asset'     => 'الأصول (Assets)',
+        return match ($this->account_category) {
+            'asset' => 'الأصول (Assets)',
             'liability' => 'الخصوم (Liabilities)',
-            'equity'    => 'حقوق الملكية (Equity)',
-            'revenue'   => 'الإيرادات (Revenues)',
-            'expense'   => 'المصروفات (Expenses)',
-            default     => 'أصول',
+            'equity' => 'حقوق الملكية (Equity)',
+            'revenue' => 'الإيرادات (Revenues)',
+            'expense' => 'المصروفات (Expenses)',
+            default => 'أصول',
         };
     }
 
@@ -226,35 +241,35 @@ class FinancialAccount extends Model
 
     public function getAnalyticalTypeLabelAttribute(): string
     {
-        return match($this->analytical_type) {
-            'student'   => 'طالب (دارس)',
-            'teacher'   => 'مدرس / مدرب',
-            'employee'  => 'موظف / إداري',
-            'parent'    => 'ولي أمر',
-            'cash_box'  => 'صندوق نقدي',
-            'bank'      => 'بنك / مصرف',
-            'customer'  => 'عميل / جهة',
-            'supplier'  => 'مورد / التزامات',
-            'revenue'   => 'إيراد نشاط',
-            'expense'   => 'مصروف تشغيلي',
-            default     => 'عام / غير محدد',
+        return match ($this->analytical_type) {
+            'student' => 'طالب (دارس)',
+            'teacher' => 'مدرس / مدرب',
+            'employee' => 'موظف / إداري',
+            'parent' => 'ولي أمر',
+            'cash_box' => 'صندوق نقدي',
+            'bank' => 'بنك / مصرف',
+            'customer' => 'عميل / جهة',
+            'supplier' => 'مورد / التزامات',
+            'revenue' => 'إيراد نشاط',
+            'expense' => 'مصروف تشغيلي',
+            default => 'عام / غير محدد',
         };
     }
 
     public function getAnalyticalTypeBadgeAttribute(): string
     {
-        return match($this->analytical_type) {
-            'student'   => 'bg-cyan-50 text-cyan-800 border-cyan-300',
-            'teacher'   => 'bg-indigo-50 text-indigo-800 border-indigo-300',
-            'employee'  => 'bg-violet-50 text-violet-800 border-violet-300',
-            'parent'    => 'bg-teal-50 text-teal-800 border-teal-300',
-            'cash_box'  => 'bg-emerald-50 text-emerald-800 border-emerald-300',
-            'bank'      => 'bg-blue-50 text-blue-800 border-blue-300',
-            'customer'  => 'bg-sky-50 text-sky-800 border-sky-300',
-            'supplier'  => 'bg-orange-50 text-orange-800 border-orange-300',
-            'revenue'   => 'bg-green-50 text-green-800 border-green-300',
-            'expense'   => 'bg-rose-50 text-rose-800 border-rose-300',
-            default     => 'bg-slate-100 text-slate-700 border-slate-300',
+        return match ($this->analytical_type) {
+            'student' => 'bg-cyan-50 text-cyan-800 border-cyan-300',
+            'teacher' => 'bg-indigo-50 text-indigo-800 border-indigo-300',
+            'employee' => 'bg-violet-50 text-violet-800 border-violet-300',
+            'parent' => 'bg-teal-50 text-teal-800 border-teal-300',
+            'cash_box' => 'bg-emerald-50 text-emerald-800 border-emerald-300',
+            'bank' => 'bg-blue-50 text-blue-800 border-blue-300',
+            'customer' => 'bg-sky-50 text-sky-800 border-sky-300',
+            'supplier' => 'bg-orange-50 text-orange-800 border-orange-300',
+            'revenue' => 'bg-green-50 text-green-800 border-green-300',
+            'expense' => 'bg-rose-50 text-rose-800 border-rose-300',
+            default => 'bg-slate-100 text-slate-700 border-slate-300',
         };
     }
 }

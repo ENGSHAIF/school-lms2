@@ -34,6 +34,7 @@ use App\Http\Controllers\StudyGroupController;
 use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\WhatsAppManagementController;
+use App\Http\Controllers\YemenSoftAccountingController;
 use Illuminate\Support\Facades\Route;
 
 // الصفحات العامة والتعريفية (واجهات وتبويبات ASOTS لـ ASOTS)
@@ -314,6 +315,29 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/reports/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('accounting.reports.income_statement');
         Route::get('/accounting/reports/general-ledger', [FinancialReportController::class, 'generalLedger'])->name('accounting.reports.general_ledger');
         Route::get('/accounting/reports/cost-centers', [FinancialReportController::class, 'costCentersReport'])->name('accounting.reports.cost_centers');
+
+        // 4.6 وحدة يمن سوفت ERP (الفترات، الخيارات، الأرصدة الافتتاحية، الموازنة، الشيكات، الحوافظ، الإشعارات، جرد النقدية، الترحيل)
+        Route::get('/accounting/periods', [YemenSoftAccountingController::class, 'periods'])->name('accounting.periods.index');
+        Route::post('/accounting/periods/{id}/toggle', [YemenSoftAccountingController::class, 'togglePeriodStatus'])->name('accounting.periods.toggle');
+        Route::get('/accounting/options', [YemenSoftAccountingController::class, 'options'])->name('accounting.options.index');
+        Route::post('/accounting/options', [YemenSoftAccountingController::class, 'updateOptions'])->name('accounting.options.update');
+        Route::get('/accounting/opening-balances', [YemenSoftAccountingController::class, 'openingBalances'])->name('accounting.opening_balances.index');
+        Route::post('/accounting/opening-balances', [YemenSoftAccountingController::class, 'saveOpeningBalances'])->name('accounting.opening_balances.save');
+        Route::get('/accounting/budgets', [YemenSoftAccountingController::class, 'budgets'])->name('accounting.budgets.index');
+        Route::post('/accounting/budgets', [YemenSoftAccountingController::class, 'saveBudget'])->name('accounting.budgets.save');
+        Route::get('/accounting/cheques', [YemenSoftAccountingController::class, 'cheques'])->name('accounting.cheques.index');
+        Route::post('/accounting/cheques', [YemenSoftAccountingController::class, 'storeCheque'])->name('accounting.cheques.store');
+        Route::post('/accounting/cheques/{id}/status', [YemenSoftAccountingController::class, 'updateChequeStatus'])->name('accounting.cheques.update_status');
+        Route::get('/accounting/daily-portfolios', [YemenSoftAccountingController::class, 'dailyPortfolios'])->name('accounting.daily_portfolios.index');
+        Route::post('/accounting/daily-portfolios', [YemenSoftAccountingController::class, 'storeDailyPortfolio'])->name('accounting.daily_portfolios.store');
+        Route::post('/accounting/daily-portfolios/{id}/approve', [YemenSoftAccountingController::class, 'approveDailyPortfolio'])->name('accounting.daily_portfolios.approve');
+        Route::post('/accounting/daily-portfolios/{id}/post-voucher', [YemenSoftAccountingController::class, 'postDailyPortfolioToVoucher'])->name('accounting.daily_portfolios.post_voucher');
+        Route::get('/accounting/notes', [YemenSoftAccountingController::class, 'financialNotes'])->name('accounting.notes.index');
+        Route::post('/accounting/notes', [YemenSoftAccountingController::class, 'storeFinancialNote'])->name('accounting.notes.store');
+        Route::get('/accounting/cash-counts', [YemenSoftAccountingController::class, 'cashCounts'])->name('accounting.cash_counts.index');
+        Route::post('/accounting/cash-counts', [YemenSoftAccountingController::class, 'storeCashCount'])->name('accounting.cash_counts.store');
+        Route::get('/accounting/posting', [YemenSoftAccountingController::class, 'posting'])->name('accounting.posting.index');
+        Route::post('/accounting/posting/batch', [YemenSoftAccountingController::class, 'postBatch'])->name('accounting.posting.batch');
 
         // 6. لوحة تحكم المشرف الأكاديمي التجريبي (مراجعة واعتماد المستويات الأكاديمية)
         Route::get('/supervisor', [SupervisorController::class, 'dashboard'])->name('supervisor.dashboard');

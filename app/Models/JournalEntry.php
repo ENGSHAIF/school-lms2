@@ -8,6 +8,7 @@ class JournalEntry extends Model
 {
     protected $fillable = [
         'entry_no',
+        'entry_type',
         'entry_date',
         'reference_type',
         'reference_id',
@@ -15,6 +16,10 @@ class JournalEntry extends Model
         'total_debit',
         'total_credit',
         'is_posted',
+        'is_suspended',
+        'is_recurring',
+        'is_reversal',
+        'reversal_date',
         'posted_at',
         'posted_by',
         'created_by',
@@ -23,9 +28,13 @@ class JournalEntry extends Model
 
     protected $casts = [
         'entry_date' => 'date',
+        'reversal_date' => 'date',
         'total_debit' => 'decimal:2',
         'total_credit' => 'decimal:2',
         'is_posted' => 'boolean',
+        'is_suspended' => 'boolean',
+        'is_recurring' => 'boolean',
+        'is_reversal' => 'boolean',
         'posted_at' => 'datetime',
     ];
 
@@ -52,18 +61,18 @@ class JournalEntry extends Model
     // هل القيد متزن محاسبياً؟
     public function getIsBalancedAttribute(): bool
     {
-        return abs((float)$this->total_debit - (float)$this->total_credit) < 0.001;
+        return abs((float) $this->total_debit - (float) $this->total_credit) < 0.001;
     }
 
     public function getReferenceTypeLabelAttribute(): string
     {
-        return match($this->reference_type) {
-            'voucher'  => 'سند صرف / قبض',
-            'billing'  => 'استحقاق رسوم طالب',
-            'payroll'  => 'استحقاق رواتب كادر',
-            'manual'   => 'قيد يومية يدوي',
+        return match ($this->reference_type) {
+            'voucher' => 'سند صرف / قبض',
+            'billing' => 'استحقاق رسوم طالب',
+            'payroll' => 'استحقاق رواتب كادر',
+            'manual' => 'قيد يومية يدوي',
             'reversal' => 'قيد عكسي / تسوية',
-            default    => $this->reference_type ?? 'قيد محاسبي',
+            default => $this->reference_type ?? 'قيد محاسبي',
         };
     }
 }
