@@ -86,9 +86,12 @@
                             <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black flex items-center justify-center text-xs font-mono">
                                 #{{ $lvl->level_order }}
                             </span>
-                            <span class="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                                {{ $lvl->formatted_fee }}
-                            </span>
+                            <div class="text-left font-mono space-y-0.5">
+                                <span class="text-[10px] text-slate-400 line-through block">سعر الدورة قبل التخفيض {{ $lvl->formatted_original_fee ?? ('500.00 ' . $lvl->currency_symbol) }}</span>
+                                <span class="text-xs font-mono font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full inline-block">
+                                    {{ $lvl->formatted_fee }}
+                                </span>
+                            </div>
                         </div>
 
                         <div>
@@ -117,7 +120,8 @@
                                 </div>
                                 <div class="text-left font-mono">
                                     <span class="font-bold text-indigo-600 block text-[11px]">⏱️ {{ $crs->hours }} ساعة</span>
-                                    <span class="text-[10px] text-slate-400 block">{{ $crs->formatted_fee }}</span>
+                                    <span class="text-[10px] text-slate-400 line-through block">{{ $crs->formatted_original_fee ?? ('500.00 ' . $crs->currency_symbol) }}</span>
+                                    <span class="text-[11px] font-black text-emerald-600 block">{{ $crs->formatted_fee }}</span>
                                 </div>
                             </div>
                         @endforeach

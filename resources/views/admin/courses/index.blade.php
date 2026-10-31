@@ -201,10 +201,18 @@
 
                         <!-- تسعيرة المستوى وإجراءات الإدارة وزر العرض/الإخفاء بالنهاية -->
                         <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 border-white/10 pt-4 lg:pt-0 flex-wrap shrink-0">
-                            <div class="text-right lg:text-left font-mono">
-                                <span class="text-[10px] text-slate-200 block font-bold">رسوم المستوى الشاملة:</span>
-                                <span class="text-xl font-black text-[#F58220] block font-mono">{{ $lvl->formatted_fee }}</span>
-                                <span class="text-[10px] text-slate-200 block">{{ $lvl->currency_name }}</span>
+                            <div class="text-right lg:text-left font-mono space-y-1">
+                                <div class="inline-flex items-center gap-1.5 bg-rose-500/25 text-rose-200 border border-rose-400/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                    <span>🔥 خصم خاص</span>
+                                    <span class="line-through opacity-80">{{ $lvl->formatted_original_fee ?? ('500.00 ' . $lvl->currency_symbol) }}</span>
+                                </div>
+                                <div class="flex items-baseline gap-1.5 justify-end">
+                                    <span class="text-2xl font-black text-[#F58220] font-mono leading-none">{{ $lvl->formatted_fee }}</span>
+                                    <span class="text-xs text-slate-200 font-bold">{{ $lvl->currency_name }}</span>
+                                </div>
+                                <span class="text-[10px] text-amber-200 font-bold block">
+                                    (سعر كل دورة قبل التخفيض {{ $lvl->formatted_original_fee ?? ('500.00 ' . $lvl->currency_symbol) }})
+                                </span>
                             </div>
 
                             <div class="flex items-center gap-2 flex-wrap">
@@ -322,9 +330,12 @@
 
                                     <!-- تسعيرة الدورة الفردية وأزرار الإجراءات وبنك المناهج -->
                                     <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 border-slate-100 pt-3 lg:pt-0 shrink-0">
-                                        <div class="text-right font-mono">
-                                            <span class="text-[10px] text-slate-400 block font-bold">تسعيرة الدورة الفردية:</span>
-                                            <span class="text-base font-black text-emerald-600 block">{{ $crs->formatted_fee }}</span>
+                                        <div class="text-right font-mono space-y-0.5">
+                                            <div class="flex items-center gap-1.5 justify-end">
+                                                <span class="text-[10px] text-slate-400 line-through">{{ $crs->formatted_original_fee ?? ('500.00 ' . $crs->currency_symbol) }}</span>
+                                                <span class="text-[10px] bg-rose-50 text-rose-700 px-1.5 py-0.2 rounded font-bold border border-rose-200">تخفيض</span>
+                                            </div>
+                                            <span class="text-base font-black text-emerald-600 block leading-tight">{{ $crs->formatted_fee }}</span>
                                             <span class="text-[10px] text-slate-400 block">{{ $crs->currency_name }}</span>
                                         </div>
 
@@ -425,13 +436,13 @@
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">رسوم الدورة الفردية <span class="text-rose-500">*</span></label>
-                    <input type="number" step="0.01" name="fee_amount" value="20000" required min="0" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
+                    <input type="number" step="0.01" name="fee_amount" value="150" required min="0" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">العملة <span class="text-rose-500">*</span></label>
                     <select name="currency" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
-                        <option value="YER" selected>ريال يمني (YER)</option>
-                        <option value="SAR">ريال سعودي (SAR)</option>
+                        <option value="SAR" selected>ريال سعودي (SAR)</option>
+                        <option value="YER">ريال يمني (YER)</option>
                         <option value="USD">دولار أمريكي (USD)</option>
                     </select>
                 </div>
@@ -557,16 +568,20 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 min-w-0">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">رسوم المستوى الشاملة</label>
-                    <input type="number" step="0.01" name="fee_amount" required value="50000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
+                    <label class="block font-bold text-slate-700 mb-1">الرسوم المخفضة</label>
+                    <input type="number" step="0.01" name="fee_amount" required value="150" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">سعر كل دورة قبل التخفيض</label>
+                    <input type="number" step="0.01" name="original_fee" value="500" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-rose-600">
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">العملة</label>
                     <select name="currency" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
-                        <option value="YER" selected>ريال يمني (YER)</option>
-                        <option value="SAR">ريال سعودي (SAR)</option>
+                        <option value="SAR" selected>ريال سعودي (SAR)</option>
+                        <option value="YER">ريال يمني (YER)</option>
                         <option value="USD">دولار أمريكي (USD)</option>
                     </select>
                 </div>
@@ -614,16 +629,20 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 min-w-0">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">رسوم المستوى الشاملة</label>
+                    <label class="block font-bold text-slate-700 mb-1">الرسوم المخفضة</label>
                     <input type="number" step="0.01" name="fee_amount" id="editLvlFee" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">سعر كل دورة قبل التخفيض</label>
+                    <input type="number" step="0.01" name="original_fee" id="editLvlOriginalFee" placeholder="500" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-rose-600">
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">العملة</label>
                     <select name="currency" id="editLvlCurrency" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
-                        <option value="YER">ريال يمني (YER)</option>
                         <option value="SAR">ريال سعودي (SAR)</option>
+                        <option value="YER">ريال يمني (YER)</option>
                         <option value="USD">دولار أمريكي (USD)</option>
                     </select>
                 </div>
@@ -789,8 +808,9 @@
         document.getElementById('editLvlNameEn').value = lvl.name_en || '';
         document.getElementById('editLvlNameAr').value = lvl.name_ar || lvl.name || '';
         document.getElementById('editLvlDescription').value = lvl.description || '';
-        document.getElementById('editLvlFee').value = lvl.fee_amount || '';
-        document.getElementById('editLvlCurrency').value = lvl.currency || 'YER';
+        document.getElementById('editLvlFee').value = lvl.fee_amount || 150;
+        document.getElementById('editLvlOriginalFee').value = lvl.original_fee || 500;
+        document.getElementById('editLvlCurrency').value = lvl.currency || 'SAR';
         document.getElementById('editLvlOrder').value = lvl.level_order || 1;
         document.getElementById('editLevelModal').classList.remove('hidden');
     }

@@ -14,6 +14,7 @@ class Course extends Model
         'name_en',
         'hours',
         'fee_amount',
+        'original_fee',
         'teacher_fee',
         'teacher_hourly_rate',
         'currency',
@@ -27,6 +28,7 @@ class Course extends Model
     protected $casts = [
         'hours' => 'integer',
         'fee_amount' => 'decimal:2',
+        'original_fee' => 'decimal:2',
         'teacher_fee' => 'decimal:2',
         'teacher_hourly_rate' => 'decimal:2',
         'course_order' => 'integer',
@@ -154,5 +156,10 @@ class Course extends Model
     public function getFormattedTeacherFeeAttribute(): string
     {
         return ArabicCurrencyHelper::format($this->teacher_fee, $this->currency);
+    }
+
+    public function getFormattedOriginalFeeAttribute(): ?string
+    {
+        return $this->original_fee ? ArabicCurrencyHelper::format($this->original_fee, $this->currency) : null;
     }
 }

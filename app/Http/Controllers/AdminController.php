@@ -948,6 +948,7 @@ class AdminController extends Controller
             'name_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'fee_amount' => 'required|numeric|min:0',
+            'original_fee' => 'nullable|numeric|min:0',
             'currency' => 'required|string|max:10',
             'level_order' => 'nullable|integer',
         ]);
@@ -962,6 +963,7 @@ class AdminController extends Controller
         $validated['name_en'] = $nameEn;
         $validated['name'] = $fullName;
         $validated['level_order'] = $nextOrder;
+        $validated['original_fee'] = $request->filled('original_fee') ? (float) $request->original_fee : 500.00;
         $validated['created_by'] = auth()->id();
 
         $level = Level::create($validated);
@@ -970,7 +972,7 @@ class AdminController extends Controller
             'level.create',
             "إضافة مستوى أكاديمي جديد: [{$fullName}] برسم قدره {$validated['fee_amount']} {$validated['currency']}",
             $level,
-            ['fee_amount' => $validated['fee_amount'], 'currency' => $validated['currency']]
+            ['fee_amount' => $validated['fee_amount'], 'original_fee' => $validated['original_fee'], 'currency' => $validated['currency']]
         );
 
         return back()->with('success', "تمت إضافة المستوى الأكاديمي [{$fullName}] بنجاح.");
@@ -988,6 +990,7 @@ class AdminController extends Controller
             'name_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'fee_amount' => 'required|numeric|min:0',
+            'original_fee' => 'nullable|numeric|min:0',
             'currency' => 'required|string|max:10',
             'level_order' => 'nullable|integer|min:1',
         ]);
@@ -1005,6 +1008,7 @@ class AdminController extends Controller
         $validated['name_en'] = $nameEn;
         $validated['name'] = $fullName;
         $validated['level_order'] = ! empty($validated['level_order']) ? (int) $validated['level_order'] : $level->level_order;
+        $validated['original_fee'] = $request->filled('original_fee') ? (float) $request->original_fee : ($level->original_fee ?: 500.00);
         $validated['updated_by'] = auth()->id();
 
         $level->update($validated);

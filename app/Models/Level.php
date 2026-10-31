@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class Level extends Model
@@ -14,10 +15,18 @@ class Level extends Model
         'description',
         'level_order',
         'fee_amount',
+        'original_fee',
         'currency',
         'is_active',
         'created_by',
         'updated_by',
+    ];
+
+    protected $casts = [
+        'fee_amount' => 'decimal:2',
+        'original_fee' => 'decimal:2',
+        'level_order' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     public function creator()
@@ -35,6 +44,7 @@ class Level extends Model
         if ($this->name_ar && $this->name_en) {
             return "{$this->name_ar} ({$this->name_en})";
         }
+
         return $this->name_ar ?: ($this->name ?: ($this->name_en ?: ''));
     }
 
@@ -106,16 +116,21 @@ class Level extends Model
 
     public function getCurrencyNameAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencyName($this->currency);
+        return ArabicCurrencyHelper::currencyName($this->currency);
     }
 
     public function getCurrencySymbolAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencySymbol($this->currency);
+        return ArabicCurrencyHelper::currencySymbol($this->currency);
     }
 
     public function getFormattedFeeAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->fee_amount, $this->currency);
+        return ArabicCurrencyHelper::format($this->fee_amount, $this->currency);
+    }
+
+    public function getFormattedOriginalFeeAttribute(): ?string
+    {
+        return $this->original_fee ? ArabicCurrencyHelper::format($this->original_fee, $this->currency) : null;
     }
 }
