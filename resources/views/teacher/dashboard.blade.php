@@ -521,10 +521,15 @@
                 const item = document.createElement('div');
                 item.className = "p-4 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-2 hover:border-purple-300 transition";
                 
-                let icon = act.type === 'audio' ? '🎙️' : (act.type === 'announcement' ? '📢' : '📄');
+                const ext = act.file_path ? act.file_path.split('.').pop().toLowerCase() : '';
+                const isVideo = act.type === 'video' || ['mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v'].includes(ext);
+
+                let icon = act.type === 'audio' ? '🎙️' : (act.type === 'announcement' ? '📢' : (isVideo ? '🎥' : '📄'));
                 let typeBadge = act.type === 'audio' 
                     ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">تسجيل صوتي 🎵</span>'
-                    : '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">ورقة نشاط</span>';
+                    : (isVideo 
+                        ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">محاضرة فيديو 🎥</span>'
+                        : '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">ورقة نشاط</span>');
 
                 let audioHtml = '';
                 if (act.type === 'audio' && act.file_path) {
@@ -535,8 +540,20 @@
                     `;
                 }
 
+                let videoHtml = '';
+                if (isVideo && act.file_path) {
+                    videoHtml = `
+                        <div class="bg-blue-50/70 p-2.5 rounded-xl border border-blue-200 mt-2 space-y-1.5">
+                            <video controls class="w-full rounded-lg max-h-52 bg-black"><source src="/${act.file_path}"></video>
+                            <a href="/${act.file_path}" download target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-2xs">
+                                <span>📥</span><span>تحميل الفيديو (${act.file_name || 'فيديو'})</span>
+                            </a>
+                        </div>
+                    `;
+                }
+
                 let downloadHtml = '';
-                if (act.file_path && act.type !== 'audio') {
+                if (act.file_path && act.type !== 'audio' && !isVideo) {
                     downloadHtml = `
                         <div class="mt-2">
                             <a href="/${act.file_path}" download target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-xs border border-indigo-200">
@@ -566,6 +583,7 @@
                     </div>
                     ${act.instructions ? `<p class="text-slate-600 bg-slate-50 p-2 rounded-xl text-xs">${act.instructions}</p>` : ''}
                     ${audioHtml}
+                    ${videoHtml}
                     ${downloadHtml}
                 `;
                 container.appendChild(item);

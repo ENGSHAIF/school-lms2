@@ -1532,8 +1532,28 @@
                     `;
                 }
 
+                const isVideo = act.type === 'video' || ['mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v'].includes(ext);
+
+                let videoPlayerHtml = '';
+                if (isVideo && act.file_path) {
+                    videoPlayerHtml = `
+                        <div class="bg-blue-50/70 p-2.5 rounded-xl border border-blue-200 mt-2 space-y-2">
+                            <span class="text-[10px] font-bold text-blue-900 block mb-1">🎥 تشغيل فيديو المحاضرة:</span>
+                            <video controls class="w-full rounded-lg max-h-56 bg-black">
+                                <source src="/${act.file_path}">
+                                المتصفح لا يدعم مشغل الفيديو.
+                            </video>
+                            <a href="/${act.file_path}" download target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-2xs">
+                                <span>📥</span>
+                                <span>تحميل الفيديو (${act.file_name || 'فيديو'})</span>
+                                ${act.file_size ? `<span class="text-[10px] text-blue-200 font-mono">(${act.file_size})</span>` : ''}
+                            </a>
+                        </div>
+                    `;
+                }
+
                 let downloadFileHtml = '';
-                if (act.file_path && !isImage && act.type !== 'audio' && !['mp3', 'wav', 'ogg', 'webm', 'm4a'].includes(ext)) {
+                if (act.file_path && !isImage && !isVideo && act.type !== 'audio' && !['mp3', 'wav', 'ogg', 'webm', 'm4a'].includes(ext)) {
                     downloadFileHtml = `
                         <div class="mt-2">
                             <a href="/${act.file_path}" download target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition">
@@ -1572,6 +1592,7 @@
                     ${act.instructions ? `<p class="text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">${act.instructions}</p>` : ''}
                     ${imagePreviewHtml}
                     ${audioPlayerHtml}
+                    ${videoPlayerHtml}
                     ${downloadFileHtml}
                 `;
                 container.appendChild(item);

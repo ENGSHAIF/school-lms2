@@ -59,6 +59,14 @@ class GroupActivity extends Model
         return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg']);
     }
 
+    public function isVideo(): bool
+    {
+        if ($this->type === 'video') return true;
+        if (!$this->file_path) return false;
+        $ext = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+        return in_array($ext, ['mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v', '3gp']);
+    }
+
     // أيقونة نوع النشاط
     public function getTypeIconAttribute(): string
     {

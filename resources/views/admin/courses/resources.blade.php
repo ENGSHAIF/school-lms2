@@ -415,13 +415,22 @@
 
         <form id="shareForm" method="POST" action="" class="space-y-4 text-xs">
             @csrf
-            <input type="hidden" name="level_resource_id" id="shareResourceId">
+            <input type="hidden" name="resource_id" id="shareResourceId">
+            <input type="hidden" name="level_resource_id" id="shareLevelResourceId">
 
             <div>
                 <label class="block font-bold text-slate-700 mb-1">المجموعة الدراسية المستهدفة</label>
                 <select name="study_group_id" id="shareGroupIdSelect" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold" onchange="updateShareActionUrl()">
                     @foreach($studyGroups as $grp)
-                        <option value="{{ $grp->id }}">{{ $grp->name }} ({{ $grp->students->count() }} طالب)</option>
+                        <option value="{{ $grp->id }}">
+                            {{ $grp->name }}
+                            @if($grp->course_id === $course->id)
+                                (مجموعة الدورة الحالية 🌟)
+                            @elseif($grp->level_id === $course->level_id)
+                                (مجموعة نفس المستوى 🎓)
+                            @endif
+                            - ({{ $grp->students->count() }} طالب)
+                        </option>
                     @endforeach
                 </select>
             </div>

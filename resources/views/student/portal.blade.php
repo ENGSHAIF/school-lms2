@@ -225,8 +225,34 @@
                                 </div>
                             @endif
 
-                            <!-- زر تحميل الملف إن وُجد (مستند أو PDF) -->
-                            @if($act->file_path && !$act->isAudio() && !$act->isImage())
+                            <!-- مشغل الفيديو وزر التحميل المباشر إن كان النشاط فيديو -->
+                            @if($act->isVideo() && $act->file_path)
+                                <div class="bg-blue-50/70 p-3 rounded-2xl border border-blue-200 space-y-2">
+                                    <div class="flex justify-between items-center text-[11px] text-blue-900 font-bold">
+                                        <span class="flex items-center gap-1">
+                                            <span>🎥</span>
+                                            <span>مشاهدة وتحميل فيديو الشرح:</span>
+                                        </span>
+                                        @if($act->file_size)
+                                            <span class="font-mono text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold">({{ $act->file_size }})</span>
+                                        @endif
+                                    </div>
+                                    <video controls class="w-full rounded-xl max-h-64 bg-black shadow-xs">
+                                        <source src="{{ asset($act->file_path) }}">
+                                        متصفحك لا يدعم مشغل الفيديو.
+                                    </video>
+                                    <a href="{{ asset($act->file_path) }}" download target="_blank" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm">
+                                        <span>📥</span>
+                                        <span>تحميل الفيديو إلى هاتفك / جهازك</span>
+                                        @if($act->file_size)
+                                            <span class="text-[10px] opacity-80 font-mono">({{ $act->file_size }})</span>
+                                        @endif
+                                    </a>
+                                </div>
+                            @endif
+
+                            <!-- زر تحميل الملف إن وُجد (مستند، PDF أو ورقة عمل) -->
+                            @if($act->file_path && !$act->isAudio() && !$act->isImage() && !$act->isVideo())
                                 <div class="pt-2">
                                     <a href="{{ asset($act->file_path) }}" download target="_blank" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm">
                                         <span>📥</span>
@@ -313,9 +339,15 @@
                                     مشاهدة الآن ▶️
                                 </a>
                             @elseif($vid->file_path)
-                                <a href="{{ asset($vid->file_path) }}" target="_blank" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition text-center shrink-0">
-                                    تشغيل الفيديو ▶️
-                                </a>
+                                <div class="flex items-center gap-2 w-full sm:w-auto">
+                                    <a href="{{ asset($vid->file_path) }}" target="_blank" class="flex-1 sm:flex-initial bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition text-center shrink-0">
+                                        تشغيل الفيديو ▶️
+                                    </a>
+                                    <a href="{{ asset($vid->file_path) }}" download target="_blank" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition text-center flex items-center justify-center gap-1 shadow-2xs shrink-0" title="تحميل الفيديو لجهازك">
+                                        <span>📥</span>
+                                        <span>تحميل</span>
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     @empty

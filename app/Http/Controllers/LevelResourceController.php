@@ -31,10 +31,11 @@ class LevelResourceController extends Controller
             'quizzes' => $course->resources->where('type', 'quiz')->count(),
         ];
 
-        // المجموعات الدراسية المسكنة في هذه الدورة
-        $studyGroups = StudyGroup::where('course_id', $course->id)
-            ->where('status', 'active')
-            ->with(['teacher', 'students'])
+        // المجموعات الدراسية المسكنة في هذه الدورة والمجموعات النشطة لمشاركة الموارد بسهولة
+        $studyGroups = StudyGroup::where('status', 'active')
+            ->with(['teacher', 'students', 'course', 'level'])
+            ->orderByRaw('CASE WHEN course_id = ? THEN 0 WHEN level_id = ? THEN 1 ELSE 2 END', [$course->id, $course->level_id ?? 0])
+            ->orderBy('name')
             ->get();
 
         // الكويزات والاختبارات المتاحة للربط
@@ -359,11 +360,12 @@ class LevelResourceController extends Controller
     public function shareToGroup(Request $request, $groupId = null)
     {
         $groupId = $groupId ?: $request->input('study_group_id');
-        $resourceId = $request->input('resource_id') ?: $request->route('resourceId');
+        $resourceId = $request->input('resource_id') ?: $request->input('level_resource_id') ?: $request->route('resourceId');
 
         $request->validate([
             'study_group_id' => 'nullable|exists:study_groups,id',
             'resource_id' => 'nullable|exists:level_resources,id',
+            'level_resource_id' => 'nullable|exists:level_resources,id',
             'custom_instructions' => 'nullable|string',
             'due_date' => 'nullable|date',
         ]);
