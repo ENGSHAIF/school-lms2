@@ -258,17 +258,31 @@
                             @foreach($section->resources as $res)
                                 @include('admin.courses.partials.resource_card', ['res' => $res, 'studyGroups' => $studyGroups])
                             @endforeach
+
+                            <!-- بطاقة إضافة مورد جديد داخل هذا اليوم مباشرة -->
+                            <div class="border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-indigo-50/20 hover:bg-indigo-50/60 rounded-3xl p-6 transition flex flex-col items-center justify-center text-center space-y-3 cursor-pointer group min-h-[240px]" onclick="openAddResourceModal({{ $section->id }}, '{{ addslashes($section->title) }}')">
+                                <span class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-2xl font-black group-hover:scale-110 transition shadow-xs">
+                                    ➕
+                                </span>
+                                <div>
+                                    <h4 class="font-black text-sm text-indigo-950 group-hover:text-indigo-600 transition">إضافة مورد جديد لهذا اليوم</h4>
+                                    <p class="text-[11px] text-slate-500 mt-1">يمكنك إضافة أي عدد تريده من الموارد والفيديوهات دون حد أقصى</p>
+                                </div>
+                                <span class="px-4 py-2 bg-indigo-600 group-hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-xs transition">
+                                    ➕ رفع مورد إضافي
+                                </span>
+                            </div>
                         </div>
                     @else
                         <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-3">
                             <span class="text-3xl block">📂</span>
                             <div class="space-y-1">
-                                <h4 class="text-sm font-bold text-slate-700">لا توجد موارد مضافة في هذا العنوان / اليوم بعد</h4>
-                                <p class="text-xs text-slate-400">يمكنك رفع الفيديوهات والصوتيات والكتب وأوراق العمل وتخصيصها لهذا اليوم مباشرة.</p>
+                                <h4 class="text-sm font-bold text-slate-700">لا توجد موارد مضافة في هذا اليوم / العنوان بعد</h4>
+                                <p class="text-xs text-slate-400">يمكنك رفع عدد غير محدود من الفيديوهات والصوتيات والكتب وأوراق العمل وتخصيصها لهذا اليوم.</p>
                             </div>
-                            <button type="button" onclick="openAddResourceModal({{ $section->id }}, '{{ addslashes($section->title) }}')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5">
+                            <button type="button" onclick="openAddResourceModal({{ $section->id }}, '{{ addslashes($section->title) }}')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5">
                                 <span>➕</span>
-                                <span>إضافة أول مورد لـ {{ $section->title }}</span>
+                                <span>إضافة مورد لـ {{ $section->title }}</span>
                             </button>
                         </div>
                     @endif
@@ -336,6 +350,20 @@
                         @foreach($unassignedResources as $res)
                             @include('admin.courses.partials.resource_card', ['res' => $res, 'studyGroups' => $studyGroups])
                         @endforeach
+
+                        <!-- بطاقة إضافة مورد عام إضافي -->
+                        <div class="border-2 border-dashed border-amber-200 hover:border-amber-500 bg-amber-50/20 hover:bg-amber-50/60 rounded-3xl p-6 transition flex flex-col items-center justify-center text-center space-y-3 cursor-pointer group min-h-[240px]" onclick="openAddResourceModal(null, 'مورد عام للدورة')">
+                            <span class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl font-black group-hover:scale-110 transition shadow-xs">
+                                ➕
+                            </span>
+                            <div>
+                                <h4 class="font-black text-sm text-amber-950 group-hover:text-amber-600 transition">إضافة مورد عام جديد</h4>
+                                <p class="text-[11px] text-slate-500 mt-1">رفع كتب أو ملفات عامة للدورة بدون تحديد قسم</p>
+                            </div>
+                            <span class="px-4 py-2 bg-amber-600 group-hover:bg-amber-700 text-white font-black text-xs rounded-xl shadow-xs transition">
+                                ➕ رفع مورد عام إضافي
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -438,11 +466,13 @@
     <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
         <div class="flex justify-between items-center border-b pb-3">
             <div>
-                <h3 class="font-black text-slate-900 text-sm">إضافة مورد تعليمي جديد لبنك الدورة</h3>
-                <p class="text-[11px] text-slate-500">رفع كتاب PDF، تسجيل صوتي MP3، فيديو، صورة نشاط، أو ربط كويز.</p>
+                <h3 class="font-black text-slate-900 text-sm">إضافة مورد تعليمي جديد لبنك الدورة (غير محدود)</h3>
+                <p class="text-[11px] text-slate-500">رفع فيديو، تسجيل صوتي MP3، كتاب PDF، صورة، ورقة عمل، أو ربط كويز (بدون حد أقصى للعدد).</p>
             </div>
             <button type="button" onclick="closeAddResourceModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
         </div>
+
+        <div id="modalSelectedSectionBadge" class="hidden text-xs font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-3.5 py-2.5 rounded-xl"></div>
 
         <form action="{{ route('admin.courses.resources.store', $course->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
             @csrf
@@ -650,8 +680,17 @@
     // مودال إضافة مورد (مع إمكانية تحديد قسم مسبق)
     function openAddResourceModal(sectionId = null, sectionTitle = '') {
         const select = document.getElementById('resourceSectionSelect');
-        if (select && sectionId) {
-            select.value = sectionId;
+        if (select) {
+            select.value = sectionId ? sectionId : '';
+        }
+        const badge = document.getElementById('modalSelectedSectionBadge');
+        if (badge) {
+            if (sectionTitle) {
+                badge.innerText = '📌 سيتم إدراج هذا المورد داخل: ' + sectionTitle;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
         document.getElementById('addResourceModal').classList.remove('hidden');
         toggleResourceTypeFields();

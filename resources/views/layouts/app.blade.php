@@ -635,6 +635,20 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="mb-6 bg-rose-50 border-r-4 border-rose-500 p-4 rounded-xl shadow-sm text-rose-800">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xl">⚠️</span>
+                    <span class="font-bold text-sm">يرجى مراجعة وتصحيح المدخلات:</span>
+                </div>
+                <ul class="list-disc list-inside text-xs space-y-1 mr-6">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @yield('content')
     </main>
 
