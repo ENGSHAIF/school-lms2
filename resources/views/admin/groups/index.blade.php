@@ -284,13 +284,19 @@
                                 <button onclick='openEditGroupModal(@json($grp))' title="تعديل بيانات المجموعة وتغيير الأستاذ" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition">
                                     ✏️
                                 </button>
-                                <form method="POST" action="{{ route('admin.groups.destroy', $grp->id) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذه المجموعة؟ لن يتم حذف الطلاب، بل فك قيدهم فقط.');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" title="حذف المجموعة" class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center text-xs transition">
-                                        🗑️
-                                    </button>
-                                </form>
+                                @if($grp->canBeDeleted())
+                                    <form method="POST" action="{{ route('admin.groups.destroy', $grp->id) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذه المجموعة الفارغة نهائياً؟');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" title="حذف المجموعة" class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center text-xs transition">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                @else
+                                    <span title="لا يمكن حذف هذه المجموعة لبدء الدراسة أو وجود طلاب ومحادثات ومشاركات مسجلة (للحفاظ على السجلات الأكاديمية)" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 border border-slate-100 flex items-center justify-center text-xs cursor-not-allowed select-none">
+                                        🔒
+                                    </span>
+                                @endif
                             </div>
                         </div>
 

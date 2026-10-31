@@ -235,4 +235,42 @@ class StudyGroup extends Model
     {
         return $this->hasMany(Exam::class, 'study_group_id');
     }
+
+    /**
+     * هل يمكن حذف المجموعة؟
+     * يلتغي الحذف إذا بدأت المجموعة أو سُجل بها طلاب أو بدأت فيها محادثات أو تسجيلات أو مشاركات
+     */
+    public function canBeDeleted(): bool
+    {
+        // 1. وجود طلاب مسجلين
+        if ($this->groupStudents()->where('status', '!=', 'transferred')->exists()) {
+            return false;
+        }
+
+        // 2. وجود أنشطة أو محادثات أو تسجيلات صوتية أو أوراق عمل
+        if ($this->activities()->exists()) {
+            return false;
+        }
+
+        // 3. انعقاد جلسات أو تقييمات
+        if ($this->sessions()->exists() || $this->evaluations()->exists()) {
+            return false;
+        }
+
+        // 4. وجود درجات أو شهادات صادرة
+        if ($this->studentGrades()->exists() || $this->certificates()->exists()) {
+            return false;
+        }
+
+        // 5. إذا كانت قد بدأت الدراسة أو بدأ البث الحي
+        if ($this->is_live || $this->live_started_at !== null) {
+            return false;
+        }
+
+        if ($this->start_date && $this->start_date->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
 }

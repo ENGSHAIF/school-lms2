@@ -6,10 +6,10 @@ use App\Models\Booking;
 use App\Models\FinancialAccount;
 use App\Models\LessonReport;
 use App\Models\StudentWallet;
+use App\Models\StudyGroup;
 use App\Models\TeacherSchedule;
 use App\Models\User;
 use App\Models\WhatsAppLog;
-use App\Models\StudyGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -20,7 +20,7 @@ class BookingController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // جلب محفظة الطالب
         $wallet = StudentWallet::firstOrCreate(
             ['user_id' => $user->id],
@@ -54,7 +54,7 @@ class BookingController extends Controller
         $user = Auth::user();
         $wallet = StudentWallet::where('user_id', $user->id)->first();
 
-        if (!$wallet || $wallet->remaining_lessons < 1) {
+        if (! $wallet || $wallet->remaining_lessons < 1) {
             return back()->with('error', 'عذراً! لا يوجد رصيد حصص كافٍ في محفظتك. يرجى تجديد الباقة لحجز حصة جديدة.');
         }
 
@@ -65,7 +65,7 @@ class BookingController extends Controller
         }
 
         // 1. تثبيت الحجز وتوليد غرفة الفصل
-        $roomId = 'airclass-' . Str::random(10);
+        $roomId = 'airclass-'.Str::random(10);
         $booking = Booking::create([
             'student_id' => $user->id,
             'teacher_id' => $schedule->teacher_id,
@@ -112,7 +112,7 @@ class BookingController extends Controller
             $isGroup = false;
 
             // إذا كان المستخدم طالباً ولم يتم فتح البث الحي بعد من قبل المعلم أو الإدارة
-            if (!$isTeacher && !$booking->is_live && $booking->status !== 'in_progress') {
+            if (! $isTeacher && ! $booking->is_live && $booking->status !== 'in_progress') {
                 return view('classroom.waiting', [
                     'booking' => $booking,
                     'group' => null,
@@ -128,19 +128,26 @@ class BookingController extends Controller
         }
 
         // 2. فحص هل الغرفة خاصة بمجموعة دراسية جماعية (Study Group)
-        $group = StudyGroup::with(['course', 'level.resources.exam', 'teacher', 'supervisor', 'students', 'requester', 'activities.publisher'])
+        $group = StudyGroup::with(['course', 'level.resources.exam', 'teacher', 'teachers', 'supervisor', 'supervisors', 'students', 'requester', 'activities.publisher'])
             ->where('room_id', $roomId)
             ->first();
 
         if ($group) {
-            $isTeacher = ($user->id === $group->teacher_id || $user->id === $group->supervisor_id || $user->isAdmin());
-            $title = $group->name . ' • ' . ($group->course?->name ?? 'دورات اللغة');
-            $teacher = $group->teacher;
+            $isTeacher = ($user->isAdmin()
+                || $user->isSupervisor()
+                || $user->isTeacher()
+                || $user->id === $group->teacher_id
+                || $user->id === $group->supervisor_id
+                || $group->teachers->contains('id', $user->id)
+                || $group->supervisors->contains('id', $user->id));
+
+            $title = $group->name.' • '.($group->course?->name ?? 'دورات اللغة');
+            $teacher = $group->teacher ?: ($isTeacher ? $user : null);
             $students = $group->students;
             $isGroup = true;
 
             // إذا كان المستخدم طالباً ولم يتم فتح البث الحي بعد من قبل المعلم أو الإدارة
-            if (!$isTeacher && !$group->is_live) {
+            if (! $isTeacher && ! $group->is_live) {
                 return view('classroom.waiting', [
                     'group' => $group,
                     'booking' => null,
@@ -184,6 +191,7 @@ class BookingController extends Controller
         $booking = Booking::where('room_id', $roomId)->first();
         if ($booking) {
             $isLive = (bool) ($booking->is_live || $booking->status === 'in_progress');
+
             return response()->json([
                 'success' => true,
                 'type' => 'booking',
@@ -207,11 +215,11 @@ class BookingController extends Controller
         $booking = Booking::findOrFail($bookingId);
         $user = Auth::user();
 
-        if ($user->id !== $booking->teacher_id && !$user->isAdmin()) {
+        if ($user->id !== $booking->teacher_id && ! $user->isAdmin()) {
             abort(403, 'غير مصرح لك بالتحكم في بث هذه الحصة.');
         }
 
-        $newLive = !$booking->is_live;
+        $newLive = ! $booking->is_live;
         $booking->update([
             'is_live' => $newLive,
             'status' => $newLive ? 'in_progress' : ($booking->status === 'in_progress' ? 'completed' : $booking->status),
@@ -219,6 +227,7 @@ class BookingController extends Controller
         ]);
 
         $msg = $newLive ? 'تم بدء وفتح البث الحي للحصة بنجاح!' : 'تم إغلاق البث الحي للحصة.';
+
         return back()->with('success', $msg);
     }
 

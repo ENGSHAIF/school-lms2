@@ -430,12 +430,9 @@ class StudyGroupController extends Controller
             return back()->with('error', 'عذراً، ليس لديك صلاحية حذف المجموعات الدراسية.');
         }
 
-        // منع الحذف إذا كانت المجموعة تضم طلاباً أو عُقدت فيها جلسات دراسية (كما طلبت الإدارة)
-        $studentsCount = $group->students()->where('study_group_students.status', '!=', 'transferred')->count();
-        $sessionsCount = $group->sessions()->count();
-
-        if ($studentsCount > 0 || $sessionsCount > 0) {
-            return back()->with('error', "لا يمكن حذف المجموعة [{$group->name}] لوجود ({$studentsCount}) طالب مسجلين أو ({$sessionsCount}) جلسة دراسية منقعدة فيها. يمكنك إيقاف المجموعة أو نقل الطلاب بدلاً من الحذف للحفاظ على السجلات الأكاديمية والتقييمات.");
+        // منع الحذف إذا كانت المجموعة تضم طلاباً أو أنشطة أو بدأت الدراسة فيها
+        if (! $group->canBeDeleted()) {
+            return back()->with('error', "لا يمكن حذف المجموعة [{$group->name}] نظراً لبدء الدراسة أو وجود طلاب مسجلين أو محادثات وأنشطة ومشاركات مسجلة فيها. يمكنك أرشفة المجموعة أو تغيير حالتها إلى مكتملة للحفاظ على السجلات الأكاديمية والدرجات.");
         }
 
         $name = $group->name;
@@ -448,11 +445,17 @@ class StudyGroupController extends Controller
     // إضافة نشاط أو ورقة عمل أو تسجيل صوتي للمجموعة (مثل الواتساب)
     public function storeActivity(Request $request, $groupId)
     {
-        $group = StudyGroup::with('students', 'teachers')->findOrFail($groupId);
+        $group = StudyGroup::with(['students', 'teachers', 'supervisors'])->findOrFail($groupId);
         $user = auth()->user();
 
         // فحص الصلاحية: هل المستخدم معلم المجموعة أو مشرفها أو مدير أو طالب مسجل في هذه المجموعة
-        $isStaff = ($user->isAdmin() || $user->isSupervisor() || $user->id === $group->teacher_id || $user->id === $group->supervisor_id || $group->teachers->contains('id', $user->id));
+        $isStaff = ($user->isAdmin()
+            || $user->isSupervisor()
+            || $user->isTeacher()
+            || $user->id === $group->teacher_id
+            || $user->id === $group->supervisor_id
+            || $group->teachers->contains('id', $user->id)
+            || $group->supervisors->contains('id', $user->id));
         $isGroupStudent = $group->students->contains('id', $user->id);
 
         if (! $isStaff && ! $isGroupStudent) {
@@ -575,14 +578,23 @@ class StudyGroupController extends Controller
         return back()->with('success', 'تم حذف النشاط بنجاح.');
     }
 
-    // بدء وفتح البث الحي للمجموعة (المعلم أو الإدارة)
+    // بدء وفتح البث الحي للمجموعة (المعلم أو الإدارة أو المشرف)
     public function startLive(Request $request, $groupId)
     {
-        $group = StudyGroup::with('students')->findOrFail($groupId);
+        $group = StudyGroup::with(['students', 'teachers', 'supervisors'])->findOrFail($groupId);
         $user = auth()->user();
 
-        // التحقق من الصلاحيات (المدير، أستاذ المجموعة، مشرف المجموعة)
-        if (! $user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
+        // التحقق من الصلاحيات (المدير، أستاذ المجموعة، مشرف المجموعة، أو أي كادر تعليمي مسند للمجموعة)
+        $isAuthorized = ($user->isAdmin()
+            || $user->isSupervisor()
+            || $user->isTeacher()
+            || $user->id === $group->teacher_id
+            || $user->id === $group->supervisor_id
+            || $group->teachers->contains('id', $user->id)
+            || $group->supervisors->contains('id', $user->id)
+            || $user->hasPermission('groups.manage'));
+
+        if (! $isAuthorized) {
             abort(403, 'غير مصرح لك بفتح البث الحي لهذه المجموعة.');
         }
 
@@ -616,10 +628,19 @@ class StudyGroupController extends Controller
     // إغلاق وإنهاء البث الحي للمجموعة
     public function stopLive(Request $request, $groupId)
     {
-        $group = StudyGroup::findOrFail($groupId);
+        $group = StudyGroup::with(['teachers', 'supervisors'])->findOrFail($groupId);
         $user = auth()->user();
 
-        if (! $user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
+        $isAuthorized = ($user->isAdmin()
+            || $user->isSupervisor()
+            || $user->isTeacher()
+            || $user->id === $group->teacher_id
+            || $user->id === $group->supervisor_id
+            || $group->teachers->contains('id', $user->id)
+            || $group->supervisors->contains('id', $user->id)
+            || $user->hasPermission('groups.manage'));
+
+        if (! $isAuthorized) {
             abort(403, 'غير مصرح لك بإغلاق البث الحي لهذه المجموعة.');
         }
 
@@ -676,10 +697,19 @@ class StudyGroupController extends Controller
     // رفض طلب فتح البث الحي للمجموعة
     public function rejectLive(Request $request, $groupId)
     {
-        $group = StudyGroup::findOrFail($groupId);
+        $group = StudyGroup::with(['teachers', 'supervisors'])->findOrFail($groupId);
         $user = auth()->user();
 
-        if (! $user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
+        $isAuthorized = ($user->isAdmin()
+            || $user->isSupervisor()
+            || $user->isTeacher()
+            || $user->id === $group->teacher_id
+            || $user->id === $group->supervisor_id
+            || $group->teachers->contains('id', $user->id)
+            || $group->supervisors->contains('id', $user->id)
+            || $user->hasPermission('groups.manage'));
+
+        if (! $isAuthorized) {
             abort(403, 'غير مصرح لك برفض الطلب.');
         }
 

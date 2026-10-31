@@ -179,7 +179,7 @@
                     </button>
 
                     @if(isset($isGroup) && $isGroup && isset($group))
-                        <a href="{{ route('admin.groups.evaluations.create', ['group_id' => $group->id]) }}" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+                        <a href="{{ route('admin.groups.evaluations.create', $group->id) }}" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
                             <span>📋</span>
                             <span>رصد الحضور والتقييم اليومي للمجموعة</span>
                         </a>
