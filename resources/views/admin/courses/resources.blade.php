@@ -491,6 +491,8 @@
 
     function openShareModal(resourceId, resourceTitle) {
         document.getElementById('shareResourceId').value = resourceId;
+        const fallback = document.getElementById('shareLevelResourceId');
+        if (fallback) fallback.value = resourceId;
         document.getElementById('shareResourceTitle').innerText = resourceTitle;
         updateShareActionUrl();
         document.getElementById('shareModal').classList.remove('hidden');

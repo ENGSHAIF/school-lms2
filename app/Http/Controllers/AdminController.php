@@ -796,6 +796,7 @@ class AdminController extends Controller
             'hours' => 'required|integer|min:1|max:500',
             'fee_amount' => 'required|numeric|min:0',
             'currency' => 'required|string|max:10',
+            'course_order' => 'nullable|integer|min:1',
             'description' => 'nullable|string',
         ]);
 
@@ -803,7 +804,7 @@ class AdminController extends Controller
         $nameAr = $request->filled('name_ar') ? trim($request->name_ar) : null;
         $fullName = $nameAr ? "{$nameEn} ({$nameAr})" : $nameEn;
 
-        $nextOrder = (Course::where('level_id', $validated['level_id'])->max('course_order') ?? 0) + 1;
+        $nextOrder = ! empty($validated['course_order']) ? (int) $validated['course_order'] : ((Course::where('level_id', $validated['level_id'])->max('course_order') ?? 0) + 1);
 
         $validated['name_en'] = $nameEn;
         $validated['name_ar'] = $nameAr;
@@ -837,6 +838,7 @@ class AdminController extends Controller
             'hours' => 'required|integer|min:1|max:500',
             'fee_amount' => 'required|numeric|min:0',
             'currency' => 'required|string|max:10',
+            'course_order' => 'nullable|integer|min:1',
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
         ]);
@@ -855,6 +857,7 @@ class AdminController extends Controller
         $validated['name_en'] = $nameEn;
         $validated['name_ar'] = $nameAr;
         $validated['name'] = $fullName;
+        $validated['course_order'] = ! empty($validated['course_order']) ? (int) $validated['course_order'] : $course->course_order;
         $validated['is_active'] = $request->has('is_active') ? (bool) $request->is_active : true;
         $validated['updated_by'] = auth()->id();
 
@@ -953,7 +956,7 @@ class AdminController extends Controller
         $nameAr = $request->filled('name_ar') ? trim($request->name_ar) : null;
         $fullName = $nameAr ? "{$nameAr} ({$nameEn})" : $nameEn;
 
-        $nextOrder = $validated['level_order'] ?? ((Level::max('level_order') ?? 0) + 1);
+        $nextOrder = ! empty($validated['level_order']) ? (int) $validated['level_order'] : ((Level::max('level_order') ?? 0) + 1);
 
         $validated['name_ar'] = $nameAr;
         $validated['name_en'] = $nameEn;
@@ -986,6 +989,7 @@ class AdminController extends Controller
             'description' => 'nullable|string',
             'fee_amount' => 'required|numeric|min:0',
             'currency' => 'required|string|max:10',
+            'level_order' => 'nullable|integer|min:1',
         ]);
 
         $nameEn = trim($request->name_en);
@@ -1000,6 +1004,7 @@ class AdminController extends Controller
         $validated['name_ar'] = $nameAr;
         $validated['name_en'] = $nameEn;
         $validated['name'] = $fullName;
+        $validated['level_order'] = ! empty($validated['level_order']) ? (int) $validated['level_order'] : $level->level_order;
         $validated['updated_by'] = auth()->id();
 
         $level->update($validated);

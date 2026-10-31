@@ -410,7 +410,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">عدد الساعات <span class="text-rose-500">*</span></label>
                     <input type="number" name="hours" value="40" required min="1" max="500" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold">
@@ -426,6 +426,10 @@
                         <option value="SAR">ريال سعودي (SAR)</option>
                         <option value="USD">دولار أمريكي (USD)</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">الترتيب الرقمي</label>
+                    <input type="number" name="course_order" placeholder="تلقائي بعد الدورات" min="1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
                 </div>
             </div>
 
@@ -479,13 +483,13 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">عدد الساعات <span class="text-rose-500">*</span></label>
                     <input type="number" name="hours" id="editCourseHours" required min="1" max="500" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">رسوم الدورة الفردية <span class="text-rose-500">*</span></label>
+                    <label class="block font-bold text-slate-700 mb-1">رسوم الدورة <span class="text-rose-500">*</span></label>
                     <input type="number" step="0.01" name="fee_amount" id="editCourseFee" required min="0" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
                 </div>
                 <div>
@@ -495,6 +499,10 @@
                         <option value="SAR">ريال سعودي (SAR)</option>
                         <option value="USD">دولار أمريكي (USD)</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">الترتيب الرقمي</label>
+                    <input type="number" name="course_order" id="editCourseOrder" min="1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
                 </div>
             </div>
 
@@ -556,7 +564,7 @@
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">الترتيب الرقمي</label>
-                    <input type="number" name="level_order" value="{{ $levels->count() + 1 }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
+                    <input type="number" name="level_order" value="{{ ($levels->max('level_order') ?? 0) + 1 }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
                 </div>
             </div>
 
@@ -598,7 +606,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">رسوم المستوى الشاملة</label>
                     <input type="number" step="0.01" name="fee_amount" id="editLvlFee" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
@@ -610,6 +618,10 @@
                         <option value="SAR">ريال سعودي (SAR)</option>
                         <option value="USD">دولار أمريكي (USD)</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">الترتيب الرقمي</label>
+                    <input type="number" name="level_order" id="editLvlOrder" min="1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
                 </div>
             </div>
 
@@ -771,6 +783,7 @@
         document.getElementById('editLvlDescription').value = lvl.description || '';
         document.getElementById('editLvlFee').value = lvl.fee_amount || '';
         document.getElementById('editLvlCurrency').value = lvl.currency || 'YER';
+        document.getElementById('editLvlOrder').value = lvl.level_order || 1;
         document.getElementById('editLevelModal').classList.remove('hidden');
     }
 
@@ -798,6 +811,7 @@
         document.getElementById('editCourseHours').value = crs.hours || 40;
         document.getElementById('editCourseFee').value = crs.fee_amount || '';
         document.getElementById('editCourseCurrency').value = crs.currency || 'YER';
+        document.getElementById('editCourseOrder').value = crs.course_order || 1;
         document.getElementById('editCourseDescription').value = crs.description || '';
         document.getElementById('editCourseIsActive').checked = crs.is_active ? true : false;
         document.getElementById('editCourseModal').classList.remove('hidden');
