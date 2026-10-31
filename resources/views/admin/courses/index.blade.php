@@ -353,29 +353,30 @@
 <!-- =============================================================== -->
 <!-- 1. مودال إضافة دورة جديدة لمستوى (Add Course Modal) -->
 <!-- =============================================================== -->
-<div id="addCourseModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
-        <div class="flex justify-between items-center border-b pb-3">
-            <div>
-                <h3 class="font-black text-slate-900 text-sm">إضافة دورة تدريبية جديدة</h3>
-                <p class="text-[11px] text-slate-500">إضافة دورة إلى مستوى محدد مع تحديد الساعات والرسوم.</p>
+<div id="addCourseModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeAddCourseModal()"></div>
+    <div class="relative bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 space-y-4 sm:space-y-5 min-w-0 my-auto z-10">
+        <div class="flex justify-between items-center border-b pb-3 gap-2 min-w-0">
+            <div class="min-w-0">
+                <h3 class="font-black text-slate-900 text-sm truncate">إضافة دورة تدريبية جديدة</h3>
+                <p class="text-[11px] text-slate-500 truncate">إضافة دورة إلى مستوى محدد مع تحديد الساعات والرسوم.</p>
             </div>
-            <button type="button" onclick="closeAddCourseModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+            <button type="button" onclick="closeAddCourseModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold shrink-0 p-1">✕</button>
         </div>
 
-        <form action="{{ route('admin.courses.store') }}" method="POST" class="space-y-4 text-xs">
+        <form action="{{ route('admin.courses.store') }}" method="POST" class="space-y-4 text-xs min-w-0">
             @csrf
 
-            <div>
+            <div class="min-w-0">
                 <label class="block font-bold text-slate-700 mb-1">المستوى الأكاديمي الحاضن <span class="text-rose-500">*</span></label>
-                <select name="level_id" id="addCourseLevelId" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                <select name="level_id" id="addCourseLevelId" required class="w-full max-w-full truncate px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                     @foreach($allLevels as $lvl)
                         <option value="{{ $lvl->id }}">{{ $lvl->name_en }} - {{ $lvl->name_ar }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">اسم الدورة بالإنجليزي <span class="text-rose-500">*</span></label>
                     <input type="text" name="name_en" required placeholder="مثال: Team Together 1 أو Access A" dir="ltr" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-bold font-mono">
@@ -386,7 +387,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">عدد الساعات <span class="text-rose-500">*</span></label>
                     <input type="number" name="hours" value="40" required min="1" max="500" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold">
@@ -410,9 +411,9 @@
                 <textarea name="description" rows="2" placeholder="وصف محتوى الدورة والمهارات المكتسبة..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
             </div>
 
-            <div class="flex justify-end gap-2 pt-3 border-t">
-                <button type="button" onclick="closeAddCourseModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">حفظ وإضافة الدورة 🚀</button>
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeAddCourseModal()" class="w-full sm:w-auto px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl text-center">إلغاء</button>
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm text-center">حفظ وإضافة الدورة 🚀</button>
             </div>
         </form>
     </div>
@@ -421,29 +422,30 @@
 <!-- =============================================================== -->
 <!-- 2. مودال تعديل الدورة والتسعيرة والساعات (Edit Course Modal) -->
 <!-- =============================================================== -->
-<div id="editCourseModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
-        <div class="flex justify-between items-center border-b pb-3">
-            <div>
-                <h3 class="font-black text-slate-900 text-sm">تعديل بيانات الدورة والرسوم والساعات</h3>
-                <p class="text-[11px] text-slate-500">تحديث تفاصيل وساعات وتسعيرة الدورة التدريبية.</p>
+<div id="editCourseModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeEditCourseModal()"></div>
+    <div class="relative bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 space-y-4 sm:space-y-5 min-w-0 my-auto z-10">
+        <div class="flex justify-between items-center border-b pb-3 gap-2 min-w-0">
+            <div class="min-w-0">
+                <h3 class="font-black text-slate-900 text-sm truncate">تعديل بيانات الدورة والرسوم والساعات</h3>
+                <p class="text-[11px] text-slate-500 truncate">تحديث تفاصيل وساعات وتسعيرة الدورة التدريبية.</p>
             </div>
-            <button type="button" onclick="closeEditCourseModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+            <button type="button" onclick="closeEditCourseModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold shrink-0 p-1">✕</button>
         </div>
 
-        <form id="editCourseForm" method="POST" action="" class="space-y-4 text-xs">
+        <form id="editCourseForm" method="POST" action="" class="space-y-4 text-xs min-w-0">
             @csrf
 
-            <div>
+            <div class="min-w-0">
                 <label class="block font-bold text-slate-700 mb-1">المستوى الأكاديمي الحاضن</label>
-                <select name="level_id" id="editCourseLevelId" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                <select name="level_id" id="editCourseLevelId" required class="w-full max-w-full truncate px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                     @foreach($allLevels as $lvl)
                         <option value="{{ $lvl->id }}">{{ $lvl->name_en }} - {{ $lvl->name_ar }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">اسم الدورة بالإنجليزي <span class="text-rose-500">*</span></label>
                     <input type="text" name="name_en" id="editCourseNameEn" required dir="ltr" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-bold font-mono">
@@ -454,7 +456,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">عدد الساعات <span class="text-rose-500">*</span></label>
                     <input type="number" name="hours" id="editCourseHours" required min="1" max="500" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold">
@@ -479,13 +481,13 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <input type="checkbox" name="is_active" id="editCourseIsActive" value="1" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
-                <label for="editCourseIsActive" class="font-bold text-slate-700">الدورة نشطة ومتاحة للتسكين والتسجيل</label>
+                <input type="checkbox" name="is_active" id="editCourseIsActive" value="1" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 shrink-0">
+                <label for="editCourseIsActive" class="font-bold text-slate-700 cursor-pointer">الدورة نشطة ومتاحة للتسكين والتسجيل</label>
             </div>
 
-            <div class="flex justify-end gap-2 pt-3 border-t">
-                <button type="button" onclick="closeEditCourseModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">حفظ التعديلات 🚀</button>
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeEditCourseModal()" class="w-full sm:w-auto px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl text-center">إلغاء</button>
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm text-center">حفظ التعديلات 🚀</button>
             </div>
         </form>
     </div>
@@ -494,17 +496,18 @@
 <!-- =============================================================== -->
 <!-- 3. مودال إضافة مستوى جديد (Add Level Modal) -->
 <!-- =============================================================== -->
-<div id="addLevelModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
-        <div class="flex justify-between items-center border-b pb-3">
-            <h3 class="font-black text-slate-900 text-sm">إضافة مستوى أكاديمي رئيسي جديد</h3>
-            <button type="button" onclick="closeAddLevelModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+<div id="addLevelModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeAddLevelModal()"></div>
+    <div class="relative bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 space-y-4 sm:space-y-5 min-w-0 my-auto z-10">
+        <div class="flex justify-between items-center border-b pb-3 gap-2 min-w-0">
+            <h3 class="font-black text-slate-900 text-sm truncate">إضافة مستوى أكاديمي رئيسي جديد</h3>
+            <button type="button" onclick="closeAddLevelModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold shrink-0 p-1">✕</button>
         </div>
 
-        <form action="{{ route('admin.levels.store') }}" method="POST" class="space-y-4 text-xs">
+        <form action="{{ route('admin.levels.store') }}" method="POST" class="space-y-4 text-xs min-w-0">
             @csrf
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">الاسم بالإنجليزي (English) <span class="text-rose-500">*</span></label>
                     <input type="text" name="name_en" required placeholder="مثال: ADVANCED 3" dir="ltr" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold">
@@ -515,7 +518,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">رسوم المستوى الشاملة</label>
                     <input type="number" step="0.01" name="fee_amount" required value="50000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
@@ -539,9 +542,9 @@
                 <textarea name="description" rows="2" placeholder="أهداف ومخرجات التعلم للمستوى..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
             </div>
 
-            <div class="flex justify-end gap-2 pt-3 border-t">
-                <button type="button" onclick="closeAddLevelModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">حفظ المستوى الأكاديمي 🚀</button>
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeAddLevelModal()" class="w-full sm:w-auto px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl text-center">إلغاء</button>
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm text-center">حفظ المستوى الأكاديمي 🚀</button>
             </div>
         </form>
     </div>
@@ -550,17 +553,18 @@
 <!-- =============================================================== -->
 <!-- 4. مودال تعديل تسعيرة وبيانات المستوى (Edit Level Modal) -->
 <!-- =============================================================== -->
-<div id="editLevelModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
-        <div class="flex justify-between items-center border-b pb-3">
-            <h3 class="font-black text-slate-900 text-sm">تعديل تسعيرة ورسوم المستوى الأكاديمي</h3>
-            <button type="button" onclick="closeEditLevelModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+<div id="editLevelModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeEditLevelModal()"></div>
+    <div class="relative bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 space-y-4 sm:space-y-5 min-w-0 my-auto z-10">
+        <div class="flex justify-between items-center border-b pb-3 gap-2 min-w-0">
+            <h3 class="font-black text-slate-900 text-sm truncate">تعديل تسعيرة ورسوم المستوى الأكاديمي</h3>
+            <button type="button" onclick="closeEditLevelModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold shrink-0 p-1">✕</button>
         </div>
 
-        <form id="editLevelForm" method="POST" action="" class="space-y-4 text-xs">
+        <form id="editLevelForm" method="POST" action="" class="space-y-4 text-xs min-w-0">
             @csrf
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">الاسم بالإنجليزي (English) <span class="text-rose-500">*</span></label>
                     <input type="text" name="name_en" id="editLvlNameEn" required dir="ltr" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold">
@@ -571,7 +575,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">رسوم المستوى الشاملة</label>
                     <input type="number" step="0.01" name="fee_amount" id="editLvlFee" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-emerald-600">
@@ -591,9 +595,9 @@
                 <textarea name="description" id="editLvlDescription" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
             </div>
 
-            <div class="flex justify-end gap-2 pt-3 border-t">
-                <button type="button" onclick="closeEditLevelModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">حفظ وتحديث الرسوم 🚀</button>
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeEditLevelModal()" class="w-full sm:w-auto px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl text-center">إلغاء</button>
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm text-center">حفظ وتحديث الرسوم 🚀</button>
             </div>
         </form>
     </div>
@@ -602,21 +606,22 @@
 <!-- =============================================================== -->
 <!-- 5. مودال تعديل سعر الباقة (Edit Package Modal) -->
 <!-- =============================================================== -->
-<div id="editPackageModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
-        <div class="flex justify-between items-center border-b pb-3">
-            <h3 class="font-black text-slate-900 text-sm">تعديل سعر وبيانات الباقة</h3>
-            <button type="button" onclick="closeEditPackageModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+<div id="editPackageModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeEditPackageModal()"></div>
+    <div class="relative bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 space-y-4 sm:space-y-5 min-w-0 my-auto z-10">
+        <div class="flex justify-between items-center border-b pb-3 gap-2 min-w-0">
+            <h3 class="font-black text-slate-900 text-sm truncate">تعديل سعر وبيانات الباقة</h3>
+            <button type="button" onclick="closeEditPackageModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold shrink-0 p-1">✕</button>
         </div>
 
-        <form id="editPackageForm" method="POST" action="" class="space-y-4 text-xs">
+        <form id="editPackageForm" method="POST" action="" class="space-y-4 text-xs min-w-0">
             @csrf
             <div>
                 <label class="block font-bold text-slate-700 mb-1">عنوان الباقة</label>
                 <input type="text" name="title" id="editPkgTitle" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">السعر الإجمالي</label>
                     <input type="number" step="0.01" name="price" id="editPkgPrice" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
@@ -641,9 +646,9 @@
                 <textarea name="description" id="editPkgDesc" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
             </div>
 
-            <div class="flex justify-end gap-2 pt-3 border-t">
-                <button type="button" onclick="closeEditPackageModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">حفظ التعديل 🚀</button>
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeEditPackageModal()" class="w-full sm:w-auto px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl text-center">إلغاء</button>
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm text-center">حفظ التعديل 🚀</button>
             </div>
         </form>
     </div>
@@ -652,21 +657,22 @@
 <!-- =============================================================== -->
 <!-- 6. مودال إضافة باقة جديدة (Add Package Modal) -->
 <!-- =============================================================== -->
-<div id="addPackageModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
-        <div class="flex justify-between items-center border-b pb-3">
-            <h3 class="font-black text-slate-900 text-sm">إضافة باقة حصص جديدة</h3>
-            <button type="button" onclick="closeAddPackageModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+<div id="addPackageModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeAddPackageModal()"></div>
+    <div class="relative bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 space-y-4 sm:space-y-5 min-w-0 my-auto z-10">
+        <div class="flex justify-between items-center border-b pb-3 gap-2 min-w-0">
+            <h3 class="font-black text-slate-900 text-sm truncate">إضافة باقة حصص جديدة</h3>
+            <button type="button" onclick="closeAddPackageModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold shrink-0 p-1">✕</button>
         </div>
 
-        <form action="{{ route('admin.packages.store') }}" method="POST" class="space-y-4 text-xs">
+        <form action="{{ route('admin.packages.store') }}" method="POST" class="space-y-4 text-xs min-w-0">
             @csrf
             <div>
                 <label class="block font-bold text-slate-700 mb-1">عنوان الباقة</label>
                 <input type="text" name="title" required placeholder="مثال: باقة الانطلاقة (24 حصة)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">السعر الإجمالي</label>
                     <input type="number" step="0.01" name="price" required placeholder="مثال: 55000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
@@ -691,9 +697,9 @@
                 <textarea name="description" rows="2" placeholder="وصف الباقة وشروطها..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
             </div>
 
-            <div class="flex justify-end gap-2 pt-3 border-t">
-                <button type="button" onclick="closeAddPackageModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
-                <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm">إضافة الباقة 🚀</button>
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeAddPackageModal()" class="w-full sm:w-auto px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl text-center">إلغاء</button>
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm text-center">إضافة الباقة 🚀</button>
             </div>
         </form>
     </div>

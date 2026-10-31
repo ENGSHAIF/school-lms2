@@ -429,17 +429,18 @@
 </div>
 
 <!-- مودال إنشاء مجموعة صلاحيات جديدة -->
-<div id="createGroupModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-pop">
-        <div class="p-5 bg-gradient-to-r from-indigo-900 to-purple-900 text-white flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-xl">🛡️</span>
-                <h3 class="text-sm font-black">إنشاء مجموعة صلاحيات وأدوار جديدة</h3>
+<div id="createGroupModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeCreateGroupModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-pop min-w-0 my-auto z-10">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-indigo-900 to-purple-900 text-white flex justify-between items-center gap-2 min-w-0">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xl shrink-0">🛡️</span>
+                <h3 class="text-xs sm:text-sm font-black truncate">إنشاء مجموعة صلاحيات وأدوار جديدة</h3>
             </div>
-            <button type="button" onclick="closeCreateGroupModal()" class="text-white/80 hover:text-white text-lg">✕</button>
+            <button type="button" onclick="closeCreateGroupModal()" class="text-white/80 hover:text-white text-lg shrink-0 p-1">✕</button>
         </div>
 
-        <form method="POST" action="{{ route('admin.permission_groups.store') }}" class="p-6 space-y-4">
+        <form method="POST" action="{{ route('admin.permission_groups.store') }}" class="p-4 sm:p-6 space-y-4 min-w-0">
             @csrf
 
             <div>
@@ -457,7 +458,7 @@
                 <textarea name="description" rows="2" placeholder="وصف موجز للمهام الموكلة لأعضاء هذه المجموعة..." class="w-full text-xs rounded-xl border-slate-200 p-2.5 focus:ring-2 focus:ring-indigo-500"></textarea>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">الرمز التعبيري (الأيقونة)</label>
                     <input type="text" name="icon" value="🛡️" class="w-full text-xs rounded-xl border-slate-200 p-2.5 text-center text-lg">
@@ -476,11 +477,11 @@
                 </div>
             </div>
 
-            <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onclick="closeCreateGroupModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+            <div class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2">
+                <button type="button" onclick="closeCreateGroupModal()" class="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition text-center">
                     إلغاء
                 </button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md transition">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md transition text-center">
                     إنشاء المجموعة والبدء بتحديد صلاحياتها ➕
                 </button>
             </div>
@@ -490,34 +491,35 @@
 
 <!-- مودال إضافة وتسكين مستخدمين في المجموعة -->
 @if($selectedGroup)
-<div id="assignUsersModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-pop">
-        <div class="p-5 bg-gradient-to-r from-slate-900 to-indigo-900 text-white flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-xl">👥</span>
-                <h3 class="text-sm font-black">إضافة مستخدمين إلى [{{ $selectedGroup->name }}]</h3>
+<div id="assignUsersModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeAssignUsersModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-pop min-w-0 my-auto z-10">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-indigo-900 text-white flex justify-between items-center gap-2 min-w-0">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xl shrink-0">👥</span>
+                <h3 class="text-xs sm:text-sm font-black truncate">إضافة مستخدمين إلى [{{ $selectedGroup->name }}]</h3>
             </div>
-            <button type="button" onclick="closeAssignUsersModal()" class="text-white/80 hover:text-white text-lg">✕</button>
+            <button type="button" onclick="closeAssignUsersModal()" class="text-white/80 hover:text-white text-lg shrink-0 p-1">✕</button>
         </div>
 
-        <form method="POST" action="{{ route('admin.permission_groups.assign_users', $selectedGroup->id) }}" class="p-6 space-y-4">
+        <form method="POST" action="{{ route('admin.permission_groups.assign_users', $selectedGroup->id) }}" class="p-4 sm:p-6 space-y-4 min-w-0">
             @csrf
 
             <p class="text-xs text-slate-500">
                 اختر مستخدماً أو عدة مستخدمين من القائمة لنقلهم إلى هذه المجموعة وتفعيل صلاحياتها عليهم فوراً:
             </p>
 
-            <div class="max-h-60 overflow-y-auto space-y-2 border border-slate-200 p-3 rounded-2xl">
+            <div class="max-h-60 overflow-y-auto space-y-2 border border-slate-200 p-3 rounded-2xl min-w-0">
                 @forelse($availableUsers as $u)
-                    <label class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200 transition">
-                        <div class="flex items-center gap-2.5">
-                            <input type="checkbox" name="user_ids[]" value="{{ $u->id }}" class="rounded text-indigo-600 focus:ring-indigo-500">
-                            <div>
-                                <span class="text-xs font-bold text-slate-900 block leading-tight">{{ $u->name }}</span>
-                                <span class="text-[10px] text-slate-400 font-mono" dir="ltr">{{ $u->email }}</span>
+                    <label class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200 transition gap-2">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <input type="checkbox" name="user_ids[]" value="{{ $u->id }}" class="rounded text-indigo-600 focus:ring-indigo-500 shrink-0">
+                            <div class="min-w-0">
+                                <span class="text-xs font-bold text-slate-900 block leading-tight truncate">{{ $u->name }}</span>
+                                <span class="text-[10px] text-slate-400 font-mono block truncate" dir="ltr">{{ $u->email }}</span>
                             </div>
                         </div>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">
                             {{ $u->role }}
                         </span>
                     </label>
@@ -528,11 +530,11 @@
                 @endforelse
             </div>
 
-            <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
-                <button type="button" onclick="closeAssignUsersModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+            <div class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2">
+                <button type="button" onclick="closeAssignUsersModal()" class="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition text-center">
                     إلغاء
                 </button>
-                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md transition">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md transition text-center">
                     إضافة المحددين للمجموعة ✅
                 </button>
             </div>

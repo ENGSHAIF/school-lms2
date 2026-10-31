@@ -1062,71 +1062,71 @@
 <!-- =============================================================== -->
 <!-- مودال إضافة مستخدم جديد وتحديد الصلاحيات (Add User Modal) -->
 <!-- =============================================================== -->
-<div id="addUserModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden" style="overscroll-behavior: contain;">
+<div id="addUserModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto" style="overscroll-behavior: contain;">
     <!-- خلفية النقر للإغلاق -->
     <div class="fixed inset-0 cursor-pointer" onclick="closeAddModal()"></div>
 
-    <!-- بطاقة النافذة المنبثقة بحجم متناسق ومحدد الارتفاع -->
-    <div class="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10">
+    <!-- بطاقة النافذة المنبثقة بحجم متناسق ومحدد الارتفاع مع حماية كاملة من الخروج عن الإطار على الهواتف -->
+    <div class="relative bg-white w-full max-w-4xl min-w-0 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10 my-auto">
         
-        <!-- الترويسة المثبتة بالأعلى (Fixed Header) -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-xl shadow-xs">
+        <!-- الترويسة المثبتة بالأعلى (Fixed Header) متجاوبة مع الهواتف -->
+        <div class="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 bg-slate-50 shrink-0 gap-2.5">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg sm:text-xl shadow-xs shrink-0">
                     👤
                 </div>
-                <div>
-                    <h2 class="text-base sm:text-lg font-black text-slate-900 leading-tight">إضافة مستخدم جديد للنظام وتحديد صلاحياته</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">اختر نوع الحساب وحدد الصلاحيات الدقيقة الممنوحة له.</p>
+                <div class="min-w-0">
+                    <h2 class="text-xs sm:text-base md:text-lg font-black text-slate-900 leading-tight truncate sm:whitespace-normal">إضافة مستخدم جديد للنظام وتحديد صلاحياته</h2>
+                    <p class="text-[10px] sm:text-xs text-slate-500 mt-0.5 truncate sm:whitespace-normal">اختر نوع الحساب وحدد الصلاحيات الدقيقة الممنوحة له.</p>
                 </div>
             </div>
-            <button type="button" onclick="closeAddModal()" class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center text-sm font-bold transition shadow-xs" title="إغلاق النافذة (Esc)">✕</button>
+            <button type="button" onclick="closeAddModal()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center text-xs sm:text-sm font-bold transition shadow-xs shrink-0" title="إغلاق النافذة (Esc)">✕</button>
         </div>
 
         <!-- نموذج الإضافة مع جسم قابل للتمرير بسلاسة -->
-        <form action="{{ route('admin.users.store') }}" method="POST" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form action="{{ route('admin.users.store') }}" method="POST" class="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden w-full">
             @csrf
 
-            <!-- جسم النموذج القابل للتمرير بشريط تمرير واضح وأنيق -->
-            <div class="modal-scrollable-body overflow-y-auto flex-1 p-5 sm:p-6 space-y-6 overscroll-contain">
+            <!-- جسم النموذج القابل للتمرير بشريط تمرير واضح وأنيق ومحمي من التمدد الأفقي -->
+            <div class="modal-scrollable-body overflow-y-auto overflow-x-hidden flex-1 p-3.5 sm:p-6 space-y-4 sm:space-y-6 overscroll-contain min-w-0">
                 <!-- البيانات الأساسية -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-                    <div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-xs">
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الاسم الكامل بالعربية <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required placeholder="محمد شائف عبدالواحد علي" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="text" name="name" required placeholder="محمد شائف عبدالواحد علي" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الاسم بالإنجليزية (Full English Name) <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="text" name="name_en" placeholder="mohammed shaif abdulwahid ali" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
+                        <input type="text" name="name_en" placeholder="mohammed shaif abdulwahid ali" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الجنس (Gender) <span class="text-red-500">*</span></label>
-                        <select name="gender" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                        <select name="gender" required class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                             <option value="male" selected>ذكر 👨 (Male)</option>
                             <option value="female">أنثى 👩 (Female)</option>
                         </select>
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">تاريخ الميلاد <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="date" name="birth_date" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="date" name="birth_date" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-red-500">*</span></label>
-                        <input type="email" name="email" required placeholder="email@asots.org" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="email" name="email" required placeholder="email@asots.org" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">رقم الهاتف والواتساب <span class="text-red-500">*</span></label>
-                        <input type="text" name="phone_whatsapp" required placeholder="+967 " class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="text" name="phone_whatsapp" required placeholder="+967 " class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الدور في المنصة (Role) <span class="text-red-500">*</span></label>
-                        <select name="role" id="addRoleSelect" onchange="onRoleChange(this.value, 'add')" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                        <select name="role" id="addRoleSelect" onchange="onRoleChange(this.value, 'add')" required class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                             <option value="supervisor" selected>🛡️ مشرف أكاديمي (Supervisor)</option>
                             <option value="accountant">💼 محاسب مالي (Accountant)</option>
                             <option value="teacher">👨‍🏫 معلم (Teacher)</option>
@@ -1136,9 +1136,9 @@
                         </select>
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">مجموعة الصلاحيات والأدوار (Permission Group) 🛡️</label>
-                        <select name="permission_group_id" id="addPermissionGroupSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-xs">
+                        <select name="permission_group_id" id="addPermissionGroupSelect" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-xs truncate">
                             <option value="">-- تلقائي حسب الدور أو بدون مجموعة --</option>
                             @foreach($permissionGroups as $pg)
                                 <option value="{{ $pg->id }}" {{ $pg->slug === 'supervisors' ? 'selected' : '' }}>
@@ -1149,17 +1149,17 @@
                         <span class="text-[10px] text-slate-400 block mt-1">يرث المستخدم كامل صلاحيات المجموعة فوراً</span>
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block font-bold text-slate-700">كلمة المرور المؤقتة <span class="text-red-500">*</span></label>
                             <button type="button" onclick="generateRandomPass('addPassInput')" class="text-[10px] text-indigo-600 font-bold hover:underline">توليد عشوائي 🎲</button>
                         </div>
-                        <input type="text" name="password" id="addPassInput" required value="password123" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="text" name="password" id="addPassInput" required value="password123" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">حالة الحساب</label>
-                        <select name="status" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                        <select name="status" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                             <option value="active" selected>نشط ومفعل فوراً (Active)</option>
                             <option value="suspended">موقوف ومعطل (Suspended)</option>
                         </select>
@@ -1167,34 +1167,34 @@
                 </div>
 
                 <!-- إجبار تغيير كلمة المرور عند أول دخول -->
-                <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
-                    <input type="checkbox" name="must_change_password" id="addMustChangePass" value="1" checked class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
-                    <label for="addMustChangePass" class="text-xs font-bold text-amber-900 cursor-pointer">
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5">
+                    <input type="checkbox" name="must_change_password" id="addMustChangePass" value="1" checked class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 shrink-0 mt-0.5">
+                    <label for="addMustChangePass" class="text-xs font-bold text-amber-900 cursor-pointer leading-relaxed">
                         إجبار المستخدم على تغيير كلمة المرور فور أول تسجيل دخول لحسابه (موصى به للأمان) 🔐
                     </label>
                 </div>
 
 
                 <!-- مصفوفة الصلاحيات المخصصة (Permissions Matrix) -->
-                <div id="addPermissionsSection" class="border border-slate-200 rounded-2xl p-5 bg-slate-50/70 space-y-4">
+                <div id="addPermissionsSection" class="border border-slate-200 rounded-2xl p-3 sm:p-5 bg-slate-50/70 space-y-3 sm:space-y-4 min-w-0">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
-                        <div>
-                            <span class="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                        <div class="min-w-0">
+                            <span class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
                                 <span>🔐</span>
                                 <span>جدول الصلاحيات المخصصة للمستخدم</span>
                             </span>
-                            <p class="text-[11px] text-slate-500">حدد الصلاحيات التي يستطيع هذا المستخدم تنفيذها في النظام.</p>
+                            <p class="text-[10px] sm:text-[11px] text-slate-500">حدد الصلاحيات التي يستطيع هذا المستخدم تنفيذها في النظام.</p>
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="toggleAllCheckboxes('add', true)" class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-[10px] font-bold text-indigo-700">تحديد الكل</button>
-                            <button type="button" onclick="toggleAllCheckboxes('add', false)" class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-[10px] font-bold text-slate-600">إلغاء التحديد</button>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button type="button" onclick="toggleAllCheckboxes('add', true)" class="flex-1 sm:flex-initial px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-[10px] font-bold text-indigo-700 text-center">تحديد الكل</button>
+                            <button type="button" onclick="toggleAllCheckboxes('add', false)" class="flex-1 sm:flex-initial px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-[10px] font-bold text-slate-600 text-center">إلغاء التحديد</button>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         @foreach($availablePermissions as $catKey => $catData)
-                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
+                            <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs space-y-2.5 min-w-0">
                                 <span class="text-xs font-black text-slate-900 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
                                     <span>{{ $catData['icon'] }}</span>
                                     <span>{{ $catData['title'] }}</span>
@@ -1202,11 +1202,11 @@
 
                                 <div class="space-y-2">
                                     @foreach($catData['permissions'] as $permKey => $perm)
-                                        <label class="flex items-start gap-2.5 cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition">
-                                            <input type="checkbox" name="permissions[{{ $permKey }}]" value="1" class="add-perm-cb mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
-                                            <div>
-                                                <span class="text-xs font-bold text-slate-800 block">{{ $perm['label'] }}</span>
-                                                <span class="text-[10px] text-slate-400 block leading-tight">{{ $perm['desc'] }}</span>
+                                        <label class="flex items-start gap-2.5 cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition min-w-0">
+                                            <input type="checkbox" name="permissions[{{ $permKey }}]" value="1" class="add-perm-cb mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 shrink-0">
+                                            <div class="min-w-0">
+                                                <span class="text-xs font-bold text-slate-800 block break-words">{{ $perm['label'] }}</span>
+                                                <span class="text-[10px] text-slate-400 block leading-tight break-words">{{ $perm['desc'] }}</span>
                                             </div>
                                         </label>
                                     @endforeach
@@ -1217,12 +1217,12 @@
                 </div>
             </div>
 
-            <!-- أسفل النافذة المثبت (Fixed Footer) - تظهر الأزرار دوماً دون أن تختفي أبداً -->
-            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 shrink-0">
-                <button type="button" onclick="closeAddModal()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 bg-white border border-slate-300 transition shadow-2xs">
+            <!-- أسفل النافذة المثبت (Fixed Footer) - متجاوب بالكامل مع شاشات الهواتف دون أي خروج عن الإطار -->
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-200 bg-slate-50 shrink-0">
+                <button type="button" onclick="closeAddModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 bg-white border border-slate-300 transition shadow-2xs text-center">
                     تراجع / إلغاء ✕
                 </button>
-                <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 text-center">
                     <span>🚀</span>
                     <span>حفظ وإضافة المستخدم وتفعيل صلاحياته</span>
                 </button>
@@ -1234,71 +1234,71 @@
 <!-- =============================================================== -->
 <!-- مودال تعديل المستخدم والصلاحيات (Edit User & Permissions Modal) -->
 <!-- =============================================================== -->
-<div id="editUserModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden" style="overscroll-behavior: contain;">
+<div id="editUserModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto" style="overscroll-behavior: contain;">
     <!-- خلفية النقر للإغلاق -->
     <div class="fixed inset-0 cursor-pointer" onclick="closeEditModal()"></div>
 
-    <!-- بطاقة النافذة المنبثقة بحجم متناسق ومحدد الارتفاع -->
-    <div class="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10">
+    <!-- بطاقة النافذة المنبثقة بحجم متناسق ومحدد الارتفاع مع حماية كاملة من الخروج عن الإطار على الهواتف -->
+    <div class="relative bg-white w-full max-w-4xl min-w-0 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10 my-auto">
         
-        <!-- الترويسة المثبتة بالأعلى (Fixed Header) -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-xl shadow-xs">
+        <!-- الترويسة المثبتة بالأعلى (Fixed Header) متجاوبة مع الهواتف -->
+        <div class="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 bg-slate-50 shrink-0 gap-2.5">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg sm:text-xl shadow-xs shrink-0">
                     ⚙️
                 </div>
-                <div>
-                    <h2 class="text-base sm:text-lg font-black text-slate-900 leading-tight">تعديل بيانات المستخدم وجدول الصلاحيات</h2>
-                    <p class="text-xs text-slate-500 mt-0.5" id="editModalSubtitle">تحديث صلاحيات الحساب وتعيين حالته في النظام.</p>
+                <div class="min-w-0">
+                    <h2 class="text-xs sm:text-base md:text-lg font-black text-slate-900 leading-tight truncate sm:whitespace-normal">تعديل بيانات المستخدم وجدول الصلاحيات</h2>
+                    <p class="text-[10px] sm:text-xs text-slate-500 mt-0.5 truncate sm:whitespace-normal" id="editModalSubtitle">تحديث صلاحيات الحساب وتعيين حالته في النظام.</p>
                 </div>
             </div>
-            <button type="button" onclick="closeEditModal()" class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center text-sm font-bold transition shadow-xs" title="إغلاق النافذة (Esc)">✕</button>
+            <button type="button" onclick="closeEditModal()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center text-xs sm:text-sm font-bold transition shadow-xs shrink-0" title="إغلاق النافذة (Esc)">✕</button>
         </div>
 
         <!-- نموذج التعديل مع جسم قابل للتمرير بسلاسة -->
-        <form id="editUserForm" method="POST" action="" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <form id="editUserForm" method="POST" action="" class="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden w-full">
             @csrf
 
-            <!-- جسم النموذج القابل للتمرير بشريط تمرير واضح وأنيق -->
-            <div class="modal-scrollable-body overflow-y-auto flex-1 p-5 sm:p-6 space-y-6 overscroll-contain">
+            <!-- جسم النموذج القابل للتمرير بشريط تمرير واضح وأنيق ومحمي من التمدد الأفقي -->
+            <div class="modal-scrollable-body overflow-y-auto overflow-x-hidden flex-1 p-3.5 sm:p-6 space-y-4 sm:space-y-6 overscroll-contain min-w-0">
                 <!-- البيانات الأساسية -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-                    <div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-xs">
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الاسم الكامل بالعربية <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" id="editName" required placeholder="محمد شائف عبدالواحد علي" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="text" name="name" id="editName" required placeholder="محمد شائف عبدالواحد علي" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الاسم بالإنجليزية (Full English Name) <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="text" name="name_en" id="editNameEn" placeholder="mohammed shaif abdulwahid ali" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
+                        <input type="text" name="name_en" id="editNameEn" placeholder="mohammed shaif abdulwahid ali" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الجنس (Gender) <span class="text-red-500">*</span></label>
-                        <select name="gender" id="editGender" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                        <select name="gender" id="editGender" required class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                             <option value="male">ذكر 👨 (Male)</option>
                             <option value="female">أنثى 👩 (Female)</option>
                         </select>
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">تاريخ الميلاد <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="date" name="birth_date" id="editBirthDate" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="date" name="birth_date" id="editBirthDate" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-red-500">*</span></label>
-                        <input type="email" name="email" id="editEmail" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="email" name="email" id="editEmail" required class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">رقم الهاتف والواتساب <span class="text-red-500">*</span></label>
-                        <input type="text" name="phone_whatsapp" id="editPhone" required placeholder="+967 " class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="text" name="phone_whatsapp" id="editPhone" required placeholder="+967 " class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الدور في المنصة (Role) <span class="text-red-500">*</span></label>
-                        <select name="role" id="editRoleSelect" onchange="onRoleChange(this.value, 'edit')" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                        <select name="role" id="editRoleSelect" onchange="onRoleChange(this.value, 'edit')" required class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                             <option value="supervisor">🛡️ مشرف أكاديمي (Supervisor)</option>
                             <option value="accountant">💼 محاسب مالي (Accountant)</option>
                             <option value="teacher">👨‍🏫 معلم (Teacher)</option>
@@ -1308,9 +1308,9 @@
                         </select>
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">مجموعة الصلاحيات والأدوار (Permission Group) 🛡️</label>
-                        <select name="permission_group_id" id="editPermissionGroupSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-xs">
+                        <select name="permission_group_id" id="editPermissionGroupSelect" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-xs truncate">
                             <option value="">-- بدون مجموعة (تخصيص يدوي مباشر) --</option>
                             @foreach($permissionGroups as $pg)
                                 <option value="{{ $pg->id }}">
@@ -1321,14 +1321,14 @@
                         <span class="text-[10px] text-slate-400 block mt-1">يرث المستخدم صلاحيات المجموعة المختارة مباشرة</span>
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">تغيير كلمة المرور (اختياري)</label>
-                        <input type="text" name="password" placeholder="اتركه فارغاً دون تغيير" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="text" name="password" placeholder="اتركه فارغاً دون تغيير" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
-                    <div>
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">حالة الحساب</label>
-                        <select name="status" id="editStatusSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                        <select name="status" id="editStatusSelect" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                             <option value="active">نشط ومفعل (Active)</option>
                             <option value="suspended">موقوف ومعطل (Suspended)</option>
                         </select>
@@ -1336,34 +1336,34 @@
                 </div>
 
                 <!-- خيار إجبار تغيير كلمة المرور عند أول دخول قادم -->
-                <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
-                    <input type="checkbox" name="must_change_password" id="editMustChangePass" value="1" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
-                    <label for="editMustChangePass" class="text-xs font-bold text-amber-900 cursor-pointer">
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5">
+                    <input type="checkbox" name="must_change_password" id="editMustChangePass" value="1" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 shrink-0 mt-0.5">
+                    <label for="editMustChangePass" class="text-xs font-bold text-amber-900 cursor-pointer leading-relaxed">
                         إجبار المستخدم على تغيير كلمة المرور عند أول تسجيل دخول قادم 🔐
                     </label>
                 </div>
 
 
                 <!-- مصفوفة الصلاحيات المخصصة (Permissions Matrix) -->
-                <div id="editPermissionsSection" class="border border-slate-200 rounded-2xl p-5 bg-slate-50/70 space-y-4">
+                <div id="editPermissionsSection" class="border border-slate-200 rounded-2xl p-3 sm:p-5 bg-slate-50/70 space-y-3 sm:space-y-4 min-w-0">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
-                        <div>
-                            <span class="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                        <div class="min-w-0">
+                            <span class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
                                 <span>🔐</span>
                                 <span>تعديل الصلاحيات الممنوحة للمستخدم</span>
                             </span>
-                            <p class="text-[11px] text-slate-500">حدد بالضبط العمليات المصرح للمستخدم إجراؤها.</p>
+                            <p class="text-[10px] sm:text-[11px] text-slate-500">حدد بالضبط العمليات المصرح للمستخدم إجراؤها.</p>
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="toggleAllCheckboxes('edit', true)" class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-[10px] font-bold text-indigo-700">تحديد الكل</button>
-                            <button type="button" onclick="toggleAllCheckboxes('edit', false)" class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-[10px] font-bold text-slate-600">إلغاء التحديد</button>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button type="button" onclick="toggleAllCheckboxes('edit', true)" class="flex-1 sm:flex-initial px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-[10px] font-bold text-indigo-700 text-center">تحديد الكل</button>
+                            <button type="button" onclick="toggleAllCheckboxes('edit', false)" class="flex-1 sm:flex-initial px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-[10px] font-bold text-slate-600 text-center">إلغاء التحديد</button>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         @foreach($availablePermissions as $catKey => $catData)
-                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
+                            <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-2xs space-y-2.5 min-w-0">
                                 <span class="text-xs font-black text-slate-900 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
                                     <span>{{ $catData['icon'] }}</span>
                                     <span>{{ $catData['title'] }}</span>
@@ -1371,11 +1371,11 @@
 
                                 <div class="space-y-2">
                                     @foreach($catData['permissions'] as $permKey => $perm)
-                                        <label class="flex items-start gap-2.5 cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition">
-                                            <input type="checkbox" name="permissions[{{ $permKey }}]" id="edit_perm_{{ $permKey }}" value="1" class="edit-perm-cb mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
-                                            <div>
-                                                <span class="text-xs font-bold text-slate-800 block">{{ $perm['label'] }}</span>
-                                                <span class="text-[10px] text-slate-400 block leading-tight">{{ $perm['desc'] }}</span>
+                                        <label class="flex items-start gap-2.5 cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition min-w-0">
+                                            <input type="checkbox" name="permissions[{{ $permKey }}]" id="edit_perm_{{ $permKey }}" value="1" class="edit-perm-cb mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 shrink-0">
+                                            <div class="min-w-0">
+                                                <span class="text-xs font-bold text-slate-800 block break-words">{{ $perm['label'] }}</span>
+                                                <span class="text-[10px] text-slate-400 block leading-tight break-words">{{ $perm['desc'] }}</span>
                                             </div>
                                         </label>
                                     @endforeach
@@ -1386,22 +1386,22 @@
                 </div>
             </div>
 
-            <!-- أسفل النافذة المثبت (Fixed Footer) - يضم زر الحذف وأزرار التراجع والحفظ ثابتة دوماً -->
-            <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 shrink-0">
+            <!-- أسفل النافذة المثبت (Fixed Footer) - متجاوب بالكامل مع الهواتف دون أي خروج عن الإطار -->
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-200 bg-slate-50 shrink-0">
                 <!-- زر الحذف المباشر للمستخدم -->
-                <div>
-                    <button type="button" id="editDeleteBtn" onclick="confirmDeleteUserFromModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 transition flex items-center justify-center gap-1.5 shadow-2xs">
+                <div class="w-full sm:w-auto">
+                    <button type="button" id="editDeleteBtn" onclick="confirmDeleteUserFromModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 transition flex items-center justify-center gap-1.5 shadow-2xs text-center">
                         <span>🗑️</span>
                         <span>حذف المستخدم نهائياً</span>
                     </button>
                 </div>
 
                 <!-- أزرار التراجع والحفظ -->
-                <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-                    <button type="button" onclick="closeEditModal()" class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 bg-white border border-slate-300 transition shadow-2xs">
+                <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
+                    <button type="button" onclick="closeEditModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 bg-white border border-slate-300 transition shadow-2xs text-center">
                         تراجع / إلغاء ✕
                     </button>
-                    <button type="submit" class="flex-1 sm:flex-initial px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 text-center">
                         <span>💾</span>
                         <span>حفظ التعديلات وتحديث الصلاحيات</span>
                     </button>
@@ -1420,39 +1420,39 @@
 <!-- =============================================================== -->
 <!-- مودال منع الحذف وتوضيح قيود وسجلات العمليات بالحساب (Blocked Deletion Modal) -->
 <!-- =============================================================== -->
-<div id="blockedDeleteModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+<div id="blockedDeleteModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
     <div class="fixed inset-0 cursor-pointer" onclick="closeBlockedDeleteModal()"></div>
-    <div class="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
+    <div class="relative bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150 min-w-0 my-auto">
         <!-- الرأس -->
-        <div class="p-6 bg-gradient-to-r from-amber-50 to-rose-50 border-b border-amber-200/80 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-900 flex items-center justify-center text-2xl font-bold shadow-2xs">
+        <div class="p-4 sm:p-6 bg-gradient-to-r from-amber-50 to-rose-50 border-b border-amber-200/80 flex items-center justify-between gap-3 min-w-0">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500/20 text-amber-900 flex items-center justify-center text-xl sm:text-2xl font-bold shadow-2xs shrink-0">
                     🛡️
                 </div>
-                <div>
-                    <h3 class="text-base font-black text-slate-950">قيد أمان: الحذف محظور ومقيد</h3>
-                    <p class="text-xs text-slate-500">حماية القيود المحاسبية وسجل العمليات الأكاديمية</p>
+                <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-black text-slate-950 truncate">قيد أمان: الحذف محظور ومقيد</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500 truncate">حماية القيود المحاسبية وسجل العمليات الأكاديمية</p>
                 </div>
             </div>
-            <button type="button" onclick="closeBlockedDeleteModal()" class="w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-400 hover:text-slate-600 flex items-center justify-center transition text-sm">
+            <button type="button" onclick="closeBlockedDeleteModal()" class="w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-400 hover:text-slate-600 flex items-center justify-center transition text-sm shrink-0">
                 ✕
             </button>
         </div>
 
         <!-- المحتوى والتفاصيل -->
-        <div class="p-6 space-y-4">
-            <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
-                <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs font-bold text-slate-500">اسم المستخدم:</span>
-                    <span id="blockedUserName" class="text-xs font-black text-slate-900"></span>
+        <div class="p-4 sm:p-6 space-y-3.5 sm:space-y-4 min-w-0">
+            <div class="bg-slate-50 border border-slate-200 p-3.5 sm:p-4 rounded-2xl">
+                <div class="flex items-center justify-between mb-1.5 gap-2">
+                    <span class="text-xs font-bold text-slate-500 shrink-0">اسم المستخدم:</span>
+                    <span id="blockedUserName" class="text-xs font-black text-slate-900 truncate text-left"></span>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-slate-500">الرقم الفريد التسلسلي:</span>
-                    <span id="blockedUserCode" class="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200"></span>
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-bold text-slate-500 shrink-0">الرقم الفريد التسلسلي:</span>
+                    <span id="blockedUserCode" class="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200 truncate"></span>
                 </div>
             </div>
 
-            <div class="bg-rose-50 border border-rose-200 p-4 rounded-2xl">
+            <div class="bg-rose-50 border border-rose-200 p-3.5 sm:p-4 rounded-2xl">
                 <div class="flex items-center gap-2 mb-1.5 text-rose-900 font-bold text-xs">
                     <span>⚠️</span>
                     <span>لماذا يمنع النظام حذف هذا الحساب نهائياً؟</span>
@@ -1469,7 +1469,7 @@
                 </div>
             </div>
 
-            <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-xs text-emerald-900 flex items-start gap-2">
+            <div class="bg-emerald-50 border border-emerald-200 p-3 sm:p-3.5 rounded-2xl text-xs text-emerald-900 flex items-start gap-2">
                 <span class="text-base shrink-0">💡</span>
                 <div>
                     <span class="font-bold block mb-0.5">الحل النظامي المعتمد:</span>
@@ -1479,13 +1479,13 @@
         </div>
 
         <!-- أزرار الإجراءات في أسفل النافذة -->
-        <div class="p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <button type="button" onclick="closeBlockedDeleteModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 transition shadow-2xs">
+        <div class="p-3.5 sm:p-5 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+            <button type="button" onclick="closeBlockedDeleteModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 transition shadow-2xs text-center">
                 إغلاق النافذة ✕
             </button>
             <form id="blockedToggleForm" method="POST" action="" class="w-full sm:w-auto">
                 @csrf
-                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-black bg-slate-900 hover:bg-slate-800 text-amber-300 shadow-md transition flex items-center justify-center gap-1.5">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-black bg-slate-900 hover:bg-slate-800 text-amber-300 shadow-md transition flex items-center justify-center gap-1.5 text-center">
                     <span>⏸️</span>
                     <span>إيقاف وتعطيل الحساب الآن</span>
                 </button>
@@ -1497,28 +1497,28 @@
 <!-- =============================================================== -->
 <!-- مودال تغيير كلمة المرور للمستخدم مباشرة (Direct Admin Password Reset) -->
 <!-- =============================================================== -->
-<div id="adminChangePasswordModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+<div id="adminChangePasswordModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
     <div class="fixed inset-0 cursor-pointer" onclick="closeAdminChangePasswordModal()"></div>
-    <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 p-6 z-10">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-            <div class="flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl shadow-xs">
+    <div class="relative bg-white w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 z-10 min-w-0 my-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 gap-2 min-w-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg sm:text-xl shadow-xs shrink-0">
                     🔑
                 </div>
-                <div>
-                    <h3 class="text-base font-black text-slate-900" id="changePassUserName">تغيير كلمة المرور</h3>
-                    <p class="text-[11px] text-slate-500" id="changePassUserSub">تعيين كلمة مرور جديدة للمستخدم مع إمكانية إجبار التغيير.</p>
+                <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-black text-slate-900 truncate" id="changePassUserName">تغيير كلمة المرور</h3>
+                    <p class="text-[11px] text-slate-500 truncate" id="changePassUserSub">تعيين كلمة مرور جديدة للمستخدم مع إمكانية إجبار التغيير.</p>
                 </div>
             </div>
-            <button type="button" onclick="closeAdminChangePasswordModal()" class="text-slate-400 hover:text-slate-700 text-base font-bold">✕</button>
+            <button type="button" onclick="closeAdminChangePasswordModal()" class="text-slate-400 hover:text-slate-700 text-base font-bold shrink-0 p-1">✕</button>
         </div>
 
-        <form id="adminChangePasswordForm" method="POST" action="" class="space-y-4 text-xs">
+        <form id="adminChangePasswordForm" method="POST" action="" class="space-y-4 text-xs min-w-0">
             @csrf
             <div>
-                <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center justify-between mb-1 gap-2">
                     <label class="block font-bold text-slate-700">كلمة المرور الجديدة <span class="text-red-500">*</span></label>
-                    <button type="button" onclick="generateRandomPass('adminNewPassInput')" class="text-[10px] text-indigo-600 font-bold hover:underline">توليد كلمة مرور عشوائية 🎲</button>
+                    <button type="button" onclick="generateRandomPass('adminNewPassInput')" class="text-[10px] text-indigo-600 font-bold hover:underline shrink-0">توليد كلمة مرور عشوائية 🎲</button>
                 </div>
                 <input type="text" name="password" id="adminNewPassInput" required minlength="6"
                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
@@ -1534,17 +1534,17 @@
 
             <!-- إجبار المستخدم على التغيير عند أول دخول -->
             <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5">
-                <input type="checkbox" name="force_change" id="adminForceChangeCb" value="1" checked class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
+                <input type="checkbox" name="force_change" id="adminForceChangeCb" value="1" checked class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 shrink-0">
                 <label for="adminForceChangeCb" class="text-xs font-bold text-amber-900 cursor-pointer leading-relaxed">
                     إجبار المستخدم على تغيير كلمة المرور فور أول تسجيل دخول لحسابه (موصى به للأمان والخصوصية) 🔐
                 </label>
             </div>
 
-            <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                <button type="button" onclick="closeAdminChangePasswordModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition">
+            <div class="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t border-slate-100">
+                <button type="button" onclick="closeAdminChangePasswordModal()" class="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition text-center">
                     إلغاء ✕
                 </button>
-                <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-slate-950 font-black rounded-xl shadow-md transition flex items-center gap-1.5">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-slate-950 font-black rounded-xl shadow-md transition flex items-center justify-center gap-1.5 text-center">
                     <span>💾</span>
                     <span>حفظ وتعيين كلمة المرور</span>
                 </button>
@@ -1556,48 +1556,48 @@
 <!-- =============================================================== -->
 <!-- مودال معالجة طلب استرجاع كلمة المرور (Handle Password Reset Request Modal) -->
 <!-- =============================================================== -->
-<div id="handleResetRequestModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+<div id="handleResetRequestModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
     <div class="fixed inset-0 cursor-pointer" onclick="closeHandleResetModal()"></div>
-    <div class="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 z-10">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-            <div class="flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center text-xl shadow-xs">
+    <div class="relative bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 z-10 min-w-0 my-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 gap-2 min-w-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center text-lg sm:text-xl shadow-xs shrink-0">
                     🔑
                 </div>
-                <div>
-                    <h3 class="text-base font-black text-slate-900" id="handleModalTitle">معالجة طلب استرجاع الحساب</h3>
-                    <p class="text-[11px] text-slate-500">إصدار كلمة مرور مؤقتة وتفعيل إجبار التغيير عند تسجيل الدخول.</p>
+                <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-black text-slate-900 truncate" id="handleModalTitle">معالجة طلب استرجاع الحساب</h3>
+                    <p class="text-[11px] text-slate-500 truncate">إصدار كلمة مرور مؤقتة وتفعيل إجبار التغيير عند تسجيل الدخول.</p>
                 </div>
             </div>
-            <button type="button" onclick="closeHandleResetModal()" class="text-slate-400 hover:text-slate-700 text-base font-bold">✕</button>
+            <button type="button" onclick="closeHandleResetModal()" class="text-slate-400 hover:text-slate-700 text-base font-bold shrink-0 p-1">✕</button>
         </div>
 
-        <form id="handleResetRequestForm" method="POST" action="" class="space-y-4 text-xs">
+        <form id="handleResetRequestForm" method="POST" action="" class="space-y-4 text-xs min-w-0">
             @csrf
             <!-- بطاقة تفاصيل الطلب -->
-            <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200 space-y-1.5">
-                <div class="flex justify-between items-center">
-                    <span class="text-slate-500">مقدم الطلب:</span>
-                    <span class="font-bold text-slate-900" id="handleApplicantName">-</span>
+            <div class="bg-slate-50 rounded-2xl p-3 sm:p-3.5 border border-slate-200 space-y-1.5 min-w-0">
+                <div class="flex justify-between items-center gap-2">
+                    <span class="text-slate-500 shrink-0">مقدم الطلب:</span>
+                    <span class="font-bold text-slate-900 truncate text-left" id="handleApplicantName">-</span>
                 </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-slate-500">المعرف المدخل:</span>
-                    <span class="font-mono font-bold text-indigo-700" id="handleApplicantId" dir="ltr">-</span>
+                <div class="flex justify-between items-center gap-2">
+                    <span class="text-slate-500 shrink-0">المعرف المدخل:</span>
+                    <span class="font-mono font-bold text-indigo-700 truncate" id="handleApplicantId" dir="ltr">-</span>
                 </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-slate-500">رقم الهاتف / واتساب:</span>
-                    <span class="font-mono font-bold text-slate-800" id="handleApplicantPhone" dir="ltr">-</span>
+                <div class="flex justify-between items-center gap-2">
+                    <span class="text-slate-500 shrink-0">رقم الهاتف / واتساب:</span>
+                    <span class="font-mono font-bold text-slate-800 truncate" id="handleApplicantPhone" dir="ltr">-</span>
                 </div>
                 <div class="pt-1 border-t border-slate-200 text-slate-600">
                     <span class="text-slate-400 block text-[10px]">ملاحظات المستخدم:</span>
-                    <span id="handleApplicantNotes" class="font-medium">-</span>
+                    <span id="handleApplicantNotes" class="font-medium break-words">-</span>
                 </div>
             </div>
 
             <div>
-                <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center justify-between mb-1 gap-2">
                     <label class="block font-bold text-slate-700">كلمة المرور المؤقتة التي سيتم تعيينها <span class="text-red-500">*</span></label>
-                    <button type="button" onclick="generateRandomPass('handleNewPassInput')" class="text-[10px] text-indigo-600 font-bold hover:underline">توليد عشوائي 🎲</button>
+                    <button type="button" onclick="generateRandomPass('handleNewPassInput')" class="text-[10px] text-indigo-600 font-bold hover:underline shrink-0">توليد عشوائي 🎲</button>
                 </div>
                 <input type="text" name="new_password" id="handleNewPassInput" required value="Pass@2026" minlength="6"
                     class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
@@ -1612,24 +1612,24 @@
             </div>
 
             <!-- زر تجهيز رسالة الواتساب للمستخدم -->
-            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl">💬</span>
-                    <div>
-                        <span class="text-xs font-bold text-emerald-900 block">رسالة الواتساب للعميل</span>
-                        <span class="text-[10px] text-emerald-700">نسخ رسالة جاهزة تتضمن كود الدخول وكلمة المرور المؤقتة</span>
+            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-xl shrink-0">💬</span>
+                    <div class="min-w-0">
+                        <span class="text-xs font-bold text-emerald-900 block truncate">رسالة الواتساب للعميل</span>
+                        <span class="text-[10px] text-emerald-700 block truncate">نسخ رسالة جاهزة تتضمن كود الدخول وكلمة المرور المؤقتة</span>
                     </div>
                 </div>
-                <button type="button" onclick="copyWhatsAppMessage()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-[11px] shadow-sm transition whitespace-nowrap">
+                <button type="button" onclick="copyWhatsAppMessage()" class="w-full sm:w-auto px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition whitespace-nowrap text-center shrink-0">
                     نسخ الرسالة 📋
                 </button>
             </div>
 
-            <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                <button type="button" onclick="closeHandleResetModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition">
+            <div class="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t border-slate-100">
+                <button type="button" onclick="closeHandleResetModal()" class="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition text-center">
                     إلغاء ✕
                 </button>
-                <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-slate-950 font-black rounded-xl shadow-md transition flex items-center gap-1.5">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-slate-950 font-black rounded-xl shadow-md transition flex items-center justify-center gap-1.5 text-center">
                     <span>✅</span>
                     <span>اعتماد وتعيين كلمة المرور</span>
                 </button>
@@ -1641,28 +1641,28 @@
 <!-- =============================================================== -->
 <!-- مودال إدارة وربط أبناء ولي الأمر (Manage Parent's Children Modal) -->
 <!-- =============================================================== -->
-<div id="manageChildrenModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+<div id="manageChildrenModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 hidden overflow-y-auto">
     <!-- خلفية النقر للإغلاق -->
     <div class="fixed inset-0" onclick="closeManageChildrenModal()"></div>
 
-    <div class="relative bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto modal-scrollable-body z-10">
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-6 md:p-8 max-w-2xl w-full shadow-2xl space-y-4 sm:space-y-6 max-h-[90vh] overflow-y-auto modal-scrollable-body z-10 min-w-0 my-auto">
         <!-- رأس المودال -->
-        <div class="flex justify-between items-start border-b border-slate-100 pb-4">
-            <div>
-                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-black border border-purple-200 mb-1">
-                    <span>👨‍👧‍👦</span>
-                    <span>إدارة وربط الأبناء بحساب ولي الأمر</span>
+        <div class="flex justify-between items-start border-b border-slate-100 pb-3 sm:pb-4 gap-3 min-w-0">
+            <div class="min-w-0">
+                <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-[11px] sm:text-xs font-black border border-purple-200 mb-1 max-w-full">
+                    <span class="shrink-0">👨‍👧‍👦</span>
+                    <span class="truncate">إدارة وربط الأبناء بحساب ولي الأمر</span>
                 </div>
-                <h3 class="font-black text-lg text-slate-900" id="parentModalName">ولي الأمر: ---</h3>
-                <p class="text-xs text-slate-500" id="parentModalInfo">كود ولي الأمر: ---</p>
+                <h3 class="font-black text-base sm:text-lg text-slate-900 truncate" id="parentModalName">ولي الأمر: ---</h3>
+                <p class="text-xs text-slate-500 truncate" id="parentModalInfo">كود ولي الأمر: ---</p>
             </div>
-            <button type="button" onclick="closeManageChildrenModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center transition">✕</button>
+            <button type="button" onclick="closeManageChildrenModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center transition shrink-0">✕</button>
         </div>
 
         <!-- 1. نموذج ربط طالب جديد بولي الأمر -->
-        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 p-5 rounded-2xl space-y-3 shadow-2xs">
-            <div class="flex items-center justify-between">
-                <h4 class="font-black text-xs text-purple-900 flex items-center gap-2">
+        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 p-3.5 sm:p-5 rounded-2xl space-y-3 shadow-2xs min-w-0">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <h4 class="font-black text-xs text-purple-900 flex items-center gap-1.5">
                     <span>➕</span>
                     <span>ربط طالب جديد من النظام بولي الأمر هذا</span>
                 </h4>
@@ -1670,15 +1670,15 @@
             </div>
 
             <!-- حقل بحث وتصفية فورية لاختيار الطالب بسهولة -->
-            <div class="relative">
+            <div class="relative min-w-0">
                 <input type="text" id="studentFilterInput" onkeyup="filterStudentOptions()" placeholder="🔍 ابحث بالاسم أو كود الطالب للوصول السريع..."
                     class="w-full border border-purple-200 rounded-xl px-3 py-1.5 text-xs bg-white/90 focus:bg-white outline-none focus:ring-2 focus:ring-purple-400 placeholder:text-slate-400">
             </div>
 
-            <form id="linkStudentForm" method="POST" action="" class="flex flex-col sm:flex-row gap-2.5">
+            <form id="linkStudentForm" method="POST" action="" class="flex flex-col sm:flex-row gap-2 sm:gap-2.5 min-w-0">
                 @csrf
-                <div class="flex-1">
-                    <select name="student_id" id="linkStudentSelect" required class="w-full border border-purple-300 rounded-xl p-2.5 text-xs bg-white outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs font-medium">
+                <div class="flex-1 min-w-0 max-w-full">
+                    <select name="student_id" id="linkStudentSelect" required class="w-full max-w-full truncate border border-purple-300 rounded-xl p-2.5 text-xs bg-white outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs font-medium">
                         <option value="">-- اختر الطالب من قائمة طلاب المدرسة ({{ $allStudents->count() }} طالب) --</option>
                         @foreach($allStudents as $st)
                             <option value="{{ $st->id }}" data-search="{{ mb_strtolower($st->name . ' ' . ($st->name_en ?? '') . ' ' . ($st->user_code ?? '') . ' ' . ($st->student_code ?? '')) }}">
@@ -1687,7 +1687,7 @@
                         @endforeach
                     </select>
                 </div>
-                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-1.5 whitespace-nowrap">
+                <button type="submit" class="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 text-center">
                     <span>➕</span>
                     <span>ربط الطالب بولي الأمر</span>
                 </button>
@@ -1695,8 +1695,8 @@
         </div>
 
         <!-- 2. قائمة الأبناء المرتبطين حالياً -->
-        <div class="space-y-3">
-            <div class="flex justify-between items-center">
+        <div class="space-y-3 min-w-0">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <h4 class="font-black text-xs text-slate-900 flex items-center gap-2">
                     <span>📋</span>
                     <span>الأبناء المرتبطون حالياً (<span id="childrenCountText">0</span>)</span>
@@ -1704,13 +1704,13 @@
                 <span class="text-[11px] text-slate-400">السجل الأكاديمي والمالي الشامل 360 وإلغاء الربط</span>
             </div>
 
-            <div id="linkedChildrenContainer" class="space-y-2.5">
+            <div id="linkedChildrenContainer" class="space-y-2.5 min-w-0">
                 <!-- يُملأ بالجافاسكريبت -->
             </div>
         </div>
 
-        <div class="flex justify-end pt-4 border-t border-slate-100">
-            <button type="button" onclick="closeManageChildrenModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+        <div class="flex justify-end pt-3 sm:pt-4 border-t border-slate-100">
+            <button type="button" onclick="closeManageChildrenModal()" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition text-center">
                 إغلاق النافذة
             </button>
         </div>

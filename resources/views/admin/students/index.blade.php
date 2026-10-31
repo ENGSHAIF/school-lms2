@@ -382,68 +382,71 @@
 <!-- =============================================================== -->
 <!-- مودال التقرير التفصيلي لفحص النطق وأخطاء الطالب وسماع الذكاء الاصطناعي -->
 <!-- =============================================================== -->
-<div id="speechDiagnosticModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden" style="overscroll-behavior: contain;">
+<!-- =============================================================== -->
+<!-- مودال التقرير التفصيلي لفحص النطق وأخطاء الطالب وسماع الذكاء الاصطناعي -->
+<!-- =============================================================== -->
+<div id="speechDiagnosticModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto" style="overscroll-behavior: contain;">
     <div class="fixed inset-0 cursor-pointer" onclick="closeSpeechDiagnosticModal()"></div>
 
-    <div class="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
+    <div class="relative bg-white w-full max-w-4xl rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150 min-w-0 my-auto">
         
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shadow-xs">
+        <div class="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 bg-slate-50 shrink-0 gap-2 min-w-0">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg sm:text-xl shadow-xs shrink-0">
                     🎙️
                 </div>
-                <div>
-                    <h3 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-                        <span>تقرير التشخيص الصوتي المتقدم (AI Speech Diagnostic)</span>
+                <div class="min-w-0">
+                    <h3 class="text-sm sm:text-lg font-black text-slate-900 truncate">
+                        <span>تقرير التشخيص الصوتي المتقدم (AI Speech)</span>
                     </h3>
-                    <p class="text-xs text-slate-500" id="diagStudentInfo">الطالب: جارٍ التحميل...</p>
+                    <p class="text-xs text-slate-500 truncate" id="diagStudentInfo">الطالب: جارٍ التحميل...</p>
                 </div>
             </div>
-            <button type="button" onclick="closeSpeechDiagnosticModal()" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 font-bold flex items-center justify-center transition">
+            <button type="button" onclick="closeSpeechDiagnosticModal()" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-600 font-bold flex items-center justify-center transition shrink-0">
                 ✕
             </button>
         </div>
 
-        <div class="p-6 overflow-y-auto space-y-6 flex-1 text-right text-xs">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-3">
-                    <span class="text-[11px] font-bold text-indigo-600 block">الدرجة الإجمالية للنطق</span>
-                    <span class="text-xl font-black text-indigo-900 font-mono" id="diagOverallScore">0%</span>
+        <div class="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 flex-1 text-right text-xs min-w-0">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
+                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-2.5 sm:p-3">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-indigo-600 block">الدرجة الإجمالية</span>
+                    <span class="text-lg sm:text-xl font-black text-indigo-900 font-mono" id="diagOverallScore">0%</span>
                 </div>
-                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-3">
-                    <span class="text-[11px] font-bold text-emerald-600 block">دقة المخارج (Accuracy)</span>
-                    <span class="text-xl font-black text-emerald-900 font-mono" id="diagAccuracyScore">0%</span>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-2.5 sm:p-3">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-emerald-600 block">دقة المخارج</span>
+                    <span class="text-lg sm:text-xl font-black text-emerald-900 font-mono" id="diagAccuracyScore">0%</span>
                 </div>
-                <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3">
-                    <span class="text-[11px] font-bold text-amber-600 block">الطلاقة والسرعة (Fluency)</span>
-                    <span class="text-xl font-black text-amber-900 font-mono" id="diagFluencyScore">0%</span>
+                <div class="bg-amber-50 border border-amber-100 rounded-2xl p-2.5 sm:p-3">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-amber-600 block">الطلاقة والسرعة</span>
+                    <span class="text-lg sm:text-xl font-black text-amber-900 font-mono" id="diagFluencyScore">0%</span>
                 </div>
-                <div class="bg-purple-50 border border-purple-100 rounded-2xl p-3">
-                    <span class="text-[11px] font-bold text-purple-600 block">اكتمال النص (Completeness)</span>
-                    <span class="text-xl font-black text-purple-900 font-mono" id="diagCompletenessScore">0%</span>
+                <div class="bg-purple-50 border border-purple-100 rounded-2xl p-2.5 sm:p-3">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-purple-600 block">اكتمال النص</span>
+                    <span class="text-lg sm:text-xl font-black text-purple-900 font-mono" id="diagCompletenessScore">0%</span>
                 </div>
             </div>
 
             <!-- المقارنة النصية التفاعلية -->
-            <div class="space-y-2">
+            <div class="space-y-2 min-w-0">
                 <span class="font-black text-slate-800 text-xs block">مقارنة النص المنطوق والمطلوب:</span>
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 font-mono" dir="ltr">
-                    <div class="text-[11px] text-slate-500 font-bold">Target Text: <span class="text-slate-800" id="diagExpectedText">-</span></div>
-                    <div class="text-[11px] text-slate-500 font-bold">Recognized: <span class="text-emerald-700" id="diagRecognizedText">-</span></div>
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 font-mono break-words min-w-0" dir="ltr">
+                    <div class="text-[11px] text-slate-500 font-bold break-words">Target Text: <span class="text-slate-800" id="diagExpectedText">-</span></div>
+                    <div class="text-[11px] text-slate-500 font-bold break-words">Recognized: <span class="text-emerald-700" id="diagRecognizedText">-</span></div>
                 </div>
             </div>
 
             <!-- تفريغ الكلمات ومخارج الحروف -->
-            <div class="space-y-2">
+            <div class="space-y-2 min-w-0">
                 <span class="font-black text-slate-800 text-xs block">تحليل الكلمات (Word-Level Evaluation):</span>
-                <div id="diagWordsContainer" class="flex flex-wrap gap-2 pt-1" dir="ltr">
+                <div id="diagWordsContainer" class="flex flex-wrap gap-1.5 sm:gap-2 pt-1 min-w-0" dir="ltr">
                     <!-- يتم بناؤها ديناميكياً -->
                 </div>
             </div>
         </div>
 
-        <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end shrink-0">
-            <button type="button" onclick="closeSpeechDiagnosticModal()" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition">
+        <div class="px-4 py-3 sm:px-6 sm:py-3 border-t border-slate-200 bg-slate-50 flex justify-end shrink-0">
+            <button type="button" onclick="closeSpeechDiagnosticModal()" class="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition text-center">
                 إغلاق التقرير
             </button>
         </div>
@@ -513,35 +516,36 @@
 </script>
 
 <!-- ================= مودال تأكيد إلغاء اعتماد الطالب ================= -->
-<div id="revokeApprovalModal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-rose-100 animate-in fade-in zoom-in-95 duration-150">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div class="flex items-center gap-2.5">
-                <span class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center text-xl font-black">↩️</span>
-                <div>
-                    <h3 class="font-black text-slate-900 text-base">إلغاء اعتماد وتسكين الطالب</h3>
-                    <p class="text-[11px] text-slate-500">إعادة الطالب لحالة (بانتظار الاعتماد) لتغيير المستوى أو إعادة التقييم</p>
+<div id="revokeApprovalModal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeRevokeApprovalModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-6 space-y-3.5 sm:space-y-4 shadow-2xl border border-rose-100 animate-in fade-in zoom-in-95 duration-150 min-w-0 my-auto z-10">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 gap-2 min-w-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center text-lg sm:text-xl font-black shrink-0">↩️</span>
+                <div class="min-w-0">
+                    <h3 class="font-black text-slate-900 text-sm sm:text-base truncate">إلغاء اعتماد وتسكين الطالب</h3>
+                    <p class="text-[11px] text-slate-500 truncate">إعادة الطالب لحالة (بانتظار الاعتماد) لتغيير المستوى أو إعادة التقييم</p>
                 </div>
             </div>
-            <button type="button" onclick="closeRevokeApprovalModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition">✕</button>
+            <button type="button" onclick="closeRevokeApprovalModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition shrink-0">✕</button>
         </div>
 
-        <form id="revokeApprovalForm" method="POST" action="" class="space-y-4">
+        <form id="revokeApprovalForm" method="POST" action="" class="space-y-3.5 sm:space-y-4 min-w-0">
             @csrf
             
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1 text-xs">
-                <div class="flex justify-between">
-                    <span class="text-slate-500 font-bold">اسم الطالب:</span>
-                    <strong class="text-slate-900 font-black" id="revokeStudentName">-</strong>
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-3.5 space-y-1.5 text-xs min-w-0">
+                <div class="flex justify-between items-center gap-2">
+                    <span class="text-slate-500 font-bold shrink-0">اسم الطالب:</span>
+                    <strong class="text-slate-900 font-black truncate text-left" id="revokeStudentName">-</strong>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500 font-bold">المستوى المقيد به حالياً:</span>
-                    <span class="text-indigo-700 font-bold" id="revokeCurrentLevel">-</span>
+                <div class="flex justify-between items-center gap-2">
+                    <span class="text-slate-500 font-bold shrink-0">المستوى المقيد به:</span>
+                    <span class="text-indigo-700 font-bold truncate text-left" id="revokeCurrentLevel">-</span>
                 </div>
             </div>
 
             <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-[11px] text-amber-900 space-y-1 leading-relaxed">
-                <span class="font-black block flex items-center gap-1">
+                <span class="font-black flex items-center gap-1">
                     <span>⚠️</span>
                     <span>ضوابط وإجراءات إلغاء الاعتماد:</span>
                 </span>
@@ -553,16 +557,16 @@
                 </ul>
             </div>
 
-            <div class="space-y-1.5">
+            <div class="space-y-1.5 min-w-0">
                 <label class="block text-xs font-bold text-slate-700">سبب إلغاء الاعتماد (يُوثق في سجل الطالب):</label>
                 <textarea name="reason" rows="3" required placeholder="مثال: رغبة الطالب في تعديل المستوى بعد مراجعة نطق الصوت، أو خطأ في اختيار المستوى، إلخ..." class="w-full text-xs p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-rose-500 outline-none leading-relaxed"></textarea>
             </div>
 
-            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button type="button" onclick="closeRevokeApprovalModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition">
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeRevokeApprovalModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition text-center">
                     تراجع
                 </button>
-                <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md transition flex items-center gap-1.5">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md transition flex items-center justify-center gap-1.5 text-center">
                     <span>↩️</span>
                     <span>تأكيد إلغاء الاعتماد وإعادة للمراجعة</span>
                 </button>

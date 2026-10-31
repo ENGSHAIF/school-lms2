@@ -497,19 +497,20 @@
 <!-- ======================================================= -->
 <!-- نافذة منبثقة: 1. إنشاء مجموعة جديدة (Create Group Modal) -->
 <!-- ======================================================= -->
-<div id="createGroupModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh]">
+<div id="createGroupModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeCreateGroupModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] min-w-0 my-auto z-10">
         <!-- ترويسة -->
-        <div class="px-6 py-4 bg-indigo-900 text-white flex justify-between items-center shrink-0">
-            <h3 class="font-black text-sm flex items-center gap-2">
-                <span>➕</span>
-                <span>إنشاء مجموعة دراسية جديدة (Study Group & Cohort)</span>
+        <div class="px-4 py-3 sm:px-6 sm:py-4 bg-indigo-900 text-white flex justify-between items-center shrink-0 gap-2 min-w-0">
+            <h3 class="font-black text-xs sm:text-sm flex items-center gap-2 truncate">
+                <span class="shrink-0">➕</span>
+                <span class="truncate">إنشاء مجموعة دراسية جديدة (Study Group & Cohort)</span>
             </h3>
-            <button onclick="closeCreateGroupModal()" class="text-white/70 hover:text-white text-lg">✕</button>
+            <button onclick="closeCreateGroupModal()" class="text-white/70 hover:text-white text-lg shrink-0 p-1">✕</button>
         </div>
 
         <!-- النموذج -->
-        <form action="{{ route('admin.groups.store') }}" method="POST" class="p-6 space-y-4 overflow-y-auto text-xs">
+        <form action="{{ route('admin.groups.store') }}" method="POST" class="p-4 sm:p-6 space-y-4 overflow-y-auto text-xs min-w-0">
             @csrf
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -672,11 +673,11 @@
                 <textarea name="description" rows="2" placeholder="أي تعليمات أو ملاحظات خاصة بهذه الدفعة..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
             </div>
 
-            <div class="pt-3 border-t border-slate-100 flex justify-end gap-2 shrink-0">
-                <button type="button" onclick="closeCreateGroupModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
+            <div class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
+                <button type="button" onclick="closeCreateGroupModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-center">
                     إلغاء
                 </button>
-                <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition shadow-md">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition shadow-md text-center">
                     حفظ وإنشاء المجموعة ✅
                 </button>
             </div>
@@ -687,66 +688,67 @@
 <!-- ======================================================= -->
 <!-- نافذة منبثقة: 2. تسكين وقيد الطلاب دفعة واحدة (Enroll Students) -->
 <!-- ======================================================= -->
-<div id="enrollModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh]">
+<div id="enrollModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeEnrollModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] min-w-0 my-auto z-10">
         <!-- ترويسة -->
-        <div class="px-6 py-4 bg-indigo-950 text-white flex justify-between items-center shrink-0">
-            <div>
-                <h3 class="font-black text-sm flex items-center gap-2">
-                    <span>👥</span>
-                    <span>تسكين الطلاب في المجموعة: <span id="enrollGroupName" class="text-amber-400"></span></span>
+        <div class="px-4 py-3 sm:px-6 sm:py-4 bg-indigo-950 text-white flex justify-between items-center shrink-0 gap-2 min-w-0">
+            <div class="min-w-0">
+                <h3 class="font-black text-xs sm:text-sm flex items-center gap-2 truncate">
+                    <span class="shrink-0">👥</span>
+                    <span class="truncate">تسكين الطلاب في المجموعة: <span id="enrollGroupName" class="text-amber-400"></span></span>
                 </h3>
-                <span class="text-[11px] text-slate-300">حدد الطلاب المراد ضمهم (مثلاً الطلاب الـ 5 الجدد) واضغط تسكين فوراً</span>
+                <span class="text-[10px] sm:text-[11px] text-slate-300 block truncate">حدد الطلاب المراد ضمهم واضغط تسكين فوراً</span>
             </div>
-            <button onclick="closeEnrollModal()" class="text-white/70 hover:text-white text-lg">✕</button>
+            <button onclick="closeEnrollModal()" class="text-white/70 hover:text-white text-lg shrink-0 p-1">✕</button>
         </div>
 
-        <form id="enrollForm" method="POST" action="" class="flex flex-col flex-1 overflow-hidden">
+        <form id="enrollForm" method="POST" action="" class="flex flex-col flex-1 overflow-hidden min-w-0">
             @csrf
             
             <!-- شريط بحث سريع وتحديد الكل -->
-            <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
-                <div class="relative w-full sm:w-72">
+            <div class="p-3 sm:p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
+                <div class="relative w-full sm:w-72 min-w-0">
                     <input type="text" id="studentFilterInput" onkeyup="filterStudentList()" placeholder="ابحث باسم الطالب أو هاتفه..." class="w-full pr-8 pl-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <span class="absolute right-2.5 top-2.5 text-slate-400 text-xs">🔍</span>
                 </div>
                 
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <button type="button" onclick="selectAllStudents(true)" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition">
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+                    <button type="button" onclick="selectAllStudents(true)" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition text-center">
                         ✓ تحديد الكل
                     </button>
-                    <button type="button" onclick="selectAllStudents(false)" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs transition">
+                    <button type="button" onclick="selectAllStudents(false)" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs transition text-center">
                         إلغاء التحديد
                     </button>
                 </div>
             </div>
 
             <!-- قائمة الطلاب القابلة للاختيار -->
-            <div class="p-4 overflow-y-auto space-y-2 flex-1" id="studentsCheckboxContainer">
+            <div class="p-3 sm:p-4 overflow-y-auto space-y-2 flex-1 min-w-0" id="studentsCheckboxContainer">
                 @if($students->isEmpty())
                     <p class="text-center text-slate-400 py-8 text-xs">لا يوجد طلاب مسجلين في النظام حالياً.</p>
                 @else
                     @foreach($students as $st)
-                        <label class="student-item flex items-center justify-between p-3 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/20 cursor-pointer transition" data-name="{{ strtolower($st->name) }}" data-phone="{{ $st->phone_whatsapp }}">
-                            <div class="flex items-center gap-3">
-                                <input type="checkbox" name="student_ids[]" value="{{ $st->id }}" class="student-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-slate-300">
-                                <div>
-                                    <span class="font-bold text-xs text-slate-900 block">{{ $st->name }}</span>
-                                    <span class="text-[11px] text-slate-400 block font-mono" dir="ltr">{{ $st->phone_whatsapp ?: $st->email }}</span>
+                        <label class="student-item flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/20 cursor-pointer transition gap-2" data-name="{{ strtolower($st->name) }}" data-phone="{{ $st->phone_whatsapp }}">
+                            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                                <input type="checkbox" name="student_ids[]" value="{{ $st->id }}" class="student-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-slate-300 shrink-0">
+                                <div class="min-w-0">
+                                    <span class="font-bold text-xs text-slate-900 block truncate">{{ $st->name }}</span>
+                                    <span class="text-[10px] sm:text-[11px] text-slate-400 block font-mono truncate" dir="ltr">{{ $st->phone_whatsapp ?: $st->email }}</span>
                                 </div>
                             </div>
 
-                            <div class="text-left">
+                            <div class="text-left shrink-0">
                                 @if($st->studyGroups->count() > 0)
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold block">
-                                        مسكن في: {{ $st->studyGroups->first()->name }}
+                                    <span class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold block max-w-[120px] sm:max-w-none truncate">
+                                        {{ $st->studyGroups->first()->name }}
                                     </span>
                                 @else
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold block">
-                                        طالب جديد غير مسكن 🟢
+                                    <span class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold block">
+                                        جديد 🟢
                                     </span>
                                 @endif
-                                <span class="text-[10px] text-slate-400 block mt-0.5">
+                                <span class="text-[9px] sm:text-[10px] text-slate-400 block mt-0.5 max-w-[120px] sm:max-w-none truncate">
                                     {{ $st->enrollments->first()?->level?->name ?? 'بانتظار التسكين' }}
                                 </span>
                             </div>
@@ -756,13 +758,13 @@
             </div>
 
             <!-- أزرار الإجراءات في أسفل النافذة -->
-            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
-                <span id="selectedCountBadge" class="text-xs font-bold text-indigo-700">0 طلاب محددين</span>
-                <div class="flex gap-2">
-                    <button type="button" onclick="closeEnrollModal()" class="px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs transition">
+            <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
+                <span id="selectedCountBadge" class="text-xs font-bold text-indigo-700 text-center sm:text-right">0 طلاب محددين</span>
+                <div class="flex flex-col-reverse sm:flex-row gap-2">
+                    <button type="button" onclick="closeEnrollModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs transition text-center">
                         إلغاء
                     </button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition">
+                    <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition text-center">
                         تسكين الطلاب المحددين في المجموعة 👥
                     </button>
                 </div>
@@ -774,28 +776,29 @@
 <!-- ======================================================= -->
 <!-- نافذة منبثقة: 3. استعراض طلاب المجموعة (View Students Modal) -->
 <!-- ======================================================= -->
-<div id="viewStudentsModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh]">
+<div id="viewStudentsModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeViewStudentsModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] min-w-0 my-auto z-10">
         <!-- ترويسة -->
-        <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
-            <div>
-                <h3 class="font-black text-sm flex items-center gap-2">
-                    <span>📋</span>
-                    <span>طلاب المجموعة: <span id="viewGroupName" class="text-amber-400"></span></span>
+        <div class="px-4 py-3 sm:px-6 sm:py-4 bg-slate-900 text-white flex justify-between items-center shrink-0 gap-2 min-w-0">
+            <div class="min-w-0">
+                <h3 class="font-black text-xs sm:text-sm flex items-center gap-2 truncate">
+                    <span class="shrink-0">📋</span>
+                    <span class="truncate">طلاب المجموعة: <span id="viewGroupName" class="text-amber-400"></span></span>
                 </h3>
-                <span class="text-[11px] text-slate-300" id="viewGroupCapacity"></span>
+                <span class="text-[10px] sm:text-[11px] text-slate-300 block truncate" id="viewGroupCapacity"></span>
             </div>
-            <button onclick="closeViewStudentsModal()" class="text-white/70 hover:text-white text-lg">✕</button>
+            <button onclick="closeViewStudentsModal()" class="text-white/70 hover:text-white text-lg shrink-0 p-1">✕</button>
         </div>
 
-        <div class="p-6 overflow-y-auto flex-1">
-            <div id="studentsListTableContainer" class="space-y-3">
+        <div class="p-4 sm:p-6 overflow-y-auto flex-1 min-w-0">
+            <div id="studentsListTableContainer" class="space-y-3 min-w-0">
                 <!-- سيتم ملؤها بالجافاسكريبت -->
             </div>
         </div>
 
-        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
-            <button type="button" onclick="closeViewStudentsModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900 transition">
+        <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+            <button type="button" onclick="closeViewStudentsModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900 transition text-center">
                 إغلاق
             </button>
         </div>
@@ -805,17 +808,18 @@
 <!-- ======================================================= -->
 <!-- نافذة منبثقة: 4. تعديل المجموعة وتغيير الأستاذ (Edit Modal) -->
 <!-- ======================================================= -->
-<div id="editGroupModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh]">
-        <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
-            <h3 class="font-black text-sm flex items-center gap-2">
-                <span>✏️</span>
-                <span>تعديل المجموعة وتغيير الأستاذ والمشرف</span>
+<div id="editGroupModal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeEditGroupModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] min-w-0 my-auto z-10">
+        <div class="px-4 py-3 sm:px-6 sm:py-4 bg-slate-900 text-white flex justify-between items-center shrink-0 gap-2 min-w-0">
+            <h3 class="font-black text-xs sm:text-sm flex items-center gap-2 truncate">
+                <span class="shrink-0">✏️</span>
+                <span class="truncate">تعديل المجموعة وتغيير الأستاذ والمشرف</span>
             </h3>
-            <button onclick="closeEditGroupModal()" class="text-white/70 hover:text-white text-lg">✕</button>
+            <button onclick="closeEditGroupModal()" class="text-white/70 hover:text-white text-lg shrink-0 p-1">✕</button>
         </div>
 
-        <form id="editGroupForm" method="POST" action="" class="p-6 space-y-4 overflow-y-auto text-xs">
+        <form id="editGroupForm" method="POST" action="" class="p-4 sm:p-6 space-y-4 overflow-y-auto text-xs min-w-0">
             @csrf
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -979,11 +983,11 @@
                 <textarea name="description" id="editDescription" rows="2" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
             </div>
 
-            <div class="pt-3 border-t border-slate-100 flex justify-end gap-2 shrink-0">
-                <button type="button" onclick="closeEditGroupModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
+            <div class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
+                <button type="button" onclick="closeEditGroupModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-center">
                     إلغاء
                 </button>
-                <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition shadow-md">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition shadow-md text-center">
                     حفظ التعديلات 💾
                 </button>
             </div>
@@ -994,21 +998,22 @@
 <!-- ======================================================= -->
 <!-- نافذة منبثقة: 5. أنشطة وصوتيات المجموعة (Activities & Audio Feed) -->
 <!-- ======================================================= -->
-<div id="activitiesModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh]">
+<div id="activitiesModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeActivitiesModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] min-w-0 my-auto z-10">
         <!-- ترويسة النافذة -->
-        <div class="px-6 py-4 bg-purple-950 text-white flex justify-between items-center shrink-0">
-            <div>
-                <h3 class="font-black text-sm flex items-center gap-2">
-                    <span>📎</span>
-                    <span>حائط أنشطة وصوتيات المجموعة: <span id="activitiesGroupName" class="text-amber-400"></span></span>
+        <div class="px-4 py-3 sm:px-6 sm:py-4 bg-purple-950 text-white flex justify-between items-center shrink-0 gap-2 min-w-0">
+            <div class="min-w-0">
+                <h3 class="font-black text-xs sm:text-sm flex items-center gap-2 truncate">
+                    <span class="shrink-0">📎</span>
+                    <span class="truncate">حائط أنشطة وصوتيات المجموعة: <span id="activitiesGroupName" class="text-amber-400"></span></span>
                 </h3>
-                <span class="text-[11px] text-purple-200">أوراق النشاط والتسجيلات الصوتية والتنبيهات الموجهة لجميع طلاب المجموعة</span>
+                <span class="text-[10px] sm:text-[11px] text-purple-200 block truncate">أوراق النشاط والتسجيلات الصوتية والتنبيهات الموجهة لجميع طلاب المجموعة</span>
             </div>
-            <button onclick="closeActivitiesModal()" class="text-white/70 hover:text-white text-lg">✕</button>
+            <button onclick="closeActivitiesModal()" class="text-white/70 hover:text-white text-lg shrink-0 p-1">✕</button>
         </div>
 
-        <div class="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+        <div class="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 flex-1 text-xs min-w-0">
             
             <!-- القسم الأول: سجل الأنشطة والصوتيات المنشورة -->
             <div>
@@ -1080,8 +1085,8 @@
 
         </div>
 
-        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
-            <button type="button" onclick="closeActivitiesModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900 transition">
+        <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+            <button type="button" onclick="closeActivitiesModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900 transition text-center">
                 إغلاق النافذة
             </button>
         </div>
@@ -1091,41 +1096,42 @@
 <!-- ======================================================= -->
 <!-- نافذة منبثقة: 6. استدعاء ومشاركة من بنك موارد المستوى المركزي للمجموعة -->
 <!-- ======================================================= -->
-<div id="groupLevelResourcesModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh]">
+<div id="groupLevelResourcesModal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeGroupLevelResourcesModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] min-w-0 my-auto z-10">
         <!-- ترويسة النافذة -->
-        <div class="px-6 py-4 bg-gradient-to-r from-indigo-900 to-purple-950 text-white flex justify-between items-center shrink-0">
-            <div class="flex items-center gap-3">
-                <span class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-xl">📦</span>
-                <div>
-                    <h3 class="font-black text-sm flex items-center gap-2">
-                        <span>بنك موارد المستوى: <span id="glrLevelName" class="text-amber-400"></span></span>
+        <div class="px-4 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-indigo-900 to-purple-950 text-white flex justify-between items-center shrink-0 gap-2 min-w-0">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-white/10 flex items-center justify-center text-lg sm:text-xl shrink-0">📦</span>
+                <div class="min-w-0">
+                    <h3 class="font-black text-xs sm:text-sm flex items-center gap-2 truncate">
+                        <span class="truncate">بنك موارد المستوى: <span id="glrLevelName" class="text-amber-400"></span></span>
                     </h3>
-                    <span class="text-[11px] text-indigo-200">مشاركة الكتب، التسجيلات الصوتية، محاضرات الفيديو، والأنشطة لمجموعة: <strong id="glrGroupName" class="text-white"></strong></span>
+                    <span class="text-[10px] sm:text-[11px] text-indigo-200 block truncate">مشاركة الكتب، التسجيلات الصوتية، ومحاضرات الفيديو</span>
                 </div>
             </div>
-            <button onclick="closeGroupLevelResourcesModal()" class="text-white/70 hover:text-white text-lg">✕</button>
+            <button onclick="closeGroupLevelResourcesModal()" class="text-white/70 hover:text-white text-lg shrink-0 p-1">✕</button>
         </div>
 
-        <div class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
-            <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-amber-950">
-                <div class="flex items-center gap-2">
-                    <span class="text-lg">💡</span>
-                    <span>الموارد المرفوعة في هذا المستوى تظل محفوظة دوماً في بنك المناهج، ويمكنك مشاركتها للطلاب يوماً بيوم.</span>
+        <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 text-xs min-w-0">
+            <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-amber-950 min-w-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-lg shrink-0">💡</span>
+                    <span class="text-[11px] sm:text-xs">الموارد المرفوعة في هذا المستوى تظل محفوظة دوماً في بنك المناهج، ويمكنك مشاركتها للطلاب.</span>
                 </div>
-                <a id="glrOpenBankLink" href="#" target="_blank" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-[11px] whitespace-nowrap shadow-xs">
+                <a id="glrOpenBankLink" href="#" target="_blank" class="w-full sm:w-auto px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-[11px] whitespace-nowrap shadow-xs text-center shrink-0">
                     فتح بنك المستوى ↗️
                 </a>
             </div>
 
             <!-- قائمة الموارد المتاحة للاستدعاء والنشر -->
-            <div id="glrResourcesListContainer" class="space-y-3">
+            <div id="glrResourcesListContainer" class="space-y-3 min-w-0">
                 <!-- سيتم ملؤه بالجافاسكريبت -->
             </div>
         </div>
 
-        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
-            <button type="button" onclick="closeGroupLevelResourcesModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900 transition">
+        <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+            <button type="button" onclick="closeGroupLevelResourcesModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900 transition text-center">
                 إغلاق النافذة
             </button>
         </div>
