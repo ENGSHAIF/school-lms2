@@ -374,12 +374,13 @@
                             </div>
                         </div>
 
-                        <!-- نموذج الاعتماد المباشر -->
-                        <form action="{{ route('supervisor.assign_level', $st->id) }}" method="POST" class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                        <!-- نموذج الاعتماد المباشر للمستوى والدورة -->
+                        <form action="{{ route('supervisor.assign_level', $st->id) }}" method="POST" class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 flex-wrap">
                             @csrf
                             <div class="flex items-center gap-2">
-                                <label class="text-xs font-bold text-slate-700 whitespace-nowrap">تخصيص المستوى الأكاديمي:</label>
-                                <select name="level_id" class="border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold bg-white outline-none focus:ring-1 focus:ring-indigo-500">
+                                <label class="text-xs font-bold text-slate-700 whitespace-nowrap">1. المستوى:</label>
+                                <select name="level_id" id="sup_level_sel_{{ $st->id }}" onchange="onSupLevelChanged({{ $st->id }})" required class="border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold bg-white outline-none focus:ring-1 focus:ring-indigo-500">
+                                    <option value="">-- اختر المستوى --</option>
                                     @foreach($levels as $lvl)
                                         <option value="{{ $lvl->id }}" {{ ($latestAttempt && $latestAttempt->suggested_level_id == $lvl->id) ? 'selected' : '' }}>
                                             {{ $lvl->name }} ({{ $lvl->formatted_fee }})
@@ -388,8 +389,24 @@
                                 </select>
                             </div>
 
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs font-bold text-indigo-700 whitespace-nowrap">2. الدورة:</label>
+                                <select name="course_id" id="sup_course_sel_{{ $st->id }}" onchange="onSupCourseChanged({{ $st->id }})" class="border border-indigo-200 rounded-xl px-3 py-2 text-xs font-bold bg-indigo-50/50 outline-none focus:ring-1 focus:ring-indigo-500 text-indigo-950">
+                                    <option value="">-- اختر الدورة (اختياري / موصى به) --</option>
+                                    @foreach($levels as $lvl)
+                                        <optgroup label="دورات {{ $lvl->name }}" data-level="{{ $lvl->id }}">
+                                            @foreach($lvl->courses as $c)
+                                                <option value="{{ $c->id }}" data-level="{{ $lvl->id }}">
+                                                    {{ $c->name_ar ?: $c->name_en }} ({{ $c->formatted_fee }})
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs px-6 py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-1.5 whitespace-nowrap">
-                                <span>اعتماد المستوى وتفعيل الحساب الأكاديمي 🚀</span>
+                                <span>اعتماد المستوى والدورة وتفعيل الحساب 🚀</span>
                             </button>
                         </form>
                     </div>
@@ -820,6 +837,50 @@
         if (e.key === 'Escape') {
             closeSpeechDiagnosticModal();
         }
+    });
+
+    // مزامنة واختيار المستوى والدورة التابعة له للمشرف
+    function onSupLevelChanged(studentId) {
+        const levelSelect = document.getElementById('sup_level_sel_' + studentId);
+        const courseSelect = document.getElementById('sup_course_sel_' + studentId);
+        if (!levelSelect || !courseSelect) return;
+
+        const selectedLevel = levelSelect.value;
+        const optgroups = courseSelect.querySelectorAll('optgroup');
+
+        optgroups.forEach(og => {
+            if (!selectedLevel || og.getAttribute('data-level') === selectedLevel) {
+                og.style.display = '';
+            } else {
+                og.style.display = 'none';
+            }
+        });
+
+        const selectedOption = courseSelect.selectedOptions[0];
+        if (selectedOption && selectedOption.value && selectedOption.getAttribute('data-level') !== selectedLevel) {
+            courseSelect.value = '';
+        }
+    }
+
+    function onSupCourseChanged(studentId) {
+        const levelSelect = document.getElementById('sup_level_sel_' + studentId);
+        const courseSelect = document.getElementById('sup_course_sel_' + studentId);
+        if (!levelSelect || !courseSelect) return;
+
+        const selectedOption = courseSelect.selectedOptions[0];
+        if (selectedOption && selectedOption.getAttribute('data-level')) {
+            levelSelect.value = selectedOption.getAttribute('data-level');
+            onSupLevelChanged(studentId);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[id^="sup_level_sel_"]').forEach(el => {
+            const sid = el.id.replace('sup_level_sel_', '');
+            if (el.value) {
+                onSupLevelChanged(sid);
+            }
+        });
     });
 </script>
 @endsection

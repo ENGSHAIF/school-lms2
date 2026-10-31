@@ -80,6 +80,13 @@ class User extends Authenticatable
                 $user->gender = 'male';
             }
         });
+
+        static::saving(function ($user) {
+            if (isset($user->email)) {
+                $trimmed = trim((string) $user->email);
+                $user->email = $trimmed !== '' ? $trimmed : null;
+            }
+        });
     }
 
     public function getGenderLabelAttribute(): string

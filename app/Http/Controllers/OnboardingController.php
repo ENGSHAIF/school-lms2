@@ -23,7 +23,7 @@ class OnboardingController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users',
+            'email' => 'nullable|email|max:255|unique:users,email',
             'phone_whatsapp' => 'required|string|max:30',
             'password' => 'required|string|min:6',
             'country' => 'nullable|string|max:100',
@@ -42,12 +42,14 @@ class OnboardingController extends Controller
         // 2. توليد كود الطالب التلقائي
         $latestId = User::max('id') ?? 0;
         $codePrefix = ($role === 'parent') ? 'PAR-' : 'STU-';
-        $studentCode = $codePrefix . date('Y') . '-' . str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
+        $studentCode = $codePrefix.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
+
+        $email = ! empty($validated['email']) ? trim($validated['email']) : null;
 
         // 3. إنشاء حساب المستخدم
         $user = User::create([
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            'email' => $email,
             'phone_whatsapp' => $validated['phone_whatsapp'],
             'password' => Hash::make($validated['password']),
             'role' => $role,
@@ -79,8 +81,8 @@ class OnboardingController extends Controller
 
         // 6. فتح الحساب المالي (المعايير المحاسبية المعتمدة)
         FinancialAccount::create([
-            'account_code' => '21' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
-            'account_name' => 'حساب الطالب: ' . $user->name,
+            'account_code' => '21'.str_pad($user->id, 4, '0', STR_PAD_LEFT),
+            'account_name' => 'حساب الطالب: '.$user->name,
             'account_type' => 'student',
             'user_id' => $user->id,
             'currency' => 'YER',

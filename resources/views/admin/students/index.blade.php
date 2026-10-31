@@ -173,9 +173,16 @@
                                         مفعل ومقبول ✅
                                     </span>
                                     @if($activeEnrollment && $activeEnrollment->level)
-                                        <span class="text-[10px] text-slate-500 block mt-1 font-bold">
-                                            المستوى: {{ $activeEnrollment->level->name }}
-                                        </span>
+                                        <div class="mt-1 space-y-0.5">
+                                            <span class="text-[10px] text-slate-700 block font-bold">
+                                                📚 المستوى: {{ $activeEnrollment->level->name }}
+                                            </span>
+                                            @if($activeEnrollment->course)
+                                                <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded font-black inline-block">
+                                                    🎯 الدورة: {{ $activeEnrollment->course->name_ar ?: $activeEnrollment->course->name_en }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     @endif
 
                                     <!-- بيانات من اعتمد الطالب وتاريخ الاعتماد -->
@@ -298,19 +305,41 @@
                             <td class="p-4">
                                 <div class="flex items-center justify-center gap-2 flex-wrap">
                                     @if($student->status !== 'active')
-                                        <form action="{{ route('admin.assign_level', $student->id) }}" method="POST" class="flex items-center gap-1.5">
+                                        <form action="{{ route('admin.assign_level', $student->id) }}" method="POST" class="flex flex-col gap-1.5 min-w-[260px] text-right">
                                             @csrf
-                                            <select name="level_id" required class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none bg-white font-bold">
-                                                <option value="">-- اختر المستوى لتسكين الطالب --</option>
-                                                @foreach($levels as $lvl)
-                                                    <option value="{{ $lvl->id }}" {{ $attempt && $attempt->suggested_level_id == $lvl->id ? 'selected' : '' }}>
-                                                        {{ $lvl->name }} ({{ $lvl->formatted_fee }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs px-3.5 py-1.5 rounded-lg shadow-sm transition shrink-0 flex items-center gap-1">
+                                            <!-- اختيار المستوى -->
+                                            <div class="flex items-center gap-1.5">
+                                                <label class="text-[11px] font-bold text-slate-500 shrink-0 w-14">المستوى:</label>
+                                                <select name="level_id" id="level_sel_{{ $student->id }}" onchange="onLevelChanged({{ $student->id }})" required class="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none bg-white font-bold">
+                                                    <option value="">-- 1. اختر المستوى --</option>
+                                                    @foreach($levels as $lvl)
+                                                        <option value="{{ $lvl->id }}" {{ $attempt && $attempt->suggested_level_id == $lvl->id ? 'selected' : '' }}>
+                                                            {{ $lvl->name }} ({{ $lvl->formatted_fee }})
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+
+                                            <!-- اختيار الدورة التابعة للمستوى -->
+                                            <div class="flex items-center gap-1.5">
+                                                <label class="text-[11px] font-bold text-indigo-700 shrink-0 w-14">الدورة:</label>
+                                                <select name="course_id" id="course_sel_{{ $student->id }}" onchange="onCourseChanged({{ $student->id }})" class="w-full text-xs border border-indigo-200 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none bg-indigo-50/50 font-bold text-indigo-950">
+                                                    <option value="">-- 2. اختر الدورة (اختياري / موصى به) --</option>
+                                                    @foreach($levels as $lvl)
+                                                        <optgroup label="دورات {{ $lvl->name }}" data-level="{{ $lvl->id }}">
+                                                            @foreach($lvl->courses as $c)
+                                                                <option value="{{ $c->id }}" data-level="{{ $lvl->id }}">
+                                                                    {{ $c->name_ar ?: $c->name_en }} ({{ $c->formatted_fee }})
+                                                                </option>
+                                                            @endforeach
+                                                        </optgroup>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+
+                                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs py-2 rounded-lg shadow-sm transition flex items-center justify-center gap-1.5">
                                                 <span>🚀</span>
-                                                <span>اعتماد وتفعيل</span>
+                                                <span>اعتماد المستوى والدورة للطالب</span>
                                             </button>
                                         </form>
                                     @else
@@ -319,13 +348,17 @@
                                                 <span>📄</span>
                                                 <span>كشف الحساب</span>
                                             </a>
-                                            <!-- إمكانية ترقية أو تغيير المستوى -->
-                                            <form action="{{ route('admin.assign_level', $student->id) }}" method="POST" class="inline" onsubmit="return confirm('تعديل أو ترقية المستوى للطالب؟');">
+                                            <!-- إمكانية ترقية أو تغيير المستوى والدورة -->
+                                            <form action="{{ route('admin.assign_level', $student->id) }}" method="POST" class="inline" onsubmit="return confirm('تعديل أو ترقية المستوى والدورة للطالب؟');">
                                                 @csrf
-                                                <select name="level_id" required onchange="if(confirm('تأكيد ترقية/تعديل مستوى الطالب إلى: ' + this.options[this.selectedIndex].text)) { this.form.submit(); }" class="text-[11px] border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 text-slate-600 font-bold">
-                                                    <option value="">تعديل المستوى...</option>
+                                                <select name="course_id" onchange="if(this.value && confirm('تأكيد ترقية/تعديل دورة الطالب إلى: ' + this.options[this.selectedIndex].text)) { this.form.submit(); }" class="text-[11px] border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 text-slate-600 font-bold">
+                                                    <option value="">تعديل الدورة/المستوى...</option>
                                                     @foreach($levels as $lvl)
-                                                        <option value="{{ $lvl->id }}">{{ $lvl->name }}</option>
+                                                        <optgroup label="{{ $lvl->name }}">
+                                                            @foreach($lvl->courses as $c)
+                                                                <option value="{{ $c->id }}">{{ $c->name_ar ?: $c->name_en }}</option>
+                                                            @endforeach
+                                                        </optgroup>
                                                     @endforeach
                                                 </select>
                                             </form>
@@ -513,6 +546,50 @@
     function closeRevokeApprovalModal() {
         document.getElementById('revokeApprovalModal').classList.add('hidden');
     }
+
+    // مزامنة واختيار المستوى والدورة التابعة له
+    function onLevelChanged(studentId) {
+        const levelSelect = document.getElementById('level_sel_' + studentId);
+        const courseSelect = document.getElementById('course_sel_' + studentId);
+        if (!levelSelect || !courseSelect) return;
+
+        const selectedLevel = levelSelect.value;
+        const optgroups = courseSelect.querySelectorAll('optgroup');
+
+        optgroups.forEach(og => {
+            if (!selectedLevel || og.getAttribute('data-level') === selectedLevel) {
+                og.style.display = '';
+            } else {
+                og.style.display = 'none';
+            }
+        });
+
+        const selectedOption = courseSelect.selectedOptions[0];
+        if (selectedOption && selectedOption.value && selectedOption.getAttribute('data-level') !== selectedLevel) {
+            courseSelect.value = '';
+        }
+    }
+
+    function onCourseChanged(studentId) {
+        const levelSelect = document.getElementById('level_sel_' + studentId);
+        const courseSelect = document.getElementById('course_sel_' + studentId);
+        if (!levelSelect || !courseSelect) return;
+
+        const selectedOption = courseSelect.selectedOptions[0];
+        if (selectedOption && selectedOption.getAttribute('data-level')) {
+            levelSelect.value = selectedOption.getAttribute('data-level');
+            onLevelChanged(studentId);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[id^="level_sel_"]').forEach(el => {
+            const sid = el.id.replace('level_sel_', '');
+            if (el.value) {
+                onLevelChanged(sid);
+            }
+        });
+    });
 </script>
 
 <!-- ================= مودال تأكيد إلغاء اعتماد الطالب ================= -->

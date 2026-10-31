@@ -31,12 +31,22 @@ class AuthController extends Controller
         ]);
 
         $loginInput = trim($request->input('login') ?? $request->input('email') ?? '');
+        $cleanPhone = preg_replace('/[^0-9]/', '', $loginInput);
 
-        // البحث عن المستخدم بواسطة البريد الإلكتروني أو الرقم الفريد (user_code أو student_code)
-        $user = User::where('email', $loginInput)
-            ->orWhere('user_code', $loginInput)
-            ->orWhere('student_code', $loginInput)
-            ->first();
+        // البحث عن المستخدم بواسطة البريد الإلكتروني أو الرقم الفريد (user_code أو student_code) أو رقم الهاتف
+        $user = User::where(function ($q) use ($loginInput, $cleanPhone) {
+            $q->where('user_code', $loginInput)
+                ->orWhere('student_code', $loginInput);
+            if (! empty($loginInput) && str_contains($loginInput, '@')) {
+                $q->orWhere('email', $loginInput);
+            }
+            if (! empty($loginInput)) {
+                $q->orWhere('phone_whatsapp', $loginInput);
+            }
+            if (! empty($cleanPhone) && strlen($cleanPhone) >= 7) {
+                $q->orWhere('phone_whatsapp', 'LIKE', '%'.substr($cleanPhone, -8));
+            }
+        })->first();
 
         if ($user && Hash::check($request->input('password'), $user->password)) {
             // التحقق من أن الحساب غير معطل
@@ -200,7 +210,7 @@ class AuthController extends Controller
             'name_en' => 'nullable|string|max:255',
             'birth_date' => 'nullable|date',
             'gender' => 'required|string|in:male,female',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'nullable|string|email|max:255|unique:users,email',
             'phone_whatsapp' => 'required|string|max:20',
             'password' => 'required|string|min:6|confirmed',
         ], [
@@ -212,12 +222,14 @@ class AuthController extends Controller
         $latestId = User::max('id') ?? 0;
         $studentCode = 'STU-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
 
+        $email = ! empty($validated['email']) ? trim($validated['email']) : null;
+
         $user = User::create([
             'name' => $validated['name'],
             'name_en' => $validated['name_en'] ?? null,
             'birth_date' => $validated['birth_date'] ?? null,
             'gender' => $validated['gender'],
-            'email' => $validated['email'],
+            'email' => $email,
             'phone_whatsapp' => $validated['phone_whatsapp'],
             'password' => Hash::make($validated['password']),
             'role' => 'student',

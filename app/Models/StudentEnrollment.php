@@ -9,6 +9,7 @@ class StudentEnrollment extends Model
     protected $fillable = [
         'user_id',
         'level_id',
+        'course_id',
         'status',
         'enrolled_at',
         'completed_at',
@@ -34,6 +35,11 @@ class StudentEnrollment extends Model
     public function level()
     {
         return $this->belongsTo(Level::class, 'level_id');
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class, 'course_id');
     }
 
     public function approver()

@@ -16,8 +16,8 @@ class StudentPortalController extends Controller
     {
         $user = Auth::user();
 
-        // المستوى الدراسي النشط
-        $enrollment = StudentEnrollment::with(['level.lessons', 'level.books', 'level.course', 'level.resources.exam'])
+        // المستوى الدراسي النشط والدورة المعتمدة
+        $enrollment = StudentEnrollment::with(['course', 'level.lessons', 'level.books', 'level.course', 'level.resources.exam'])
             ->where('user_id', $user->id)
             ->where('status', 'active')
             ->first();

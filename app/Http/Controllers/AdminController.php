@@ -63,7 +63,8 @@ class AdminController extends Controller
         $query = User::where('role', 'student')
             ->with([
                 'examAttempts' => fn ($q) => $q->with('answers')->latest()->limit(1),
-                'enrollments.level.course',
+                'enrollments.level.courses',
+                'enrollments.course',
                 'enrollments.approver',
                 'enrollments.revoker',
                 'approver',
@@ -87,7 +88,8 @@ class AdminController extends Controller
         }
 
         $students = $query->paginate(15)->withQueryString();
-        $levels = Level::with('course')->get();
+        $levels = Level::with('courses')->get();
+        $courses = Course::with('level')->orderBy('order_index')->get();
 
         $totalStudents = User::where('role', 'student')->count();
         $pendingApproval = User::where('role', 'student')->where('status', 'pending_approval')->count();
@@ -97,6 +99,7 @@ class AdminController extends Controller
         return view('admin.students.index', compact(
             'students',
             'levels',
+            'courses',
             'totalStudents',
             'pendingApproval',
             'pendingTest',
@@ -107,16 +110,30 @@ class AdminController extends Controller
     public function assignLevel(Request $request, $id)
     {
         $request->validate([
-            'level_id' => 'required|exists:levels,id',
+            'level_id' => 'required_without:course_id|nullable|exists:levels,id',
+            'course_id' => 'nullable|exists:courses,id',
         ]);
 
         $student = User::findOrFail($id);
-        $level = Level::findOrFail($request->level_id);
+
+        $course = $request->filled('course_id') ? Course::with('level')->find($request->course_id) : null;
+        $levelId = $request->level_id ?: $course?->level_id;
+        $level = Level::with('courses')->findOrFail($levelId);
+
+        if (! $course && $level->courses->count() === 1) {
+            $course = $level->courses->first();
+        }
+
+        $feeAmount = $course?->fee_amount ?? $level->fee_amount;
+        $currency = $course?->currency ?? $level->currency ?? 'SAR';
+        $courseTitle = $course ? ($course->name_ar ?: $course->name_en) : null;
+        $displayPath = $courseTitle ? "{$level->name} — دورة [{$courseTitle}]" : $level->name;
 
         // 1. تسجيل الطالب في المستوى مع توثيق من اعتمد الطالب وتاريخ الاعتماد
         StudentEnrollment::create([
             'user_id' => $student->id,
             'level_id' => $level->id,
+            'course_id' => $course?->id,
             'status' => 'active',
             'enrolled_at' => now(),
             'approved_by' => auth()->id(),
@@ -127,9 +144,10 @@ class AdminController extends Controller
         StudentInstallment::create([
             'user_id' => $student->id,
             'level_id' => $level->id,
+            'course_id' => $course?->id,
             'installment_number' => 1,
-            'amount' => $level->fee_amount,
-            'currency' => $level->currency,
+            'amount' => $feeAmount,
+            'currency' => $currency,
             'due_date' => now()->addDays(7),
             'status' => 'unpaid',
         ]);
@@ -137,7 +155,7 @@ class AdminController extends Controller
         // 3. تحديث حساب الطالب المالي (مدين بالرسوم الدراسية - كشف حساب قياسي)
         $studentAccount = FinancialAccount::where('user_id', $student->id)->first();
         if ($studentAccount) {
-            $studentAccount->increment('current_balance', $level->fee_amount);
+            $studentAccount->increment('current_balance', $feeAmount);
         }
 
         // 4. تفعيل حساب الطالب بالكامل وتوثيق من اعتمد وتاريخ الاعتماد وتصفير أي إلغاء سابق
@@ -152,7 +170,7 @@ class AdminController extends Controller
 
         // 5. إرسال إشعار الواتساب التلقائي المعتمد
         $schoolName = SiteSetting::get('school_name', 'منصة ASOTS');
-        $msgBody = "مرحباً {$student->name}، تهانينا! 🎓\n\nتم اعتماد مستواك الأكاديمي رسمياً: [{$level->name}] في {$schoolName}.\nيمكنك الآن تسجيل الدخول لمنصتك ومتابعة محاضراتك ودروسك فوراً.\n\nنتمنى لك دوام التفوق والنجاح!";
+        $msgBody = "مرحباً {$student->name}، تهانينا! 🎓\n\nتم اعتماد مسارك الأكاديمي رسمياً: [{$displayPath}] في {$schoolName}.\nيمكنك الآن تسجيل الدخول لمنصتك ومتابعة محاضراتك ودروسك فوراً.\n\nنتمنى لك دوام التفوق والنجاح!";
 
         WhatsAppService::send(
             $student->phone_whatsapp ?: '',
@@ -165,19 +183,21 @@ class AdminController extends Controller
         // توثيق في سجل تدقيق النظام
         SystemAuditLog::record(
             'student.level_assigned',
-            "تم اعتماد المستوى الأكاديمي [{$level->name}] للطالب [{$student->name}] ({$student->student_code}) ورسم دراسي {$level->fee_amount} {$level->currency} بواسطة (".auth()->user()->name.')',
+            "تم اعتماد المسار الأكاديمي [{$displayPath}] للطالب [{$student->name}] ({$student->student_code}) ورسم دراسي {$feeAmount} {$currency} بواسطة (".auth()->user()->name.')',
             $student,
             [
                 'level_id' => $level->id,
                 'level_name' => $level->name,
-                'fee_amount' => $level->fee_amount,
+                'course_id' => $course?->id,
+                'course_name' => $courseTitle,
+                'fee_amount' => $feeAmount,
                 'approved_by' => auth()->id(),
                 'approved_by_name' => auth()->user()->name,
                 'approved_at' => now()->toDateTimeString(),
             ]
         );
 
-        return back()->with('success', "تم اعتماد الطالب وتخصيص المستوى [{$level->name}] بنجاح، وتفعيل حسابه المالي والأكاديمي وإشعاره عبر الواتساب.");
+        return back()->with('success', "تم اعتماد الطالب وتخصيص المسار الأكاديمي [{$displayPath}] بنجاح، وتفعيل حسابه المالي والأكاديمي وإشعاره عبر الواتساب.");
     }
 
     /**
@@ -375,7 +395,7 @@ class AdminController extends Controller
             'name_en' => 'nullable|string|max:255',
             'birth_date' => 'nullable|date',
             'gender' => 'required|string|in:male,female',
-            'email' => 'required|email|max:255|unique:users,email',
+            'email' => 'nullable|email|max:255|unique:users,email',
             'phone_whatsapp' => 'required|string|max:30',
             'role' => 'required|string|in:teacher,student,supervisor,accountant,parent,admin',
             'permission_group_id' => 'nullable|exists:permission_groups,id',
@@ -408,12 +428,14 @@ class AdminController extends Controller
         // إسناد الصلاحيات: إذا أرسلها النموذج تؤخذ، وإلا تؤخذ الافتراضية للدور
         $permissions = $validated['permissions'] ?? User::defaultPermissionsForRole($validated['role']);
 
+        $email = ! empty($validated['email']) ? trim($validated['email']) : null;
+
         $user = User::create([
             'name' => $validated['name'],
             'name_en' => $validated['name_en'] ?? null,
             'birth_date' => $validated['birth_date'] ?? null,
             'gender' => $validated['gender'] ?? 'male',
-            'email' => $validated['email'],
+            'email' => $email,
             'phone_whatsapp' => $validated['phone_whatsapp'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
@@ -494,7 +516,7 @@ class AdminController extends Controller
             'name_en' => 'nullable|string|max:255',
             'birth_date' => 'nullable|date',
             'gender' => 'required|string|in:male,female',
-            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
+            'email' => 'nullable|email|max:255|unique:users,email,'.$user->id,
             'phone_whatsapp' => 'required|string|max:30',
             'role' => 'required|string|in:teacher,student,supervisor,accountant,parent,admin',
             'permission_group_id' => 'nullable|exists:permission_groups,id',
@@ -518,12 +540,14 @@ class AdminController extends Controller
             ? false
             : $request->boolean('must_change_password');
 
+        $email = ! empty($validated['email']) ? trim($validated['email']) : null;
+
         $data = [
             'name' => $validated['name'],
             'name_en' => $validated['name_en'] ?? null,
             'birth_date' => $validated['birth_date'] ?? null,
             'gender' => $validated['gender'] ?? 'male',
-            'email' => $validated['email'],
+            'email' => $email,
             'phone_whatsapp' => $validated['phone_whatsapp'],
             'role' => $validated['role'],
             'permission_group_id' => $permissionGroupId,

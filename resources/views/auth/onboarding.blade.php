@@ -44,8 +44,8 @@
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني *</label>
-                    <input type="email" id="inputEmail" required placeholder="student@example.com" 
+                    <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                    <input type="email" id="inputEmail" placeholder="student@example.com (اختياري)" 
                         class="w-full border border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-indigo-500 outline-none">
                 </div>
 
@@ -350,8 +350,8 @@ function goToStep(step) {
         const email = document.getElementById('inputEmail').value.trim();
         const phone = document.getElementById('inputPhone').value.trim();
         const pass = document.getElementById('inputPassword').value.trim();
-        if (!name || !email || !phone || !pass) {
-            alert('يرجى ملء جميع الحقول الإلزامية في الخطوة الأولى.');
+        if (!name || !phone || !pass) {
+            alert('يرجى ملء جميع الحقول الإلزامية (الاسم، الهاتف، كلمة المرور) في الخطوة الأولى.');
             return;
         }
     }

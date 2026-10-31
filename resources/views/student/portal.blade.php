@@ -18,7 +18,7 @@
             </div>
             <h1 class="text-2xl font-black">مرحباً بك، {{ $user->name }} 👋</h1>
             <p class="text-xs text-slate-300 mt-1">
-                المسار الحالي: <strong>{{ $enrollment?->level?->course?->name ?? 'دورات اللغة الإنجليزية' }}</strong> - 
+                المسار والدورة: <strong>{{ $enrollment?->course ? ($enrollment->course->name_ar ?: $enrollment->course->name_en) : ($enrollment?->level?->course?->name ?? 'دورات اللغة الإنجليزية') }}</strong> - 
                 المستوى المعتمد: <span class="text-amber-400 font-bold">[{{ $enrollment?->level?->name ?? 'المستوى المعتمد' }}]</span>
             </p>
         </div>
@@ -506,10 +506,10 @@
                                 </a>
                             @elseif($vid->file_path)
                                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                                    <a href="{{ asset($vid->file_path) }}" target="_blank" class="flex-1 sm:flex-initial bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition text-center shrink-0">
+                                    <a href="{{ route('resources.stream', $vid->id) }}" target="_blank" class="flex-1 sm:flex-initial bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition text-center shrink-0">
                                         تشغيل الفيديو ▶️
                                     </a>
-                                    <a href="{{ asset($vid->file_path) }}" download target="_blank" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition text-center flex items-center justify-center gap-1 shadow-2xs shrink-0" title="تحميل الفيديو لجهازك">
+                                    <a href="{{ route('resources.download', $vid->id) }}" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition text-center flex items-center justify-center gap-1 shadow-2xs shrink-0" title="تحميل الفيديو لجهازك">
                                         <span>📥</span>
                                         <span>تحميل</span>
                                     </a>
@@ -548,7 +548,7 @@
                                 </span>
                             </div>
                             @if($bk->file_path)
-                                <a href="{{ asset($bk->file_path) }}" download target="_blank" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-lg transition shrink-0">
+                                <a href="{{ route('resources.download', $bk->id) }}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-lg transition shrink-0">
                                     تحميل 📥
                                 </a>
                             @endif
@@ -586,7 +586,7 @@
                                 </div>
                                 @if($aud->file_path)
                                     <audio controls class="w-full h-7">
-                                        <source src="{{ asset($aud->file_path) }}" type="audio/mpeg">
+                                        <source src="{{ route('resources.stream', $aud->id) }}" type="audio/mpeg">
                                         متصفحك لا يدعم مشغل الصوت.
                                     </audio>
                                 @endif

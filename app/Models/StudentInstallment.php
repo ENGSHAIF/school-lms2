@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class StudentInstallment extends Model
@@ -9,6 +10,7 @@ class StudentInstallment extends Model
     protected $fillable = [
         'user_id',
         'level_id',
+        'course_id',
         'installment_number',
         'amount',
         'currency',
@@ -31,18 +33,23 @@ class StudentInstallment extends Model
         return $this->belongsTo(Level::class, 'level_id');
     }
 
+    public function course()
+    {
+        return $this->belongsTo(Course::class, 'course_id');
+    }
+
     public function getCurrencyNameAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencyName($this->currency);
+        return ArabicCurrencyHelper::currencyName($this->currency);
     }
 
     public function getCurrencySymbolAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencySymbol($this->currency);
+        return ArabicCurrencyHelper::currencySymbol($this->currency);
     }
 
     public function getFormattedAmountAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->amount, $this->currency);
+        return ArabicCurrencyHelper::format($this->amount, $this->currency);
     }
 }

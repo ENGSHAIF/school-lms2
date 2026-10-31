@@ -1115,8 +1115,8 @@
                     </div>
 
                     <div class="min-w-0">
-                        <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-red-500">*</span></label>
-                        <input type="email" name="email" required placeholder="email@asots.org" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                        <input type="email" name="email" placeholder="email@asots.org (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
                     <div class="min-w-0">
@@ -1287,8 +1287,8 @@
                     </div>
 
                     <div class="min-w-0">
-                        <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-red-500">*</span></label>
-                        <input type="email" name="email" id="editEmail" required class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                        <input type="email" name="email" id="editEmail" placeholder="email@asots.org (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
                     <div class="min-w-0">

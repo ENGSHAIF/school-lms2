@@ -25,7 +25,7 @@ class BannerManagementTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.banners.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('إدارة وتعديل الإعلانات والحملات');
+        $response->assertSee('إدارة الإعلانات ومعرض حفلات التخرج والفعاليات');
     }
 
     public function test_admin_can_create_banner_with_uploaded_image(): void
@@ -37,6 +37,7 @@ class BannerManagementTest extends TestCase
         $response = $this->actingAs($admin)->post(route('admin.banners.store'), [
             'title' => 'إعلان ترويجي اختباري مع صورة',
             'title_en' => 'Test Promo Banner With Image',
+            'category' => 'ad',
             'subtitle' => 'عرض خاص ومحدد',
             'content' => 'تفاصيل الإعلان الترويجي بالكامل',
             'placement' => 'hero_slider',

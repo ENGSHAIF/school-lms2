@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
 use App\Models\FinancialAccount;
 use App\Models\LessonReport;
 use App\Models\Level;
@@ -33,7 +34,7 @@ class SupervisorController extends Controller
                 'studentProfile',
                 'approver',
                 'revoker',
-                'examAttempts' => fn ($q) => $q->with(['suggestedLevel.course', 'answers'])->latest()->limit(1),
+                'examAttempts' => fn ($q) => $q->with(['suggestedLevel.courses', 'answers'])->latest()->limit(1),
             ])
             ->latest()
             ->get();
@@ -44,8 +45,8 @@ class SupervisorController extends Controller
         $pendingCount = $pendingApprovals->count();
         $completedLessonsCount = LessonReport::count();
 
-        // 3. المستويات الأكاديمية المتاحة
-        $levels = Level::with('course')->get();
+        // 3. المستويات الأكاديمية المتاحة بجميع دوراتها
+        $levels = Level::with('courses')->get();
 
         // 4. تقارير الحصص الأخيرة لمراقبة الجودة الأكاديمية
         $recentReports = LessonReport::with(['student', 'teacher', 'booking'])
@@ -75,29 +76,43 @@ class SupervisorController extends Controller
         }
 
         $request->validate([
-            'level_id' => 'required|exists:levels,id',
+            'level_id' => 'required_without:course_id|nullable|exists:levels,id',
+            'course_id' => 'nullable|exists:courses,id',
         ]);
 
         $student = User::findOrFail($id);
-        $level = Level::with('course')->findOrFail($request->level_id);
+        $course = $request->filled('course_id') ? Course::with('level')->find($request->course_id) : null;
+        $levelId = $request->level_id ?: $course?->level_id;
+        $level = Level::with('courses')->findOrFail($levelId);
 
-        // 1. قيد تسجيل الطالب في المستوى مع توثيق من اعتمد الطالب وتاريخ الاعتماد
+        if (! $course && $level->courses->count() === 1) {
+            $course = $level->courses->first();
+        }
+
+        $feeAmount = $course?->fee_amount ?? $level->fee_amount;
+        $currency = $course?->currency ?? $level->currency ?? 'SAR';
+        $courseTitle = $course ? ($course->name_ar ?: $course->name_en) : null;
+        $displayPath = $courseTitle ? "{$level->name} — دورة [{$courseTitle}]" : $level->name;
+
+        // 1. قيد تسجيل الطالب في المستوى والدورة مع توثيق من اعتمد الطالب وتاريخ الاعتماد
         StudentEnrollment::create([
             'user_id' => $student->id,
             'level_id' => $level->id,
+            'course_id' => $course?->id,
             'status' => 'active',
             'enrolled_at' => now(),
             'approved_by' => $supervisor->id,
             'approved_at' => now(),
         ]);
 
-        // 2. جدولة القسط المالي للمستوى
+        // 2. جدولة القسط المالي للمستوى / الدورة
         StudentInstallment::create([
             'user_id' => $student->id,
             'level_id' => $level->id,
+            'course_id' => $course?->id,
             'installment_number' => 1,
-            'amount' => $level->fee_amount,
-            'currency' => $level->currency,
+            'amount' => $feeAmount,
+            'currency' => $currency,
             'due_date' => now()->addDays(7),
             'status' => 'unpaid',
         ]);
@@ -105,7 +120,7 @@ class SupervisorController extends Controller
         // 3. تقييد الرسوم في حساب الطالب المالي (كشف حساب قياسي)
         $studentAccount = FinancialAccount::where('user_id', $student->id)->first();
         if ($studentAccount) {
-            $studentAccount->increment('current_balance', $level->fee_amount);
+            $studentAccount->increment('current_balance', $feeAmount);
         }
 
         // 4. تفعيل حساب الطالب رسمياً وتوثيق من اعتمد وتاريخ الاعتماد وتصفير أي إلغاء سابق
@@ -123,26 +138,28 @@ class SupervisorController extends Controller
             'user_id' => $student->id,
             'phone_number' => $student->phone_whatsapp ?? 'unknown',
             'message_type' => 'announcement',
-            'message_body' => "مرحباً {$student->name}، تمت مراجعة اختبارك واعتماد مستواك الأكاديمي رسمياً من قبل الإشراف الأكاديمي: [{$level->name}]. يمكنك الآن حجز حصصك ومتابعة دروسك من بوابتك.",
+            'message_body' => "مرحباً {$student->name}، تمت مراجعة اختبارك واعتماد مسارك الأكاديمي رسمياً من قبل الإشراف الأكاديمي: [{$displayPath}]. يمكنك الآن حجز حصصك ومتابعة دروسك من بوابتك.",
             'status' => 'sent',
         ]);
 
         // 6. توثيق في سجل تدقيق النظام
         SystemAuditLog::record(
             'student.level_assigned',
-            "تم اعتماد المستوى الأكاديمي [{$level->name}] للطالب [{$student->name}] ({$student->student_code}) ورسم دراسي {$level->fee_amount} {$level->currency} بواسطة المشرف الأكاديمي ({$supervisor->name})",
+            "تم اعتماد المسار الأكاديمي [{$displayPath}] للطالب [{$student->name}] ({$student->student_code}) ورسم دراسي {$feeAmount} {$currency} بواسطة المشرف الأكاديمي ({$supervisor->name})",
             $student,
             [
                 'level_id' => $level->id,
                 'level_name' => $level->name,
-                'fee_amount' => $level->fee_amount,
+                'course_id' => $course?->id,
+                'course_name' => $courseTitle,
+                'fee_amount' => $feeAmount,
                 'approved_by' => $supervisor->id,
                 'approved_by_name' => $supervisor->name,
                 'approved_at' => now()->toDateTimeString(),
             ]
         );
 
-        return back()->with('success', "تم اعتماد المستوى [{$level->name}] للطالب [{$student->name}] بنجاح وتفعيل حسابه الأكاديمي والمالي.");
+        return back()->with('success', "تم اعتماد المسار الأكاديمي [{$displayPath}] للطالب [{$student->name}] بنجاح وتفعيل حسابه الأكاديمي والمالي.");
     }
 
     /**
