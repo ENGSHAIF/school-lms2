@@ -3,17 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Certificate;
 use App\Models\ExamAttempt;
 use App\Models\FinancialAccount;
 use App\Models\GroupActivity;
-use App\Models\GroupSession;
 use App\Models\GroupStudentEvaluation;
 use App\Models\LessonReport;
-use App\Models\StudentEnrollment;
+use App\Models\StudentCourseGrade;
 use App\Models\StudentInstallment;
 use App\Models\StudentProfile;
 use App\Models\StudentWallet;
-use App\Models\StudyGroup;
 use App\Models\TeacherSchedule;
 use App\Models\User;
 use App\Models\Voucher;
@@ -30,12 +29,12 @@ class ParentController extends Controller
     {
         $parent = Auth::user();
 
-        if (!$parent->isParent() && !$parent->isAdmin()) {
+        if (! $parent->isParent() && ! $parent->isAdmin()) {
             abort(403, 'غير مصرح لك بالدخول إلى لوحة ولي الأمر.');
         }
 
         // فحص صلاحية دخول لوحة ولي الأمر
-        if (!$parent->hasPermission('parent.dashboard')) {
+        if (! $parent->hasPermission('parent.dashboard')) {
             abort(403, 'غير مصرح لك بالوصول إلى لوحة ولي الأمر بحسب الصلاحيات الممنوحة لحسابك.');
         }
 
@@ -48,8 +47,8 @@ class ParentController extends Controller
             'user.studyGroups.teachers',
             'user.studyGroups.supervisors',
         ])
-        ->where('parent_id', $parent->id)
-        ->get();
+            ->where('parent_id', $parent->id)
+            ->get();
 
         // إذا كان مدير نظام ولم يكن لديه أبناء مسجلين، نحضر له أول طالب مسجل في النظام كمعاينة
         if ($childrenProfiles->isEmpty() && $parent->isAdmin()) {
@@ -108,7 +107,7 @@ class ParentController extends Controller
         $lateCount = $evaluations->where('attendance_status', 'late')->count();
         $excusedCount = $evaluations->where('attendance_status', 'excused')->count();
         $attendanceRate = $totalSessions > 0 ? round(($presentCount / $totalSessions) * 100, 1) : 100;
-        $totalStars = (int)$evaluations->sum('stars_awarded') + (int)$reports->sum('stars_awarded');
+        $totalStars = (int) $evaluations->sum('stars_awarded') + (int) $reports->sum('stars_awarded');
 
         // التكليفات والواجبات المدرسية للشعب المسكن بها
         $groupActivities = $studyGroups->isNotEmpty() ? GroupActivity::whereIn('study_group_id', $studyGroups->pluck('id'))
@@ -123,6 +122,17 @@ class ParentController extends Controller
             ->latest()
             ->get() : collect();
 
+        // النتائج النهائية للدورات والشهادات الأكاديمية المعتمدة الصادرة للطالب
+        $studentCourseGrades = $activeChild ? StudentCourseGrade::with(['course', 'level', 'studyGroup'])
+            ->where('student_id', $activeChild->id)
+            ->latest()
+            ->get() : collect();
+
+        $certificates = $activeChild ? Certificate::with(['course', 'level', 'studyGroup'])
+            ->where('student_id', $activeChild->id)
+            ->latest()
+            ->get() : collect();
+
         // الرسوم المالية وسندات القبض والأقساط
         $account = $activeChild ? $activeChild->financialAccount : null;
         $vouchers = $account ? Voucher::where('account_id', $account->id)->latest()->get() : collect();
@@ -132,7 +142,7 @@ class ParentController extends Controller
         $totalDiscounts = $installments->sum('discount_amount');
         $netTuition = max(0, $totalTuition - $totalDiscounts);
         $totalPaid = $vouchers->where('voucher_type', 'receipt')->sum('amount');
-        $currentBalance = $account ? (float)$account->current_balance : ($netTuition - $totalPaid);
+        $currentBalance = $account ? (float) $account->current_balance : ($netTuition - $totalPaid);
 
         // مواعيد المعلمين المتاحة للحجز السريع
         $availableSchedules = TeacherSchedule::with('teacher')
@@ -162,6 +172,8 @@ class ParentController extends Controller
             'totalStars',
             'groupActivities',
             'examAttempts',
+            'studentCourseGrades',
+            'certificates',
             'account',
             'vouchers',
             'installments',
@@ -186,8 +198,8 @@ class ParentController extends Controller
         ]);
 
         $latestId = User::max('id') ?? 0;
-        $studentCode = 'STU-' . date('Y') . '-' . str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
-        $email = 'child_' . ($latestId + 1) . '@school.com';
+        $studentCode = 'STU-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
+        $email = 'child_'.($latestId + 1).'@school.com';
 
         $child = User::create([
             'name' => $validated['name'],
@@ -219,8 +231,8 @@ class ParentController extends Controller
         ]);
 
         FinancialAccount::create([
-            'account_code' => '21' . str_pad($child->id, 4, '0', STR_PAD_LEFT),
-            'account_name' => 'حساب الطالب: ' . $child->name,
+            'account_code' => '21'.str_pad($child->id, 4, '0', STR_PAD_LEFT),
+            'account_name' => 'حساب الطالب: '.$child->name,
             'account_type' => 'student',
             'user_id' => $child->id,
             'currency' => 'YER',
@@ -240,7 +252,7 @@ class ParentController extends Controller
 
         // التحقق من أن الطفل مسجل تحت هذا الوالد
         $profile = StudentProfile::where('user_id', $child->id)->where('parent_id', $parent->id)->first();
-        if (!$profile && !$parent->isAdmin()) {
+        if (! $profile && ! $parent->isAdmin()) {
             abort(403, 'غير مصرح لك بالحجز لهذا الطالب.');
         }
 
@@ -249,7 +261,7 @@ class ParentController extends Controller
         ]);
 
         $wallet = StudentWallet::where('user_id', $child->id)->first();
-        if (!$wallet || $wallet->remaining_lessons < 1) {
+        if (! $wallet || $wallet->remaining_lessons < 1) {
             return back()->with('error', "عذراً! لا يوجد رصيد حصص كافٍ في محفظة [{$child->name}]. يرجى شحن باقة الحصص أولاً.");
         }
 
@@ -258,7 +270,7 @@ class ParentController extends Controller
             return back()->with('error', 'تم حجز هذه الخانة من قبل طالب آخر، يرجى اختيار موعد بديل.');
         }
 
-        $roomId = 'airclass-' . Str::random(10);
+        $roomId = 'airclass-'.Str::random(10);
         Booking::create([
             'student_id' => $child->id,
             'teacher_id' => $schedule->teacher_id,

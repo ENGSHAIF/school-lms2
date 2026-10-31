@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Certificate;
+use App\Models\ExamAttempt;
+use App\Models\StudentCourseGrade;
 use App\Models\StudentEnrollment;
-use App\Models\Voucher;
 use App\Models\StudentInstallment;
-use Illuminate\Http\Request;
+use App\Models\Voucher;
 use Illuminate\Support\Facades\Auth;
 
 class StudentPortalController extends Controller
@@ -34,6 +36,34 @@ class StudentPortalController extends Controller
         // المستوى الفعلي المعتمد للطالب (سواء من التسجيل المباشر أو من مجموعته الدراسية)
         $activeLevel = $enrollment?->level ?: $studyGroup?->level;
 
-        return view('student.portal', compact('user', 'enrollment', 'activeLevel', 'account', 'vouchers', 'installments', 'studyGroup'));
+        // النتائج النهائية المعتمدة والشهادات الصادرة لهذا الطالب فقط
+        $courseGrades = StudentCourseGrade::with(['course', 'level', 'studyGroup'])
+            ->where('student_id', $user->id)
+            ->latest()
+            ->get();
+
+        $certificates = Certificate::with(['course', 'level', 'studyGroup'])
+            ->where('student_id', $user->id)
+            ->latest()
+            ->get();
+
+        $examAttempts = ExamAttempt::with(['exam.course', 'exam.level'])
+            ->where('user_id', $user->id)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('student.portal', compact(
+            'user',
+            'enrollment',
+            'activeLevel',
+            'account',
+            'vouchers',
+            'installments',
+            'studyGroup',
+            'courseGrades',
+            'certificates',
+            'examAttempts'
+        ));
     }
 }

@@ -77,6 +77,151 @@
         </div>
     </div>
 
+    <!-- بطاقة نتائجي والشهادات الأكاديمية المعتمدة (My Results & Official Certificates) -->
+    @if((isset($certificates) && $certificates->isNotEmpty()) || (isset($courseGrades) && $courseGrades->isNotEmpty()))
+        <div class="space-y-4">
+            <!-- 1. الشهادات المعتمدة الصادرة للطالب -->
+            @if(isset($certificates) && $certificates->isNotEmpty())
+                <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-7 text-white shadow-xl border border-emerald-500/40 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-400/30">
+                                    شهادات تخرج رسمية معتمدة 🎓
+                                </span>
+                                <span class="text-xs text-amber-300 font-mono">ASOTS Official Verified</span>
+                            </div>
+                            <h2 class="text-lg font-black text-white">شهاداتك الأكاديمية الصادرة المعتمدة برمز QR</h2>
+                        </div>
+                        <span class="px-3.5 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                            {{ $certificates->count() }} شهادة 📜
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @foreach($certificates as $cert)
+                            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/15 flex flex-col justify-between space-y-4 hover:border-emerald-400/50 transition">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-mono font-bold text-amber-300 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+                                            {{ $cert->certificate_number }}
+                                        </span>
+                                        <span class="text-[11px] font-bold text-emerald-300 flex items-center gap-1">
+                                            <span>موثقة ومعتمدة</span>
+                                            <span>✅</span>
+                                        </span>
+                                    </div>
+
+                                    <h3 class="text-base font-black text-white">{{ $cert->title }}</h3>
+                                    <div class="text-xs text-slate-300 space-y-0.5">
+                                        <div>الدورة: <strong class="text-white">{{ $cert->course_name_ar ?: ($cert->course?->displayName ?: 'دورة تدريبية') }}</strong></div>
+                                        <div class="flex items-center gap-3 text-[11px] text-slate-400 pt-1">
+                                            <span>⏱️ {{ $cert->hours }} ساعة</span>
+                                            <span>•</span>
+                                            <span>📅 تاريخ الإصدار: {{ $cert->issue_date ? $cert->issue_date->format('Y-m-d') : $cert->created_at->format('Y-m-d') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-3 border-t border-white/10 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-xl font-black text-amber-300 font-mono">{{ $cert->percentage }}%</span>
+                                        <span class="text-[11px] text-slate-300 block font-bold">{{ $cert->grade_letter }}</span>
+                                    </div>
+
+                                    <a href="{{ route('admin.exams_management.certificates.print', $cert->id) }}" target="_blank"
+                                        class="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition flex items-center gap-1.5">
+                                        <span>🖨️</span>
+                                        <span>عرض وطباعة شهادتي المعتمدة</span>
+                                    </a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <!-- 2. بطاقة النتائج النهائية المعتمدة للدورات وتفصيل توزيع الدرجات -->
+            @if(isset($courseGrades) && $courseGrades->isNotEmpty())
+                <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-sm space-y-4">
+                    <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+                                <span>📊</span>
+                                <span>نتائجي النهائية ودرجاتي المعتمدة بالدورة</span>
+                            </h2>
+                            <p class="text-xs text-slate-500">تفصيل درجاتك وفق المعيار الرسمي للدورة (حضور، مشاركة، أنشطة، نصفي، عملي، ونهائي).</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        @foreach($courseGrades as $scg)
+                            <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50/50 space-y-4 hover:border-indigo-300 transition">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
+                                    <div>
+                                        <h3 class="font-black text-sm text-slate-900">{{ $scg->course?->displayName ?? 'الدورة التدريبية' }}</h3>
+                                        <span class="text-xs text-indigo-600 font-bold">
+                                            المجموعة: {{ $scg->studyGroup?->displayName ?? 'الشعبة الدراسية' }}
+                                            @if($scg->level) • {{ $scg->level->name }} @endif
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-3 py-1 rounded-full text-xs font-black border {{ $scg->status_badge_class }}">
+                                            {{ $scg->status_label }}
+                                        </span>
+                                        <span class="px-3 py-1 rounded-full text-xs font-black border {{ $scg->grade_badge_class }}">
+                                            {{ $scg->grade_letter }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- تفصيل درجات التقييم الستة -->
+                                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-center text-xs">
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                                        <span class="text-[10px] text-slate-500 block font-bold mb-0.5">الحضور والانضباط</span>
+                                        <strong class="font-mono text-slate-900 text-sm font-black">{{ $scg->attendance_score }}</strong>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                                        <span class="text-[10px] text-slate-500 block font-bold mb-0.5">المشاركة والتفاعل</span>
+                                        <strong class="font-mono text-slate-900 text-sm font-black">{{ $scg->participation_score }}</strong>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                                        <span class="text-[10px] text-slate-500 block font-bold mb-0.5">الأنشطة والواجبات</span>
+                                        <strong class="font-mono text-slate-900 text-sm font-black">{{ $scg->activities_score }}</strong>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                                        <span class="text-[10px] text-slate-500 block font-bold mb-0.5">الاختبار النصفي</span>
+                                        <strong class="font-mono text-indigo-700 text-sm font-black">{{ $scg->midterm_score }}</strong>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                                        <span class="text-[10px] text-slate-500 block font-bold mb-0.5">الشفهي / العملي</span>
+                                        <strong class="font-mono text-purple-700 text-sm font-black">{{ $scg->practical_score }}</strong>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                                        <span class="text-[10px] text-slate-500 block font-bold mb-0.5">الاختبار النهائي</span>
+                                        <strong class="font-mono text-rose-700 text-sm font-black">{{ $scg->final_exam_score }}</strong>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 border-t border-slate-200 text-xs">
+                                    <div class="flex items-center gap-4">
+                                        <span>المجموع الكلي: <strong class="font-mono text-slate-900 text-sm font-black">{{ $scg->total_score }} / 100</strong></span>
+                                        <span>النسبة المئوية: <strong class="font-mono text-emerald-700 text-sm font-black">{{ $scg->percentage }}%</strong></span>
+                                    </div>
+                                    @if($scg->teacher_notes)
+                                        <div class="text-[11px] text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
+                                            💬 ملاحظات الأستاذ: {{ $scg->teacher_notes }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
+    @endif
+
     <!-- بطاقة المجموعة الدراسية المسكن فيها الطالب (إن وُجدت) -->
     @if(isset($studyGroup) && $studyGroup)
         @php

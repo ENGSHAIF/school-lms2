@@ -3,88 +3,6 @@
 @section('content')
 <div class="space-y-20 py-4">
 
-    <!-- ==================== 1. القسم الرئيسي (Hero Section) ==================== -->
-    @php
-        $siteBg = site_setting('site_background');
-        $isBgEnabled = site_setting('site_background_enabled', '0') === '1';
-        $bgMode = site_setting('background_mode', 'hero');
-        $overlayOpacity = site_setting('overlay_opacity', '0.75');
-        $bgBlur = site_setting('background_blur', 'none');
-        $applyHeroBg = $isBgEnabled && !empty($siteBg) && ($bgMode === 'hero' || $bgMode === 'body' || $bgMode === 'all_pages');
-        $bgImageUrl = $siteBg ? (str_starts_with($siteBg, 'http') ? $siteBg : asset($siteBg)) : null;
-
-        $heroBadge = site_setting('hero_badge_text', '⭐ The Asian Star Office for Translation, Training, & Consultancy Services');
-        $heroTitle = site_setting('hero_title_ar', $info['name_ar']);
-        $siteNameEn = site_setting('site_name_en', 'The Asian Star Office (ASOTS)');
-        $siteSlogan = site_setting('site_slogan_ar', $info['motto_ar'] . ' • ' . $info['promise_ar']);
-        $heroSubtitle = site_setting('hero_subtitle_ar', $info['definition_ar'] . ' نوفر تعليماً تفاعلياً حياً يربطك بأفضل المعلمين مع فحص فوري لمخارج الحروف والطلاقة بنظام الذكاء الاصطناعي ونظام محاسبي معتمد.');
-        $heroCtaPrimary = site_setting('hero_cta_primary', '🚀 ابدأ باختبار تحديد المستوى وحصتك المجانية');
-        $heroCtaSecondary = site_setting('hero_cta_secondary', '💳 استعراض باقات الحصص والأسعار');
-    @endphp
-
-    <section class="rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden border border-[#0066A1]/40 text-white transition-all duration-300 {{ $applyHeroBg ? 'bg-[#004e7c]' : 'bg-gradient-to-r from-[#004e7c] via-[#005586] to-[#0066A1]' }}"
-             @if($applyHeroBg && $bgImageUrl)
-                 style="background-image: linear-gradient(rgba(0, 78, 124, {{ $overlayOpacity }}), rgba(0, 102, 161, {{ $overlayOpacity }})), url('{{ $bgImageUrl }}'); background-size: cover; background-position: center; background-repeat: no-repeat;"
-             @endif>
-        <div class="max-w-3xl space-y-6 relative z-10">
-            <div class="inline-flex items-center gap-2 bg-gradient-to-r from-[#F58220]/25 to-[#0066A1]/30 text-[#F58220] text-xs px-4 py-1.5 rounded-full font-black border border-[#F58220]/40">
-                <span>{{ $heroBadge }}</span>
-            </div>
-
-            <h1 class="text-3xl sm:text-5xl font-black leading-tight tracking-wide">
-                {{ $heroTitle }}
-                <span class="block text-2xl sm:text-3xl text-[#F58220] font-extrabold mt-2 font-sans" dir="ltr">
-                    {{ $siteNameEn }}
-                </span>
-            </h1>
-
-            <div class="space-y-1">
-                <p class="text-xs sm:text-sm font-bold text-amber-200">
-                    {{ $siteSlogan }}
-                </p>
-                <p class="text-sm sm:text-base text-slate-100 leading-relaxed font-medium">
-                    {{ $heroSubtitle }}
-                </p>
-            </div>
-
-            <!-- أزرار الإجراءات الرئيسية المنسجمة مع هوية الشعار -->
-            <div class="flex flex-wrap items-center gap-4 pt-2">
-                <a href="{{ route('onboarding') }}" 
-                    class="bg-gradient-to-r from-[#F58220] to-[#d96e14] hover:from-[#d96e14] hover:to-[#b85807] text-white font-black text-sm px-8 py-4 rounded-2xl shadow-xl shadow-[#F58220]/30 transition transform hover:-translate-y-0.5 flex items-center gap-2">
-                    <span>{{ $heroCtaPrimary }}</span>
-                </a>
-
-                <a href="{{ route('packages.index') }}" 
-                    class="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold text-sm px-6 py-4 rounded-2xl backdrop-blur-md transition flex items-center gap-2">
-                    <span>{{ $heroCtaSecondary }}</span>
-                </a>
-            </div>
-
-            <!-- شريط مؤشرات الثقة والأرقام القياسية -->
-            @php
-                $cleanStats = array_values(array_filter($info['stats'] ?? [], function($st) {
-                    $txt = ($st['value'] ?? '') . ' ' . ($st['label'] ?? '');
-                    return !str_contains($txt, '25 دقيقة') && !str_contains($txt, '15,000') && !str_contains($txt, 'حصة تدريبية');
-                }));
-            @endphp
-            @if(count($cleanStats) > 0)
-                <div class="pt-6 border-t border-white/20 grid grid-cols-2 sm:grid-cols-{{ min(count($cleanStats), 4) }} gap-4">
-                    @foreach($cleanStats as $st)
-                        <div class="bg-black/25 backdrop-blur-sm p-3 rounded-xl border border-white/15">
-                            <span class="block text-xl font-black text-[#F58220] font-mono">{{ $st['value'] }}</span>
-                            <span class="text-[11px] text-slate-200 font-medium">{{ $st['label'] }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-
-        <!-- أشكال زخرفية خفية في الخلفية بتدرجات الأزرق والبرتقالي -->
-        <div class="absolute -bottom-10 -left-10 w-96 h-96 bg-[#0066A1]/30 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -top-10 -right-10 w-80 h-80 bg-[#F58220]/25 rounded-full blur-3xl pointer-events-none"></div>
-    </section>
-
-    <!-- ==================== بانر العروض الخاصة المجدولة (Visual CMS Slider Banner) ==================== -->
     <!-- ==================== بانر وسلايدر الإعلانات التفاعلي المتحرك (Dynamic Visual Announcements Carousel - الحجم المضاعف) ==================== -->
     @php
         $heroBanners = \App\Models\Banner::active()->ads()->placement('hero_slider')->orderBy('sort_order')->get();
@@ -121,16 +39,16 @@
                 </div>
             </div>
 
-            <!-- حاوية السلايدر التفاعلي الدوّار بحجم مضاعف كبير وواضح -->
-            <div class="relative overflow-hidden rounded-3xl sm:rounded-[36px] shadow-2xl border-2 border-[#0066A1]/40 bg-gradient-to-r from-[#002e4a] via-[#004e7c] to-[#0066A1] text-white group min-h-[460px] sm:min-h-[500px] lg:min-h-[520px] flex items-center" id="mainBannerCarousel">
+            <!-- حاوية السلايدر التفاعلي الدوّار بحجم مضاعف كبير وواضح وبأقصى ارتفاع لعرض المحتوى -->
+            <div class="relative overflow-hidden rounded-3xl sm:rounded-[36px] shadow-2xl border-2 border-[#0066A1]/40 bg-gradient-to-r from-[#002e4a] via-[#004e7c] to-[#0066A1] text-white group min-h-[540px] sm:min-h-[600px] lg:min-h-[640px] flex items-center" id="mainBannerCarousel">
                 
                 @foreach($heroBanners as $idx => $hb)
                     <div class="banner-slide w-full {{ $idx === 0 ? 'block' : 'hidden' }} transition-all duration-700 ease-in-out p-6 sm:p-10 lg:p-12" data-index="{{ $idx }}">
                         <div class="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
                             
-                            <!-- صورة البوستر المرفقة بحجم كبير مضاعف وواضح جداً -->
+                            <!-- صورة البوستر المرفقة بحجم كبير مضاعف وواضح جداً بارتفاع موسّع -->
                             @if($hb->image_path)
-                                <div class="w-full lg:w-5/12 h-64 sm:h-80 md:h-[400px] lg:h-[440px] rounded-3xl overflow-hidden border-2 border-white/25 shadow-2xl bg-black/40 flex items-center justify-center flex-shrink-0 group-hover:scale-[1.01] transition duration-300 relative">
+                                <div class="w-full lg:w-5/12 h-72 sm:h-96 md:h-[480px] lg:h-[560px] rounded-3xl overflow-hidden border-2 border-white/25 shadow-2xl bg-black/40 flex items-center justify-center flex-shrink-0 group-hover:scale-[1.01] transition duration-300 relative">
                                     <img src="{{ asset($hb->image_path) }}" alt="{{ $hb->title }}" class="w-full h-full object-cover">
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
                                     <span class="absolute bottom-3 right-3 bg-[#0066A1]/90 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full border border-white/20">
@@ -161,8 +79,8 @@
                                 @endif
 
                                 @if($hb->content)
-                                    <div class="text-xs sm:text-sm text-amber-100/95 leading-relaxed max-w-3xl bg-black/30 backdrop-blur-sm p-4 sm:p-5 rounded-2xl border border-white/15 line-clamp-3 font-medium">
-                                        {{ Str::limit(strip_tags($hb->content), 260) }}
+                                    <div class="text-xs sm:text-sm text-amber-100/95 leading-relaxed max-w-3xl bg-black/30 backdrop-blur-sm p-4 sm:p-5 rounded-2xl border border-white/15 line-clamp-5 font-medium">
+                                        {{ Str::limit(strip_tags($hb->content), 400) }}
                                     </div>
                                 @endif
 
