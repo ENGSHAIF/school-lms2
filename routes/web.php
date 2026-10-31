@@ -175,6 +175,9 @@ Route::middleware('auth')->group(function () {
         // 3.1.1 بنك موارد ومناهج الدورات والمستويات الأكاديمية
         Route::get('/admin/courses/{courseId}/resources', [LevelResourceController::class, 'courseResources'])->name('admin.courses.resources');
         Route::post('/admin/courses/{courseId}/resources', [LevelResourceController::class, 'storeCourseResource'])->name('admin.courses.resources.store');
+        Route::post('/admin/courses/{courseId}/sections', [LevelResourceController::class, 'storeSection'])->name('admin.courses.sections.store');
+        Route::post('/admin/courses/sections/{id}/update', [LevelResourceController::class, 'updateSection'])->name('admin.courses.sections.update');
+        Route::delete('/admin/courses/sections/{id}', [LevelResourceController::class, 'destroySection'])->name('admin.courses.sections.destroy');
         Route::get('/admin/levels/{levelId}/resources', [LevelResourceController::class, 'index'])->name('admin.levels.resources');
         Route::post('/admin/levels/{levelId}/resources', [LevelResourceController::class, 'store'])->name('admin.levels.resources.store');
         Route::post('/admin/levels/resources/{id}/update', [LevelResourceController::class, 'update'])->name('admin.levels.resources.update');

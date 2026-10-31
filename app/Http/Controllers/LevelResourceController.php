@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\Course;
+use App\Models\CourseSection;
 use App\Models\Exam;
 use App\Models\GroupActivity;
 use App\Models\Level;
@@ -17,9 +18,24 @@ class LevelResourceController extends Controller
     // عرض واستعراض بنك المناهج والموارد التعليمية للدورة المحددة (Course Curriculum Bank)
     public function courseResources($courseId)
     {
-        $course = Course::with(['level', 'resources' => function ($q) {
-            $q->orderBy('order_index')->latest();
-        }, 'resources.creator', 'resources.exam', 'resources.groupActivities'])->findOrFail($courseId);
+        $course = Course::with([
+            'level',
+            'sections' => function ($q) {
+                $q->orderBy('order_index');
+            },
+            'sections.resources' => function ($q) {
+                $q->orderBy('order_index')->latest();
+            },
+            'sections.resources.creator',
+            'sections.resources.exam',
+            'sections.resources.groupActivities',
+            'resources' => function ($q) {
+                $q->orderBy('order_index')->latest();
+            },
+            'resources.creator',
+            'resources.exam',
+            'resources.groupActivities',
+        ])->findOrFail($courseId);
 
         $stats = [
             'total' => $course->resources->count(),
@@ -29,6 +45,7 @@ class LevelResourceController extends Controller
             'images' => $course->resources->where('type', 'image')->count(),
             'worksheets' => $course->resources->where('type', 'worksheet')->count(),
             'quizzes' => $course->resources->where('type', 'quiz')->count(),
+            'sections' => $course->sections->count(),
         ];
 
         // المجموعات الدراسية المسكنة في هذه الدورة والمجموعات النشطة لمشاركة الموارد بسهولة
@@ -47,7 +64,10 @@ class LevelResourceController extends Controller
             })
             ->get();
 
-        return view('admin.courses.resources', compact('course', 'stats', 'studyGroups', 'availableExams'));
+        $sections = $course->sections;
+        $unassignedResources = $course->resources->whereNull('course_section_id');
+
+        return view('admin.courses.resources', compact('course', 'stats', 'studyGroups', 'availableExams', 'sections', 'unassignedResources'));
     }
 
     // رفع وإضافة مورد تعليمي جديد لبنك الدورة
@@ -63,6 +83,7 @@ class LevelResourceController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:book,audio,video,worksheet,quiz,image',
+            'course_section_id' => 'nullable|exists:course_sections,id',
             'description' => 'nullable|string',
             'external_url' => 'nullable|url|max:500',
             'duration_hours' => 'nullable|numeric|min:0.01|max:1000',
@@ -113,6 +134,7 @@ class LevelResourceController extends Controller
         $resource = LevelResource::create([
             'course_id' => $course->id,
             'level_id' => $course->level_id,
+            'course_section_id' => $validated['course_section_id'] ?? null,
             'title' => $validated['title'],
             'type' => $validated['type'],
             'description' => $validated['description'] ?? null,
@@ -270,6 +292,7 @@ class LevelResourceController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:book,audio,video,worksheet,quiz,image',
+            'course_section_id' => 'nullable|exists:course_sections,id',
             'description' => 'nullable|string',
             'external_url' => 'nullable|url|max:500',
             'duration_hours' => 'nullable|numeric|min:0.01|max:1000',
@@ -296,6 +319,7 @@ class LevelResourceController extends Controller
         $data = [
             'title' => $validated['title'],
             'type' => $validated['type'],
+            'course_section_id' => $request->has('course_section_id') ? $request->input('course_section_id') : $resource->course_section_id,
             'description' => $validated['description'] ?? null,
             'external_url' => $validated['external_url'] ?? null,
             'duration_hours' => $durationHours,
@@ -447,5 +471,82 @@ class LevelResourceController extends Controller
         }
 
         return back()->with('error', 'هذا المورد غير منشور في هذه المجموعة.');
+    }
+
+    // إضافة عنوان / يوم دراسي / وحدة جديدة للدورة (Course Section / Topic / Day)
+    public function storeSection(Request $request, $courseId)
+    {
+        $user = auth()->user();
+        if (! $user->isAdmin() && ! $user->hasPermission('manage_courses')) {
+            return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة أقسام وعناوين للدورة.');
+        }
+
+        $course = Course::findOrFail($courseId);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'order_index' => 'nullable|integer|min:1',
+        ]);
+
+        $nextOrder = (CourseSection::where('course_id', $course->id)->max('order_index') ?? 0) + 1;
+
+        CourseSection::create([
+            'course_id' => $course->id,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'order_index' => $validated['order_index'] ?? $nextOrder,
+            'is_active' => true,
+            'created_by' => $user->id,
+        ]);
+
+        return back()->with('success', "تمت إضافة العنوان / اليوم الدراسي [{$validated['title']}] للدورة بنجاح! 📌");
+    }
+
+    // تعديل عنوان / يوم دراسي
+    public function updateSection(Request $request, $id)
+    {
+        $user = auth()->user();
+        if (! $user->isAdmin() && ! $user->hasPermission('manage_courses')) {
+            return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل أقسام الدورة.');
+        }
+
+        $section = CourseSection::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'order_index' => 'nullable|integer|min:1',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $section->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'order_index' => $validated['order_index'] ?? $section->order_index,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : $section->is_active,
+        ]);
+
+        return back()->with('success', "تم تحديث بيانات العنوان [{$section->title}] بنجاح.");
+    }
+
+    // حذف عنوان / يوم دراسي (إذا كان فارغاً)
+    public function destroySection($id)
+    {
+        $user = auth()->user();
+        if (! $user->isAdmin() && ! $user->hasPermission('manage_courses')) {
+            return back()->with('error', 'عذراً، ليس لديك صلاحية حذف أقسام الدورة.');
+        }
+
+        $section = CourseSection::withCount('resources')->findOrFail($id);
+
+        if ($section->resources_count > 0) {
+            return back()->with('error', "لا يمكن حذف العنوان [{$section->title}] لأنه يحتوي على ({$section->resources_count}) من الموارد التعليمية. يرجى نقل الموارد أو حذفها أولاً.");
+        }
+
+        $title = $section->title;
+        $section->delete();
+
+        return back()->with('success', "تم حذف العنوان [{$title}] بنجاح.");
     }
 }

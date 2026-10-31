@@ -773,7 +773,7 @@ class AdminController extends Controller
         }
 
         $levels = Level::with(['courses' => function ($q) {
-            $q->withCount('resources')->orderBy('course_order');
+            $q->withCount(['resources', 'sections'])->orderBy('course_order');
         }])->orderBy('level_order')->get();
 
         $allLevels = Level::where('is_active', true)->orderBy('level_order')->get();

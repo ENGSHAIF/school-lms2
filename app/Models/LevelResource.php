@@ -8,6 +8,7 @@ class LevelResource extends Model
 {
     protected $fillable = [
         'course_id',
+        'course_section_id',
         'level_id',
         'title',
         'type',
@@ -26,6 +27,7 @@ class LevelResource extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'course_section_id' => 'integer',
         'duration_hours' => 'decimal:2',
         'duration_minutes' => 'integer',
         'order_index' => 'integer',
@@ -58,6 +60,11 @@ class LevelResource extends Model
     public function course()
     {
         return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(CourseSection::class, 'course_section_id');
     }
 
     public function level()

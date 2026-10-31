@@ -27,7 +27,7 @@
                         @endif
                     </h1>
                     <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                        المكتبة المركزية الدائمة للدورة (كتب PDF، تسجيلات صوتية، محاضرات فيديو، صور نشاط، أوراق عمل، وكويزات) القابلة للمشاركة للمجموعات يومياً.
+                        إدارة محتوى الدورة المقسم حسب العناوين والأيام والوحدات (كتب، صوتيات، فيديوهات، صور، أوراق عمل، كويزات).
                     </p>
                 </div>
             </div>
@@ -42,13 +42,20 @@
             @if($course->level_id)
                 <a href="{{ route('admin.exams.create', $course->level_id) }}" class="px-4 py-2.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
                     <span>🎯</span>
-                    <span>تصميم كويز / اختبار جديد</span>
+                    <span>تصميم كويز جديد</span>
                 </a>
             @endif
 
-            <button type="button" onclick="openAddResourceModal()" class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center gap-2">
+            <!-- زر إضافة عنوان / يوم دراسي جديد -->
+            <button type="button" onclick="openAddSectionModal()" class="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+                <span>📌</span>
+                <span>إضافة عنوان / يوم دراسي</span>
+            </button>
+
+            <!-- زر إضافة مورد تعليمي -->
+            <button type="button" onclick="openAddResourceModal()" class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center gap-2">
                 <span>➕</span>
-                <span>إضافة مورد تعليمي للدورة</span>
+                <span>إضافة مورد تعليمي</span>
             </button>
         </div>
     </div>
@@ -63,6 +70,9 @@
                 <span class="text-[11px] font-mono font-bold text-amber-300 bg-amber-400/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
                     ⏱️ {{ $course->hours }} ساعة معتمدة
                 </span>
+                <span class="text-[11px] font-mono font-bold text-indigo-300 bg-indigo-400/20 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
+                    📌 {{ $sections->count() }} أقسام / أيام دراسية
+                </span>
             </div>
 
             <h2 class="text-xl font-black text-white">
@@ -73,7 +83,7 @@
             </h2>
 
             <p class="text-xs text-slate-300 leading-relaxed">
-                {{ $course->description ?: "دورة معتمدة بواقع {$course->hours} ساعة تدريبية تفاعلية مباشرة مع بنك مناهج رقمي شامل." }}
+                {{ $course->description ?: "دورة معتمدة بواقع {$course->hours} ساعة تدريبية تفاعلية مباشرة مع بنك مناهج رقمي شامل مقسم حسب الأيام والدروس." }}
             </p>
         </div>
 
@@ -93,8 +103,8 @@
         </div>
     </div>
 
-    <!-- شريط فلترة وتبويبات الموارد وإحصائياتها -->
-    <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <!-- شريط فلترة وتبويبات الموارد وإحصائياتها والتحكم بالطي/التوسيع -->
+    <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div class="flex items-center gap-1.5 flex-wrap">
             <button type="button" onclick="filterResources('all')" id="tab-all" class="filter-tab active px-3.5 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white transition flex items-center gap-1.5 shadow-xs">
                 <span>📁</span>
@@ -102,19 +112,19 @@
             </button>
             <button type="button" onclick="filterResources('book')" id="tab-book" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1">
                 <span>📚</span>
-                <span>الكتب والمقررات ({{ $stats['books'] }})</span>
+                <span>الكتب ({{ $stats['books'] }})</span>
             </button>
             <button type="button" onclick="filterResources('audio')" id="tab-audio" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1">
                 <span>🎧</span>
-                <span>التسجيلات الصوتية ({{ $stats['audios'] }})</span>
+                <span>الصوتيات ({{ $stats['audios'] }})</span>
             </button>
             <button type="button" onclick="filterResources('video')" id="tab-video" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1">
                 <span>🎥</span>
-                <span>محاضرات الفيديو ({{ $stats['videos'] }})</span>
+                <span>الفيديوهات ({{ $stats['videos'] }})</span>
             </button>
             <button type="button" onclick="filterResources('image')" id="tab-image" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1">
                 <span>🖼️</span>
-                <span>صور وبطاقات الأنشطة ({{ $stats['images'] ?? 0 }})</span>
+                <span>الصور ({{ $stats['images'] ?? 0 }})</span>
             </button>
             <button type="button" onclick="filterResources('worksheet')" id="tab-worksheet" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1">
                 <span>📝</span>
@@ -122,196 +132,303 @@
             </button>
             <button type="button" onclick="filterResources('quiz')" id="tab-quiz" class="filter-tab px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1">
                 <span>🎯</span>
-                <span>الكويزات والاختبارات ({{ $stats['quizzes'] }})</span>
+                <span>الكويزات ({{ $stats['quizzes'] }})</span>
             </button>
         </div>
 
-        <div class="text-xs text-slate-500 font-bold bg-amber-50 text-amber-900 border border-amber-200 px-3 py-1.5 rounded-xl">
-            💡 يمكنك رفع مناهج وكتب الدورة ومشاركتها مع مجموعات الطلاب بكل سهولة.
+        <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="expandAllSections()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1">
+                <span>📂</span>
+                <span>توسيع الكل</span>
+            </button>
+            <button type="button" onclick="collapseAllSections()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1">
+                <span>📁</span>
+                <span>طي الكل</span>
+            </button>
         </div>
     </div>
 
-    <!-- شبكة بطاقات الموارد التعليمية (Cards Grid) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="resourcesGrid">
-        @forelse($course->resources as $res)
-            <div class="resource-card bg-white rounded-3xl border border-slate-200 hover:border-indigo-400 transition shadow-xs flex flex-col justify-between overflow-hidden" data-type="{{ $res->type }}">
+    <!-- =============================================================== -->
+    <!-- قائمة العناوين والأيام الدراسية التفاعلية (Accordion Sections) -->
+    <!-- =============================================================== -->
+    <div class="space-y-5" id="sectionsContainer">
+
+        @forelse($sections as $section)
+            <div class="section-card bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden transition-all duration-200" id="section-card-{{ $section->id }}">
                 
-                <!-- رأس البطاقة: النوع والترتيب والحالة -->
-                <div class="p-5 space-y-3">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black border flex items-center gap-1.5 {{ $res->type_badge_class }}">
-                            <span>{{ $res->type_icon }}</span>
-                            <span>{{ $res->type_label }}</span>
+                <!-- رأس القسم / اليوم الدراسي (Accordion Header) -->
+                <div class="p-5 sm:p-6 bg-gradient-to-r from-slate-50 via-white to-slate-50 border-b border-slate-200 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none hover:bg-slate-100/50 transition" onclick="toggleSection({{ $section->id }})">
+                    
+                    <div class="flex items-center gap-3.5">
+                        <span id="chevron-{{ $section->id }}" class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-sm font-black transition-transform duration-300">
+                            ▼
                         </span>
 
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                                #{{ $res->order_index }}
-                            </span>
-                            @if($res->is_active)
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="نشط ومتاح"></span>
-                            @else
-                                <span class="w-2.5 h-2.5 rounded-full bg-slate-300" title="معطل مؤقتاً"></span>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-[11px] font-mono font-bold text-slate-400 bg-slate-200/70 px-2 py-0.5 rounded-md">
+                                    #{{ $section->order_index }}
+                                </span>
+                                <h3 class="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                                    {{ $section->title }}
+                                </h3>
+                                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full {{ $section->resources->count() > 0 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-500' }}">
+                                    {{ $section->resources->count() }} مورد
+                                </span>
+                            </div>
+
+                            @if($section->description)
+                                <p class="text-xs text-slate-500 mt-1 line-clamp-1">
+                                    {{ $section->description }}
+                                </p>
+                            @endif
+
+                            <!-- شارات سريعة بأنواع الموارد في هذا القسم -->
+                            @if($section->resources->count() > 0)
+                                <div class="flex items-center gap-2 mt-2 flex-wrap text-[10px] text-slate-500 font-bold">
+                                    @if($section->resources->where('type', 'video')->count() > 0)
+                                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
+                                            🎥 {{ $section->resources->where('type', 'video')->count() }} فيديو
+                                        </span>
+                                    @endif
+                                    @if($section->resources->where('type', 'audio')->count() > 0)
+                                        <span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-100">
+                                            🎧 {{ $section->resources->where('type', 'audio')->count() }} صوت
+                                        </span>
+                                    @endif
+                                    @if($section->resources->where('type', 'book')->count() > 0)
+                                        <span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-100">
+                                            📚 {{ $section->resources->where('type', 'book')->count() }} كتاب
+                                        </span>
+                                    @endif
+                                    @if($section->resources->where('type', 'worksheet')->count() > 0)
+                                        <span class="bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-100">
+                                            📝 {{ $section->resources->where('type', 'worksheet')->count() }} أوراق عمل
+                                        </span>
+                                    @endif
+                                    @if($section->resources->where('type', 'quiz')->count() > 0)
+                                        <span class="bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-100">
+                                            🎯 {{ $section->resources->where('type', 'quiz')->count() }} كويز
+                                        </span>
+                                    @endif
+                                    @if($section->resources->where('type', 'image')->count() > 0)
+                                        <span class="bg-pink-50 text-pink-700 px-2 py-0.5 rounded border border-pink-100">
+                                            🖼️ {{ $section->resources->where('type', 'image')->count() }} صور
+                                        </span>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     </div>
 
-                    <!-- عنوان المورد -->
-                    <h3 class="font-black text-sm sm:text-base text-slate-900 leading-snug">
-                        {{ $res->title }}
-                    </h3>
+                    <!-- أزرار الإجراءات على القسم (مع إيقاف حدث النقر منعاً لغلق الأكورديون) -->
+                    <div class="flex items-center gap-2 self-end md:self-center shrink-0" onclick="event.stopPropagation()">
+                        <!-- زر إضافة مورد لهذا القسم بالتحديد -->
+                        <button type="button" onclick="openAddResourceModal({{ $section->id }}, '{{ addslashes($section->title) }}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1" title="إضافة ملف أو فيديو أو تسجيل صوتي لهذا العنوان">
+                            <span>➕</span>
+                            <span>إضافة مورد هنا</span>
+                        </button>
 
-                    <!-- الوصف أو التعليمات -->
-                    @if($res->description)
-                        <p class="text-xs text-slate-500 line-clamp-3 leading-relaxed">
-                            {{ $res->description }}
-                        </p>
-                    @endif
+                        <!-- زر تعديل العنوان -->
+                        <button type="button" onclick="openEditSectionModal({{ $section->id }}, '{{ addslashes($section->title) }}', '{{ addslashes($section->description ?? '') }}', {{ $section->order_index }})" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-xl font-bold transition" title="تعديل اسم العنوان أو ترتيبه">
+                            ✏️
+                        </button>
 
-                    <!-- مشغل الصوت التفاعلي (إذا كان صوتياً) -->
-                    @if($res->type === 'audio' && $res->file_path)
-                        <div class="bg-purple-50 p-3 rounded-2xl border border-purple-100 space-y-1.5">
-                            <span class="text-[10px] font-bold text-purple-900 block flex items-center gap-1">
-                                <span>▶️</span>
-                                <span>استماع للتسجيل الصوتي للدورة:</span>
-                            </span>
-                            <audio controls class="w-full h-8">
-                                <source src="{{ asset($res->file_path) }}" type="audio/mpeg">
-                                متصفحك لا يدعم مشغل الصوت.
-                            </audio>
-                        </div>
-                    @endif
-
-                    <!-- معاينة الفيديو ورابط المحاضرة (إذا كان فيديو) -->
-                    @if($res->type === 'video')
-                        <div class="bg-blue-50 p-3 rounded-2xl border border-blue-100 space-y-2">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="text-blue-900 font-bold flex items-center gap-1">
-                                    <span>🎥</span>
-                                    <span>محاضرة مرئية</span>
-                                </span>
-                                @if($res->duration_hours || $res->duration_minutes)
-                                    <span class="text-[10px] font-mono text-blue-700 bg-blue-100 px-2 py-0.5 rounded font-bold">
-                                        ⏱️ {{ $res->formatted_duration }}
-                                    </span>
-                                @endif
-                            </div>
-
-                            @if($res->external_url)
-                                <a href="{{ $res->external_url }}" target="_blank" class="w-full py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
-                                    <span>▶️</span>
-                                    <span>مشاهدة فيديو الشرح والمحاضرة</span>
-                                </a>
-                            @elseif($res->file_path)
-                                <a href="{{ asset($res->file_path) }}" target="_blank" class="w-full py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
-                                    <span>▶️</span>
-                                    <span>تشغيل ملف الفيديو المرفوع</span>
-                                </a>
-                            @endif
-                        </div>
-                    @endif
-
-                    <!-- صور وبطاقات الأنشطة (معاينة وتحميل) -->
-                    @if($res->type === 'image' && $res->file_path)
-                        <div class="bg-pink-50/70 p-3 rounded-2xl border border-pink-200 space-y-2">
-                            <a href="{{ asset($res->file_path) }}" target="_blank" class="block relative rounded-xl overflow-hidden group/img aspect-video bg-slate-900 border border-pink-200">
-                                <img src="{{ asset($res->file_path) }}" alt="{{ $res->title }}" class="w-full h-full object-cover group-hover/img:scale-105 transition duration-300">
-                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-white text-xs font-bold gap-1">
-                                    <span>🔍</span>
-                                    <span>تكبير ومعاينة الصورة كاملة</span>
-                                </div>
-                            </a>
-                        </div>
-                    @endif
-
-                    <!-- تفاصيل الكويز المربوط (إذا كان كويز) -->
-                    @if($res->type === 'quiz' && $res->exam)
-                        <div class="bg-rose-50 p-3 rounded-2xl border border-rose-100 space-y-1.5">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-rose-900">اختبار كويز مربوط:</span>
-                                <span class="font-mono text-[10px] text-rose-700 bg-rose-100 px-2 py-0.5 rounded font-bold">
-                                    {{ $res->exam->total_points }} درجة
-                                </span>
-                            </div>
-                            <span class="text-xs font-black text-slate-800 block">{{ $res->exam->title }}</span>
-                            <a href="{{ route('admin.exams.edit', $res->exam_id) }}" class="text-[11px] text-rose-700 font-bold hover:underline block">
-                                تعديل أسئلة الكويز ←
-                            </a>
-                        </div>
-                    @endif
-
-                    <!-- تفاصيل الملف المرفق -->
-                    @if($res->file_path)
-                        <div class="flex items-center justify-between text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                            <div class="flex items-center gap-2 truncate">
-                                <span class="text-slate-400 font-bold">📎</span>
-                                <span class="truncate font-mono text-[11px] text-slate-700" title="{{ $res->file_name }}">
-                                    {{ $res->file_name ?: basename($res->file_path) }}
-                                </span>
-                            </div>
-                            @if($res->file_size)
-                                <span class="font-mono text-[10px] text-slate-400 shrink-0 font-bold mr-1">
-                                    {{ $res->file_size }}
-                                </span>
-                            @endif
-                        </div>
-                    @endif
-                </div>
-
-                <!-- أسفل البطاقة: الإجراءات والمشاركة للمجموعات -->
-                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5">
-                        @if($res->file_path)
-                            <a href="{{ asset($res->file_path) }}" target="_blank" download class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-700 font-bold text-xs transition shadow-2xs flex items-center gap-1" title="تحميل الملف">
-                                <span>⬇️</span>
-                                <span>تحميل</span>
-                            </a>
-                        @endif
-
-                        @if($res->external_url)
-                            <a href="{{ $res->external_url }}" target="_blank" class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-indigo-700 font-bold text-xs transition shadow-2xs flex items-center gap-1" title="فتح الرابط">
-                                <span>🔗</span>
-                                <span>فتح</span>
-                            </a>
-                        @endif
-
-                        <!-- زر مشاركة المورد لمجموعة طلاب محددة -->
-                        @if($studyGroups->count() > 0)
-                            <button type="button" onclick="openShareModal({{ $res->id }}, '{{ addslashes($res->title) }}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1" title="مشاركة هذا المورد لمجموعة معينة لتظهر في صفحتهم">
-                                <span>📢</span>
-                                <span>مشاركة لمجموعة</span>
+                        <!-- زر حذف العنوان إن كان فارغاً -->
+                        @if($section->resources->count() === 0)
+                            <form action="{{ route('admin.courses.sections.destroy', $section->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا العنوان [{{ addslashes($section->title) }}]؟');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition text-xs font-bold" title="حذف هذا العنوان الفارغ">
+                                    🗑️
+                                </button>
+                            </form>
+                        @else
+                            <button type="button" onclick="alert('لا يمكن حذف هذا العنوان لأنه يحتوي على ({{ $section->resources->count() }}) مورد تعليمي. قم بحذف أو نقل موارده أولاً.');" class="p-2 text-slate-300 cursor-not-allowed rounded-xl text-xs font-bold" title="لا يمكن حذف عنوان يحتوي على موارد">
+                                🗑️
                             </button>
                         @endif
                     </div>
+                </div>
 
-                    <!-- زر حذف المورد -->
-                    <form action="{{ route('admin.levels.resources.destroy', $res->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا المورد نهائياً من بنك الدورة؟');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition text-xs font-bold" title="حذف المورد">
-                            🗑️
-                        </button>
-                    </form>
+                <!-- جسم القسم الحاوي على بطاقات الموارد (Accordion Body) -->
+                <div id="section-body-{{ $section->id }}" class="section-body p-6">
+                    @if($section->resources->count() > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            @foreach($section->resources as $res)
+                                @include('admin.courses.partials.resource_card', ['res' => $res, 'studyGroups' => $studyGroups])
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-3">
+                            <span class="text-3xl block">📂</span>
+                            <div class="space-y-1">
+                                <h4 class="text-sm font-bold text-slate-700">لا توجد موارد مضافة في هذا العنوان / اليوم بعد</h4>
+                                <p class="text-xs text-slate-400">يمكنك رفع الفيديوهات والصوتيات والكتب وأوراق العمل وتخصيصها لهذا اليوم مباشرة.</p>
+                            </div>
+                            <button type="button" onclick="openAddResourceModal({{ $section->id }}, '{{ addslashes($section->title) }}')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5">
+                                <span>➕</span>
+                                <span>إضافة أول مورد لـ {{ $section->title }}</span>
+                            </button>
+                        </div>
+                    @endif
                 </div>
 
             </div>
         @empty
-            <div class="col-span-full bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center space-y-4">
-                <span class="text-5xl block">📚</span>
-                <div class="space-y-1">
-                    <h3 class="text-lg font-black text-slate-900">بنك موارد الدورة فارغ حالياً</h3>
-                    <p class="text-xs text-slate-500 max-w-md mx-auto">
-                        لم يتم رفع أي كتب أو صوتيات أو أنشطة لهذه الدورة بعد. يمكنك البدء الآن بالضغط على زر "إضافة مورد تعليمي للدورة".
-                    </p>
+            @if($unassignedResources->count() === 0)
+                <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center space-y-4">
+                    <span class="text-5xl block">📌</span>
+                    <div class="space-y-1">
+                        <h3 class="text-lg font-black text-slate-900">لم يتم تقسيم الدورة إلى عناوين أو أيام دراسية بعد</h3>
+                        <p class="text-xs text-slate-500 max-w-md mx-auto">
+                            يمكنك البدء بإنشاء أول يوم دراسي أو وحدة تعليمية (مثال: "اليوم الأول"، "الوحدة الأولى: Unit 1"، "الدرس الأول")، ثم رفع المحتويات والفيديوهات بداخلها بسهولة.
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-center gap-3 flex-wrap">
+                        <button type="button" onclick="openAddSectionModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition inline-flex items-center gap-1.5">
+                            <span>📌</span>
+                            <span>إضافة أول عنوان / يوم دراسي الآن</span>
+                        </button>
+                        <button type="button" onclick="openAddResourceModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition inline-flex items-center gap-1.5">
+                            <span>➕</span>
+                            <span>رفع مورد مباشر للدورة</span>
+                        </button>
+                    </div>
                 </div>
-                <button type="button" onclick="openAddResourceModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition inline-flex items-center gap-1.5">
-                    <span>➕</span>
-                    <span>رفع أول كتاب أو تسجيل أو مورد الآن</span>
-                </button>
-            </div>
+            @endif
         @endforelse
+
+        <!-- قسم الموارد العامة / غير المخصصة لقسم معين (Unassigned / General Resources) -->
+        @if($unassignedResources->count() > 0)
+            <div class="section-card bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden" id="section-card-unassigned">
+                
+                <div class="p-5 sm:p-6 bg-gradient-to-r from-amber-50/60 via-white to-amber-50/60 border-b border-amber-200/60 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none hover:bg-amber-100/30 transition" onclick="toggleSection('unassigned')">
+                    <div class="flex items-center gap-3.5">
+                        <span id="chevron-unassigned" class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-black transition-transform duration-300">
+                            ▼
+                        </span>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                                    📁 موارد ومحتويات عامة للدورة (بدون قسم محدد)
+                                </h3>
+                                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                    {{ $unassignedResources->count() }} مورد عام
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">
+                                موارد وكتب تم رفعها على مستوى الدورة بشكل عام. يمكنك تعديل أي منها وتحديد العنوان المناسب له في أي وقت.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 self-end md:self-center shrink-0" onclick="event.stopPropagation()">
+                        <button type="button" onclick="openAddResourceModal(null, 'مورد عام للدورة')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1">
+                            <span>➕</span>
+                            <span>إضافة مورد عام</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="section-body-unassigned" class="section-body p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        @foreach($unassignedResources as $res)
+                            @include('admin.courses.partials.resource_card', ['res' => $res, 'studyGroups' => $studyGroups])
+                        @endforeach
+                    </div>
+                </div>
+
+            </div>
+        @endif
+
     </div>
 
+</div>
+
+<!-- =============================================================== -->
+<!-- مودال إضافة عنوان / يوم دراسي جديد للدورة (Add Section Modal) -->
+<!-- =============================================================== -->
+<div id="addSectionModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
+        <div class="flex justify-between items-center border-b pb-3">
+            <div>
+                <h3 class="font-black text-slate-900 text-sm">إضافة عنوان / يوم دراسي جديد للدورة</h3>
+                <p class="text-[11px] text-slate-500">تقسيم محتوى الدورة حسب الأيام أو الدروس أو الوحدات لسهولة التصفح والوصول.</p>
+            </div>
+            <button type="button" onclick="closeAddSectionModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+        </div>
+
+        <form action="{{ route('admin.courses.sections.store', $course->id) }}" method="POST" class="space-y-4 text-xs">
+            @csrf
+
+            <!-- عنوان القسم -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">اسم العنوان أو اليوم الدراسي <span class="text-rose-500">*</span></label>
+                <input type="text" name="title" required placeholder="مثال: اليوم الأول - المحادثة والترحيب، أو الدرس الأول، أو Unit 1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
+            </div>
+
+            <!-- الوصف أو ملاحظات اليوم -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">وصف أو أهداف هذا اليوم / الدرس (اختياري)</label>
+                <textarea name="description" rows="2" placeholder="أهداف الدرس، الواجبات المطلوبة، أو ملخص سريع للأنشطة..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+            </div>
+
+            <!-- الترتيب -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">ترتيب الظهور الرقمي</label>
+                <input type="number" name="order_index" value="{{ $sections->count() + 1 }}" min="1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
+                <span class="text-[10px] text-slate-400 mt-0.5 block">يحدد موضع هذا العنوان بين الأيام والدروس بالترتيب التصاعدي.</span>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeAddSectionModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">حفظ العنوان 📌</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =============================================================== -->
+<!-- مودال تعديل عنوان / يوم دراسي (Edit Section Modal) -->
+<!-- =============================================================== -->
+<div id="editSectionModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
+        <div class="flex justify-between items-center border-b pb-3">
+            <div>
+                <h3 class="font-black text-slate-900 text-sm">تعديل بيانات العنوان / اليوم الدراسي</h3>
+                <p class="text-[11px] text-slate-500">تحديث مسمى اليوم أو الوحدة أو الترتيب.</p>
+            </div>
+            <button type="button" onclick="closeEditSectionModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+        </div>
+
+        <form id="editSectionForm" method="POST" action="" class="space-y-4 text-xs">
+            @csrf
+
+            <!-- عنوان القسم -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">اسم العنوان أو اليوم الدراسي <span class="text-rose-500">*</span></label>
+                <input type="text" name="title" id="editSectionTitle" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
+            </div>
+
+            <!-- الوصف -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">وصف أو أهداف اليوم (اختياري)</label>
+                <textarea name="description" id="editSectionDescription" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+            </div>
+
+            <!-- الترتيب -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">ترتيب الظهور الرقمي</label>
+                <input type="number" name="order_index" id="editSectionOrder" min="1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeEditSectionModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">حفظ التعديلات 💾</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- =============================================================== -->
@@ -330,19 +447,30 @@
         <form action="{{ route('admin.courses.resources.store', $course->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
             @csrf
 
+            <!-- اختيار العنوان / اليوم الدراسي التابع له -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">العنوان / اليوم الدراسي التابع له <span class="text-indigo-600 font-normal">(اختر اليوم لتنظيم المورد داخله)</span></label>
+                <select name="course_section_id" id="resourceSectionSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-slate-800">
+                    <option value="">-- مورد عام للدورة (بدون قسم مخصص) --</option>
+                    @foreach($sections as $sec)
+                        <option value="{{ $sec->id }}">📌 {{ $sec->title }} (#{{ $sec->order_index }})</option>
+                    @endforeach
+                </select>
+            </div>
+
             <!-- عنوان المورد -->
             <div>
                 <label class="block font-bold text-slate-700 mb-1">عنوان المورد أو الملف <span class="text-rose-500">*</span></label>
-                <input type="text" name="title" required placeholder="مثال: كتاب الطالب Team Together 1 PDF أو تسجيل Unit 1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
+                <input type="text" name="title" required placeholder="مثال: فيديو شرح الدرس الأول، أو تسجيل Unit 1 MP3، أو كتاب الطالب PDF" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
             </div>
 
             <!-- نوع المورد -->
             <div>
                 <label class="block font-bold text-slate-700 mb-1">نوع المورد التعليمي <span class="text-rose-500">*</span></label>
                 <select name="type" id="resourceTypeSelect" onchange="toggleResourceTypeFields()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
-                    <option value="book">📚 كتاب ومقرر دراسي (PDF / Document)</option>
-                    <option value="audio">🎧 تسجيل صوتي للوحدة أو المحادثة (MP3 / Audio)</option>
                     <option value="video">🎥 محاضرة أو شرح مرئي (Video / Link)</option>
+                    <option value="audio">🎧 تسجيل صوتي للوحدة أو المحادثة (MP3 / Audio)</option>
+                    <option value="book">📚 كتاب ومقرر دراسي (PDF / Document)</option>
                     <option value="image">🖼️ صورة نشاط أو بطاقة تعليمية (Image)</option>
                     <option value="worksheet">📝 ورقة عمل وتطبيق منزلي (Worksheet)</option>
                     <option value="quiz">🎯 كويز واختبار قصير (Quiz / Exam)</option>
@@ -351,7 +479,7 @@
 
             <!-- رفع الملف المرفق -->
             <div id="fileUploadContainer">
-                <label class="block font-bold text-slate-700 mb-1">الملف المرفق (PDF, MP3, MP4, PNG, JPG... حتى 100MB)</label>
+                <label class="block font-bold text-slate-700 mb-1">الملف المرفق (فيديو MP4, صوت MP3, مستند PDF, صورة PNG/JPG... حتى 100MB)</label>
                 <input type="file" name="attachment" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
             </div>
 
@@ -365,7 +493,7 @@
                 <!-- مدة المورد بالساعات -->
                 <div id="durationContainer">
                     <label class="block font-bold text-slate-700 mb-1">المدة المقدرة (بالساعات)</label>
-                    <input type="number" name="duration_hours" step="0.1" min="0.1" max="1000" placeholder="مثال: 2 أو 1.5 أو 40" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
+                    <input type="number" name="duration_hours" step="0.1" min="0.1" max="1000" placeholder="مثال: 2 أو 1.5 أو 0.5" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
                 </div>
 
                 <!-- ترتيب المورد -->
@@ -444,9 +572,45 @@
 </div>
 
 <!-- =============================================================== -->
-<!-- سكربت فلترة الموارد والنوافذ المنبثقة -->
+<!-- سكربت التحكم بالأكورديون والفلترة والمودالات -->
 <!-- =============================================================== -->
 <script>
+    // طي وتوسيع قسم محدد
+    function toggleSection(sectionId) {
+        const body = document.getElementById('section-body-' + sectionId);
+        const chevron = document.getElementById('chevron-' + sectionId);
+        if (!body) return;
+
+        if (body.classList.contains('hidden')) {
+            body.classList.remove('hidden');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+        } else {
+            body.classList.add('hidden');
+            if (chevron) chevron.style.transform = 'rotate(-90deg)';
+        }
+    }
+
+    // توسيع جميع الأقسام
+    function expandAllSections() {
+        document.querySelectorAll('.section-body').forEach(body => {
+            body.classList.remove('hidden');
+        });
+        document.querySelectorAll('[id^="chevron-"]').forEach(chevron => {
+            chevron.style.transform = 'rotate(0deg)';
+        });
+    }
+
+    // طي جميع الأقسام
+    function collapseAllSections() {
+        document.querySelectorAll('.section-body').forEach(body => {
+            body.classList.add('hidden');
+        });
+        document.querySelectorAll('[id^="chevron-"]').forEach(chevron => {
+            chevron.style.transform = 'rotate(-90deg)';
+        });
+    }
+
+    // فلترة الموارد حسب النوع (فيديو، صوت، كتاب...)
     function filterResources(type) {
         document.querySelectorAll('.filter-tab').forEach(tab => {
             tab.classList.remove('active', 'bg-indigo-600', 'text-white');
@@ -467,6 +631,9 @@
                 card.style.display = 'none';
             }
         });
+
+        // عند الفلترة، وسّع الأقسام تلقائياً حتى يرى المستخدم النتائج
+        expandAllSections();
     }
 
     function toggleResourceTypeFields() {
@@ -480,7 +647,12 @@
         }
     }
 
-    function openAddResourceModal() {
+    // مودال إضافة مورد (مع إمكانية تحديد قسم مسبق)
+    function openAddResourceModal(sectionId = null, sectionTitle = '') {
+        const select = document.getElementById('resourceSectionSelect');
+        if (select && sectionId) {
+            select.value = sectionId;
+        }
         document.getElementById('addResourceModal').classList.remove('hidden');
         toggleResourceTypeFields();
     }
@@ -489,6 +661,29 @@
         document.getElementById('addResourceModal').classList.add('hidden');
     }
 
+    // مودال إضافة عنوان / يوم دراسي
+    function openAddSectionModal() {
+        document.getElementById('addSectionModal').classList.remove('hidden');
+    }
+
+    function closeAddSectionModal() {
+        document.getElementById('addSectionModal').classList.add('hidden');
+    }
+
+    // مودال تعديل عنوان / يوم دراسي
+    function openEditSectionModal(id, title, description, order) {
+        document.getElementById('editSectionForm').action = '/admin/courses/sections/' + id + '/update';
+        document.getElementById('editSectionTitle').value = title;
+        document.getElementById('editSectionDescription').value = description || '';
+        document.getElementById('editSectionOrder').value = order || 1;
+        document.getElementById('editSectionModal').classList.remove('hidden');
+    }
+
+    function closeEditSectionModal() {
+        document.getElementById('editSectionModal').classList.add('hidden');
+    }
+
+    // مودال مشاركة المورد للمجموعة
     function openShareModal(resourceId, resourceTitle) {
         document.getElementById('shareResourceId').value = resourceId;
         const fallback = document.getElementById('shareLevelResourceId');
@@ -514,6 +709,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('action') === 'add') {
             openAddResourceModal();
+        } else if (urlParams.get('action') === 'add_section') {
+            openAddSectionModal();
         }
     });
 </script>

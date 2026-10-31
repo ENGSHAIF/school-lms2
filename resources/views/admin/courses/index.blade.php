@@ -311,6 +311,9 @@
                                             <span class="text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200" title="أوراق العمل">
                                                 📝 {{ $crsWorksheets }} أنشطة
                                             </span>
+                                            <span class="text-[10px] px-2 py-0.5 rounded-md font-bold bg-indigo-50 text-indigo-700 border border-indigo-200" title="الأقسام والأيام الدراسية">
+                                                📌 {{ $crs->sections_count ?? $crs->sections->count() }} أيام/أقسام
+                                            </span>
                                             <span class="text-[10px] px-2 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200" title="الكويزات والاختبارات">
                                                 🎯 {{ $crsQuizzes }} كويزات
                                             </span>
@@ -330,6 +333,11 @@
                                             <a href="{{ route('admin.courses.resources', $crs->id) }}" class="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
                                                 <span>📚 بنك المناهج والموارد</span>
                                                 <span class="bg-white/25 px-1.5 py-0.2 rounded-full text-[10px] font-mono">{{ $crsTotalRes }}</span>
+                                            </a>
+
+                                            <!-- زر إضافة عنوان/يوم دراسي سريع -->
+                                            <a href="{{ route('admin.courses.resources', $crs->id) }}?action=add_section" class="px-2.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded-xl text-xs transition border border-purple-200" title="إضافة عنوان أو يوم دراسي للدورة">
+                                                📌 يوم/عنوان
                                             </a>
 
                                             <!-- زر إضافة مورد سريع -->

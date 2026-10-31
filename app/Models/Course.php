@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class Course extends Model
@@ -52,6 +53,12 @@ class Course extends Model
     public function levels()
     {
         return $this->hasMany(Level::class, 'course_id')->orderBy('level_order');
+    }
+
+    // الأقسام والوحدات والموضوعات / الأيام الدراسية التابعة للدورة
+    public function sections()
+    {
+        return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order_index');
     }
 
     public function studyGroups()
@@ -120,6 +127,7 @@ class Course extends Model
         if ($this->name_ar && $this->name_en) {
             return "{$this->name_ar} ({$this->name_en})";
         }
+
         return $this->name_ar ?: ($this->name ?: ($this->name_en ?: ''));
     }
 
@@ -130,21 +138,21 @@ class Course extends Model
 
     public function getCurrencyNameAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencyName($this->currency);
+        return ArabicCurrencyHelper::currencyName($this->currency);
     }
 
     public function getCurrencySymbolAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencySymbol($this->currency);
+        return ArabicCurrencyHelper::currencySymbol($this->currency);
     }
 
     public function getFormattedFeeAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->fee_amount, $this->currency);
+        return ArabicCurrencyHelper::format($this->fee_amount, $this->currency);
     }
 
     public function getFormattedTeacherFeeAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->teacher_fee, $this->currency);
+        return ArabicCurrencyHelper::format($this->teacher_fee, $this->currency);
     }
 }
