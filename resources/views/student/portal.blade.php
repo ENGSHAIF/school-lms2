@@ -195,16 +195,16 @@
                             <!-- معاينة الصورة المصغرة إن كانت صورة ورقة إجابة -->
                             @if($act->isImage() && $act->file_path)
                                 <div class="space-y-1.5 pt-1">
-                                    <div class="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-slate-900 aspect-video max-h-48 flex items-center justify-center" onclick="showImagePreview('{{ asset($act->file_path) }}', '{{ addslashes($act->title) }}')">
-                                        <img src="{{ asset($act->file_path) }}" alt="{{ $act->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                    <div class="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-slate-900 aspect-video max-h-48 flex items-center justify-center" onclick="showImagePreview('{{ route('groups.activities.stream', $act->id) }}', '{{ addslashes($act->title) }}')">
+                                        <img src="{{ route('groups.activities.stream', $act->id) }}" alt="{{ $act->title }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold gap-1.5 backdrop-blur-[2px]">
                                             <span>🔍</span>
-                                            <span>انقر لتكبير ورقة الإجابة</span>
+                                            <span>انقر لتكبير الصورة</span>
                                         </div>
                                     </div>
                                     <div class="flex justify-between items-center text-[10px] text-slate-400">
                                         <span>📷 صورة مرفقة</span>
-                                        <a href="{{ asset($act->file_path) }}" download target="_blank" class="text-emerald-700 font-bold hover:underline">تحميل الصورة الأصلية 📥</a>
+                                        <a href="{{ route('groups.activities.download', $act->id) }}" download class="text-emerald-700 font-bold hover:underline">تحميل الصورة الأصلية 📥</a>
                                     </div>
                                 </div>
                             @endif
@@ -219,9 +219,15 @@
                                         @endif
                                     </div>
                                     <audio controls class="w-full h-8">
-                                        <source src="{{ asset($act->file_path) }}">
+                                        <source src="{{ route('groups.activities.stream', $act->id) }}">
                                         متصفحك لا يدعم مشغل الصوت.
                                     </audio>
+                                    <div class="flex justify-end pt-1">
+                                        <a href="{{ route('groups.activities.download', $act->id) }}" download class="text-[11px] text-purple-800 font-bold hover:underline flex items-center gap-1">
+                                            <span>📥</span>
+                                            <span>تحميل الملف الصوتي</span>
+                                        </a>
+                                    </div>
                                 </div>
                             @endif
 
@@ -237,29 +243,44 @@
                                             <span class="font-mono text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold">({{ $act->file_size }})</span>
                                         @endif
                                     </div>
-                                    <video controls class="w-full rounded-xl max-h-64 bg-black shadow-xs">
-                                        <source src="{{ asset($act->file_path) }}">
+                                    <video controls preload="metadata" class="w-full rounded-xl max-h-64 bg-black shadow-xs">
+                                        <source src="{{ route('groups.activities.stream', $act->id) }}">
                                         متصفحك لا يدعم مشغل الفيديو.
                                     </video>
-                                    <a href="{{ asset($act->file_path) }}" download target="_blank" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm">
-                                        <span>📥</span>
-                                        <span>تحميل الفيديو إلى هاتفك / جهازك</span>
-                                        @if($act->file_size)
-                                            <span class="text-[10px] opacity-80 font-mono">({{ $act->file_size }})</span>
-                                        @endif
+                                    <div class="flex items-center gap-2 pt-1">
+                                        <a href="{{ route('groups.activities.stream', $act->id) }}" target="_blank" class="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm">
+                                            <span>▶️</span>
+                                            <span>فتح بملء الشاشة</span>
+                                        </a>
+                                        <a href="{{ route('groups.activities.download', $act->id) }}" download class="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm">
+                                            <span>📥</span>
+                                            <span>تحميل إلى جهازك</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            @elseif($act->type === 'video' && ($act->external_url || $act->levelResource?->external_url))
+                                @php $extUrl = $act->external_url ?: $act->levelResource?->external_url; @endphp
+                                <div class="bg-blue-50/70 p-3 rounded-2xl border border-blue-200 space-y-2">
+                                    <a href="{{ $extUrl }}" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm">
+                                        <span>▶️</span>
+                                        <span>مشاهدة فيديو الشرح والمحاضرة (رابط خارجي) ↗️</span>
                                     </a>
                                 </div>
                             @endif
 
                             <!-- زر تحميل الملف إن وُجد (مستند، PDF أو ورقة عمل) -->
                             @if($act->file_path && !$act->isAudio() && !$act->isImage() && !$act->isVideo())
-                                <div class="pt-2">
-                                    <a href="{{ asset($act->file_path) }}" download target="_blank" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm">
+                                <div class="pt-2 flex items-center gap-2">
+                                    <a href="{{ route('groups.activities.download', $act->id) }}" download class="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm">
                                         <span>📥</span>
                                         <span>تحميل الملف ({{ $act->file_name ?? 'ورقة النشاط' }})</span>
                                         @if($act->file_size)
                                             <span class="text-[10px] opacity-75 font-mono">({{ $act->file_size }})</span>
                                         @endif
+                                    </a>
+                                    <a href="{{ route('groups.activities.stream', $act->id) }}" target="_blank" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                                        <span>👁️</span>
+                                        <span>معاينة</span>
                                     </a>
                                 </div>
                             @endif

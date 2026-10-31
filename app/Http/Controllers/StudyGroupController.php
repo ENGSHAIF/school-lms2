@@ -8,6 +8,7 @@ use App\Models\StudentEnrollment;
 use App\Models\StudyGroup;
 use App\Models\StudyGroupStudent;
 use App\Models\User;
+use App\Models\WhatsAppLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -26,7 +27,10 @@ class StudyGroupController extends Controller
         $search = $request->query('search');
 
         $query = StudyGroup::with([
-            'course',
+            'course.resources.section',
+            'course.resources.exam',
+            'course.sections.resources.exam',
+            'level.resources.section',
             'level.resources.exam',
             'teacher',
             'supervisor',
@@ -34,9 +38,10 @@ class StudyGroupController extends Controller
             'supervisors',
             'requester',
             'activities.publisher',
+            'activities.levelResource.section',
             'students' => function ($q) {
                 $q->wherePivot('status', 'active');
-            }
+            },
         ]);
 
         if ($status && $status !== 'all') {
@@ -62,31 +67,31 @@ class StudyGroupController extends Controller
         if ($teacherId) {
             $query->where(function ($q) use ($teacherId) {
                 $q->where('teacher_id', $teacherId)
-                  ->orWhereHas('teachers', function ($t) use ($teacherId) {
-                      $t->where('users.id', $teacherId);
-                  });
+                    ->orWhereHas('teachers', function ($t) use ($teacherId) {
+                        $t->where('users.id', $teacherId);
+                    });
             });
         }
 
         if ($supervisorId) {
             $query->where(function ($q) use ($supervisorId) {
                 $q->where('supervisor_id', $supervisorId)
-                  ->orWhereHas('supervisors', function ($s) use ($supervisorId) {
-                      $s->where('users.id', $supervisorId);
-                  });
+                    ->orWhereHas('supervisors', function ($s) use ($supervisorId) {
+                        $s->where('users.id', $supervisorId);
+                    });
             });
         }
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('term', 'like', "%{$search}%")
-                  ->orWhere('batch', 'like', "%{$search}%")
-                  ->orWhere('program_type', 'like', "%{$search}%")
-                  ->orWhere('schedule_days', 'like', "%{$search}%")
-                  ->orWhereHas('teacher', function ($t) use ($search) {
-                      $t->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('term', 'like', "%{$search}%")
+                    ->orWhere('batch', 'like', "%{$search}%")
+                    ->orWhere('program_type', 'like', "%{$search}%")
+                    ->orWhere('schedule_days', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -97,7 +102,7 @@ class StudyGroupController extends Controller
         $activeGroups = StudyGroup::where('status', 'active')->count();
         $totalEnrolledStudents = StudyGroupStudent::where('status', 'active')->distinct('student_id')->count('student_id');
         $totalTeachersAssigned = StudyGroup::whereNotNull('teacher_id')->distinct('teacher_id')->count('teacher_id');
-        
+
         // طلبات فتح البث الحي المعلقة بانتظار اعتماد الإدارة
         $pendingLiveRequests = StudyGroup::with(['requester', 'course', 'teacher'])
             ->where('live_status', 'pending_approval')
@@ -170,7 +175,7 @@ class StudyGroupController extends Controller
 
         $nameAr = $request->filled('name_ar') ? trim($request->name_ar) : trim($request->name);
         $nameEn = $request->filled('name_en') ? trim($request->name_en) : null;
-        if (empty($nameAr) && !empty($nameEn)) {
+        if (empty($nameAr) && ! empty($nameEn)) {
             $nameAr = $nameEn;
         }
         $fullName = $nameEn && $nameEn !== $nameAr ? "{$nameAr} ({$nameEn})" : $nameAr;
@@ -178,7 +183,7 @@ class StudyGroupController extends Controller
         $validated['name_ar'] = $nameAr;
         $validated['name_en'] = $nameEn;
         $validated['name'] = $fullName;
-        $validated['room_id'] = 'asots-grp-' . strtolower(Str::random(8));
+        $validated['room_id'] = 'asots-grp-'.strtolower(Str::random(8));
         $validated['status'] = 'active';
         $validated['teacher_id'] = $request->primary_teacher_id ?: ($request->teacher_id ?: null);
         $validated['supervisor_id'] = $request->primary_supervisor_id ?: ($request->supervisor_id ?: null);
@@ -227,7 +232,7 @@ class StudyGroupController extends Controller
 
         $nameAr = $request->filled('name_ar') ? trim($request->name_ar) : ($request->filled('name') ? trim($request->name) : ($group->name_ar ?: $group->name));
         $nameEn = $request->filled('name_en') ? trim($request->name_en) : null;
-        if (empty($nameAr) && !empty($nameEn)) {
+        if (empty($nameAr) && ! empty($nameEn)) {
             $nameAr = $nameEn;
         }
         $fullName = $nameEn && $nameEn !== $nameAr ? "{$nameAr} ({$nameEn})" : $nameAr;
@@ -402,13 +407,13 @@ class StudyGroupController extends Controller
             ->where('student_id', $studentId)
             ->update([
                 'status' => 'transferred',
-                'notes' => 'تم النقل إلى مجموعة: ' . $toGroup->name . ' في ' . now()->format('Y-m-d H:i'),
+                'notes' => 'تم النقل إلى مجموعة: '.$toGroup->name.' في '.now()->format('Y-m-d H:i'),
             ]);
 
         // إضافة في الجديد
         StudyGroupStudent::updateOrCreate(
             ['study_group_id' => $toGroup->id, 'student_id' => $studentId],
-            ['status' => 'active', 'enrolled_at' => now(), 'notes' => 'منقول من: ' . $fromGroup->name]
+            ['status' => 'active', 'enrolled_at' => now(), 'notes' => 'منقول من: '.$fromGroup->name]
         );
 
         return redirect()->route('admin.groups.index')
@@ -421,7 +426,7 @@ class StudyGroupController extends Controller
         $group = StudyGroup::findOrFail($id);
 
         // التحقق من الصلاحية
-        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('groups.delete')) {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('groups.delete')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية حذف المجموعات الدراسية.');
         }
 
@@ -450,10 +455,11 @@ class StudyGroupController extends Controller
         $isStaff = ($user->isAdmin() || $user->isSupervisor() || $user->id === $group->teacher_id || $user->id === $group->supervisor_id || $group->teachers->contains('id', $user->id));
         $isGroupStudent = $group->students->contains('id', $user->id);
 
-        if (!$isStaff && !$isGroupStudent) {
+        if (! $isStaff && ! $isGroupStudent) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'غير مصرح لك بالنشر في هذه المجموعة.'], 403);
             }
+
             return back()->with('error', 'غير مصرح لك بالنشر في هذه المجموعة.');
         }
 
@@ -462,7 +468,7 @@ class StudyGroupController extends Controller
             'type' => 'required|in:worksheet,audio,video,announcement,image,student_submission',
             'instructions' => 'nullable|string',
             'due_date' => 'nullable|date',
-            'attachment' => 'nullable|file|max:51200', // حد أقصى 50MB
+            'attachment' => 'nullable|file|max:524288', // حد أقصى 512MB للأنشطة والفيديوهات والتسجيلات
         ]);
 
         $filePath = null;
@@ -471,33 +477,33 @@ class StudyGroupController extends Controller
 
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
-            $originalName = $file->getClientOriginalName() ?: ('upload_' . time() . '.' . ($file->guessExtension() ?: 'bin'));
+            $originalName = $file->getClientOriginalName() ?: ('upload_'.time().'.'.($file->guessExtension() ?: 'bin'));
             $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'bin');
-            
+
             // تصحيح امتداد التسجيلات الصوتية المسجلة من المتصفح عبر WebM
             if ($validated['type'] === 'audio' && ($extension === 'bin' || empty($extension))) {
                 $extension = 'webm';
             }
 
             $sizeBytes = $file->getSize();
-            
+
             // حساب الحجم بطريقة سهلة القراءة
             if ($sizeBytes >= 1048576) {
-                $fileSize = round($sizeBytes / 1048576, 1) . ' MB';
+                $fileSize = round($sizeBytes / 1048576, 1).' MB';
             } else {
-                $fileSize = round($sizeBytes / 1024, 0) . ' KB';
+                $fileSize = round($sizeBytes / 1024, 0).' KB';
             }
 
             $baseName = pathinfo($originalName, PATHINFO_FILENAME);
-            $uniqueName = time() . '_' . Str::slug($baseName ?: 'file') . '.' . $extension;
+            $uniqueName = time().'_'.Str::slug($baseName ?: 'file').'.'.$extension;
             $destinationPath = public_path('uploads/group_activities');
-            
-            if (!file_exists($destinationPath)) {
+
+            if (! file_exists($destinationPath)) {
                 mkdir($destinationPath, 0777, true);
             }
 
             $file->move($destinationPath, $uniqueName);
-            $filePath = 'uploads/group_activities/' . $uniqueName;
+            $filePath = 'uploads/group_activities/'.$uniqueName;
             $fileName = $originalName;
         }
 
@@ -522,7 +528,7 @@ class StudyGroupController extends Controller
             default => 'ورقة النشاط / الواجب',
         };
 
-        $successMsg = $user->isStudent() 
+        $successMsg = $user->isStudent()
             ? "تم إرسال {$typeArabic} بنجاح إلى حائط المجموعة والمعلم!"
             : "تم نشر {$typeArabic} بنجاح لجميع طلاب مجموعة [{$group->name}]!";
 
@@ -554,9 +560,9 @@ class StudyGroupController extends Controller
     public function destroyActivity($activityId)
     {
         $activity = \App\Models\GroupActivity::findOrFail($activityId);
-        
+
         // التحقق من الصلاحية (الناشر أو المدير)
-        if (auth()->id() !== $activity->user_id && !auth()->user()->isAdmin()) {
+        if (auth()->id() !== $activity->user_id && ! auth()->user()->isAdmin()) {
             abort(403, 'غير مصرح لك بحذف هذا النشاط.');
         }
 
@@ -576,7 +582,7 @@ class StudyGroupController extends Controller
         $user = auth()->user();
 
         // التحقق من الصلاحيات (المدير، أستاذ المجموعة، مشرف المجموعة)
-        if (!$user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
+        if (! $user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
             abort(403, 'غير مصرح لك بفتح البث الحي لهذه المجموعة.');
         }
 
@@ -588,9 +594,9 @@ class StudyGroupController extends Controller
         ]);
 
         // إرسال إشعار في سجل الواتساب لطلاب المجموعة
-        \App\Models\WhatsAppLog::create([
+        WhatsAppLog::create([
             'user_id' => $user->id,
-            'phone_number' => 'group_' . $group->id,
+            'phone_number' => 'group_'.$group->id,
             'message_type' => 'announcement',
             'message_body' => "بدأ البث المباشر لمجموعة [{$group->name}] الآن عبر المنصة! الأستاذ متواجد داخل الفصل التفاعلي الحي، يمكنكم الدخول الآن.",
             'status' => 'sent',
@@ -613,7 +619,7 @@ class StudyGroupController extends Controller
         $group = StudyGroup::findOrFail($groupId);
         $user = auth()->user();
 
-        if (!$user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
+        if (! $user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
             abort(403, 'غير مصرح لك بإغلاق البث الحي لهذه المجموعة.');
         }
 
@@ -648,7 +654,7 @@ class StudyGroupController extends Controller
         ]);
 
         // تسجيل إشعار إداري في سجل الإشعارات والواتساب
-        \App\Models\WhatsAppLog::create([
+        WhatsAppLog::create([
             'user_id' => $user->id,
             'phone_number' => $user->phone_whatsapp ?: '00967735999101',
             'message_type' => 'announcement',
@@ -673,7 +679,7 @@ class StudyGroupController extends Controller
         $group = StudyGroup::findOrFail($groupId);
         $user = auth()->user();
 
-        if (!$user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
+        if (! $user->isAdmin() && $user->id !== $group->teacher_id && $user->id !== $group->supervisor_id) {
             abort(403, 'غير مصرح لك برفض الطلب.');
         }
 
@@ -692,5 +698,113 @@ class StudyGroupController extends Controller
         }
 
         return back()->with('info', "تم رفض طلب فتح البث الحي لمجموعة [{$group->name}].");
+    }
+
+    // بث وتشغيل ملف نشاط المجموعة (فيديو، تسجيل صوتي، مستند، صورة)
+    public function streamActivity($id)
+    {
+        $activity = GroupActivity::findOrFail($id);
+
+        if ($activity->external_url && ! $activity->file_path) {
+            return redirect()->away($activity->external_url);
+        }
+
+        $cleanPath = ltrim(str_replace('\\', '/', $activity->file_path ?? ''), '/');
+
+        $candidatePaths = [
+            public_path($cleanPath),
+            base_path('public/'.$cleanPath),
+            base_path($cleanPath),
+            public_path('uploads/group_activities/'.basename($cleanPath)),
+            public_path('uploads/level_resources/'.basename($cleanPath)),
+            storage_path('app/public/'.$cleanPath),
+        ];
+
+        $foundPath = null;
+        foreach ($candidatePaths as $p) {
+            if (! empty($p) && file_exists($p) && ! is_dir($p)) {
+                $foundPath = $p;
+                break;
+            }
+        }
+
+        if (! $foundPath) {
+            if ($activity->external_url) {
+                return redirect()->away($activity->external_url);
+            }
+            if ($activity->levelResource) {
+                return redirect()->route('resources.stream', $activity->levelResource->id);
+            }
+
+            return response()->view('errors.custom_file_not_found', [
+                'title' => 'ملف نشاط المجموعة غير متوفر حالياً',
+                'resourceTitle' => $activity->title,
+                'filePath' => $activity->file_path,
+                'message' => 'عذراً، ملف هذا النشاط لم يتم العثور عليه على الخادم، قد يكون لم يكتمل رفعه أو تم حذفه.',
+                'backUrl' => url()->previous(),
+            ], 404);
+        }
+
+        $mimeType = mime_content_type($foundPath) ?: 'application/octet-stream';
+        $lowerPath = strtolower($foundPath);
+        if (str_ends_with($lowerPath, '.mp4')) {
+            $mimeType = 'video/mp4';
+        } elseif (str_ends_with($lowerPath, '.webm')) {
+            $mimeType = 'video/webm';
+        } elseif (str_ends_with($lowerPath, '.mp3')) {
+            $mimeType = 'audio/mpeg';
+        } elseif (str_ends_with($lowerPath, '.pdf')) {
+            $mimeType = 'application/pdf';
+        }
+
+        return response()->file($foundPath, [
+            'Content-Type' => $mimeType,
+            'Accept-Ranges' => 'bytes',
+            'Content-Disposition' => 'inline; filename="'.($activity->file_name ?: basename($foundPath)).'"',
+        ]);
+    }
+
+    // تحميل ملف النشاط مباشرة للهاتف أو الكمبيوتر
+    public function downloadActivity($id)
+    {
+        $activity = GroupActivity::findOrFail($id);
+
+        if ($activity->external_url && ! $activity->file_path) {
+            return redirect()->away($activity->external_url);
+        }
+
+        $cleanPath = ltrim(str_replace('\\', '/', $activity->file_path ?? ''), '/');
+
+        $candidatePaths = [
+            public_path($cleanPath),
+            base_path('public/'.$cleanPath),
+            base_path($cleanPath),
+            public_path('uploads/group_activities/'.basename($cleanPath)),
+            public_path('uploads/level_resources/'.basename($cleanPath)),
+            storage_path('app/public/'.$cleanPath),
+        ];
+
+        $foundPath = null;
+        foreach ($candidatePaths as $p) {
+            if (! empty($p) && file_exists($p) && ! is_dir($p)) {
+                $foundPath = $p;
+                break;
+            }
+        }
+
+        if (! $foundPath) {
+            if ($activity->external_url) {
+                return redirect()->away($activity->external_url);
+            }
+            if ($activity->levelResource) {
+                return redirect()->route('resources.download', $activity->levelResource->id);
+            }
+
+            return back()->with('error', "عذراً، الملف المطلوب غير متوفر على الخادم (المسار: {$activity->file_path}).");
+        }
+
+        $downloadName = $activity->file_name ?: ($activity->title.'.'.pathinfo($foundPath, PATHINFO_EXTENSION));
+
+        return response()->download($foundPath, $downloadName);
     }
 }

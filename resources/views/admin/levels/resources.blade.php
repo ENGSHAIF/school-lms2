@@ -207,7 +207,7 @@
                                 <span>استماع للتسجيل الصوتي للمستوى:</span>
                             </span>
                             <audio controls class="w-full h-8">
-                                <source src="{{ asset($res->file_path) }}" type="audio/mpeg">
+                                <source src="{{ route('resources.stream', $res->id) }}" type="audio/mpeg">
                                 متصفحك لا يدعم مشغل الصوت.
                             </audio>
                         </div>
@@ -228,16 +228,22 @@
                                 @endif
                             </div>
 
-                            @if($res->external_url)
+                            @if($res->external_url && !$res->file_path)
                                 <a href="{{ $res->external_url }}" target="_blank" class="w-full py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
                                     <span>▶️</span>
                                     <span>مشاهدة فيديو الشرح والمحاضرة</span>
                                 </a>
                             @elseif($res->file_path)
-                                <a href="{{ asset($res->file_path) }}" target="_blank" class="w-full py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
-                                    <span>▶️</span>
-                                    <span>تشغيل ملف الفيديو المرفوع</span>
-                                </a>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('resources.stream', $res->id) }}" target="_blank" class="flex-1 py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                                        <span>▶️</span>
+                                        <span>فتح بالكامل</span>
+                                    </a>
+                                    <a href="{{ route('resources.download', $res->id) }}" download target="_blank" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-2xs" title="تحميل الفيديو لجهازك">
+                                        <span>📥</span>
+                                        <span>تحميل</span>
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     @endif
@@ -245,8 +251,8 @@
                     <!-- صور وبطاقات الأنشطة (معاينة وتحميل) -->
                     @if($res->type === 'image' && $res->file_path)
                         <div class="bg-pink-50/70 p-3 rounded-2xl border border-pink-200 space-y-2">
-                            <a href="{{ asset($res->file_path) }}" target="_blank" class="block relative rounded-xl overflow-hidden group/img aspect-video bg-slate-900 border border-pink-200">
-                                <img src="{{ asset($res->file_path) }}" alt="{{ $res->title }}" class="w-full h-full object-cover group-hover/img:scale-105 transition duration-300">
+                            <a href="{{ route('resources.stream', $res->id) }}" target="_blank" class="block relative rounded-xl overflow-hidden group/img aspect-video bg-slate-900 border border-pink-200">
+                                <img src="{{ route('resources.stream', $res->id) }}" alt="{{ $res->title }}" class="w-full h-full object-cover group-hover/img:scale-105 transition duration-300">
                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-white text-xs font-bold gap-1">
                                     <span>🔍</span>
                                     <span>عرض الصورة بالحجم الكامل</span>
@@ -254,7 +260,7 @@
                             </a>
                             <div class="flex items-center justify-between text-xs pt-0.5">
                                 <span class="text-[10px] text-slate-500 font-mono truncate max-w-[180px]">{{ $res->file_name ?? 'صورة تعليمية' }}</span>
-                                <a href="{{ asset($res->file_path) }}" download target="_blank" class="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-bold text-[10px] transition shrink-0 flex items-center gap-1">
+                                <a href="{{ route('resources.download', $res->id) }}" download target="_blank" class="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-bold text-[10px] transition shrink-0 flex items-center gap-1">
                                     <span>📥</span>
                                     <span>تحميل</span>
                                 </a>
@@ -269,10 +275,16 @@
                                 <span class="font-bold text-slate-800 block truncate">{{ $res->file_name ?? 'ملف رقمي' }}</span>
                                 <span class="text-[10px] text-slate-400 font-mono">{{ $res->file_size ?? 'PDF' }}</span>
                             </div>
-                            <a href="{{ asset($res->file_path) }}" download target="_blank" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition shrink-0 flex items-center gap-1">
-                                <span>📥</span>
-                                <span>تحميل</span>
-                            </a>
+                            <div class="flex items-center gap-1.5">
+                                <a href="{{ route('resources.stream', $res->id) }}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition shrink-0 flex items-center gap-1">
+                                    <span>👁️</span>
+                                    <span>معاينة</span>
+                                </a>
+                                <a href="{{ route('resources.download', $res->id) }}" download target="_blank" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition shrink-0 flex items-center gap-1">
+                                    <span>📥</span>
+                                    <span>تحميل</span>
+                                </a>
+                            </div>
                         </div>
                     @endif
 

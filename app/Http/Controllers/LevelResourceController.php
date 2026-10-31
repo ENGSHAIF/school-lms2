@@ -90,7 +90,7 @@ class LevelResourceController extends Controller
             'duration_minutes' => 'nullable|integer|min:1|max:60000',
             'exam_id' => 'nullable|exists:exams,id',
             'order_index' => 'nullable|integer|min:1',
-            'attachment' => 'nullable|file|max:102400',
+            'attachment' => 'nullable|file|max:524288', // حد أقصى 512 ميجابايت للمحاضرات والفيديوهات
         ]);
 
         $durationHours = null;
@@ -206,7 +206,7 @@ class LevelResourceController extends Controller
             'duration_minutes' => 'nullable|integer|min:1|max:60000',
             'exam_id' => 'nullable|exists:exams,id',
             'order_index' => 'nullable|integer|min:1',
-            'attachment' => 'nullable|file|max:102400', // حد أقصى 100 ميجابايت
+            'attachment' => 'nullable|file|max:524288', // حد أقصى 512 ميجابايت للمحاضرات والفيديوهات
         ]);
 
         $durationHours = null;
@@ -300,7 +300,7 @@ class LevelResourceController extends Controller
             'exam_id' => 'nullable|exists:exams,id',
             'order_index' => 'nullable|integer|min:1',
             'is_active' => 'nullable|boolean',
-            'attachment' => 'nullable|file|max:102400',
+            'attachment' => 'nullable|file|max:524288', // حد أقصى 512 ميجابايت
         ]);
 
         $durationHours = $resource->duration_hours;
@@ -422,6 +422,10 @@ class LevelResourceController extends Controller
             $existing->update([
                 'user_id' => $user->id,
                 'instructions' => $instructions,
+                'external_url' => $resource->external_url,
+                'file_path' => $resource->file_path ?: $existing->file_path,
+                'file_name' => $resource->file_name ?: $existing->file_name,
+                'file_size' => $resource->file_size ?: $existing->file_size,
                 'due_date' => $request->due_date ?: $existing->due_date,
             ]);
 
@@ -439,6 +443,7 @@ class LevelResourceController extends Controller
             'file_path' => $resource->file_path,
             'file_name' => $resource->file_name,
             'file_size' => $resource->file_size,
+            'external_url' => $resource->external_url,
             'due_date' => $request->due_date ?? null,
         ]);
 
@@ -548,5 +553,105 @@ class LevelResourceController extends Controller
         $section->delete();
 
         return back()->with('success', "تم حذف العنوان [{$title}] بنجاح.");
+    }
+
+    // بث وتشغيل ملف المورد (فيديو، صوت، مستند، صورة) مع دعم Range Requests لتشغيل وسلاسة الفيديو
+    public function streamResource($id)
+    {
+        $resource = LevelResource::findOrFail($id);
+
+        if ($resource->external_url && ! $resource->file_path) {
+            return redirect()->away($resource->external_url);
+        }
+
+        $cleanPath = ltrim(str_replace('\\', '/', $resource->file_path ?? ''), '/');
+
+        $candidatePaths = [
+            public_path($cleanPath),
+            base_path('public/'.$cleanPath),
+            base_path($cleanPath),
+            public_path('uploads/level_resources/'.basename($cleanPath)),
+            storage_path('app/public/'.$cleanPath),
+        ];
+
+        $foundPath = null;
+        foreach ($candidatePaths as $p) {
+            if (! empty($p) && file_exists($p) && ! is_dir($p)) {
+                $foundPath = $p;
+                break;
+            }
+        }
+
+        if (! $foundPath) {
+            if ($resource->external_url) {
+                return redirect()->away($resource->external_url);
+            }
+
+            return response()->view('errors.custom_file_not_found', [
+                'title' => 'ملف المورد التعليمي غير متوفر حالياً',
+                'resourceTitle' => $resource->title,
+                'filePath' => $resource->file_path,
+                'message' => 'عذراً، ملف هذا المورد لم يتم العثور عليه على الخادم، قد يكون لم يكتمل رفعه بعد أو تم حذفه.',
+                'backUrl' => url()->previous(),
+            ], 404);
+        }
+
+        $mimeType = mime_content_type($foundPath) ?: 'application/octet-stream';
+        $lowerPath = strtolower($foundPath);
+        if (str_ends_with($lowerPath, '.mp4')) {
+            $mimeType = 'video/mp4';
+        } elseif (str_ends_with($lowerPath, '.webm')) {
+            $mimeType = 'video/webm';
+        } elseif (str_ends_with($lowerPath, '.mp3')) {
+            $mimeType = 'audio/mpeg';
+        } elseif (str_ends_with($lowerPath, '.pdf')) {
+            $mimeType = 'application/pdf';
+        }
+
+        return response()->file($foundPath, [
+            'Content-Type' => $mimeType,
+            'Accept-Ranges' => 'bytes',
+            'Content-Disposition' => 'inline; filename="'.($resource->file_name ?: basename($foundPath)).'"',
+        ]);
+    }
+
+    // تحميل ملف المورد مباشرة إلى الهاتف أو الكمبيوتر
+    public function downloadResource($id)
+    {
+        $resource = LevelResource::findOrFail($id);
+
+        if ($resource->external_url && ! $resource->file_path) {
+            return redirect()->away($resource->external_url);
+        }
+
+        $cleanPath = ltrim(str_replace('\\', '/', $resource->file_path ?? ''), '/');
+
+        $candidatePaths = [
+            public_path($cleanPath),
+            base_path('public/'.$cleanPath),
+            base_path($cleanPath),
+            public_path('uploads/level_resources/'.basename($cleanPath)),
+            storage_path('app/public/'.$cleanPath),
+        ];
+
+        $foundPath = null;
+        foreach ($candidatePaths as $p) {
+            if (! empty($p) && file_exists($p) && ! is_dir($p)) {
+                $foundPath = $p;
+                break;
+            }
+        }
+
+        if (! $foundPath) {
+            if ($resource->external_url) {
+                return redirect()->away($resource->external_url);
+            }
+
+            return back()->with('error', "عذراً، الملف المطلوب غير متوفر على الخادم (المسار: {$resource->file_path}).");
+        }
+
+        $downloadName = $resource->file_name ?: ($resource->title.'.'.pathinfo($foundPath, PATHINFO_EXTENSION));
+
+        return response()->download($foundPath, $downloadName);
     }
 }

@@ -118,6 +118,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/groups/{groupId}/live/request', [StudyGroupController::class, 'requestLive'])->name('groups.live.request');
     Route::post('/groups/{groupId}/live/reject', [StudyGroupController::class, 'rejectLive'])->name('groups.live.reject');
 
+    // 2.2.1 مسارات بث وتحميل ملفات المناهج وموارد المجموعات (فيديوهات، صوتيات، كتب وأنشطة)
+    Route::get('/resources/{id}/stream', [LevelResourceController::class, 'streamResource'])->name('resources.stream');
+    Route::get('/resources/{id}/download', [LevelResourceController::class, 'downloadResource'])->name('resources.download');
+    Route::get('/activities/{id}/stream', [StudyGroupController::class, 'streamActivity'])->name('groups.activities.stream');
+    Route::get('/activities/{id}/download', [StudyGroupController::class, 'downloadActivity'])->name('groups.activities.download');
+
     // 2.3 مسارات الطالب لأداء الاختبار واستعراض النتيجة
     Route::get('/student/exams/{id}/take/{groupId?}', [ExamController::class, 'take'])->name('student.exam.take');
     Route::post('/student/exams/{id}/submit', [ExamController::class, 'submit'])->name('student.exam.submit');

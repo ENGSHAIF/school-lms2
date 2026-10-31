@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\FinancialAccount;
-use App\Models\LessonReport;
+use App\Models\StudyGroup;
 use App\Models\TeacherSchedule;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class TeacherController extends Controller
@@ -16,7 +15,7 @@ class TeacherController extends Controller
     {
         $teacher = Auth::user();
 
-        if (!$teacher->isTeacher() && !$teacher->isAdmin()) {
+        if (! $teacher->isTeacher() && ! $teacher->isAdmin()) {
             abort(403, 'غير مصرح لك بالدخول إلى لوحة المعلم.');
         }
 
@@ -45,8 +44,8 @@ class TeacherController extends Controller
         $account = FinancialAccount::firstOrCreate(
             ['user_id' => $teacher->id],
             [
-                'account_code' => '22' . str_pad($teacher->id, 4, '0', STR_PAD_LEFT),
-                'account_name' => 'حساب المعلم: ' . $teacher->name,
+                'account_code' => '22'.str_pad($teacher->id, 4, '0', STR_PAD_LEFT),
+                'account_name' => 'حساب المعلم: '.$teacher->name,
                 'account_type' => 'teacher',
                 'currency' => 'YER',
                 'opening_balance' => 0.00,
@@ -55,9 +54,18 @@ class TeacherController extends Controller
         );
 
         // المجموعات والدفعات الدراسية المسندة لهذا المعلم
-        $myGroups = \App\Models\StudyGroup::with(['course', 'level.resources.exam', 'activities.publisher', 'students' => function ($q) {
-            $q->wherePivot('status', 'active');
-        }])
+        $myGroups = StudyGroup::with([
+            'course.resources.section',
+            'course.resources.exam',
+            'course.sections.resources.exam',
+            'level.resources.section',
+            'level.resources.exam',
+            'activities.publisher',
+            'activities.levelResource.section',
+            'students' => function ($q) {
+                $q->wherePivot('status', 'active');
+            },
+        ])
             ->where('teacher_id', $teacher->id)
             ->where('status', 'active')
             ->latest()

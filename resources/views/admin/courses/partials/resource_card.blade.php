@@ -40,7 +40,7 @@
                     <span>استماع للتسجيل الصوتي:</span>
                 </span>
                 <audio controls preload="metadata" class="w-full h-8">
-                    <source src="{{ asset($res->file_path) }}" type="audio/mpeg">
+                    <source src="{{ route('resources.stream', $res->id) }}" type="audio/mpeg">
                     متصفحك لا يدعم مشغل الصوت.
                 </audio>
             </div>
@@ -64,16 +64,16 @@
                 @if($res->file_path)
                     <div class="rounded-xl overflow-hidden bg-black/95">
                         <video controls preload="metadata" class="w-full max-h-48 object-cover">
-                            <source src="{{ asset($res->file_path) }}">
+                            <source src="{{ route('resources.stream', $res->id) }}">
                             متصفحك لا يدعم تشغيل هذا الفيديو.
                         </video>
                     </div>
                     <div class="flex items-center gap-2">
-                        <a href="{{ asset($res->file_path) }}" target="_blank" class="flex-1 py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                        <a href="{{ route('resources.stream', $res->id) }}" target="_blank" class="flex-1 py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
                             <span>▶️</span>
                             <span>فتح بالكامل</span>
                         </a>
-                        <a href="{{ asset($res->file_path) }}" download target="_blank" class="py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-2xs" title="تحميل الفيديو لجهازك">
+                        <a href="{{ route('resources.download', $res->id) }}" download target="_blank" class="py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-2xs" title="تحميل الفيديو لجهازك">
                             <span>⬇️</span>
                             <span>تحميل</span>
                         </a>
@@ -90,8 +90,8 @@
         <!-- صور وبطاقات الأنشطة (معاينة وتحميل) -->
         @if($res->type === 'image' && $res->file_path)
             <div class="bg-pink-50/70 p-3 rounded-2xl border border-pink-200 space-y-2">
-                <a href="{{ asset($res->file_path) }}" target="_blank" class="block relative rounded-xl overflow-hidden group/img aspect-video bg-slate-900 border border-pink-200">
-                    <img src="{{ asset($res->file_path) }}" alt="{{ $res->title }}" class="w-full h-full object-cover group-hover/img:scale-105 transition duration-300">
+                <a href="{{ route('resources.stream', $res->id) }}" target="_blank" class="block relative rounded-xl overflow-hidden group/img aspect-video bg-slate-900 border border-pink-200">
+                    <img src="{{ route('resources.stream', $res->id) }}" alt="{{ $res->title }}" class="w-full h-full object-cover group-hover/img:scale-105 transition duration-300">
                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-white text-xs font-bold gap-1">
                         <span>🔍</span>
                         <span>تكبير ومعاينة الصورة كاملة</span>
@@ -138,7 +138,7 @@
     <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
         <div class="flex items-center gap-1.5 flex-wrap">
             @if($res->file_path)
-                <a href="{{ asset($res->file_path) }}" target="_blank" download class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-700 font-bold text-xs transition shadow-2xs flex items-center gap-1" title="تحميل الملف لجهازك">
+                <a href="{{ route('resources.download', $res->id) }}" download class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-700 font-bold text-xs transition shadow-2xs flex items-center gap-1" title="تحميل الملف لجهازك">
                     <span>⬇️</span>
                     <span>تحميل</span>
                 </a>

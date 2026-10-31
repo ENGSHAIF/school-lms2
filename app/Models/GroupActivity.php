@@ -16,6 +16,7 @@ class GroupActivity extends Model
         'file_path',
         'file_name',
         'file_size',
+        'external_url',
         'due_date',
     ];
 
@@ -45,25 +46,40 @@ class GroupActivity extends Model
 
     public function isAudio(): bool
     {
-        if ($this->type === 'audio') return true;
-        if (!$this->file_path) return false;
+        if ($this->type === 'audio') {
+            return true;
+        }
+        if (! $this->file_path) {
+            return false;
+        }
         $ext = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+
         return in_array($ext, ['mp3', 'wav', 'ogg', 'webm', 'm4a', 'aac']);
     }
 
     public function isImage(): bool
     {
-        if ($this->type === 'image') return true;
-        if (!$this->file_path) return false;
+        if ($this->type === 'image') {
+            return true;
+        }
+        if (! $this->file_path) {
+            return false;
+        }
         $ext = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+
         return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg']);
     }
 
     public function isVideo(): bool
     {
-        if ($this->type === 'video') return true;
-        if (!$this->file_path) return false;
+        if ($this->type === 'video') {
+            return true;
+        }
+        if (! $this->file_path) {
+            return false;
+        }
         $ext = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+
         return in_array($ext, ['mp4', 'webm', 'mov', 'avi', 'mkv', 'm4v', '3gp']);
     }
 

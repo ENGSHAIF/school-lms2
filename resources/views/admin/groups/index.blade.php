@@ -407,13 +407,24 @@
                             </button>
                         </div>
 
-                        <!-- زر استدعاء ومشاركة من بنك موارد المستوى المركزي -->
-                        @if($grp->level)
-                            @php $levelResCount = $grp->level->resources ? $grp->level->resources->count() : 0; @endphp
-                            <button onclick='openGroupLevelResourcesModal(@json($grp), @json($grp->level), @json($grp->level->resources), @json($grp->activities))' class="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-950 border border-indigo-200/80 font-black text-xs shadow-2xs transition flex items-center justify-center gap-2">
+                        <!-- زر استدعاء ومشاركة من بنك موارد الدورة / المستوى -->
+                        @php
+                            $allGroupResources = collect();
+                            if ($grp->course && $grp->course->resources) {
+                                $allGroupResources = $allGroupResources->merge($grp->course->resources);
+                            }
+                            if ($grp->level && $grp->level->resources) {
+                                $allGroupResources = $allGroupResources->merge($grp->level->resources);
+                            }
+                            $allGroupResources = $allGroupResources->unique('id')->values();
+                            $resCount = $allGroupResources->count();
+                            $targetEntity = $grp->course ?: $grp->level;
+                        @endphp
+                        @if($targetEntity)
+                            <button onclick='openGroupLevelResourcesModal(@json($grp), @json($targetEntity), @json($allGroupResources), @json($grp->activities))' class="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-950 border border-indigo-200/80 font-black text-xs shadow-2xs transition flex items-center justify-center gap-2">
                                 <span>📦</span>
-                                <span>استدعاء ومشاركة من بنك موارد المستوى</span>
-                                <span class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-mono">{{ $levelResCount }} موارد</span>
+                                <span>استدعاء ومشاركة من بنك موارد الدورة / المستوى</span>
+                                <span class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-mono">{{ $resCount }} موارد</span>
                             </button>
                         @endif
 
@@ -1105,9 +1116,9 @@
                 <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-white/10 flex items-center justify-center text-lg sm:text-xl shrink-0">📦</span>
                 <div class="min-w-0">
                     <h3 class="font-black text-xs sm:text-sm flex items-center gap-2 truncate">
-                        <span class="truncate">بنك موارد المستوى: <span id="glrLevelName" class="text-amber-400"></span></span>
+                        <span class="truncate">بنك موارد الدورة / المستوى: <span id="glrLevelName" class="text-amber-400"></span></span>
                     </h3>
-                    <span class="text-[10px] sm:text-[11px] text-indigo-200 block truncate">مشاركة الكتب، التسجيلات الصوتية، ومحاضرات الفيديو</span>
+                    <span class="text-[10px] sm:text-[11px] text-indigo-200 block truncate">مشاركة المحاضرات والدروس والكتب لمجموعة: <strong id="glrGroupName" class="text-emerald-300 font-bold"></strong></span>
                 </div>
             </div>
             <button onclick="closeGroupLevelResourcesModal()" class="text-white/70 hover:text-white text-lg shrink-0 p-1">✕</button>
@@ -1143,10 +1154,23 @@
 <!-- ======================================================= -->
 <script>
     // 0. فتح وإغلاق نافذة استدعاء ومشاركة موارد المستوى للمجموعة
-    function openGroupLevelResourcesModal(grp, level, resources, groupActivities) {
-        document.getElementById('glrLevelName').innerText = level ? level.name : '';
-        document.getElementById('glrGroupName').innerText = grp.name;
-        document.getElementById('glrOpenBankLink').href = '/admin/levels/' + (level ? level.id : '') + '/resources';
+    function openGroupLevelResourcesModal(grp, entity, resources, groupActivities) {
+        if (document.getElementById('glrLevelName')) {
+            document.getElementById('glrLevelName').innerText = entity ? (entity.name_ar || entity.name_en || entity.name || '') : '';
+        }
+        if (document.getElementById('glrGroupName')) {
+            document.getElementById('glrGroupName').innerText = grp ? (grp.name_ar || grp.name_en || grp.name || '') : '';
+        }
+        const openBankLink = document.getElementById('glrOpenBankLink');
+        if (openBankLink) {
+            if (grp && grp.course_id) {
+                openBankLink.href = '/admin/courses/' + grp.course_id + '/resources';
+                openBankLink.innerText = 'فتح بنك الدورة ↗️';
+            } else if (entity && entity.id) {
+                openBankLink.href = '/admin/levels/' + entity.id + '/resources';
+                openBankLink.innerText = 'فتح بنك المستوى ↗️';
+            }
+        }
 
         const container = document.getElementById('glrResourcesListContainer');
         container.innerHTML = '';
@@ -1155,8 +1179,8 @@
             container.innerHTML = `
                 <div class="text-center py-8 text-slate-400 space-y-2 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                     <span class="text-3xl block">📚</span>
-                    <p class="text-xs font-bold text-slate-600">لا توجد موارد مضافة بعد في بنك هذا المستوى.</p>
-                    <p class="text-[11px]">يمكن للإدارة أو المعلم ذو الصلاحية رفع الكتب والمقاطع الصوتية والفيديوهات من بنك المناهج والأسعار.</p>
+                    <p class="text-xs font-bold text-slate-600">لا توجد موارد مضافة بعد في بنك هذه الدورة / المستوى.</p>
+                    <p class="text-[11px]">يمكن للإدارة أو المعلم ذو الصلاحية رفع المحاضرات ومقاطع الفيديو والكتب من شاشة بنك المناهج.</p>
                 </div>
             `;
         } else {
@@ -1170,7 +1194,23 @@
                 });
             }
 
+            // تجميع الموارد حسب الأقسام / الأيام الدراسية أو غير المصنفة
+            const sectionsMap = {};
+            const unassigned = [];
+
             resources.forEach(res => {
+                const secTitle = res.section ? res.section.title : null;
+                if (secTitle) {
+                    if (!sectionsMap[secTitle]) {
+                        sectionsMap[secTitle] = [];
+                    }
+                    sectionsMap[secTitle].push(res);
+                } else {
+                    unassigned.push(res);
+                }
+            });
+
+            const renderResourceCard = (res) => {
                 const isShared = !!sharedResourceMap[res.id];
 
                 let icon = '📄';
@@ -1182,6 +1222,7 @@
                 else if (res.type === 'video') { icon = '🎥'; typeLabel = 'محاضرة فيديو'; badgeClass = 'bg-blue-50 text-blue-800 border border-blue-200'; }
                 else if (res.type === 'worksheet') { icon = '📝'; typeLabel = 'ورقة نشاط وتطبيق'; badgeClass = 'bg-amber-50 text-amber-800 border border-amber-200'; }
                 else if (res.type === 'quiz') { icon = '🎯'; typeLabel = 'كويز واختبار قصير'; badgeClass = 'bg-rose-50 text-rose-800 border border-rose-200'; }
+                else if (res.type === 'image') { icon = '🖼️'; typeLabel = 'صورة وبطاقة تعليمية'; badgeClass = 'bg-pink-50 text-pink-800 border border-pink-200'; }
 
                 const card = document.createElement('div');
                 card.className = `p-4 rounded-2xl border ${isShared ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200 bg-white'} space-y-3 shadow-2xs hover:border-indigo-300 transition`;
@@ -1189,12 +1230,12 @@
                 let shareActionHtml = '';
                 if (isShared) {
                     shareActionHtml = `
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100 flex-wrap gap-2">
                             <span class="text-[11px] font-bold text-emerald-700 flex items-center gap-1.5">
                                 <span>✅</span>
                                 <span>تمت مشاركته لطلاب هذه المجموعة</span>
                             </span>
-                            <form method="POST" action="/groups/${grp.id}/resources/${res.id}/unshare" onsubmit="return confirm('هل تريد إزالة هذا المورد من المجموعة؟ (سيبقى محفوظاً في بنك المستوى)');">
+                            <form method="POST" action="/groups/${grp.id}/resources/${res.id}/unshare" onsubmit="return confirm('هل تريد إزالة هذا المورد من المجموعة؟ (سيبقى محفوظاً في بنك الدورة/المستوى)');">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="px-2.5 py-1 text-[11px] text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 font-bold transition">
@@ -1221,25 +1262,91 @@
                     `;
                 }
 
+                let previewActions = `
+                    <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 text-[11px]">
+                        <a href="/resources/${res.id}/stream" target="_blank" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold transition flex items-center gap-1">
+                            <span>👁️</span>
+                            <span>معاينة وتشغيل</span>
+                        </a>
+                        ${res.file_path ? `
+                            <a href="/resources/${res.id}/download" download class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition flex items-center gap-1">
+                                <span>📥</span>
+                                <span>تحميل للجهاز</span>
+                            </a>
+                        ` : ''}
+                    </div>
+                `;
+
                 card.innerHTML = `
                     <div class="flex items-start justify-between gap-2">
-                        <div class="flex items-start gap-2.5">
+                        <div class="flex items-start gap-2.5 min-w-0">
                             <span class="text-2xl shrink-0">${icon}</span>
-                            <div>
-                                <div class="flex items-center gap-2">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
                                     <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${badgeClass}">${typeLabel}</span>
                                     ${res.file_size ? `<span class="text-[10px] text-slate-400 font-mono">(${res.file_size})</span>` : ''}
                                     ${res.duration_minutes ? `<span class="text-[10px] text-blue-600 font-mono">⏱️ ${res.duration_minutes} د</span>` : ''}
                                 </div>
-                                <h4 class="font-black text-xs sm:text-sm text-slate-900 mt-1 leading-tight">${res.title}</h4>
-                                ${res.description ? `<p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">${res.description}</p>` : ''}
+                                <h4 class="font-black text-xs sm:text-sm text-slate-900 mt-1 leading-tight truncate">${res.title}</h4>
+                                ${res.description ? `<p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed line-clamp-2">${res.description}</p>` : ''}
                             </div>
                         </div>
                     </div>
+                    ${previewActions}
                     ${shareActionHtml}
                 `;
-                container.appendChild(card);
-            });
+                return card;
+            };
+
+            // عرض الموارد المقسمة حسب العناوين / الأيام
+            for (const [secTitle, secResources] of Object.entries(sectionsMap)) {
+                const sectionGroup = document.createElement('div');
+                sectionGroup.className = 'space-y-2 p-3 bg-slate-50/70 rounded-2xl border border-slate-200';
+                sectionGroup.innerHTML = `
+                    <div class="flex items-center justify-between pb-1 border-b border-slate-200">
+                        <span class="font-black text-xs text-indigo-900 flex items-center gap-1.5">
+                            <span>📌</span>
+                            <span>${secTitle}</span>
+                        </span>
+                        <span class="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">${secResources.length} موارد</span>
+                    </div>
+                `;
+                const listDiv = document.createElement('div');
+                listDiv.className = 'space-y-2';
+                secResources.forEach(res => {
+                    listDiv.appendChild(renderResourceCard(res));
+                });
+                sectionGroup.appendChild(listDiv);
+                container.appendChild(sectionGroup);
+            }
+
+            // عرض الموارد غير المصنفة
+            if (unassigned.length > 0) {
+                if (Object.keys(sectionsMap).length > 0) {
+                    const unGroup = document.createElement('div');
+                    unGroup.className = 'space-y-2 p-3 bg-slate-50/70 rounded-2xl border border-slate-200';
+                    unGroup.innerHTML = `
+                        <div class="flex items-center justify-between pb-1 border-b border-slate-200">
+                            <span class="font-black text-xs text-slate-700 flex items-center gap-1.5">
+                                <span>📂</span>
+                                <span>موارد عامة غير مصنفة</span>
+                            </span>
+                            <span class="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">${unassigned.length} موارد</span>
+                        </div>
+                    `;
+                    const listDiv = document.createElement('div');
+                    listDiv.className = 'space-y-2';
+                    unassigned.forEach(res => {
+                        listDiv.appendChild(renderResourceCard(res));
+                    });
+                    unGroup.appendChild(listDiv);
+                    container.appendChild(unGroup);
+                } else {
+                    unassigned.forEach(res => {
+                        container.appendChild(renderResourceCard(res));
+                    });
+                }
+            }
         }
 
         document.getElementById('groupLevelResourcesModal').classList.remove('hidden');
@@ -1511,10 +1618,13 @@
                 if (isImage && act.file_path) {
                     imagePreviewHtml = `
                         <div class="mt-2 space-y-1">
-                            <a href="/${act.file_path}" target="_blank" class="block rounded-xl overflow-hidden border border-slate-200 aspect-video max-h-44 bg-slate-900 group">
-                                <img src="/${act.file_path}" class="w-full h-full object-cover group-hover:scale-105 transition duration-200">
+                            <a href="/activities/${act.id}/stream" target="_blank" class="block rounded-xl overflow-hidden border border-slate-200 aspect-video max-h-44 bg-slate-900 group">
+                                <img src="/activities/${act.id}/stream" class="w-full h-full object-cover group-hover:scale-105 transition duration-200">
                             </a>
-                            <a href="/${act.file_path}" target="_blank" class="text-[11px] font-bold text-emerald-700 hover:underline inline-block">🔍 فتح الصورة بالحجم الكامل</a>
+                            <div class="flex items-center justify-between text-[11px]">
+                                <a href="/activities/${act.id}/stream" target="_blank" class="font-bold text-indigo-700 hover:underline">🔍 تكبير الصورة</a>
+                                <a href="/activities/${act.id}/download" download class="font-bold text-emerald-700 hover:underline">تحميل الصورة الأصلية 📥</a>
+                            </div>
                         </div>
                     `;
                 }
@@ -1522,12 +1632,15 @@
                 let audioPlayerHtml = '';
                 if ((act.type === 'audio' || ['mp3', 'wav', 'ogg', 'webm', 'm4a'].includes(ext)) && act.file_path) {
                     audioPlayerHtml = `
-                        <div class="bg-purple-50 p-2.5 rounded-xl border border-purple-200 mt-2">
+                        <div class="bg-purple-50 p-2.5 rounded-xl border border-purple-200 mt-2 space-y-2">
                             <span class="text-[10px] font-bold text-purple-900 block mb-1">▶️ استمع للتسجيل الصوتي مباشرة:</span>
                             <audio controls class="w-full h-8">
-                                <source src="/${act.file_path}">
+                                <source src="/activities/${act.id}/stream">
                                 المتصفح لا يدعم مشغل الصوت.
                             </audio>
+                            <div class="flex justify-end">
+                                <a href="/activities/${act.id}/download" download class="text-[11px] font-bold text-purple-700 hover:underline">📥 تحميل الملف الصوتي</a>
+                            </div>
                         </div>
                     `;
                 }
@@ -1539,15 +1652,20 @@
                     videoPlayerHtml = `
                         <div class="bg-blue-50/70 p-2.5 rounded-xl border border-blue-200 mt-2 space-y-2">
                             <span class="text-[10px] font-bold text-blue-900 block mb-1">🎥 تشغيل فيديو المحاضرة:</span>
-                            <video controls class="w-full rounded-lg max-h-56 bg-black">
-                                <source src="/${act.file_path}">
+                            <video controls preload="metadata" class="w-full rounded-lg max-h-56 bg-black">
+                                <source src="/activities/${act.id}/stream">
                                 المتصفح لا يدعم مشغل الفيديو.
                             </video>
-                            <a href="/${act.file_path}" download target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-2xs">
-                                <span>📥</span>
-                                <span>تحميل الفيديو (${act.file_name || 'فيديو'})</span>
-                                ${act.file_size ? `<span class="text-[10px] text-blue-200 font-mono">(${act.file_size})</span>` : ''}
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <a href="/activities/${act.id}/stream" target="_blank" class="flex-1 py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-2xs">
+                                    <span>▶️</span>
+                                    <span>فتح بالكامل</span>
+                                </a>
+                                <a href="/activities/${act.id}/download" download target="_blank" class="flex-1 py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-2xs">
+                                    <span>📥</span>
+                                    <span>تحميل الفيديو (${act.file_name || 'فيديو'})</span>
+                                </a>
+                            </div>
                         </div>
                     `;
                 }
@@ -1555,11 +1673,15 @@
                 let downloadFileHtml = '';
                 if (act.file_path && !isImage && !isVideo && act.type !== 'audio' && !['mp3', 'wav', 'ogg', 'webm', 'm4a'].includes(ext)) {
                     downloadFileHtml = `
-                        <div class="mt-2">
-                            <a href="/${act.file_path}" download target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition">
+                        <div class="mt-2 flex items-center gap-2">
+                            <a href="/activities/${act.id}/download" download target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-2xs">
                                 <span>📥</span>
                                 <span>تحميل ورقة النشاط (${act.file_name || 'ملف مرفق'})</span>
-                                ${act.file_size ? `<span class="text-[10px] text-indigo-400 font-mono">(${act.file_size})</span>` : ''}
+                                ${act.file_size ? `<span class="text-[10px] text-indigo-200 font-mono">(${act.file_size})</span>` : ''}
+                            </a>
+                            <a href="/activities/${act.id}/stream" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                                <span>👁️</span>
+                                <span>معاينة</span>
                             </a>
                         </div>
                     `;
