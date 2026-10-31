@@ -164,8 +164,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/courses', [AdminController::class, 'courses'])->name('admin.courses.index');
         Route::post('/admin/courses', [AdminController::class, 'storeCourse'])->name('admin.courses.store');
         Route::post('/admin/courses/{id}/update', [AdminController::class, 'updateCourse'])->name('admin.courses.update');
+        Route::delete('/admin/courses/{id}', [AdminController::class, 'destroyCourse'])->name('admin.courses.destroy');
         Route::post('/admin/levels', [AdminController::class, 'storeLevel'])->name('admin.levels.store');
         Route::post('/admin/levels/{id}/update', [AdminController::class, 'updateLevel'])->name('admin.levels.update');
+        Route::delete('/admin/levels/{id}', [AdminController::class, 'destroyLevel'])->name('admin.levels.destroy');
         Route::post('/admin/lessons', [AdminController::class, 'storeLesson'])->name('admin.lessons.store');
         Route::post('/admin/packages', [AdminController::class, 'storePackage'])->name('admin.packages.store');
         Route::post('/admin/packages/{id}/update', [AdminController::class, 'updatePackage'])->name('admin.packages.update');

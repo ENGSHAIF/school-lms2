@@ -190,9 +190,9 @@
                                     <span>🎥</span>
                                     <span>محاضرة مرئية</span>
                                 </span>
-                                @if($res->duration_minutes)
+                                @if($res->duration_hours || $res->duration_minutes)
                                     <span class="text-[10px] font-mono text-blue-700 bg-blue-100 px-2 py-0.5 rounded font-bold">
-                                        ⏱️ {{ $res->duration_minutes }} دقيقة
+                                        ⏱️ {{ $res->formatted_duration }}
                                     </span>
                                 @endif
                             </div>
@@ -362,10 +362,10 @@
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <!-- مدة الفيديو بالدقائق -->
+                <!-- مدة المورد بالساعات -->
                 <div id="durationContainer">
-                    <label class="block font-bold text-slate-700 mb-1">المدة المقدرة (بالدقائق)</label>
-                    <input type="number" name="duration_minutes" placeholder="مثال: 30" min="1" max="600" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
+                    <label class="block font-bold text-slate-700 mb-1">المدة المقدرة (بالساعات)</label>
+                    <input type="number" name="duration_hours" step="0.1" min="0.1" max="1000" placeholder="مثال: 2 أو 1.5 أو 40" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
                 </div>
 
                 <!-- ترتيب المورد -->

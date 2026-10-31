@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Book;
 use App\Models\Course;
 use App\Models\Exam;
 use App\Models\GroupActivity;
@@ -40,8 +41,8 @@ class LevelResourceController extends Controller
         $availableExams = Exam::where('is_active', true)
             ->where(function ($q) use ($course) {
                 $q->where('course_id', $course->id)
-                  ->orWhere('level_id', $course->level_id)
-                  ->orWhereNull('level_id');
+                    ->orWhere('level_id', $course->level_id)
+                    ->orWhereNull('level_id');
             })
             ->get();
 
@@ -52,7 +53,7 @@ class LevelResourceController extends Controller
     public function storeCourseResource(Request $request, $courseId)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->hasPermission('upload_level_resources') && !$user->hasPermission('manage_courses')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('upload_level_resources') && ! $user->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية رفع موارد وإدارة بنك المناهج.');
         }
 
@@ -63,11 +64,22 @@ class LevelResourceController extends Controller
             'type' => 'required|in:book,audio,video,worksheet,quiz,image',
             'description' => 'nullable|string',
             'external_url' => 'nullable|url|max:500',
-            'duration_minutes' => 'nullable|integer|min:1|max:600',
+            'duration_hours' => 'nullable|numeric|min:0.01|max:1000',
+            'duration_minutes' => 'nullable|integer|min:1|max:60000',
             'exam_id' => 'nullable|exists:exams,id',
             'order_index' => 'nullable|integer|min:1',
             'attachment' => 'nullable|file|max:102400',
         ]);
+
+        $durationHours = null;
+        $durationMinutes = null;
+        if ($request->filled('duration_hours')) {
+            $durationHours = round((float) $request->input('duration_hours'), 2);
+            $durationMinutes = (int) round($durationHours * 60);
+        } elseif ($request->filled('duration_minutes')) {
+            $durationMinutes = (int) $request->input('duration_minutes');
+            $durationHours = round($durationMinutes / 60.0, 2);
+        }
 
         $filePath = null;
         $fileName = null;
@@ -80,20 +92,20 @@ class LevelResourceController extends Controller
             $sizeBytes = $file->getSize();
 
             if ($sizeBytes >= 1048576) {
-                $fileSize = round($sizeBytes / 1048576, 1) . ' MB';
+                $fileSize = round($sizeBytes / 1048576, 1).' MB';
             } else {
-                $fileSize = round($sizeBytes / 1024, 0) . ' KB';
+                $fileSize = round($sizeBytes / 1024, 0).' KB';
             }
 
-            $uniqueName = 'crs_' . $course->id . '_' . time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $extension;
+            $uniqueName = 'crs_'.$course->id.'_'.time().'_'.Str::slug(pathinfo($originalName, PATHINFO_FILENAME)).'.'.$extension;
             $destinationPath = public_path('uploads/level_resources');
 
-            if (!file_exists($destinationPath)) {
+            if (! file_exists($destinationPath)) {
                 mkdir($destinationPath, 0777, true);
             }
 
             $file->move($destinationPath, $uniqueName);
-            $filePath = 'uploads/level_resources/' . $uniqueName;
+            $filePath = 'uploads/level_resources/'.$uniqueName;
             $fileName = $originalName;
         }
 
@@ -107,7 +119,8 @@ class LevelResourceController extends Controller
             'file_name' => $fileName,
             'file_size' => $fileSize,
             'external_url' => $validated['external_url'] ?? null,
-            'duration_minutes' => $validated['duration_minutes'] ?? null,
+            'duration_hours' => $durationHours,
+            'duration_minutes' => $durationMinutes,
             'exam_id' => $validated['exam_id'] ?? null,
             'order_index' => $validated['order_index'] ?? ($course->resources()->max('order_index') + 1),
             'is_active' => true,
@@ -155,7 +168,7 @@ class LevelResourceController extends Controller
     public function store(Request $request, $levelId)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->hasPermission('upload_level_resources') && !$user->hasPermission('manage_courses')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('upload_level_resources') && ! $user->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية رفع موارد وإدارة بنك المناهج.');
         }
 
@@ -166,11 +179,22 @@ class LevelResourceController extends Controller
             'type' => 'required|in:book,audio,video,worksheet,quiz,image',
             'description' => 'nullable|string',
             'external_url' => 'nullable|url|max:500',
-            'duration_minutes' => 'nullable|integer|min:1|max:600',
+            'duration_hours' => 'nullable|numeric|min:0.01|max:1000',
+            'duration_minutes' => 'nullable|integer|min:1|max:60000',
             'exam_id' => 'nullable|exists:exams,id',
             'order_index' => 'nullable|integer|min:1',
             'attachment' => 'nullable|file|max:102400', // حد أقصى 100 ميجابايت
         ]);
+
+        $durationHours = null;
+        $durationMinutes = null;
+        if ($request->filled('duration_hours')) {
+            $durationHours = round((float) $request->input('duration_hours'), 2);
+            $durationMinutes = (int) round($durationHours * 60);
+        } elseif ($request->filled('duration_minutes')) {
+            $durationMinutes = (int) $request->input('duration_minutes');
+            $durationHours = round($durationMinutes / 60.0, 2);
+        }
 
         $filePath = null;
         $fileName = null;
@@ -183,20 +207,20 @@ class LevelResourceController extends Controller
             $sizeBytes = $file->getSize();
 
             if ($sizeBytes >= 1048576) {
-                $fileSize = round($sizeBytes / 1048576, 1) . ' MB';
+                $fileSize = round($sizeBytes / 1048576, 1).' MB';
             } else {
-                $fileSize = round($sizeBytes / 1024, 0) . ' KB';
+                $fileSize = round($sizeBytes / 1024, 0).' KB';
             }
 
-            $uniqueName = 'lvl_' . $level->id . '_' . time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $extension;
+            $uniqueName = 'lvl_'.$level->id.'_'.time().'_'.Str::slug(pathinfo($originalName, PATHINFO_FILENAME)).'.'.$extension;
             $destinationPath = public_path('uploads/level_resources');
 
-            if (!file_exists($destinationPath)) {
+            if (! file_exists($destinationPath)) {
                 mkdir($destinationPath, 0777, true);
             }
 
             $file->move($destinationPath, $uniqueName);
-            $filePath = 'uploads/level_resources/' . $uniqueName;
+            $filePath = 'uploads/level_resources/'.$uniqueName;
             $fileName = $originalName;
         }
 
@@ -209,7 +233,8 @@ class LevelResourceController extends Controller
             'file_name' => $fileName,
             'file_size' => $fileSize,
             'external_url' => $validated['external_url'] ?? null,
-            'duration_minutes' => $validated['duration_minutes'] ?? null,
+            'duration_hours' => $durationHours,
+            'duration_minutes' => $durationMinutes,
             'exam_id' => $validated['exam_id'] ?? null,
             'order_index' => $validated['order_index'] ?? ($level->resources()->max('order_index') + 1),
             'is_active' => true,
@@ -218,7 +243,7 @@ class LevelResourceController extends Controller
 
         // توافق تلقائي: إذا كان كتاباً يضاف أيضاً إلى جدول books
         if ($resource->type === 'book' && $filePath) {
-            \App\Models\Book::firstOrCreate(
+            Book::firstOrCreate(
                 ['level_id' => $level->id, 'title' => $resource->title],
                 [
                     'description' => $resource->description,
@@ -235,7 +260,7 @@ class LevelResourceController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->hasPermission('upload_level_resources') && !$user->hasPermission('manage_courses')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('upload_level_resources') && ! $user->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل موارد المناهج.');
         }
 
@@ -246,19 +271,34 @@ class LevelResourceController extends Controller
             'type' => 'required|in:book,audio,video,worksheet,quiz,image',
             'description' => 'nullable|string',
             'external_url' => 'nullable|url|max:500',
-            'duration_minutes' => 'nullable|integer|min:1|max:600',
+            'duration_hours' => 'nullable|numeric|min:0.01|max:1000',
+            'duration_minutes' => 'nullable|integer|min:1|max:60000',
             'exam_id' => 'nullable|exists:exams,id',
             'order_index' => 'nullable|integer|min:1',
             'is_active' => 'nullable|boolean',
             'attachment' => 'nullable|file|max:102400',
         ]);
 
+        $durationHours = $resource->duration_hours;
+        $durationMinutes = $resource->duration_minutes;
+        if ($request->filled('duration_hours')) {
+            $durationHours = round((float) $request->input('duration_hours'), 2);
+            $durationMinutes = (int) round($durationHours * 60);
+        } elseif ($request->filled('duration_minutes')) {
+            $durationMinutes = (int) $request->input('duration_minutes');
+            $durationHours = round($durationMinutes / 60.0, 2);
+        } elseif ($request->has('duration_hours') || $request->has('duration_minutes')) {
+            $durationHours = null;
+            $durationMinutes = null;
+        }
+
         $data = [
             'title' => $validated['title'],
             'type' => $validated['type'],
             'description' => $validated['description'] ?? null,
             'external_url' => $validated['external_url'] ?? null,
-            'duration_minutes' => $validated['duration_minutes'] ?? null,
+            'duration_hours' => $durationHours,
+            'duration_minutes' => $durationMinutes,
             'exam_id' => $validated['exam_id'] ?? null,
             'order_index' => $validated['order_index'] ?? $resource->order_index,
             'is_active' => $request->has('is_active') ? (bool) $request->is_active : $resource->is_active,
@@ -276,16 +316,16 @@ class LevelResourceController extends Controller
             $sizeBytes = $file->getSize();
 
             if ($sizeBytes >= 1048576) {
-                $fileSize = round($sizeBytes / 1048576, 1) . ' MB';
+                $fileSize = round($sizeBytes / 1048576, 1).' MB';
             } else {
-                $fileSize = round($sizeBytes / 1024, 0) . ' KB';
+                $fileSize = round($sizeBytes / 1024, 0).' KB';
             }
 
-            $uniqueName = 'lvl_' . $resource->level_id . '_' . time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $extension;
+            $uniqueName = 'lvl_'.$resource->level_id.'_'.time().'_'.Str::slug(pathinfo($originalName, PATHINFO_FILENAME)).'.'.$extension;
             $destinationPath = public_path('uploads/level_resources');
             $file->move($destinationPath, $uniqueName);
 
-            $data['file_path'] = 'uploads/level_resources/' . $uniqueName;
+            $data['file_path'] = 'uploads/level_resources/'.$uniqueName;
             $data['file_name'] = $originalName;
             $data['file_size'] = $fileSize;
         }
@@ -299,7 +339,7 @@ class LevelResourceController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !$user->hasPermission('upload_level_resources') && !$user->hasPermission('manage_courses')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('upload_level_resources') && ! $user->hasPermission('manage_courses')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية حذف موارد المناهج.');
         }
 
@@ -340,7 +380,7 @@ class LevelResourceController extends Controller
             || $group->supervisors->contains('id', $user->id)
             || $user->hasPermission('share_group_resources');
 
-        if (!$canShare) {
+        if (! $canShare) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية مشاركة الموارد في هذه المجموعة الدراسية.');
         }
 
@@ -390,7 +430,7 @@ class LevelResourceController extends Controller
             || $user->id === $group->supervisor_id
             || $user->hasPermission('share_group_resources');
 
-        if (!$canUnshare) {
+        if (! $canUnshare) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إلغاء مشاركة هذا المورد.');
         }
 
@@ -400,6 +440,7 @@ class LevelResourceController extends Controller
 
         if ($activity) {
             $activity->delete();
+
             return back()->with('success', 'تمت إزالة المورد من هذه المجموعة بنجاح.');
         }
 

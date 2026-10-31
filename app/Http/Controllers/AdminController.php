@@ -19,6 +19,7 @@ use App\Models\SystemAuditLog;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\WhatsAppService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -894,6 +895,45 @@ class AdminController extends Controller
         return back()->with('success', "تم تحديث بيانات وتسعيرة الدورة [{$course->name}] بنجاح.");
     }
 
+    public function destroyCourse(int|string $id): RedirectResponse
+    {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses')) {
+            return back()->with('error', 'عذراً، ليس لديك صلاحية حذف الدورات التعليمية.');
+        }
+
+        $course = Course::withCount(['resources', 'studyGroups'])->findOrFail($id);
+
+        if ($course->resources_count > 0) {
+            return back()->with('error', "لا يمكن حذف الدورة [{$course->name}] لاحتوائها على ({$course->resources_count}) مورد تعليمي في بنك مناهج الدورة. يرجى حذف الموارد أولاً.");
+        }
+
+        if ($course->study_groups_count > 0) {
+            return back()->with('error', "لا يمكن حذف الدورة [{$course->name}] لوجود ({$course->study_groups_count}) مجموعة دراسية مرتبطة بها.");
+        }
+
+        if ($course->certificates()->exists() || $course->studentGrades()->exists()) {
+            return back()->with('error', "لا يمكن حذف الدورة [{$course->name}] لوجود شهادات أو درجات طلاب مسجلة عليها.");
+        }
+
+        if ($course->exams()->exists()) {
+            return back()->with('error', "لا يمكن حذف الدورة [{$course->name}] لوجود اختبارات مرتبطة بها.");
+        }
+
+        $courseName = $course->name;
+        $levelName = $course->level?->name;
+
+        SystemAuditLog::record(
+            'course.delete',
+            "حذف الدورة التعليمية: [{$courseName}] من المستوى [{$levelName}]",
+            $course,
+            ['course_id' => $course->id, 'name' => $courseName, 'level_id' => $course->level_id]
+        );
+
+        $course->delete();
+
+        return back()->with('success', "تم حذف الدورة التعليمية [{$courseName}] بنجاح.");
+    }
+
     public function storeLevel(Request $request)
     {
         if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses')) {
@@ -993,6 +1033,48 @@ class AdminController extends Controller
         }
 
         return back()->with('success', "تم تحديث رسوم وبيانات المستوى [{$fullName}] بنجاح.");
+    }
+
+    public function destroyLevel(int|string $id): RedirectResponse
+    {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_courses')) {
+            return back()->with('error', 'عذراً، ليس لديك صلاحية حذف المستويات الأكاديمية.');
+        }
+
+        $level = Level::withCount(['courses', 'resources'])->findOrFail($id);
+
+        if ($level->courses_count > 0) {
+            return back()->with('error', "لا يمكن حذف المستوى الأكاديمي [{$level->name}] لوجود ({$level->courses_count}) دورة مسجلة به. يجب أن يكون المستوى فارغاً تماماً من الدورات ليتم حذفه.");
+        }
+
+        if ($level->resources_count > 0) {
+            return back()->with('error', "لا يمكن حذف المستوى الأكاديمي [{$level->name}] لوجود ({$level->resources_count}) مورد تعليمي في بنك المستوى.");
+        }
+
+        if (StudyGroup::where('level_id', $level->id)->exists()) {
+            return back()->with('error', "لا يمكن حذف المستوى [{$level->name}] لوجود مجموعات دراسية مرتبطة به.");
+        }
+
+        if (StudentEnrollment::where('level_id', $level->id)->exists()) {
+            return back()->with('error', "لا يمكن حذف المستوى [{$level->name}] لوجود تسجيلات طلاب سابقة مرتبطة به.");
+        }
+
+        if (Lesson::where('level_id', $level->id)->exists()) {
+            return back()->with('error', "لا يمكن حذف المستوى [{$level->name}] لوجود حصص دراسية مسجلة به.");
+        }
+
+        $levelName = $level->name;
+
+        SystemAuditLog::record(
+            'level.delete',
+            "حذف المستوى الأكاديمي: [{$levelName}] (كود: #{$level->id})",
+            $level,
+            ['level_id' => $level->id, 'name' => $levelName]
+        );
+
+        $level->delete();
+
+        return back()->with('success', "تم حذف المستوى الأكاديمي [{$levelName}] بنجاح.");
     }
 
     public function storeLesson(Request $request)

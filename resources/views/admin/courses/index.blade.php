@@ -218,6 +218,17 @@
                                     <span>تعديل السعر</span>
                                 </button>
 
+                                @if($lvl->courses->count() === 0)
+                                    <form action="{{ route('admin.levels.destroy', $lvl->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا المستوى الأكاديمي [{{ addslashes($lvl->name_en ?: $lvl->name) }}] نهائياً؟');" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-2.5 py-2 bg-rose-600/80 hover:bg-rose-700 text-white font-bold rounded-xl text-xs border border-rose-500/50 transition flex items-center gap-1 shadow-2xs cursor-pointer" title="حذف المستوى لعدم وجود دورات">
+                                            <span>🗑️</span>
+                                            <span>حذف المستوى</span>
+                                        </button>
+                                    </form>
+                                @endif
+
                                 <!-- زر العرض / الإخفاء في نهاية شريط المستوى بناءً على طلب المستخدم -->
                                 <button type="button" onclick="toggleLevelCourses({{ $lvl->id }})" id="btn-toggle-lvl-{{ $lvl->id }}" class="px-3.5 py-2 bg-[#002b45] hover:bg-[#001f33] text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer border border-white/20">
                                     <span id="txt-toggle-lvl-{{ $lvl->id }}">عرض الدورات ({{ $lvl->courses->count() }})</span>
@@ -331,6 +342,18 @@
                                                 <span>✏️</span>
                                                 <span>تعديل السعر والساعات</span>
                                             </button>
+
+                                            <!-- زر حذف الدورة إن لم يكن بها أي موارد -->
+                                            @if($crsTotalRes === 0)
+                                                <form action="{{ route('admin.courses.destroy', $crs->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذه الدورة [{{ addslashes($crs->name_en ?: $crs->name_ar) }}] نهائياً؟');" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="px-2.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition flex items-center gap-1 shadow-2xs cursor-pointer" title="حذف الدورة لعدم وجود موارد">
+                                                        <span>🗑️</span>
+                                                        <span>حذف الدورة</span>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </div>
 

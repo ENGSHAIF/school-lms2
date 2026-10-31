@@ -16,6 +16,7 @@ class LevelResource extends Model
         'file_name',
         'file_size',
         'external_url',
+        'duration_hours',
         'duration_minutes',
         'exam_id',
         'order_index',
@@ -25,9 +26,34 @@ class LevelResource extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'duration_hours' => 'decimal:2',
         'duration_minutes' => 'integer',
         'order_index' => 'integer',
     ];
+
+    public function getFormattedDurationAttribute(): ?string
+    {
+        if ($this->duration_hours !== null && (float) $this->duration_hours > 0) {
+            $hrs = (float) $this->duration_hours;
+            $displayHrs = ($hrs == (int) $hrs) ? (int) $hrs : $hrs;
+
+            return $displayHrs.' ساعة';
+        }
+
+        if ($this->duration_minutes !== null && (int) $this->duration_minutes > 0) {
+            $mins = (int) $this->duration_minutes;
+            if ($mins >= 60) {
+                $hrs = round($mins / 60, 1);
+                $displayHrs = ($hrs == (int) $hrs) ? (int) $hrs : $hrs;
+
+                return $displayHrs.' ساعة';
+            }
+
+            return $mins.' دقيقة';
+        }
+
+        return null;
+    }
 
     public function course()
     {
