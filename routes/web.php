@@ -11,6 +11,7 @@ use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\CashBoxController;
 use App\Http\Controllers\ChartOfAccountsController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\ClassroomRealtimeController;
 use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ExamManagementController;
@@ -107,6 +108,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/classroom/{roomId}/status', [BookingController::class, 'checkStatus'])->name('classroom.status');
     Route::post('/classroom/booking/{bookingId}/toggle-live', [BookingController::class, 'toggleBookingLive'])->name('classroom.booking.toggle_live');
     Route::post('/classroom/{bookingId}/report', [BookingController::class, 'submitReport'])->name('classroom.report.submit');
+
+    // مسارات الربط اللحظي للفصل التفاعلي (الصوت الحي، الفيديو، نبضات الحضور، والدردشة المتزامنة)
+    Route::post('/classroom/{roomId}/sync', [ClassroomRealtimeController::class, 'sync'])->name('classroom.sync');
+    Route::post('/classroom/{roomId}/signal', [ClassroomRealtimeController::class, 'sendSignal'])->name('classroom.signal');
+    Route::post('/classroom/{roomId}/messages', [ClassroomRealtimeController::class, 'sendMessage'])->name('classroom.message');
+    Route::post('/classroom/{roomId}/hand', [ClassroomRealtimeController::class, 'toggleHand'])->name('classroom.hand');
+    Route::post('/classroom/{roomId}/controls', [ClassroomRealtimeController::class, 'updateControls'])->name('classroom.controls');
     Route::get('/packages', [PackageController::class, 'index'])->name('packages.index');
     Route::post('/packages/subscribe', [PackageController::class, 'subscribe'])->name('packages.subscribe');
 
