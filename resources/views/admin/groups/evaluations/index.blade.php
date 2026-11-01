@@ -388,6 +388,11 @@
                                         <span class="text-[11px] text-slate-500 block mt-0.5">
                                             المعلم: <strong class="text-slate-700">{{ $session->teacher?->name }}</strong> • 
                                             التاريخ: <strong class="text-slate-700 font-mono">{{ $session->session_date->format('Y-m-d') }}</strong>
+                                            @if($session->evaluator_name)
+                                                • <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 font-bold border border-purple-200 text-[10px]">
+                                                    👤 المقيم: {{ $session->evaluator_name }} ({{ $session->evaluator_role ?: 'معلم' }})
+                                                </span>
+                                            @endif
                                         </span>
                                     </div>
                                 </div>

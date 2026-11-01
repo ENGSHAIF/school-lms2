@@ -13,10 +13,15 @@
                 <span class="text-xs text-amber-400 font-bold font-mono">حصة رقم #{{ $session->session_number }}</span>
             </div>
             <h1 class="text-xl sm:text-2xl font-black">{{ $session->lesson_topic }}</h1>
-            <p class="text-xs text-slate-300 mt-1">
-                المجموعة: <strong class="text-white">{{ $session->group?->name }}</strong> • 
-                المعلم: <strong class="text-indigo-300">{{ $session->teacher?->name }}</strong> • 
-                التاريخ: <strong class="text-amber-300 font-mono">{{ $session->session_date->format('Y-m-d') }}</strong>
+            <p class="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span>المجموعة: <strong class="text-white">{{ $session->group?->name }}</strong></span> • 
+                <span>المعلم: <strong class="text-indigo-300">{{ $session->teacher?->name }}</strong></span> • 
+                <span>التاريخ: <strong class="text-amber-300 font-mono">{{ $session->session_date->format('Y-m-d') }}</strong></span>
+                @if($session->evaluator_name)
+                    • <span class="bg-indigo-500/30 text-amber-300 px-2.5 py-0.5 rounded-lg border border-indigo-400/30 font-bold">
+                        👤 المقيم المعتمد: {{ $session->evaluator_name }} ({{ $session->evaluator_role ?: 'معلم' }})
+                    </span>
+                @endif
             </p>
         </div>
 
@@ -126,11 +131,22 @@
         @endif
     </div>
 
-    <!-- جدول تقييم ومشاركات الطلاب الفردية -->
+    <!-- جدول تقييم ومشاركات الطلاب الفردية (التقييم المزدوج) -->
     <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-4">
-        <h3 class="text-sm font-black text-slate-900 border-b border-slate-100 pb-3">
-            كشف حضور وتقييم طلاب المجموعة في هذه الجلسة
-        </h3>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+            <div>
+                <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+                    <span>⚖️</span>
+                    <span>كشف التقييم المزدوج: تقييم النظام الآلي 🤖 مقابل تقييم المعلم المستقل 👨‍🏫</span>
+                </h3>
+                <span class="text-xs text-slate-400">تقييم موضوعي آلي مستند لنشاط الحضور والصوت والشات والتسليم + تقييم المعلم التربوي</span>
+            </div>
+            @if($session->evaluator_name)
+                <span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl">
+                    المسؤول عن الرصد: <strong>{{ $session->evaluator_name }}</strong> ({{ $session->evaluator_role ?: 'معلم' }})
+                </span>
+            @endif
+        </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-right text-xs">
@@ -138,13 +154,17 @@
                     <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold">
                         <th class="py-3 px-3">الطالب</th>
                         <th class="py-3 px-3 text-center">حالة الحضور</th>
-                        <th class="py-3 px-3 text-center">المشاركة (5)</th>
-                        <th class="py-3 px-3 text-center">الاستيعاب (5)</th>
-                        <th class="py-3 px-3 text-center">الواجب (5)</th>
-                        <th class="py-3 px-3 text-center">نوع التفاعل</th>
-                        <th class="py-3 px-3 text-center">النجوم الممنوحة</th>
-                        <th class="py-3 px-3 text-center">الدرجة المحسوبة</th>
-                        <th class="py-3 px-3">ملاحظة المعلم</th>
+                        <th class="py-3 px-3 text-center bg-indigo-50/70 text-indigo-950 border-x border-indigo-100">
+                            تقييم النظام الآلي (100) 🤖
+                            <span class="block text-[9px] font-normal text-indigo-700">حضور (25) + صوت (25) + شات (25) + واجب (25)</span>
+                        </th>
+                        <th class="py-3 px-3 text-center bg-emerald-50/70 text-emerald-950 border-r border-emerald-100">
+                            تقييم المعلم المستقل (100) 👨‍🏫
+                            <span class="block text-[9px] font-normal text-emerald-700">مشاركة (5) + فهم (5) + واجب (5)</span>
+                        </th>
+                        <th class="py-3 px-3 text-center">النجوم ⭐</th>
+                        <th class="py-3 px-3 text-center">الدرجة المعتمدة</th>
+                        <th class="py-3 px-3">ملاحظات النظام والمعلم</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -161,22 +181,48 @@
                                     {{ $ev->attendance_label }}
                                 </span>
                             </td>
-                            <td class="py-3 px-3 text-center font-mono font-bold">{{ $ev->participation_score }}/5</td>
-                            <td class="py-3 px-3 text-center font-mono font-bold">{{ $ev->understanding_score }}/5</td>
-                            <td class="py-3 px-3 text-center font-mono font-bold">{{ $ev->homework_score }}/5</td>
-                            <td class="py-3 px-3 text-center text-[11px] text-slate-600">
-                                {{ $ev->spoke_voice ? '🎙️ صوت' : '' }}
-                                {{ $ev->wrote_chat ? '💬 شات' : '' }}
-                                {{ $ev->submitted_task ? '📝 واجب' : '' }}
+
+                            <!-- تقييم النظام التلقائي -->
+                            <td class="py-3 px-3 text-center bg-indigo-50/30 border-x border-indigo-100">
+                                <span class="text-sm font-black font-mono text-indigo-700 block">
+                                    {{ $ev->system_total_score ?? 0 }}%
+                                </span>
+                                <div class="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 font-mono mt-0.5">
+                                    <span title="حضور">📍{{ $ev->system_attendance_score ?? 0 }}</span>
+                                    <span title="مشاركة صوتية">🎙️{{ $ev->system_voice_score ?? 0 }}</span>
+                                    <span title="تفاعل كتابي">💬{{ $ev->system_chat_score ?? 0 }}</span>
+                                    <span title="تسليم تكليف">📝{{ $ev->system_task_score ?? 0 }}</span>
+                                </div>
                             </td>
+
+                            <!-- تقييم المعلم المستقل -->
+                            <td class="py-3 px-3 text-center bg-emerald-50/30 border-r border-emerald-100">
+                                <span class="text-sm font-black font-mono text-emerald-700 block">
+                                    {{ $ev->teacher_total_score ?? $ev->daily_total_score }}%
+                                </span>
+                                <span class="text-[10px] text-slate-500 font-mono block mt-0.5">
+                                    م: {{ $ev->participation_score }}/5 • ف: {{ $ev->understanding_score }}/5 • و: {{ $ev->homework_score }}/5
+                                </span>
+                            </td>
+
                             <td class="py-3 px-3 text-center font-mono font-black text-amber-500">
                                 ⭐ {{ $ev->stars_awarded }}
                             </td>
-                            <td class="py-3 px-3 text-center font-mono font-bold text-indigo-700">
+                            <td class="py-3 px-3 text-center font-mono font-black text-slate-900 text-sm">
                                 {{ $ev->daily_total_score }}%
                             </td>
-                            <td class="py-3 px-3 text-slate-500 text-[11px]">
-                                {{ $ev->teacher_notes ?: '-' }}
+                            <td class="py-3 px-3 text-slate-600 text-[11px] space-y-1">
+                                @if($ev->teacher_notes)
+                                    <div><strong class="text-slate-700">المعلم:</strong> {{ $ev->teacher_notes }}</div>
+                                @endif
+                                @if($ev->system_notes)
+                                    <div class="text-[10px] text-indigo-700 font-mono bg-indigo-50/60 p-1 rounded border border-indigo-100">
+                                        {{ $ev->system_notes }}
+                                    </div>
+                                @endif
+                                @if(!$ev->teacher_notes && !$ev->system_notes)
+                                    <span class="text-slate-400">-</span>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

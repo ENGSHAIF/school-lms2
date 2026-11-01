@@ -10,16 +10,26 @@ class GroupStudentEvaluation extends Model
         'group_session_id',
         'study_group_id',
         'student_id',
+        'evaluator_id',
+        'evaluator_name',
+        'evaluator_role',
         'attendance_status',
         'participation_score',
         'understanding_score',
         'homework_score',
+        'system_attendance_score',
+        'system_voice_score',
+        'system_chat_score',
+        'system_task_score',
+        'system_total_score',
+        'teacher_total_score',
         'spoke_voice',
         'wrote_chat',
         'submitted_task',
         'stars_awarded',
         'daily_total_score',
         'teacher_notes',
+        'system_notes',
     ];
 
     protected $casts = [
@@ -27,7 +37,18 @@ class GroupStudentEvaluation extends Model
         'wrote_chat' => 'boolean',
         'submitted_task' => 'boolean',
         'daily_total_score' => 'float',
+        'system_attendance_score' => 'float',
+        'system_voice_score' => 'float',
+        'system_chat_score' => 'float',
+        'system_task_score' => 'float',
+        'system_total_score' => 'float',
+        'teacher_total_score' => 'float',
     ];
+
+    public function evaluator()
+    {
+        return $this->belongsTo(User::class, 'evaluator_id');
+    }
 
     public function session()
     {

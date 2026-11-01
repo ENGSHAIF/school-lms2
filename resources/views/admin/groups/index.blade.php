@@ -452,6 +452,12 @@
                             </a>
                         </div>
 
+                        <!-- زر لوحة تحكم المجموعة وبطاقات الطلاب التفاعلية -->
+                        <a href="{{ route('admin.groups.dashboard', $grp->id) }}" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 hover:from-slate-800 hover:to-indigo-900 text-white font-black text-xs shadow-md transition flex items-center justify-center gap-2">
+                            <span>🎛️</span>
+                            <span>لوحة تحكم المجموعة وبطاقات الطلاب</span>
+                        </a>
+
                         <!-- تحكم الإدارة في فتح وإغلاق واعتماد البث الحي -->
                         @if($grp->isPendingApproval())
                             <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-2xl space-y-2">

@@ -27,6 +27,9 @@ class GroupSession extends Model
         'excused_count',
         'attendance_rate',
         'general_notes',
+        'evaluated_by',
+        'evaluator_name',
+        'evaluator_role',
     ];
 
     protected $casts = [
@@ -42,6 +45,11 @@ class GroupSession extends Model
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    public function evaluator()
+    {
+        return $this->belongsTo(User::class, 'evaluated_by');
     }
 
     public function evaluations()

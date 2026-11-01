@@ -110,7 +110,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/classroom/{bookingId}/report', [BookingController::class, 'submitReport'])->name('classroom.report.submit');
 
     // مسارات الربط اللحظي للفصل التفاعلي (الصوت الحي، الفيديو، نبضات الحضور، والدردشة المتزامنة)
-    Route::post('/classroom/{roomId}/sync', [ClassroomRealtimeController::class, 'sync'])->name('classroom.sync');
+    Route::match(['get', 'post'], '/classroom/{roomId}/sync', [ClassroomRealtimeController::class, 'sync'])->name('classroom.sync');
     Route::post('/classroom/{roomId}/signal', [ClassroomRealtimeController::class, 'sendSignal'])->name('classroom.signal');
     Route::post('/classroom/{roomId}/messages', [ClassroomRealtimeController::class, 'sendMessage'])->name('classroom.message');
     Route::post('/classroom/{roomId}/hand', [ClassroomRealtimeController::class, 'toggleHand'])->name('classroom.hand');
@@ -247,6 +247,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/admin/groups/{groupId}/students/{studentId}', [StudyGroupController::class, 'removeStudent'])->name('admin.groups.students.remove');
         Route::post('/admin/groups/{groupId}/students/{studentId}/transfer', [StudyGroupController::class, 'transferStudent'])->name('admin.groups.students.transfer');
         Route::delete('/admin/groups/{id}', [StudyGroupController::class, 'destroy'])->name('admin.groups.destroy');
+        Route::get('/admin/groups/{groupId}/dashboard', [StudyGroupController::class, 'dashboard'])->name('admin.groups.dashboard');
+        Route::post('/admin/groups/{groupId}/students/{studentId}/stars', [StudyGroupController::class, 'updateStudentStars'])->name('admin.groups.students.stars');
+        Route::post('/admin/groups/{groupId}/students/{studentId}/toggle-mute', [StudyGroupController::class, 'toggleStudentLiveMute'])->name('admin.groups.students.toggle_mute');
 
         // 3.2.1 تقييمات وحضور ومشاركات المجموعات الدراسية (Group Evaluations, Attendance & Diploma Grading)
         Route::get('/admin/groups/evaluations', [GroupEvaluationController::class, 'index'])->name('admin.groups.evaluations.index');

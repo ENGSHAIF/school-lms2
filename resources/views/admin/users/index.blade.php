@@ -592,6 +592,12 @@
                                             @if($user->birth_date)
                                                 <span class="text-[10px] text-slate-400 block">🎂 {{ $user->birth_date->format('Y-m-d') }} ({{ $user->age }} سنة)</span>
                                             @endif
+                                            @if($user->studentProfile?->parent)
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-lg mt-0.5" title="ولي أمر الطالب المعتمد">
+                                                    <span>👨‍👧‍👦 ولي الأمر:</span>
+                                                    <span>{{ $user->studentProfile->parent->name }}</span>
+                                                </span>
+                                            @endif
                                             @if($user->must_change_password)
                                                 <span class="inline-flex items-center gap-1 text-[9px] font-black text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded mt-0.5">
                                                     ⚠️ ملزم بتغيير كلمة المرور
@@ -1175,6 +1181,38 @@
                             <option value="suspended">موقوف ومعطل (Suspended)</option>
                         </select>
                     </div>
+
+                    <!-- قسم تحديد والبحث عن ولي أمر الطالب (يتفعل تلقائياً عند اختيار دور: طالب) -->
+                    <div id="addStudentParentSection" class="hidden p-4 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border border-purple-200/90 space-y-2.5 col-span-1 sm:col-span-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                            <label class="block font-black text-purple-950 text-xs flex items-center gap-1.5">
+                                <span>👨‍👧‍👦</span>
+                                <span>تحديد والبحث عن ولي أمر الطالب (اختياري - في حال كان مضافاً بالنظام):</span>
+                            </label>
+                            <span class="text-[10px] text-purple-700 font-bold bg-white px-2.5 py-0.5 rounded-full border border-purple-200 shadow-2xs">
+                                ⚡ ربط مباشر بحساب ولي الأمر
+                            </span>
+                        </div>
+
+                        <!-- حقل البحث والتصفية الفورية السريعة لأولياء الأمور -->
+                        <div class="relative">
+                            <input type="text" id="addParentFilterInput" onkeyup="filterParentOptions('add')" placeholder="🔍 ابحث بالاسم أو كود ولي الأمر أو الهاتف لتصفية القائمة أدناه..."
+                                class="w-full px-3.5 py-2 rounded-xl border border-purple-300 text-xs bg-white focus:ring-2 focus:ring-purple-400 outline-none placeholder:text-slate-400 shadow-2xs">
+                        </div>
+
+                        <!-- قائمة أولياء الأمور المسجلين بالنظام -->
+                        <select name="parent_id" id="addParentSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-purple-300 focus:ring-2 focus:ring-purple-500 outline-none bg-white font-bold text-xs truncate shadow-2xs">
+                            <option value="">-- بدون ربط ولي أمر حالياً (يمكن تحديده لاحقاً) --</option>
+                            @foreach($allParents as $parent)
+                                <option value="{{ $parent->id }}" data-search="{{ mb_strtolower($parent->name . ' ' . ($parent->name_en ?? '') . ' ' . ($parent->user_code ?? '') . ' ' . ($parent->phone_whatsapp ?? '')) }}">
+                                    👨‍👧‍👦 {{ $parent->name }} @if($parent->name_en)({{ $parent->name_en }})@endif • [كود: {{ $parent->user_code }}] {{ $parent->phone_whatsapp ? '• ' . $parent->phone_whatsapp : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-[11px] text-purple-900 font-medium leading-relaxed">
+                            💡 سيتم ربط هذا الطالب تلقائياً بحساب ولي الأمر المختار، ليتمكن ولي الأمر من متابعة درجاته وحصصه وسنداته من بوابته الخاصة.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- إجبار تغيير كلمة المرور عند أول دخول -->
@@ -1347,6 +1385,35 @@
                         <select name="status" id="editStatusSelect" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
                             <option value="active">نشط ومفعل (Active)</option>
                             <option value="suspended">موقوف ومعطل (Suspended)</option>
+                        </select>
+                    </div>
+
+                    <!-- قسم تعديل وتحديد ولي أمر الطالب (يتفعل للطلاب فقط) -->
+                    <div id="editStudentParentSection" class="hidden p-4 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border border-purple-200/90 space-y-2.5 col-span-1 sm:col-span-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                            <label class="block font-black text-purple-950 text-xs flex items-center gap-1.5">
+                                <span>👨‍👧‍👦</span>
+                                <span>تحديد والبحث عن ولي أمر الطالب:</span>
+                            </label>
+                            <span class="text-[10px] text-purple-700 font-bold bg-white px-2.5 py-0.5 rounded-full border border-purple-200 shadow-2xs">
+                                ربط مباشر بحساب ولي الأمر
+                            </span>
+                        </div>
+
+                        <!-- حقل البحث والتصفية الفورية السريعة لأولياء الأمور -->
+                        <div class="relative">
+                            <input type="text" id="editParentFilterInput" onkeyup="filterParentOptions('edit')" placeholder="🔍 ابحث بالاسم أو كود ولي الأمر أو الهاتف لتصفية القائمة أدناه..."
+                                class="w-full px-3.5 py-2 rounded-xl border border-purple-300 text-xs bg-white focus:ring-2 focus:ring-purple-400 outline-none placeholder:text-slate-400 shadow-2xs">
+                        </div>
+
+                        <!-- قائمة أولياء الأمور المسجلين بالنظام -->
+                        <select name="parent_id" id="editParentSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-purple-300 focus:ring-2 focus:ring-purple-500 outline-none bg-white font-bold text-xs truncate shadow-2xs">
+                            <option value="">-- بدون ربط ولي أمر (إلغاء الربط أو تركه منفرداً) --</option>
+                            @foreach($allParents as $parent)
+                                <option value="{{ $parent->id }}" data-search="{{ mb_strtolower($parent->name . ' ' . ($parent->name_en ?? '') . ' ' . ($parent->user_code ?? '') . ' ' . ($parent->phone_whatsapp ?? '')) }}">
+                                    👨‍👧‍👦 {{ $parent->name }} @if($parent->name_en)({{ $parent->name_en }})@endif • [كود: {{ $parent->user_code }}] {{ $parent->phone_whatsapp ? '• ' . $parent->phone_whatsapp : '' }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -1917,6 +1984,12 @@
             }
         }
 
+        // ضبط ولي أمر الطالب إن وُجد
+        const editParentSelect = document.getElementById('editParentSelect');
+        if (editParentSelect) {
+            editParentSelect.value = user.student_profile ? (user.student_profile.parent_id || '') : '';
+        }
+
         onRoleChange(user.role, 'edit');
         document.getElementById('editUserModal').classList.remove('hidden');
     }
@@ -1980,13 +2053,42 @@
 
     function onRoleChange(role, prefix) {
         const sec = document.getElementById(prefix + 'PermissionsSection');
-        if (!sec) return;
+        if (sec) {
+            if (role === 'student' || role === 'parent') {
+                sec.classList.add('opacity-40', 'pointer-events-none');
+            } else {
+                sec.classList.remove('opacity-40', 'pointer-events-none');
+            }
+        }
 
-        // للأدوار غير الإدارية، يمكن إخفاء الصلاحيات لتوفير المساحة
-        if (role === 'student' || role === 'parent') {
-            sec.classList.add('opacity-40', 'pointer-events-none');
-        } else {
-            sec.classList.remove('opacity-40', 'pointer-events-none');
+        // تفعيل أو إخفاء قسم اختيار وبحث ولي أمر الطالب
+        const parentSec = document.getElementById(prefix + 'StudentParentSection');
+        if (parentSec) {
+            if (role === 'student') {
+                parentSec.classList.remove('hidden');
+            } else {
+                parentSec.classList.add('hidden');
+                const pSelect = document.getElementById(prefix + 'ParentSelect');
+                if (pSelect) pSelect.value = '';
+            }
+        }
+    }
+
+    function filterParentOptions(prefix) {
+        const input = document.getElementById(prefix + 'ParentFilterInput');
+        const select = document.getElementById(prefix + 'ParentSelect');
+        if (!input || !select) return;
+
+        const filter = input.value.toLowerCase().trim();
+        const options = select.options;
+
+        for (let i = 1; i < options.length; i++) {
+            const searchData = options[i].getAttribute('data-search') || options[i].text.toLowerCase();
+            if (searchData.includes(filter)) {
+                options[i].style.display = '';
+            } else {
+                options[i].style.display = 'none';
+            }
         }
     }
 

@@ -356,7 +356,7 @@ class AdminController extends Controller
             } elseif ($tab === 'teachers') {
                 $query->where('role', 'teacher')->with(['financialAccount', 'permissionGroup']);
             } elseif ($tab === 'students') {
-                $query->where('role', 'student')->with(['financialAccount', 'enrollments.level', 'permissionGroup']);
+                $query->where('role', 'student')->with(['financialAccount', 'enrollments.level', 'permissionGroup', 'studentProfile.parent']);
             } elseif ($tab === 'parents') {
                 $query->where('role', 'parent')->with([
                     'permissionGroup',
@@ -397,6 +397,11 @@ class AdminController extends Controller
             ->orderBy('name')
             ->get();
 
+        $allParents = User::where('role', 'parent')
+            ->select('id', 'name', 'name_en', 'user_code', 'phone_whatsapp')
+            ->orderBy('name')
+            ->get();
+
         $roleCounts = [
             'staff' => User::whereIn('role', ['admin', 'supervisor', 'accountant'])->count(),
             'teachers' => User::where('role', 'teacher')->count(),
@@ -410,7 +415,7 @@ class AdminController extends Controller
         $permissionGroups = PermissionGroup::withCount('users')->latest('is_system')->oldest('id')->get();
         $reviewerUser = User::where('email', 'demo.reviewer@asots.com')->first();
 
-        return view('admin.users.index', compact('users', 'passwordRequests', 'pendingResetCount', 'roleCounts', 'tab', 'search', 'availablePermissions', 'permissionGroups', 'selectedGroupId', 'allStudents', 'reviewerUser'));
+        return view('admin.users.index', compact('users', 'passwordRequests', 'pendingResetCount', 'roleCounts', 'tab', 'search', 'availablePermissions', 'permissionGroups', 'selectedGroupId', 'allStudents', 'allParents', 'reviewerUser'));
     }
 
     // 4. إضافة مستخدم أو موظف جديد للنظام مع تحديد صلاحياته
@@ -429,6 +434,7 @@ class AdminController extends Controller
             'email' => 'nullable|email|max:255|unique:users,email',
             'phone_whatsapp' => 'required|string|max:30',
             'role' => 'required|string|in:teacher,student,supervisor,accountant,parent,admin',
+            'parent_id' => 'nullable|exists:users,id',
             'permission_group_id' => 'nullable|exists:permission_groups,id',
             'password' => 'required|string|min:6',
             'status' => 'nullable|string|in:active,pending_approval,suspended,pending_test',
@@ -436,6 +442,7 @@ class AdminController extends Controller
             'permissions' => 'nullable|array',
         ], [
             'gender.required' => 'يرجى تحديد الجنس (ذكر أو أنثى).',
+            'parent_id.exists' => 'ولي الأمر المختار غير موجود في النظام.',
         ]);
 
         $status = $validated['status'] ?? 'active';
@@ -491,6 +498,25 @@ class AdminController extends Controller
                 'current_balance' => 0.00,
                 'currency' => 'YER',
             ]);
+
+            // ربط الطالب بحساب ولي أمره فورياً إن تم تحديده
+            if (! empty($validated['parent_id'])) {
+                $parentUser = User::where('id', $validated['parent_id'])->where('role', 'parent')->first();
+                if ($parentUser) {
+                    $profile = StudentProfile::firstOrCreate(['user_id' => $user->id]);
+                    $profile->update(['parent_id' => $parentUser->id]);
+
+                    SystemAuditLog::record(
+                        'parent_student_link',
+                        "تم ربط الطالب الجديد [{$user->name}] (كود: {$user->user_code}) بحساب ولي الأمر [{$parentUser->name}] (كود: {$parentUser->user_code}) أثناء التسجيل",
+                        $parentUser,
+                        [
+                            'parent_id' => $parentUser->id,
+                            'student_id' => $user->id,
+                        ]
+                    );
+                }
+            }
         } elseif ($validated['role'] === 'teacher') {
             FinancialAccount::create([
                 'user_id' => $user->id,
@@ -553,6 +579,7 @@ class AdminController extends Controller
             'email' => 'nullable|email|max:255|unique:users,email,'.$user->id,
             'phone_whatsapp' => 'required|string|max:30',
             'role' => 'required|string|in:teacher,student,supervisor,accountant,parent,admin',
+            'parent_id' => 'nullable|exists:users,id',
             'permission_group_id' => 'nullable|exists:permission_groups,id',
             'status' => 'required|string|in:active,pending_approval,suspended,pending_test',
             'password' => 'nullable|string|min:6',
@@ -560,6 +587,7 @@ class AdminController extends Controller
             'permissions' => 'nullable|array',
         ], [
             'gender.required' => 'يرجى تحديد الجنس (ذكر أو أنثى).',
+            'parent_id.exists' => 'ولي الأمر المختار غير موجود في النظام.',
         ]);
 
         $permissionGroupId = ! empty($validated['permission_group_id']) ? $validated['permission_group_id'] : null;
@@ -605,6 +633,27 @@ class AdminController extends Controller
         }
 
         $user->update($data);
+
+        // تحديث ربط ولي الأمر إذا كان المستخدم طالباً
+        if ($user->role === 'student' || $validated['role'] === 'student') {
+            $newParentId = ! empty($validated['parent_id']) ? $validated['parent_id'] : null;
+            $profile = StudentProfile::firstOrCreate(['user_id' => $user->id]);
+            if ($profile->parent_id != $newParentId) {
+                $oldParentId = $profile->parent_id;
+                $profile->update(['parent_id' => $newParentId]);
+
+                SystemAuditLog::record(
+                    'parent_student_link_update',
+                    "تم تحديث ربط ولي الأمر للطالب [{$user->name}] (كود: {$user->user_code})",
+                    $user,
+                    [
+                        'student_id' => $user->id,
+                        'old_parent_id' => $oldParentId,
+                        'new_parent_id' => $newParentId,
+                    ]
+                );
+            }
+        }
 
         return back()->with('success', "تم تحديث بيانات وصلاحيات المستخدم ({$user->name}) بنجاح.");
     }

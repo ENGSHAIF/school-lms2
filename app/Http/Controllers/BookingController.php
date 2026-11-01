@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\ClassroomMessage;
 use App\Models\FinancialAccount;
 use App\Models\LessonReport;
 use App\Models\StudentWallet;
@@ -124,7 +125,9 @@ class BookingController extends Controller
                 ]);
             }
 
-            return view('classroom.live', compact('booking', 'isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId'));
+            $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->orderBy('id')->get();
+
+            return view('classroom.live', compact('booking', 'isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId', 'chatMessages'));
         }
 
         // 2. فحص هل الغرفة خاصة بمجموعة دراسية جماعية (Study Group)
@@ -164,7 +167,9 @@ class BookingController extends Controller
                 ]);
             }
 
-            return view('classroom.live', compact('group', 'isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId'));
+            $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->orderBy('id')->get();
+
+            return view('classroom.live', compact('group', 'isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId', 'chatMessages'));
         }
 
         // 3. حالة تجريبية أو مباشرة للمدير والمعلم لضمان عدم ظهور أي خطأ
@@ -173,8 +178,9 @@ class BookingController extends Controller
         $teacher = $isTeacher ? $user : User::where('role', 'teacher')->first();
         $students = User::where('role', 'student')->take(5)->get();
         $isGroup = true;
+        $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->orderBy('id')->get();
 
-        return view('classroom.live', compact('isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId'));
+        return view('classroom.live', compact('isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId', 'chatMessages'));
     }
 
     // فحص حالة البث الحي للغرفة التفاعلية في الوقت الحقيقي (لإعادة توجيه الطلاب تلقائياً عند فتح البث)

@@ -217,10 +217,21 @@ class GroupEvaluationController extends Controller
             $effectivePresent = $presentCount + ($lateCount * 0.8) + ($excusedCount * 0.5);
             $attendanceRate = $totalStudents > 0 ? round(($effectivePresent / $totalStudents) * 100, 1) : 100.00;
 
+            // تحديد صفة المقيم الحالي
+            $evaluatorRole = match (true) {
+                $user->isAdmin() => 'مدير النظام',
+                $user->isSupervisor() => 'مشرف تربوي',
+                $user->isTeacher() => 'معلم المادة',
+                default => 'مسؤول تقييم',
+            };
+
             // 2. إنشاء الجلسة اليومية
             $session = GroupSession::create([
                 'study_group_id' => $group->id,
                 'teacher_id' => $user->isTeacher() ? $user->id : ($group->teacher_id ?: $user->id),
+                'evaluated_by' => $user->id,
+                'evaluator_name' => $user->name,
+                'evaluator_role' => $evaluatorRole,
                 'session_date' => $validated['session_date'],
                 'session_number' => $validated['session_number'],
                 'lesson_topic' => $validated['lesson_topic'],
@@ -241,7 +252,7 @@ class GroupEvaluationController extends Controller
                 'general_notes' => $validated['general_notes'] ?? null,
             ]);
 
-            // 3. تخزين تقييم كل طالب وتحديث رصيد النجوم
+            // 3. تخزين تقييم كل طالب (تقييم النظام الآلي + تقييم المعلم المستقل + هوية المقيم)
             foreach ($validated['evaluations'] as $studentId => $eval) {
                 $status = $eval['attendance_status'];
                 $partScore = $status === 'absent' ? 0 : ($eval['participation_score'] ?? 5);
@@ -249,36 +260,87 @@ class GroupEvaluationController extends Controller
                 $hwScore = $status === 'absent' ? 0 : ($eval['homework_score'] ?? 5);
                 $stars = $status === 'absent' ? 0 : intval($eval['stars_awarded'] ?? 0);
 
-                // حساب الدرجة اليومية المحسوبة من 100
-                $dailyScore = 0;
-                if ($status === 'present') {
-                    $dailyScore = (($partScore + $undScore + $hwScore) / 15) * 100;
-                } elseif ($status === 'late') {
-                    $dailyScore = ((($partScore + $undScore + $hwScore) / 15) * 100) * 0.85;
-                } elseif ($status === 'excused') {
-                    $dailyScore = 60.00;
-                } else {
-                    $dailyScore = 0.00;
-                }
-
                 $spokeVoice = $request->boolean("evaluations.{$studentId}.spoke_voice");
                 $wroteChat = $request->boolean("evaluations.{$studentId}.wrote_chat");
                 $submittedTask = $request->boolean("evaluations.{$studentId}.submitted_task");
+
+                // حساب درجات تقييم النظام التلقائي (من 100):
+                // 1) الحضور والمواظبة (25 درجة)
+                $sysAttendance = match ($status) {
+                    'present' => 25.00,
+                    'late' => 15.00,
+                    'excused' => 10.00,
+                    'absent' => 0.00,
+                    default => 25.00,
+                };
+
+                // 2) المشاركة الصوتية واللايف (25 درجة)
+                $sysVoice = ($status !== 'absent' && $spokeVoice) ? 25.00 : 0.00;
+
+                // 3) التفاعل الكتابي والدردشة (25 درجة)
+                $sysChat = ($status !== 'absent' && $wroteChat) ? 25.00 : 0.00;
+
+                // 4) تسليم الواجبات والتكاليف (25 درجة)
+                $sysTask = ($status !== 'absent' && $submittedTask) ? 25.00 : 0.00;
+
+                $sysTotal = round($sysAttendance + $sysVoice + $sysChat + $sysTask, 1);
+
+                // تقرير ملاحظات النظام الآلي
+                $sysNotesParts = [];
+                $sysNotesParts[] = match ($status) {
+                    'present' => 'حضور كامل (25/25)',
+                    'late' => 'حضور متأخر (15/25)',
+                    'excused' => 'غياب بعذر (10/25)',
+                    default => 'غياب تام (0/25)',
+                };
+                if ($sysVoice > 0) {
+                    $sysNotesParts[] = 'مشاركة صوتية (25/25)';
+                }
+                if ($sysChat > 0) {
+                    $sysNotesParts[] = 'تفاعل كتابي (25/25)';
+                }
+                if ($sysTask > 0) {
+                    $sysNotesParts[] = 'تسليم تكليف (25/25)';
+                }
+                $systemNotes = 'تقييم النظام الآلي: '.implode(' | ', $sysNotesParts);
+
+                // حساب درجة المعلم المستقلة (من 100)
+                $teacherScore = 0.00;
+                if ($status === 'present') {
+                    $teacherScore = (($partScore + $undScore + $hwScore) / 15) * 100;
+                } elseif ($status === 'late') {
+                    $teacherScore = ((($partScore + $undScore + $hwScore) / 15) * 100) * 0.85;
+                } elseif ($status === 'excused') {
+                    $teacherScore = 60.00;
+                } else {
+                    $teacherScore = 0.00;
+                }
+                $teacherTotal = round($teacherScore, 1);
 
                 GroupStudentEvaluation::create([
                     'group_session_id' => $session->id,
                     'study_group_id' => $group->id,
                     'student_id' => $studentId,
+                    'evaluator_id' => $user->id,
+                    'evaluator_name' => $user->name,
+                    'evaluator_role' => $evaluatorRole,
                     'attendance_status' => $status,
                     'participation_score' => $partScore,
                     'understanding_score' => $undScore,
                     'homework_score' => $hwScore,
+                    'system_attendance_score' => $sysAttendance,
+                    'system_voice_score' => $sysVoice,
+                    'system_chat_score' => $sysChat,
+                    'system_task_score' => $sysTask,
+                    'system_total_score' => $sysTotal,
+                    'teacher_total_score' => $teacherTotal,
                     'spoke_voice' => $spokeVoice,
                     'wrote_chat' => $wroteChat,
                     'submitted_task' => $submittedTask,
                     'stars_awarded' => $stars,
-                    'daily_total_score' => round($dailyScore, 1),
+                    'daily_total_score' => $teacherTotal,
                     'teacher_notes' => $eval['teacher_notes'] ?? null,
+                    'system_notes' => $systemNotes,
                 ]);
 
                 // تحديث رصيد نجوم الطالب المكتسبة في حسابه الشخصي

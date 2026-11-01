@@ -45,7 +45,7 @@
         </div>
 
         <!-- بطاقة بيانات الحصة والمجموعة -->
-        <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
             <div>
                 <span class="text-slate-400 block font-bold">المجموعة الدراسية:</span>
                 <strong class="text-slate-900 text-sm">{{ $session->group?->name }}</strong>
@@ -57,6 +57,10 @@
             <div>
                 <span class="text-slate-400 block font-bold">المعلم المحاضر:</span>
                 <strong class="text-slate-900">{{ $session->teacher?->name }}</strong>
+            </div>
+            <div>
+                <span class="text-slate-400 block font-bold">المسؤول عن التقييم:</span>
+                <strong class="text-indigo-900">{{ $session->evaluator_name ?: $session->teacher?->name }} ({{ $session->evaluator_role ?: 'معلم' }})</strong>
             </div>
             <div>
                 <span class="text-slate-400 block font-bold">نسبة الحضور:</span>
@@ -122,9 +126,12 @@
             @endif
         </div>
 
-        <!-- جدول الحضور والتقييم الفردي للطلاب -->
+        <!-- جدول الحضور والتقييم المزدوج للطلاب -->
         <div class="space-y-2">
-            <h3 class="text-xs font-black text-slate-900">سجل حضور وتفاعل الطلاب ومكافآت النجوم:</h3>
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-black text-slate-900">سجل الحضور والتقييم المزدوج (تقييم النظام الآلي 🤖 + تقييم المعلم 👨‍🏫):</h3>
+                <span class="text-[10px] text-slate-500 font-mono">التقييم معتمد رسمياً من: {{ $session->evaluator_name ?: $session->teacher?->name }}</span>
+            </div>
             <table class="w-full text-right text-xs border border-slate-300">
                 <thead>
                     <tr class="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold">
@@ -132,12 +139,17 @@
                         <th class="p-2 border-l border-slate-300">اسم الطالب</th>
                         <th class="p-2 border-l border-slate-300 text-center">كود الطالب</th>
                         <th class="p-2 border-l border-slate-300 text-center">حالة الحضور</th>
-                        <th class="p-2 border-l border-slate-300 text-center">المشاركة (5)</th>
-                        <th class="p-2 border-l border-slate-300 text-center">الاستيعاب (5)</th>
-                        <th class="p-2 border-l border-slate-300 text-center">الواجب (5)</th>
+                        <th class="p-2 border-l border-slate-300 text-center bg-indigo-50 text-indigo-950">
+                            تقييم النظام (100) 🤖
+                            <span class="block text-[8px] font-normal text-indigo-700">حضور (25) صوت (25) شات (25) واجب (25)</span>
+                        </th>
+                        <th class="p-2 border-l border-slate-300 text-center bg-emerald-50 text-emerald-950">
+                            تقييم المعلم (100) 👨‍🏫
+                            <span class="block text-[8px] font-normal text-emerald-700">مشاركة (5) فهم (5) واجب (5)</span>
+                        </th>
                         <th class="p-2 border-l border-slate-300 text-center">النجوم ⭐</th>
-                        <th class="p-2 border-l border-slate-300 text-center">الدرجة</th>
-                        <th class="p-2">ملاحظات المعلم</th>
+                        <th class="p-2 border-l border-slate-300 text-center">الدرجة المعتمدة</th>
+                        <th class="p-2">الملاحظات</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200">
@@ -149,12 +161,27 @@
                             <td class="p-2 border-l border-slate-200 text-center font-bold">
                                 {{ $ev->attendance_label }}
                             </td>
-                            <td class="p-2 border-l border-slate-200 text-center font-mono font-bold">{{ $ev->participation_score }}/5</td>
-                            <td class="p-2 border-l border-slate-200 text-center font-mono">{{ $ev->understanding_score }}/5</td>
-                            <td class="p-2 border-l border-slate-200 text-center font-mono">{{ $ev->homework_score }}/5</td>
+                            <td class="p-2 border-l border-slate-200 text-center bg-indigo-50/30">
+                                <span class="font-mono font-bold text-indigo-700 block">{{ $ev->system_total_score ?? 0 }}%</span>
+                                <span class="text-[9px] text-slate-400 font-mono block">ح:{{ $ev->system_attendance_score ?? 0 }} ص:{{ $ev->system_voice_score ?? 0 }} ك:{{ $ev->system_chat_score ?? 0 }} و:{{ $ev->system_task_score ?? 0 }}</span>
+                            </td>
+                            <td class="p-2 border-l border-slate-200 text-center bg-emerald-50/30">
+                                <span class="font-mono font-bold text-emerald-700 block">{{ $ev->teacher_total_score ?? $ev->daily_total_score }}%</span>
+                                <span class="text-[9px] text-slate-400 font-mono block">({{ $ev->participation_score }}+{{ $ev->understanding_score }}+{{ $ev->homework_score }})/15</span>
+                            </td>
                             <td class="p-2 border-l border-slate-200 text-center font-mono font-bold text-amber-700">⭐ {{ $ev->stars_awarded }}</td>
-                            <td class="p-2 border-l border-slate-200 text-center font-mono font-bold">{{ $ev->daily_total_score }}%</td>
-                            <td class="p-2 text-slate-600 text-[11px]">{{ $ev->teacher_notes ?: '-' }}</td>
+                            <td class="p-2 border-l border-slate-200 text-center font-mono font-black text-slate-900">{{ $ev->daily_total_score }}%</td>
+                            <td class="p-2 text-slate-600 text-[10px]">
+                                @if($ev->teacher_notes)
+                                    <div><strong class="text-slate-700">المعلم:</strong> {{ $ev->teacher_notes }}</div>
+                                @endif
+                                @if($ev->system_notes)
+                                    <div class="text-[9px] text-indigo-700 font-mono">{{ $ev->system_notes }}</div>
+                                @endif
+                                @if(!$ev->teacher_notes && !$ev->system_notes)
+                                    <span class="text-slate-400">-</span>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -162,20 +189,27 @@
         </div>
 
         <!-- التوقيعات والاعتماد الرسمي -->
-        <div class="pt-8 border-t border-slate-300 grid grid-cols-3 gap-6 text-center text-xs">
-            <div class="space-y-8">
-                <span class="font-bold text-slate-700 block">توقيع المعلم المسؤول:</span>
-                <span class="font-bold text-slate-900 border-b border-dashed border-slate-400 pb-1 inline-block min-w-[120px]">
+        <div class="pt-8 border-t border-slate-300 grid grid-cols-4 gap-4 text-center text-xs">
+            <div class="space-y-6">
+                <span class="font-bold text-slate-700 block">المعلم المحاضر:</span>
+                <span class="font-bold text-slate-900 border-b border-dashed border-slate-400 pb-1 inline-block min-w-[100px]">
                     {{ $session->teacher?->name }}
                 </span>
             </div>
-            <div class="space-y-8">
-                <span class="font-bold text-slate-700 block">المشرف الأكاديمي:</span>
-                <span class="border-b border-dashed border-slate-400 pb-1 inline-block min-w-[120px]">....................</span>
+            <div class="space-y-6">
+                <span class="font-bold text-slate-700 block">المقيم المعتمد:</span>
+                <span class="font-bold text-indigo-900 border-b border-dashed border-slate-400 pb-1 inline-block min-w-[100px]">
+                    {{ $session->evaluator_name ?: $session->teacher?->name }}
+                    <span class="text-[10px] text-slate-500 block">({{ $session->evaluator_role ?: 'معلم' }})</span>
+                </span>
             </div>
-            <div class="space-y-8">
+            <div class="space-y-6">
+                <span class="font-bold text-slate-700 block">المشرف الأكاديمي:</span>
+                <span class="border-b border-dashed border-slate-400 pb-1 inline-block min-w-[100px]">....................</span>
+            </div>
+            <div class="space-y-6">
                 <span class="font-bold text-slate-700 block">ختم إدارة الأكاديمية:</span>
-                <span class="border-b border-dashed border-slate-400 pb-1 inline-block min-w-[120px]">....................</span>
+                <span class="border-b border-dashed border-slate-400 pb-1 inline-block min-w-[100px]">....................</span>
             </div>
         </div>
 

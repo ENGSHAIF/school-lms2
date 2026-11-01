@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClassroomMessage;
+use App\Models\ClassroomParticipant;
 use App\Models\Course;
+use App\Models\GroupActivity;
+use App\Models\GroupSession;
+use App\Models\GroupStudentEvaluation;
 use App\Models\Level;
 use App\Models\StudentEnrollment;
 use App\Models\StudyGroup;
@@ -510,7 +515,7 @@ class StudyGroupController extends Controller
             $fileName = $originalName;
         }
 
-        $activity = \App\Models\GroupActivity::create([
+        $activity = GroupActivity::create([
             'study_group_id' => $group->id,
             'user_id' => $user->id,
             'title' => $validated['title'],
@@ -562,7 +567,7 @@ class StudyGroupController extends Controller
     // حذف نشاط أو تسجيل صوتي من المجموعة
     public function destroyActivity($activityId)
     {
-        $activity = \App\Models\GroupActivity::findOrFail($activityId);
+        $activity = GroupActivity::findOrFail($activityId);
 
         // التحقق من الصلاحية (الناشر أو المدير)
         if (auth()->id() !== $activity->user_id && ! auth()->user()->isAdmin()) {
@@ -836,5 +841,171 @@ class StudyGroupController extends Controller
         $downloadName = $activity->file_name ?: ($activity->title.'.'.pathinfo($foundPath, PATHINFO_EXTENSION));
 
         return response()->download($foundPath, $downloadName);
+    }
+
+    /**
+     * لوحة تحكم المجموعة الدراسية الشاملة وبطاقات ومربعات الطلاب التفاعلية (Group Control Panel & Visual Cards)
+     */
+    public function dashboard($groupId)
+    {
+        $user = auth()->user();
+        $group = StudyGroup::with([
+            'course',
+            'level',
+            'teacher',
+            'supervisor',
+            'teachers',
+            'supervisors',
+            'students' => function ($q) {
+                $q->wherePivot('status', 'active')->orderBy('name');
+            },
+            'sessions' => function ($q) {
+                $q->latest('session_date')->take(5);
+            },
+        ])->findOrFail($groupId);
+
+        // التحقق من الصلاحيات: مدير أو مشرف أو معلم المجموعة
+        $isTeacherOfGroup = ($group->teacher_id === $user->id || $group->teachers->contains('id', $user->id));
+        $isSupervisorOfGroup = ($group->supervisor_id === $user->id || $group->supervisors->contains('id', $user->id));
+        if (! $user->isAdmin() && ! $isTeacherOfGroup && ! $isSupervisorOfGroup) {
+            abort(403, 'غير مصرح لك بالوصول للوحة تحكم هذه المجموعة.');
+        }
+
+        // جلب قائمة الحاضرين المتصلين في البث الحي الآن (آخر 20 ثانية)
+        $activeParticipants = ClassroomParticipant::where('room_id', $group->room_id)
+            ->where('last_seen_at', '>=', now()->subSeconds(20))
+            ->get()
+            ->keyBy('user_id');
+
+        // تجهيز بيانات بطاقات الطلاب المرئية التفاعلية
+        $studentCards = $group->students->map(function ($student) use ($group, $activeParticipants) {
+            $liveParticipant = $activeParticipants->get($student->id);
+            $isOnlineLive = ($liveParticipant !== null);
+
+            // آخر تقييم للطالب في هذه المجموعة
+            $lastEval = GroupStudentEvaluation::where('study_group_id', $group->id)
+                ->where('student_id', $student->id)
+                ->latest('id')
+                ->first();
+
+            // إجمالي الحضور والغياب في المجموعة
+            $totalAttended = GroupStudentEvaluation::where('study_group_id', $group->id)
+                ->where('student_id', $student->id)
+                ->whereIn('attendance_status', ['present', 'late'])
+                ->count();
+
+            $totalSessions = GroupSession::where('study_group_id', $group->id)->count();
+            $attendanceRate = $totalSessions > 0 ? round(($totalAttended / $totalSessions) * 100, 1) : 100.0;
+
+            return (object) [
+                'id' => $student->id,
+                'name' => $student->name,
+                'name_en' => $student->name_en,
+                'email' => $student->email,
+                'phone' => $student->phone,
+                'phone_whatsapp' => $student->phone_whatsapp,
+                'gender' => $student->gender,
+                'student_code' => $student->student_code ?? $student->user_code,
+                'academic_number' => $student->academic_number,
+                'avatar' => $student->avatar,
+                'stars_balance' => $student->stars_balance ?? 0,
+                'is_online_live' => $isOnlineLive,
+                'has_mic' => $liveParticipant ? (bool) $liveParticipant->has_mic : false,
+                'has_camera' => $liveParticipant ? (bool) $liveParticipant->has_camera : false,
+                'is_hand_raised' => $liveParticipant ? (bool) $liveParticipant->is_hand_raised : false,
+                'is_muted_by_host' => $liveParticipant ? (bool) $liveParticipant->is_muted_by_host : false,
+                'last_seen_at' => $liveParticipant?->last_seen_at,
+                'last_eval' => $lastEval,
+                'total_attended' => $totalAttended,
+                'attendance_rate' => $attendanceRate,
+            ];
+        });
+
+        $totalStudents = $studentCards->count();
+        $onlineCount = $studentCards->where('is_online_live', true)->count();
+        $offlineCount = $totalStudents - $onlineCount;
+        $handsRaisedCount = $studentCards->where('is_hand_raised', true)->count();
+
+        // أحدث رسائل في البث الحي لهذه المجموعة
+        $recentMessages = ClassroomMessage::with('user')
+            ->where('room_id', $group->room_id)
+            ->latest('id')
+            ->take(12)
+            ->get()
+            ->reverse();
+
+        return view('admin.groups.dashboard', compact(
+            'group',
+            'studentCards',
+            'totalStudents',
+            'onlineCount',
+            'offlineCount',
+            'handsRaisedCount',
+            'recentMessages'
+        ));
+    }
+
+    /**
+     * منح أو خصم نجوم للطالب مباشرة من بطاقة التحكم
+     */
+    public function updateStudentStars(Request $request, $groupId, $studentId)
+    {
+        $group = StudyGroup::findOrFail($groupId);
+        $student = User::where('id', $studentId)->where('role', 'student')->firstOrFail();
+
+        $action = $request->input('action', 'add'); // add | deduct
+        $amount = max(1, intval($request->input('amount', 1)));
+
+        if ($action === 'add') {
+            $student->increment('stars_balance', $amount);
+            $msg = "تم منح {$amount} ⭐ للطالب ({$student->name}) بنجاح!";
+        } else {
+            if ($student->stars_balance >= $amount) {
+                $student->decrement('stars_balance', $amount);
+            } else {
+                $student->update(['stars_balance' => 0]);
+            }
+            $msg = "تم خصم {$amount} ⭐ من الطالب ({$student->name}).";
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'new_balance' => $student->fresh()->stars_balance,
+                'message' => $msg,
+            ]);
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    /**
+     * كتم أو فك كتم صوت الطالب في البث الحي مباشرة من بطاقة التحكم
+     */
+    public function toggleStudentLiveMute(Request $request, $groupId, $studentId)
+    {
+        $group = StudyGroup::findOrFail($groupId);
+        $participant = ClassroomParticipant::where('room_id', $group->room_id)
+            ->where('user_id', $studentId)
+            ->first();
+
+        if ($participant) {
+            $newState = ! $participant->is_muted_by_host;
+            $participant->update(['is_muted_by_host' => $newState]);
+            $msg = $newState ? 'تم كتم مايكروفون الطالب في البث الحي 🔇' : 'تم السماح للطالب بالكلام في البث 🎙️';
+        } else {
+            $newState = false;
+            $msg = 'الطالب غير متصل بالبث الحي في الوقت الحالي.';
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'is_muted' => $newState,
+                'message' => $msg,
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 }

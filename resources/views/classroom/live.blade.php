@@ -51,6 +51,14 @@
         <!-- أزرار التحكم بالبث الحي وإدارة الحضور والمشاركات -->
         <div class="flex items-center flex-wrap gap-2">
             
+            <!-- زر لوحة تحكم المجموعة وبطاقات الطلاب (للمعلم والإدارة) -->
+            @if($isTeacher && isset($group) && $group)
+                <a href="{{ route('admin.groups.dashboard', $group->id) }}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition" title="فتح لوحة تحكم المجموعة وبطاقات الطلاب">
+                    <span>🎛️</span>
+                    <span class="hidden md:inline">لوحة التحكم</span>
+                </a>
+            @endif
+
             <!-- زر قائمة الحاضرين في البث الحي مع تنبيه رفع اليد -->
             <button type="button" onclick="toggleSidePanel('participants')" id="btnHeaderParticipants" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition relative">
                 <span>👥</span>
@@ -357,37 +365,59 @@
                     </p>
                 </div>
 
-                <!-- استعراض الأنشطة والواجبات السابقة المسجلة للمجموعة إن وُجدت -->
-                @foreach($groupActivities->take(10) as $item)
-                    <div class="p-3 rounded-2xl border {{ $item->isStudentSubmission() ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-slate-800 bg-slate-950/50' }} space-y-2">
-                        <div class="flex justify-between items-center text-[10px]">
-                            <span class="font-bold flex items-center gap-1 text-slate-300">
-                                <span>{{ $item->type_icon }}</span>
-                                <span>{{ $item->publisher?->name ?? 'مشارك' }}</span>
-                            </span>
-                            <span class="text-slate-500 font-mono">{{ $item->created_at->format('H:i') }}</span>
-                        </div>
-
-                        <div class="text-xs text-slate-200 font-medium leading-relaxed">
-                            {{ $item->title }}
-                        </div>
-
-                        @if($item->isImage() && $item->file_path)
-                            <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-36 flex items-center justify-center relative group" onclick="openLiveImageModal('{{ asset($item->file_path) }}', '{{ addslashes($item->title) }}')">
-                                <img src="{{ asset($item->file_path) }}" alt="{{ $item->title }}" class="w-full h-full object-cover group-hover:scale-105 transition">
-                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-[11px] text-white font-bold gap-1">
-                                    <span>🔍 تكبير ورقة الإجابة</span>
-                                </div>
+                <!-- استعراض رسائل وتفريغات وتسجيلات الحصة المباشرة -->
+                @if(isset($chatMessages) && $chatMessages->isNotEmpty())
+                    @foreach($chatMessages as $msg)
+                        @php $isMine = ($msg->user_id === auth()->id()); @endphp
+                        <div id="chatMsg_{{ $msg->id }}" class="p-3 rounded-2xl border {{ $msg->user?->isStudent() ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-indigo-800/40 bg-indigo-950/20' }} space-y-1.5">
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="font-bold flex items-center gap-1 text-slate-300">
+                                    <span>{{ $msg->user?->isStudent() ? '🎒' : '👨‍🏫' }}</span>
+                                    <span>{{ $msg->user?->name ?? 'مشارك' }} {{ $isMine ? '(أنت)' : '' }}</span>
+                                </span>
+                                <span class="text-slate-500 font-mono">{{ $msg->created_at->format('H:i') }}</span>
                             </div>
-                        @endif
-
-                        @if($item->isAudio() && $item->file_path)
-                            <audio controls class="w-full h-8 mt-1">
-                                <source src="{{ asset($item->file_path) }}">
-                            </audio>
-                        @endif
-                    </div>
-                @endforeach
+                            @if($msg->content)
+                                <div class="text-xs text-slate-200 leading-relaxed">{{ $msg->content }}</div>
+                            @endif
+                            @if(($msg->type === 'image' || $msg->type === 'worksheet') && $msg->file_path)
+                                <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-36 flex items-center justify-center mt-1" onclick="openLiveImageModal('{{ asset($msg->file_path) }}', '{{ addslashes($msg->content ?? '') }}')">
+                                    <img src="{{ asset($msg->file_path) }}" class="w-full h-full object-cover">
+                                </div>
+                            @endif
+                            @if($msg->type === 'audio' && $msg->file_path)
+                                <div class="bg-purple-950/40 p-2 rounded-xl border border-purple-800/40 mt-1">
+                                    <audio controls src="{{ asset($msg->file_path) }}" class="w-full h-8"></audio>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                @elseif(isset($groupActivities))
+                    @foreach($groupActivities->take(10) as $item)
+                        <div class="p-3 rounded-2xl border {{ $item->isStudentSubmission() ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-slate-800 bg-slate-950/50' }} space-y-2">
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="font-bold flex items-center gap-1 text-slate-300">
+                                    <span>{{ $item->type_icon }}</span>
+                                    <span>{{ $item->publisher?->name ?? 'مشارك' }}</span>
+                                </span>
+                                <span class="text-slate-500 font-mono">{{ $item->created_at->format('H:i') }}</span>
+                            </div>
+                            <div class="text-xs text-slate-200 font-medium leading-relaxed">
+                                {{ $item->title }}
+                            </div>
+                            @if($item->isImage() && $item->file_path)
+                                <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-36 flex items-center justify-center relative group" onclick="openLiveImageModal('{{ asset($item->file_path) }}', '{{ addslashes($item->title) }}')">
+                                    <img src="{{ asset($item->file_path) }}" alt="{{ $item->title }}" class="w-full h-full object-cover group-hover:scale-105 transition">
+                                </div>
+                            @endif
+                            @if($item->isAudio() && $item->file_path)
+                                <audio controls class="w-full h-8 mt-1">
+                                    <source src="{{ asset($item->file_path) }}">
+                                </audio>
+                            @endif
+                        </div>
+                    @endforeach
+                @endif
             </div>
 
             <!-- شريط مسجل الصوت المباشر المصغر -->
@@ -653,7 +683,7 @@
     let isCamEnabled = false;
     let isHandRaised = false;
     let currentRoomPolicy = 'open'; // 'open' | 'permission'
-    let lastMessageId = 0;
+    let lastMessageId = {{ isset($chatMessages) && $chatMessages->isNotEmpty() ? $chatMessages->last()->id : 0 }};
 
     // اتصالات WebRTC بالأقران (PeerConnections Map)
     const peerConnections = {}; // key: peerId => RTCPeerConnection
@@ -964,20 +994,20 @@
     // 3. المزامنة اللحظية (Sync Loop كل ثانيتين)
     async function syncClassroom() {
         try {
-            const response = await fetch(`/classroom/${ROOM_ID}/sync`, {
-                method: 'POST',
+            const params = new URLSearchParams({
+                peer_id: MY_PEER_ID,
+                has_camera: isCamEnabled ? '1' : '0',
+                has_mic: isMicEnabled ? '1' : '0',
+                is_hand_raised: isHandRaised ? '1' : '0',
+                last_message_id: lastMessageId
+            });
+
+            const response = await fetch(`/classroom/${ROOM_ID}/sync?${params.toString()}`, {
+                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    peer_id: MY_PEER_ID,
-                    has_camera: isCamEnabled,
-                    has_mic: isMicEnabled,
-                    is_hand_raised: isHandRaised,
-                    last_message_id: lastMessageId
-                })
+                }
             });
 
             if (!response.ok) return;
