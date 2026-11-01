@@ -566,6 +566,12 @@
                                             <span>{{ $user->user_code ?? $user->student_code ?? ('STU-' . $user->id) }}</span>
                                             <span class="text-[9px] text-indigo-400">📋</span>
                                         </button>
+                                        @if($user->academic_number)
+                                            <span class="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg w-max" title="الرقم الأكاديمي اليدوي">
+                                                <span>🎓 يدوي:</span>
+                                                <span>{{ $user->academic_number }}</span>
+                                            </span>
+                                        @endif
                                         <span class="text-[10px] text-slate-400 font-mono">#{{ $user->id }}</span>
                                     </div>
                                 </td>
@@ -1120,6 +1126,11 @@
                     </div>
 
                     <div class="min-w-0">
+                        <label class="block font-bold text-slate-700 mb-1">الرقم الأكاديمي اليدوي / السابق <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                        <input type="text" name="academic_number" placeholder="مثال: 2023-A-104 (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                    </div>
+
+                    <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">رقم الهاتف والواتساب <span class="text-red-500">*</span></label>
                         <input type="text" name="phone_whatsapp" required placeholder="+967 " class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
@@ -1289,6 +1300,11 @@
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-slate-400 font-normal">(اختياري)</span></label>
                         <input type="email" name="email" id="editEmail" placeholder="email@asots.org (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                    </div>
+
+                    <div class="min-w-0">
+                        <label class="block font-bold text-slate-700 mb-1">الرقم الأكاديمي اليدوي / السابق <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                        <input type="text" name="academic_number" id="editAcademicNumber" placeholder="مثال: 2023-A-104 (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
                     <div class="min-w-0">
@@ -1848,6 +1864,7 @@
         document.getElementById('editGender').value = user.gender || 'male';
         document.getElementById('editBirthDate').value = user.birth_date ? user.birth_date.substring(0, 10) : '';
         document.getElementById('editEmail').value = user.email || '';
+        document.getElementById('editAcademicNumber').value = user.academic_number || '';
         document.getElementById('editPhone').value = user.phone_whatsapp || '';
         document.getElementById('editRoleSelect').value = user.role || 'supervisor';
         const pgSelect = document.getElementById('editPermissionGroupSelect');

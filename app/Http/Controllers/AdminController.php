@@ -77,6 +77,7 @@ class AdminController extends Controller
             $query->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
                     ->orWhere('student_code', 'like', "%{$s}%")
+                    ->orWhere('academic_number', 'like', "%{$s}%")
                     ->orWhere('user_code', 'like', "%{$s}%")
                     ->orWhere('email', 'like', "%{$s}%")
                     ->orWhere('phone_whatsapp', 'like', "%{$s}%");
@@ -297,6 +298,34 @@ class AdminController extends Controller
         return back()->with('success', "تم إلغاء اعتماد الطالب ({$student->name}) بنجاح وإعادته لقائمة مراجعة وتخصيص المستويات بانتظار الاعتماد.");
     }
 
+    /**
+     * تحديث أو تعيين الرقم الأكاديمي اليدوي للطالب (للطلاب السابقين أو الجدد)
+     */
+    public function updateStudentAcademicNumber(Request $request, $id)
+    {
+        if (! auth()->user()->isAdmin() && ! auth()->user()->hasPermission('manage_users') && ! auth()->user()->hasPermission('students.manage')) {
+            return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل بيانات الطلاب.');
+        }
+
+        $student = User::where('role', 'student')->findOrFail($id);
+
+        $request->validate([
+            'academic_number' => 'nullable|string|max:100',
+        ]);
+
+        $academicNumber = $request->filled('academic_number') ? trim($request->academic_number) : null;
+        $student->update(['academic_number' => $academicNumber]);
+
+        SystemAuditLog::record(
+            'student.academic_number_updated',
+            "تم تحديث الرقم الأكاديمي اليدوي للطالب [{$student->name}] ({$student->student_code}) إلى [".($academicNumber ?: 'غير محدد').'] بواسطة ('.auth()->user()->name.').',
+            $student,
+            ['student_id' => $student->id, 'academic_number' => $academicNumber]
+        );
+
+        return back()->with('success', "تم حفظ الرقم الأكاديمي للطالب ({$student->name}) بنجاح.");
+    }
+
     // 3. عرض وإدارة المستخدمين مع تبويبات منفصلة لكل فئة (إدارة النظام، المعلمون، الطلاب، أولياء الأمور، وطلبات استعادة كلمة المرور)
     public function users(Request $request)
     {
@@ -349,7 +378,8 @@ class AdminController extends Controller
                         ->orWhere('email', 'like', "%{$search}%")
                         ->orWhere('phone_whatsapp', 'like', "%{$search}%")
                         ->orWhere('user_code', 'like', "%{$search}%")
-                        ->orWhere('student_code', 'like', "%{$search}%");
+                        ->orWhere('student_code', 'like', "%{$search}%")
+                        ->orWhere('academic_number', 'like', "%{$search}%");
                 });
             }
 
@@ -363,7 +393,7 @@ class AdminController extends Controller
         }
 
         $allStudents = User::where('role', 'student')
-            ->select('id', 'name', 'name_en', 'user_code', 'student_code', 'phone_whatsapp')
+            ->select('id', 'name', 'name_en', 'user_code', 'student_code', 'academic_number', 'phone_whatsapp')
             ->orderBy('name')
             ->get();
 
@@ -395,6 +425,7 @@ class AdminController extends Controller
             'name_en' => 'nullable|string|max:255',
             'birth_date' => 'nullable|date',
             'gender' => 'required|string|in:male,female',
+            'academic_number' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:255|unique:users,email',
             'phone_whatsapp' => 'required|string|max:30',
             'role' => 'required|string|in:teacher,student,supervisor,accountant,parent,admin',
@@ -429,12 +460,14 @@ class AdminController extends Controller
         $permissions = $validated['permissions'] ?? User::defaultPermissionsForRole($validated['role']);
 
         $email = ! empty($validated['email']) ? trim($validated['email']) : null;
+        $academicNumber = ! empty($validated['academic_number']) ? trim($validated['academic_number']) : null;
 
         $user = User::create([
             'name' => $validated['name'],
             'name_en' => $validated['name_en'] ?? null,
             'birth_date' => $validated['birth_date'] ?? null,
             'gender' => $validated['gender'] ?? 'male',
+            'academic_number' => $academicNumber,
             'email' => $email,
             'phone_whatsapp' => $validated['phone_whatsapp'],
             'password' => Hash::make($validated['password']),
@@ -516,6 +549,7 @@ class AdminController extends Controller
             'name_en' => 'nullable|string|max:255',
             'birth_date' => 'nullable|date',
             'gender' => 'required|string|in:male,female',
+            'academic_number' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:255|unique:users,email,'.$user->id,
             'phone_whatsapp' => 'required|string|max:30',
             'role' => 'required|string|in:teacher,student,supervisor,accountant,parent,admin',
@@ -541,12 +575,14 @@ class AdminController extends Controller
             : $request->boolean('must_change_password');
 
         $email = ! empty($validated['email']) ? trim($validated['email']) : null;
+        $academicNumber = ! empty($validated['academic_number']) ? trim($validated['academic_number']) : null;
 
         $data = [
             'name' => $validated['name'],
             'name_en' => $validated['name_en'] ?? null,
             'birth_date' => $validated['birth_date'] ?? null,
             'gender' => $validated['gender'] ?? 'male',
+            'academic_number' => $academicNumber,
             'email' => $email,
             'phone_whatsapp' => $validated['phone_whatsapp'],
             'role' => $validated['role'],

@@ -10,11 +10,16 @@
     <!-- بطاقة الترحيب والمستوى الحالي للطالب -->
     <div class="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-            <div class="flex items-center gap-3 mb-2">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                 <span class="bg-emerald-500/20 text-emerald-300 text-xs px-3 py-1 rounded-full font-bold border border-emerald-400/30">
                     حساب طالب مفعل ونشط ✅
                 </span>
                 <span class="text-xs text-indigo-300 font-mono">{{ $user->student_code }}</span>
+                @if($user->academic_number)
+                    <span class="text-xs bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full font-mono font-bold" title="الرقم الأكاديمي اليدوي">
+                        🎓 الرقم الأكاديمي: {{ $user->academic_number }}
+                    </span>
+                @endif
             </div>
             <h1 class="text-2xl font-black">مرحباً بك، {{ $user->name }} 👋</h1>
             <p class="text-xs text-slate-300 mt-1">

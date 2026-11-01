@@ -33,10 +33,11 @@ class AuthController extends Controller
         $loginInput = trim($request->input('login') ?? $request->input('email') ?? '');
         $cleanPhone = preg_replace('/[^0-9]/', '', $loginInput);
 
-        // البحث عن المستخدم بواسطة البريد الإلكتروني أو الرقم الفريد (user_code أو student_code) أو رقم الهاتف
+        // البحث عن المستخدم بواسطة البريد الإلكتروني أو الرقم الفريد (user_code أو student_code أو academic_number) أو رقم الهاتف
         $user = User::where(function ($q) use ($loginInput, $cleanPhone) {
             $q->where('user_code', $loginInput)
-                ->orWhere('student_code', $loginInput);
+                ->orWhere('student_code', $loginInput)
+                ->orWhere('academic_number', $loginInput);
             if (! empty($loginInput) && str_contains($loginInput, '@')) {
                 $q->orWhere('email', $loginInput);
             }
@@ -183,6 +184,7 @@ class AuthController extends Controller
         $user = User::where('email', $identifier)
             ->orWhere('user_code', $identifier)
             ->orWhere('student_code', $identifier)
+            ->orWhere('academic_number', $identifier)
             ->orWhere('phone_whatsapp', $identifier)
             ->first();
 
@@ -211,6 +213,7 @@ class AuthController extends Controller
             'birth_date' => 'nullable|date',
             'gender' => 'required|string|in:male,female',
             'email' => 'nullable|string|email|max:255|unique:users,email',
+            'academic_number' => 'nullable|string|max:100',
             'phone_whatsapp' => 'required|string|max:20',
             'password' => 'required|string|min:6|confirmed',
         ], [
@@ -223,6 +226,7 @@ class AuthController extends Controller
         $studentCode = 'STU-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
 
         $email = ! empty($validated['email']) ? trim($validated['email']) : null;
+        $academicNumber = ! empty($validated['academic_number']) ? trim($validated['academic_number']) : null;
 
         $user = User::create([
             'name' => $validated['name'],
@@ -230,6 +234,7 @@ class AuthController extends Controller
             'birth_date' => $validated['birth_date'] ?? null,
             'gender' => $validated['gender'],
             'email' => $email,
+            'academic_number' => $academicNumber,
             'phone_whatsapp' => $validated['phone_whatsapp'],
             'password' => Hash::make($validated['password']),
             'role' => 'student',

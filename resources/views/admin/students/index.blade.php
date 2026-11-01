@@ -139,6 +139,7 @@
                 <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-xs">
                     <tr>
                         <th class="p-4">رقم القيد الأكاديمي</th>
+                        <th class="p-4">الرقم الأكاديمي اليدوي</th>
                         <th class="p-4">اسم الطالب والواتساب</th>
                         <th class="p-4">حالة القبول</th>
                         <th class="p-4">نتيجة اختبار القبول</th>
@@ -155,6 +156,29 @@
                         <tr class="hover:bg-slate-50/70 transition">
                             <td class="p-4 font-mono font-bold text-xs text-indigo-700">
                                 {{ $student->student_code ?? $student->user_code ?? ('STU-' . $student->id) }}
+                            </td>
+                            <td class="p-4">
+                                <div class="flex items-center gap-1.5">
+                                    @if($student->academic_number)
+                                        <span class="px-2 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-lg text-xs font-mono font-bold" title="رقم أكاديمي يدوي/سابق">
+                                            {{ $student->academic_number }}
+                                        </span>
+                                        <button type="button" 
+                                            onclick="openAcademicNumberModal({{ $student->id }}, '{{ addslashes($student->name) }}', '{{ addslashes($student->academic_number) }}')"
+                                            class="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition" 
+                                            title="تعديل الرقم الأكاديمي اليدوي">
+                                            ✏️
+                                        </button>
+                                    @else
+                                        <button type="button" 
+                                            onclick="openAcademicNumberModal({{ $student->id }}, '{{ addslashes($student->name) }}', '')"
+                                            class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50/50 text-[11px] font-bold transition"
+                                            title="إدخال رقم أكاديمي يدوي (اختياري)">
+                                            <span>➕</span>
+                                            <span>إدخال يدوي</span>
+                                        </button>
+                                    @endif
+                                </div>
                             </td>
                             <td class="p-4">
                                 <span class="font-bold text-slate-900 block leading-tight">{{ $student->name }}</span>
@@ -394,7 +418,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="p-8 text-center text-slate-400 text-xs">
+                            <td colspan="7" class="p-8 text-center text-slate-400 text-xs">
                                 لا يوجد طلاب يطابقون خيارات البحث الحالية.
                             </td>
                         </tr>
@@ -651,4 +675,71 @@
         </form>
     </div>
 </div>
+
+<!-- ================= مودال تعديل أو إدخال الرقم الأكاديمي اليدوي ================= -->
+<div id="academicNumberModal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="fixed inset-0 cursor-pointer" onclick="closeAcademicNumberModal()"></div>
+    <div class="relative bg-white rounded-2xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 min-w-0 my-auto z-10 text-right">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 gap-2 min-w-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg sm:text-xl font-black shrink-0">🎓</span>
+                <div class="min-w-0">
+                    <h3 class="font-black text-slate-900 text-sm sm:text-base truncate">الرقم الأكاديمي اليدوي</h3>
+                    <p class="text-[11px] text-slate-500 truncate">تخصيص أو تعديل رقم القيد الأكاديمي اليدوي (اختياري)</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeAcademicNumberModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition shrink-0">✕</button>
+        </div>
+
+        <form id="academicNumberForm" method="POST" action="" class="space-y-4">
+            @csrf
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1 text-xs">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 font-bold">الطالب:</span>
+                    <strong class="text-slate-900 font-black" id="modalStudentName">-</strong>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                    الرقم الأكاديمي اليدوي / السابق <span class="text-slate-400 font-normal">(اختياري)</span>
+                </label>
+                <input type="text" name="academic_number" id="modalAcademicNumberInput"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-xs font-bold font-mono text-slate-800"
+                    placeholder="مثال: 2023-A-104 أو اتركه فارغاً" dir="ltr">
+                <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                    💡 مفيد للطلاب السابقين أو المسجلين يدوياً في السجلات والدفاتر. اتركه فارغاً إذا لم يكن هناك رقم يدوي. يستطيع الطالب استخدامه لتسجيل الدخول.
+                </p>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeAcademicNumberModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition">
+                    إلغاء
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition">
+                    حفظ الرقم الأكاديمي
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAcademicNumberModal(studentId, studentName, currentNumber) {
+        const modal = document.getElementById('academicNumberModal');
+        const form = document.getElementById('academicNumberForm');
+        const nameEl = document.getElementById('modalStudentName');
+        const inputEl = document.getElementById('modalAcademicNumberInput');
+
+        nameEl.textContent = studentName;
+        inputEl.value = currentNumber || '';
+        form.action = `/admin/students/${studentId}/academic-number`;
+        modal.classList.remove('hidden');
+    }
+
+    function closeAcademicNumberModal() {
+        document.getElementById('academicNumberModal').classList.add('hidden');
+    }
+</script>
 @endsection

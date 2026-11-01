@@ -25,6 +25,7 @@ class User extends Authenticatable
         'permissions',
         'status',
         'student_code',
+        'academic_number',
         'user_code',
         'must_change_password',
         'stars_balance',
@@ -85,6 +86,10 @@ class User extends Authenticatable
             if (isset($user->email)) {
                 $trimmed = trim((string) $user->email);
                 $user->email = $trimmed !== '' ? $trimmed : null;
+            }
+            if (isset($user->academic_number)) {
+                $trimmed = trim((string) $user->academic_number);
+                $user->academic_number = $trimmed !== '' ? $trimmed : null;
             }
         });
     }

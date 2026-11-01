@@ -196,4 +196,87 @@ class StudentApprovalAndEmailOptionalTest extends TestCase
         StudentEnrollment::where('user_id', $student->id)->delete();
         $student->delete();
     }
+
+    public function test_user_can_register_with_optional_academic_number(): void
+    {
+        $uniquePhone = '96770'.rand(1000000, 9999999);
+        $manualAcademicNumber = 'ACAD-'.rand(1000, 9999);
+
+        $response = $this->post(route('register.post'), [
+            'name' => 'طالب برقم يدوي',
+            'email' => '',
+            'academic_number' => $manualAcademicNumber,
+            'gender' => 'male',
+            'phone_whatsapp' => $uniquePhone,
+            'password' => 'Secret123456!',
+            'password_confirmation' => 'Secret123456!',
+            'role' => 'student',
+        ]);
+
+        $response->assertRedirect();
+
+        $user = User::where('phone_whatsapp', $uniquePhone)->first();
+        $this->assertNotNull($user);
+        $this->assertEquals($manualAcademicNumber, $user->academic_number);
+
+        // تنظيف
+        $user->delete();
+    }
+
+    public function test_admin_can_update_student_academic_number(): void
+    {
+        $admin = $this->getAdminUser();
+        $student = User::create([
+            'name' => 'طالب لتحديث الرقم الأكاديمي',
+            'email' => null,
+            'gender' => 'female',
+            'phone_whatsapp' => '96771'.rand(1000000, 9999999),
+            'password' => Hash::make('Secret123456!'),
+            'role' => 'student',
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $newNumber = 'MANUAL-2024-'.rand(100, 999);
+
+        $response = $this->actingAs($admin)->post(route('admin.students.update_academic_number', $student->id), [
+            'academic_number' => $newNumber,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $student->refresh();
+        $this->assertEquals($newNumber, $student->academic_number);
+
+        // تنظيف
+        $student->delete();
+    }
+
+    public function test_student_can_login_using_manual_academic_number(): void
+    {
+        $uniqueNumber = 'ACAD-LOGIN-'.rand(10000, 99999);
+        $student = User::create([
+            'name' => 'طالب تسجيل دخول برقم يدوي',
+            'email' => null,
+            'academic_number' => $uniqueNumber,
+            'gender' => 'male',
+            'phone_whatsapp' => '96772'.rand(1000000, 9999999),
+            'password' => Hash::make('MyPassword123!'),
+            'role' => 'student',
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $response = $this->post(route('login.post'), [
+            'login' => $uniqueNumber,
+            'password' => 'MyPassword123!',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertAuthenticatedAs($student);
+
+        // تنظيف
+        $student->delete();
+    }
 }

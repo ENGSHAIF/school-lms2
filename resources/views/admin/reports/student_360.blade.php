@@ -79,6 +79,11 @@
                     <div class="text-right sm:text-left bg-white/10 px-4 py-2.5 rounded-xl border border-white/15">
                         <span class="text-[10px] text-slate-300 block font-bold">الرقم الأكاديمي الجامعي</span>
                         <span class="text-base font-black font-mono text-amber-400">{{ $student->student_code ?? 'STU-' . $student->id }}</span>
+                        @if($student->academic_number)
+                            <span class="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-md font-mono font-bold block mt-1">
+                                الرقم اليدوي: {{ $student->academic_number }}
+                            </span>
+                        @endif
                         <span class="text-[10px] text-slate-400 block mt-0.5">تاريخ الانضمام: {{ $student->created_at->format('Y/m/d') }}</span>
                     </div>
                 </div>

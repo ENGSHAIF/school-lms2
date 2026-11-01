@@ -148,6 +148,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/students', [AdminController::class, 'students'])->name('admin.students.index');
         Route::post('/admin/students/{id}/assign-level', [AdminController::class, 'assignLevel'])->name('admin.assign_level');
         Route::post('/admin/students/{id}/revoke-approval', [AdminController::class, 'revokeLevelApproval'])->name('admin.students.revoke_approval');
+        Route::post('/admin/students/{id}/academic-number', [AdminController::class, 'updateStudentAcademicNumber'])->name('admin.students.update_academic_number');
         Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users.index');
         Route::post('/admin/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
         Route::post('/admin/users/{id}/update', [AdminController::class, 'updateUser'])->name('admin.users.update');
