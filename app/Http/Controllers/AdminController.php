@@ -89,8 +89,8 @@ class AdminController extends Controller
         }
 
         $students = $query->paginate(15)->withQueryString();
-        $levels = Level::with('courses')->get();
-        $courses = Course::with('level')->orderBy('order_index')->get();
+        $levels = Level::with('courses')->orderBy('level_order')->get();
+        $courses = Course::with('level')->orderBy('course_order')->get();
 
         $totalStudents = User::where('role', 'student')->count();
         $pendingApproval = User::where('role', 'student')->where('status', 'pending_approval')->count();

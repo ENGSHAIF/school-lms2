@@ -279,4 +279,15 @@ class StudentApprovalAndEmailOptionalTest extends TestCase
         // تنظيف
         $student->delete();
     }
+
+    public function test_admin_can_access_students_index_page(): void
+    {
+        $admin = $this->getAdminUser();
+
+        $response = $this->actingAs($admin)->get(route('admin.students.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('admin.students.index');
+        $response->assertSee('قائمة الطلاب المسجلين ونتائج القبول');
+    }
 }
