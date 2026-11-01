@@ -121,9 +121,9 @@
                 <!-- شاشة الفيديو للمحاضر -->
                 <div class="absolute inset-0 flex items-center justify-center bg-slate-800">
                     <video id="teacherVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-                    <div id="teacherAvatar" class="text-center">
-                        <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-1">👨‍🏫</div>
-                        <span class="text-xs text-slate-300 font-bold">{{ $teacher?->name ?? ($booking->teacher?->name ?? 'الأستاذ المسؤول') }}</span>
+                    <div id="teacherAvatar" class="text-center px-2">
+                        <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-1 shadow-md">👨‍🏫</div>
+                        <span class="text-xs text-slate-200 font-bold block whitespace-nowrap overflow-hidden text-ellipsis max-w-[160px] mx-auto">{{ $teacher?->name ?? ($booking->teacher?->name ?? 'الأستاذ المسؤول') }}</span>
                     </div>
                 </div>
 
@@ -217,7 +217,10 @@
 
                 <div class="space-y-4 text-sm text-slate-700">
                     <div class="bg-indigo-50 border-l-4 border-indigo-600 p-4 rounded-r-xl">
-                        <strong class="text-indigo-950 block mb-1">Key Pronunciation Drill (Words to emphasize):</strong>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                            <strong class="text-indigo-950 block text-xs">🔤 مخارج الحروف والتدريب الصوتي (Key Pronunciation Drill):</strong>
+                            <span class="text-[11px] text-indigo-600 font-semibold bg-indigo-100/70 px-2 py-0.5 rounded">رموز صوتية توضيحية لنطق الكلمات (IPA)</span>
+                        </div>
                         <div class="flex flex-wrap gap-2 text-xs font-bold font-mono">
                             <span class="bg-white px-2.5 py-1 rounded shadow-sm text-indigo-700">/ˈpref.ər/ Prefer</span>
                             <span class="bg-white px-2.5 py-1 rounded shadow-sm text-indigo-700">/kənˈsɪs.tənt/ Consistent</span>

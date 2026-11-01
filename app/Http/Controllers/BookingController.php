@@ -141,7 +141,12 @@ class BookingController extends Controller
                 || $group->teachers->contains('id', $user->id)
                 || $group->supervisors->contains('id', $user->id));
 
-            $title = $group->name.' • '.($group->course?->name ?? 'دورات اللغة');
+            $courseName = $group->course?->name;
+            if ($courseName && ! str_contains(strtolower($group->name), strtolower($courseName))) {
+                $title = $group->name.' • '.$courseName;
+            } else {
+                $title = $group->name;
+            }
             $teacher = $group->teacher ?: ($isTeacher ? $user : null);
             $students = $group->students;
             $isGroup = true;
