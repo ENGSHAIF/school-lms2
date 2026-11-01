@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ExamAttempt;
 use App\Models\GroupSession;
 use App\Models\GroupStudentEvaluation;
+use App\Models\SiteSetting;
 use App\Models\StudyGroup;
 use App\Models\User;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,41 +26,41 @@ class GroupEvaluationController extends Controller
 
         // استعلام المجموعات المتاحة للمستخدم حسب صلاحيته (المعلم يرى مجموعاته، والمدير/المشرف يرى الكل)
         $groupsQuery = StudyGroup::with(['course', 'level', 'teacher', 'activeStudents']);
-        if ($user->isTeacher() && !$user->isAdmin() && !$user->isSupervisor()) {
+        if ($user->isTeacher() && ! $user->isAdmin() && ! $user->isSupervisor()) {
             $groupsQuery->where(function ($q) use ($user) {
                 $q->where('teacher_id', $user->id)
-                  ->orWhereHas('teachers', function ($t) use ($user) {
-                      $t->where('user_id', $user->id);
-                  });
+                    ->orWhereHas('teachers', function ($t) use ($user) {
+                        $t->where('user_id', $user->id);
+                    });
             });
         }
         $availableGroups = $groupsQuery->orderBy('name')->get();
 
         // استعلام الجلسات والتقييمات
         $sessionsQuery = GroupSession::with(['group.course', 'group.level', 'teacher', 'evaluations.student'])
-            ->when($selectedGroupId, fn($q) => $q->where('study_group_id', $selectedGroupId))
-            ->when($dateFrom, fn($q) => $q->where('session_date', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->where('session_date', '<=', $dateTo));
+            ->when($selectedGroupId, fn ($q) => $q->where('study_group_id', $selectedGroupId))
+            ->when($dateFrom, fn ($q) => $q->where('session_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->where('session_date', '<=', $dateTo));
 
-        if ($user->isTeacher() && !$user->isAdmin() && !$user->isSupervisor()) {
+        if ($user->isTeacher() && ! $user->isAdmin() && ! $user->isSupervisor()) {
             $sessionsQuery->where(function ($q) use ($user) {
                 $q->where('teacher_id', $user->id)
-                  ->orWhereHas('group.teachers', function ($t) use ($user) {
-                      $t->where('user_id', $user->id);
-                  });
+                    ->orWhereHas('group.teachers', function ($t) use ($user) {
+                        $t->where('user_id', $user->id);
+                    });
             });
         }
 
         // إحصائيات عامة
         $totalSessionsCount = (clone $sessionsQuery)->count();
         $avgAttendanceRate = (clone $sessionsQuery)->avg('attendance_rate') ?? 100;
-        
-        $totalStarsAwarded = GroupStudentEvaluation::when($selectedGroupId, fn($q) => $q->where('study_group_id', $selectedGroupId))
+
+        $totalStarsAwarded = GroupStudentEvaluation::when($selectedGroupId, fn ($q) => $q->where('study_group_id', $selectedGroupId))
             ->sum('stars_awarded');
 
         // الطلاب الأكثر تفاعلاً ونشاطاً
         $topActiveStudents = GroupStudentEvaluation::with('student', 'group')
-            ->when($selectedGroupId, fn($q) => $q->where('study_group_id', $selectedGroupId))
+            ->when($selectedGroupId, fn ($q) => $q->where('study_group_id', $selectedGroupId))
             ->select(
                 'student_id',
                 'study_group_id',
@@ -125,7 +128,7 @@ class GroupEvaluationController extends Controller
 
         // فحص الصلاحية
         $isTeacherOrStaff = ($user->isAdmin() || $user->isSupervisor() || $user->id === $group->teacher_id || $group->teachers->contains('id', $user->id));
-        if (!$isTeacherOrStaff) {
+        if (! $isTeacherOrStaff) {
             abort(403, 'غير مصرح لك برصد تقييم هذه المجموعة.');
         }
 
@@ -146,6 +149,8 @@ class GroupEvaluationController extends Controller
             'session_date' => 'required|date',
             'session_number' => 'required|integer|min:1',
             'lesson_topic' => 'required|string|max:250',
+            'lesson_objectives' => 'nullable|string',
+            'curriculum_objectives' => 'nullable|string',
             'lesson_summary' => 'nullable|string',
             'homework_assigned' => 'nullable|string',
             'general_notes' => 'nullable|string',
@@ -187,6 +192,8 @@ class GroupEvaluationController extends Controller
                 'session_date' => $validated['session_date'],
                 'session_number' => $validated['session_number'],
                 'lesson_topic' => $validated['lesson_topic'],
+                'lesson_objectives' => $validated['lesson_objectives'] ?? null,
+                'curriculum_objectives' => $validated['curriculum_objectives'] ?? null,
                 'lesson_summary' => $validated['lesson_summary'] ?? null,
                 'homework_assigned' => $validated['homework_assigned'] ?? null,
                 'total_students' => $totalStudents,
@@ -250,10 +257,10 @@ class GroupEvaluationController extends Controller
             DB::commit();
 
             // إرسال إشعارات التقييم والحضور عبر الواتساب للطلاب
-            if (\App\Models\SiteSetting::get('whatsapp_notify_evaluation', true)) {
+            if (SiteSetting::get('whatsapp_notify_evaluation', true)) {
                 foreach ($validated['evaluations'] as $studentId => $eval) {
                     $student = User::find($studentId);
-                    if ($student && !empty($student->phone_whatsapp)) {
+                    if ($student && ! empty($student->phone_whatsapp)) {
                         $statusName = match ($eval['attendance_status'] ?? 'present') {
                             'present' => 'حاضر ✅',
                             'absent' => 'غائب ❌',
@@ -262,8 +269,8 @@ class GroupEvaluationController extends Controller
                             default => 'حاضر ✅',
                         };
 
-                        $evalMsg = \App\Services\WhatsAppService::renderTemplate(
-                            \App\Models\SiteSetting::get('wa_template_evaluation_body', "عزيزنا الطالب {name} 📋\n\nتم رصد تقرير الحصة الدراسية رقم ({session_no}) لمجموعة ({group_name}):\n- حالة الحضور: {status}\n- موضوع الدرس: {topic}\n- النجوم المكتسبة: {stars} ⭐\n\nنتمنى لك دوام التقدم والاجتهاد في {school_name}!"),
+                        $evalMsg = WhatsAppService::renderTemplate(
+                            SiteSetting::get('wa_template_evaluation_body', "عزيزنا الطالب {name} 📋\n\nتم رصد تقرير الحصة الدراسية رقم ({session_no}) لمجموعة ({group_name}):\n- حالة الحضور: {status}\n- موضوع الدرس: {topic}\n- النجوم المكتسبة: {stars} ⭐\n\nنتمنى لك دوام التقدم والاجتهاد في {school_name}!"),
                             [
                                 '{name}' => $student->name,
                                 '{session_no}' => $session->session_number,
@@ -274,7 +281,7 @@ class GroupEvaluationController extends Controller
                             ]
                         );
 
-                        \App\Services\WhatsAppService::send(
+                        WhatsAppService::send(
                             $student->phone_whatsapp,
                             $evalMsg,
                             null,
@@ -290,7 +297,8 @@ class GroupEvaluationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'حدث خطأ أثناء حفظ التقييم: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'حدث خطأ أثناء حفظ التقييم: '.$e->getMessage());
         }
     }
 
@@ -298,6 +306,7 @@ class GroupEvaluationController extends Controller
     public function showSession($sessionId)
     {
         $session = GroupSession::with(['group.course', 'group.level', 'teacher', 'evaluations.student'])->findOrFail($sessionId);
+
         return view('admin.groups.evaluations.show_session', compact('session'));
     }
 
@@ -333,21 +342,23 @@ class GroupEvaluationController extends Controller
         $sessionId = $request->input('session_id');
 
         $group = $groupId ? StudyGroup::with(['course', 'level', 'teacher', 'students'])->find($groupId) : null;
-        
+
         if ($sessionId) {
             $session = GroupSession::with(['group.course', 'group.level', 'teacher', 'evaluations.student'])->findOrFail($sessionId);
+
             return view('admin.groups.evaluations.print_daily', compact('session'));
         }
 
         if ($period === 'final' && $group) {
             $evaluations = $this->calculateFinalDiplomaEvaluations($group);
+
             return view('admin.groups.evaluations.print_final', compact('group', 'evaluations'));
         }
 
         $sessions = GroupSession::with(['group.course', 'group.level', 'teacher', 'evaluations.student'])
-            ->when($groupId, fn($q) => $q->where('study_group_id', $groupId))
-            ->when($dateFrom, fn($q) => $q->where('session_date', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->where('session_date', '<=', $dateTo))
+            ->when($groupId, fn ($q) => $q->where('study_group_id', $groupId))
+            ->when($dateFrom, fn ($q) => $q->where('session_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->where('session_date', '<=', $dateTo))
             ->latest('session_date')
             ->get();
 
@@ -370,7 +381,7 @@ class GroupEvaluationController extends Controller
 
             $attendedCount = $evals->whereIn('attendance_status', ['present', 'late'])->count();
             $attendancePercentage = $totalSessionsCount > 0 ? round(($attendedCount / $totalSessionsCount) * 100, 1) : 100;
-            
+
             // 1. درجة المواظبة والحضور (من 20 درجة)
             $attendanceScore = round(($attendancePercentage / 100) * 20, 1);
 
@@ -383,7 +394,7 @@ class GroupEvaluationController extends Controller
             $homeworkScore = round(($avgHomework / 5) * 20, 1);
 
             // 4. درجات الكويزات والاختبارات الدورية للمجموعة (من 20 درجة)
-            $examAttempts = \App\Models\ExamAttempt::where('user_id', $student->id)
+            $examAttempts = ExamAttempt::where('user_id', $student->id)
                 ->whereIn('status', ['submitted', 'graded', 'reviewed'])
                 ->get();
             $quizAvg = $examAttempts->count() > 0 ? $examAttempts->avg('percentage') : 90;

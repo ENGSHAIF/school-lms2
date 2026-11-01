@@ -424,11 +424,25 @@
                                 </div>
                             </div>
 
-                            <!-- ملخص الدرس والواجب المنزلي -->
+                            <!-- أهداف الحصة والمنهج والملخص والواجب المنزلي -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                @if($session->lesson_objectives)
+                                    <div class="bg-indigo-50/40 p-3 rounded-xl border border-indigo-100 space-y-1">
+                                        <strong class="text-indigo-950 font-bold block">🎯 أهداف الحصة:</strong>
+                                        <p class="text-slate-700 leading-relaxed">{{ $session->lesson_objectives }}</p>
+                                    </div>
+                                @endif
+
+                                @if($session->curriculum_objectives)
+                                    <div class="bg-purple-50/40 p-3 rounded-xl border border-purple-100 space-y-1">
+                                        <strong class="text-purple-950 font-bold block">📚 أهداف المنهج:</strong>
+                                        <p class="text-purple-900 leading-relaxed">{{ $session->curriculum_objectives }}</p>
+                                    </div>
+                                @endif
+
                                 @if($session->lesson_summary)
                                     <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
-                                        <strong class="text-indigo-950 font-bold block">📖 ملخص محتوى الدرس:</strong>
+                                        <strong class="text-slate-800 font-bold block">📖 ملخص محتوى الدرس:</strong>
                                         <p class="text-slate-600 leading-relaxed">{{ $session->lesson_summary }}</p>
                                     </div>
                                 @endif

@@ -12,6 +12,8 @@ class GroupSession extends Model
         'session_date',
         'session_number',
         'lesson_topic',
+        'lesson_objectives',
+        'curriculum_objectives',
         'lesson_summary',
         'homework_assigned',
         'total_students',

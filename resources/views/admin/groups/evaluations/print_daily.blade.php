@@ -64,24 +64,42 @@
             </div>
         </div>
 
-        <!-- موضوع الدرس والشرح والواجب -->
+        <!-- موضوع الدرس وأهداف الحصة والمنهج والشرح والواجب -->
         <div class="space-y-2 text-xs">
             <div class="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
                 <strong class="text-indigo-950 block font-bold">عنوان وموضوع درس اليوم:</strong>
                 <p class="text-slate-800 text-sm font-black mt-0.5">{{ $session->lesson_topic }}</p>
             </div>
 
+            @if($session->lesson_objectives || $session->curriculum_objectives)
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    @if($session->lesson_objectives)
+                        <div class="p-3 bg-indigo-50/30 rounded-xl border border-indigo-100">
+                            <strong class="text-indigo-900 block font-bold">🎯 أهداف الحصة (Lesson Objectives):</strong>
+                            <p class="text-slate-700 leading-relaxed mt-0.5 whitespace-pre-line">{{ $session->lesson_objectives }}</p>
+                        </div>
+                    @endif
+
+                    @if($session->curriculum_objectives)
+                        <div class="p-3 bg-purple-50/30 rounded-xl border border-purple-100">
+                            <strong class="text-purple-900 block font-bold">📚 أهداف المنهج (Curriculum Objectives):</strong>
+                            <p class="text-slate-700 leading-relaxed mt-0.5 whitespace-pre-line">{{ $session->curriculum_objectives }}</p>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             @if($session->lesson_summary)
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <strong class="text-slate-700 block font-bold">ملخص محتوى الدرس:</strong>
-                    <p class="text-slate-600 leading-relaxed mt-0.5">{{ $session->lesson_summary }}</p>
+                    <strong class="text-slate-700 block font-bold">ملخص محتوى الدرس والشرح:</strong>
+                    <p class="text-slate-600 leading-relaxed mt-0.5 whitespace-pre-line">{{ $session->lesson_summary }}</p>
                 </div>
             @endif
 
             @if($session->homework_assigned)
                 <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-200">
                     <strong class="text-amber-950 block font-bold">الواجب والتكليف المنزلي:</strong>
-                    <p class="text-amber-900 leading-relaxed mt-0.5">{{ $session->homework_assigned }}</p>
+                    <p class="text-amber-900 leading-relaxed mt-0.5 whitespace-pre-line">{{ $session->homework_assigned }}</p>
                 </div>
             @endif
         </div>

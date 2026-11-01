@@ -51,15 +51,39 @@
         </div>
     </div>
 
-    <!-- ملخص محتوى الدرس والواجب -->
+    <!-- أهداف الحصة والمنهج والملخص والواجب -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        @if($session->lesson_objectives)
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 shadow-2xs">
+                <strong class="text-indigo-950 font-black block text-sm flex items-center gap-1.5">
+                    <span>🎯</span>
+                    <span>أهداف الحصة (Lesson Objectives):</span>
+                </strong>
+                <p class="text-slate-700 leading-relaxed bg-indigo-50/40 p-3 rounded-2xl border border-indigo-100 whitespace-pre-line">
+                    {{ $session->lesson_objectives }}
+                </p>
+            </div>
+        @endif
+
+        @if($session->curriculum_objectives)
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 shadow-2xs">
+                <strong class="text-purple-950 font-black block text-sm flex items-center gap-1.5">
+                    <span>📚</span>
+                    <span>أهداف المنهج (Curriculum Objectives):</span>
+                </strong>
+                <p class="text-purple-900 leading-relaxed bg-purple-50/40 p-3 rounded-2xl border border-purple-100 whitespace-pre-line">
+                    {{ $session->curriculum_objectives }}
+                </p>
+            </div>
+        @endif
+
         @if($session->lesson_summary)
             <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 shadow-2xs">
                 <strong class="text-indigo-950 font-black block text-sm flex items-center gap-1.5">
                     <span>📖</span>
                     <span>ملخص محتوى الدرس والشرح:</span>
                 </strong>
-                <p class="text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <p class="text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100 whitespace-pre-line">
                     {{ $session->lesson_summary }}
                 </p>
             </div>
@@ -71,7 +95,7 @@
                     <span>📝</span>
                     <span>الواجب والتكليف المنزلي:</span>
                 </strong>
-                <p class="text-amber-900 leading-relaxed bg-amber-50/50 p-3 rounded-2xl border border-amber-200">
+                <p class="text-amber-900 leading-relaxed bg-amber-50/50 p-3 rounded-2xl border border-amber-200 whitespace-pre-line">
                     {{ $session->homework_assigned }}
                 </p>
             </div>

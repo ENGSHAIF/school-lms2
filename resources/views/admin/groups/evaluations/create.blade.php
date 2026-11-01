@@ -58,6 +58,22 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div>
+                    <label class="block font-bold text-slate-700 mb-1">🎯 أهداف الحصة (Lesson Objectives):</label>
+                    <textarea name="lesson_objectives" rows="2" 
+                        placeholder="اكتب الأهداف المحددة والمخرجات المتوقعة من حصة اليوم (مثال: إتقان صياغة زمن المضارع البسيط واستخدامه في الحديث عن الروتين اليومي)..."
+                        class="w-full border border-slate-300 rounded-xl p-2.5 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ old('lesson_objectives') }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">📚 أهداف المنهج (Curriculum Objectives):</label>
+                    <textarea name="curriculum_objectives" rows="2" 
+                        placeholder="اكتب أهداف المنهج العامة أو معايير المستوى المرتبطة بالوحدة (مثال: تنمية مهارات المحادثة والاستماع وفق معايير الإطار الأوروبي CEFR)..."
+                        class="w-full border border-slate-300 rounded-xl p-2.5 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ old('curriculum_objectives') }}</textarea>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div>
                     <label class="block font-bold text-slate-700 mb-1">ملخص محتوى الدرس والشرح (Course Summary):</label>
                     <textarea name="lesson_summary" rows="2" 
                         placeholder="اكتب ملخصاً لما تم شرحه اليوم وتدريب الطلاب عليه..."
