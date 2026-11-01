@@ -123,6 +123,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/resources/{id}/download', [LevelResourceController::class, 'downloadResource'])->name('resources.download');
     Route::get('/activities/{id}/stream', [StudyGroupController::class, 'streamActivity'])->name('groups.activities.stream');
     Route::get('/activities/{id}/download', [StudyGroupController::class, 'downloadActivity'])->name('groups.activities.download');
+    Route::get('/groups/sessions/{sessionId}/download/{type}', [GroupEvaluationController::class, 'downloadSessionFile'])->name('groups.sessions.download');
 
     // 2.3 مسارات الطالب لأداء الاختبار واستعراض النتيجة
     Route::get('/student/exams/{id}/take/{groupId?}', [ExamController::class, 'take'])->name('student.exam.take');
@@ -245,6 +246,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/groups/{groupId}/evaluations/create', [GroupEvaluationController::class, 'create'])->name('admin.groups.evaluations.create');
         Route::post('/admin/groups/{groupId}/evaluations', [GroupEvaluationController::class, 'store'])->name('admin.groups.evaluations.store');
         Route::get('/admin/groups/evaluations/session/{sessionId}', [GroupEvaluationController::class, 'showSession'])->name('admin.groups.evaluations.show');
+        Route::get('/admin/groups/evaluations/session/{sessionId}/download/{type}', [GroupEvaluationController::class, 'downloadSessionFile'])->name('admin.groups.evaluations.download');
         Route::delete('/admin/groups/evaluations/session/{sessionId}', [GroupEvaluationController::class, 'destroySession'])->name('admin.groups.evaluations.destroy');
 
         // 3.2.2 مركز استبيانات وتقييمات الطلاب الشامل للأستاذ والدبلوم والتقارير

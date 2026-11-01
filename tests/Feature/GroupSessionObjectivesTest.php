@@ -7,6 +7,7 @@ use App\Models\GroupSession;
 use App\Models\Level;
 use App\Models\StudyGroup;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -110,5 +111,97 @@ class GroupSessionObjectivesTest extends TestCase
         $group->students()->detach();
         $group->delete();
         $student->delete();
+    }
+
+    public function test_group_session_uploads_and_downloads_summary_and_homework_files(): void
+    {
+        $admin = $this->getAdmin();
+
+        $student = User::create([
+            'name' => 'طالب ملفات حصة',
+            'email' => null,
+            'gender' => 'male',
+            'phone_whatsapp' => '96773'.rand(1000000, 9999999),
+            'password' => Hash::make('Secret123!'),
+            'role' => 'student',
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $group = StudyGroup::create([
+            'name' => 'مجموعة ملفات '.rand(100, 999),
+            'course_id' => Course::first()?->id,
+            'level_id' => Level::first()?->id,
+            'status' => 'active',
+        ]);
+
+        $group->students()->attach($student->id, ['status' => 'active']);
+
+        $summaryFile = UploadedFile::fake()->create('lesson_summary_guide.pdf', 150, 'application/pdf');
+        $homeworkFile = UploadedFile::fake()->create('homework_sheet.docx', 120, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+        $response = $this->actingAs($admin)->post(route('admin.groups.evaluations.store', $group->id), [
+            'session_date' => now()->toDateString(),
+            'session_number' => 2,
+            'lesson_topic' => 'Grammar Unit 4 with Worksheet',
+            'lesson_summary' => 'ملخص نصي مرفق مع ملف PDF',
+            'lesson_summary_file' => $summaryFile,
+            'homework_assigned' => 'حل الورقة المرفقة',
+            'homework_file' => $homeworkFile,
+            'evaluations' => [
+                $student->id => [
+                    'attendance_status' => 'present',
+                    'participation_score' => 5,
+                    'understanding_score' => 5,
+                    'homework_score' => 5,
+                    'stars_awarded' => 2,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+
+        $session = GroupSession::where('study_group_id', $group->id)->where('session_number', 2)->first();
+        $this->assertNotNull($session);
+        $this->assertTrue($session->hasSummaryFile());
+        $this->assertTrue($session->hasHomeworkFile());
+        $this->assertEquals('lesson_summary_guide.pdf', $session->lesson_summary_file_name);
+        $this->assertEquals('homework_sheet.docx', $session->homework_file_name);
+
+        // فحص تحميل الملف من قبل الإداري
+        $downloadSummary = $this->actingAs($admin)->get(route('groups.sessions.download', ['sessionId' => $session->id, 'type' => 'summary']));
+        $downloadSummary->assertOk();
+
+        $downloadHw = $this->actingAs($admin)->get(route('groups.sessions.download', ['sessionId' => $session->id, 'type' => 'homework']));
+        $downloadHw->assertOk();
+
+        // فحص تحميل الملف من قبل الطالب المسكن في المجموعة
+        $studentDownload = $this->actingAs($student)->get(route('groups.sessions.download', ['sessionId' => $session->id, 'type' => 'summary']));
+        $studentDownload->assertOk();
+
+        // فحص رفض التحميل لمستخدم غريب ليس في المجموعة
+        $stranger = User::create([
+            'name' => 'طالب غريب',
+            'email' => null,
+            'phone_whatsapp' => '96771'.rand(1000000, 9999999),
+            'password' => Hash::make('Secret123!'),
+            'role' => 'student',
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+        $strangerDownload = $this->actingAs($stranger)->get(route('groups.sessions.download', ['sessionId' => $session->id, 'type' => 'summary']));
+        $strangerDownload->assertStatus(403);
+
+        // فحص حذف الجلسة وتنظيف الملفات
+        $deleteResponse = $this->actingAs($admin)->delete(route('admin.groups.evaluations.destroy', $session->id));
+        $deleteResponse->assertRedirect();
+
+        $this->assertNull(GroupSession::find($session->id));
+
+        // تنظيف
+        $group->students()->detach();
+        $group->delete();
+        $student->delete();
+        $stranger->delete();
     }
 }

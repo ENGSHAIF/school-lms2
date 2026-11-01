@@ -440,17 +440,37 @@
                                     </div>
                                 @endif
 
-                                @if($session->lesson_summary)
-                                    <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
-                                        <strong class="text-slate-800 font-bold block">📖 ملخص محتوى الدرس:</strong>
-                                        <p class="text-slate-600 leading-relaxed">{{ $session->lesson_summary }}</p>
+                                @if($session->lesson_summary || $session->hasSummaryFile())
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <strong class="text-slate-800 font-bold block">📖 ملخص محتوى الدرس:</strong>
+                                            @if($session->hasSummaryFile())
+                                                <a href="{{ route('groups.sessions.download', ['sessionId' => $session->id, 'type' => 'summary']) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200 transition">
+                                                    <span>{{ $session->summary_file_icon }}</span>
+                                                    <span>تحميل الملخص</span>
+                                                </a>
+                                            @endif
+                                        </div>
+                                        @if($session->lesson_summary)
+                                            <p class="text-slate-600 leading-relaxed">{{ $session->lesson_summary }}</p>
+                                        @endif
                                     </div>
                                 @endif
 
-                                @if($session->homework_assigned)
-                                    <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-200 space-y-1">
-                                        <strong class="text-amber-950 font-bold block">📝 الواجب المطلوب:</strong>
-                                        <p class="text-amber-900 leading-relaxed">{{ $session->homework_assigned }}</p>
+                                @if($session->homework_assigned || $session->hasHomeworkFile())
+                                    <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-200 space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <strong class="text-amber-950 font-bold block">📝 الواجب المطلوب:</strong>
+                                            @if($session->hasHomeworkFile())
+                                                <a href="{{ route('groups.sessions.download', ['sessionId' => $session->id, 'type' => 'homework']) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-amber-950 bg-amber-100/70 hover:bg-amber-200/80 px-2.5 py-1 rounded-lg border border-amber-200 transition">
+                                                    <span>{{ $session->homework_file_icon }}</span>
+                                                    <span>تحميل ورقة الواجب</span>
+                                                </a>
+                                            @endif
+                                        </div>
+                                        @if($session->homework_assigned)
+                                            <p class="text-amber-900 leading-relaxed">{{ $session->homework_assigned }}</p>
+                                        @endif
                                     </div>
                                 @endif
                             </div>

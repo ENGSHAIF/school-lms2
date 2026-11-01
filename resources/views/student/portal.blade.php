@@ -271,6 +271,125 @@
             </div>
         </div>
 
+        <!-- سجل الحصص الدراسية وملخصات الدروس والواجبات -->
+        @php
+            $groupSessions = $studyGroup->sessions()->with(['evaluations' => function($q) use ($user) {
+                $q->where('student_id', $user->id);
+            }])->get();
+        @endphp
+        @if($groupSessions->isNotEmpty())
+            <div class="bg-white rounded-3xl border border-indigo-200/80 p-6 shadow-sm space-y-5">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+                            <span>📚</span>
+                            <span>سجل الحصص وملخصات الدروس والواجبات المدرسية</span>
+                        </h2>
+                        <span class="text-xs text-slate-500">
+                            متابعة مواضيع الحصص، قراءة ملخص ما تم شرحه، وتحميل أوراق العمل والتكاليف والملفات المرفقة من المعلم.
+                        </span>
+                    </div>
+                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl font-mono">
+                        {{ $groupSessions->count() }} حصص مسجلة
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach($groupSessions as $sess)
+                        @php
+                            $myEval = $sess->evaluations->first();
+                        @endphp
+                        <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 hover:border-indigo-300 transition space-y-3">
+                            <div class="flex items-start justify-between gap-2 border-b border-slate-200/80 pb-3">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-indigo-600 text-white font-mono">
+                                            الحصة #{{ $sess->session_number ?: ($loop->count - $loop->index) }}
+                                        </span>
+                                        <span class="text-xs text-slate-500 font-mono">
+                                            📅 {{ $sess->session_date ? $sess->session_date->format('Y-m-d') : '-' }}
+                                        </span>
+                                    </div>
+                                    <h3 class="text-sm font-black text-slate-900">{{ $sess->lesson_topic }}</h3>
+                                    @if($sess->teacher)
+                                        <span class="text-[11px] text-slate-500">المعلم: {{ $sess->teacher->name }}</span>
+                                    @endif
+                                </div>
+                                @if($myEval)
+                                    <div class="text-left shrink-0">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $myEval->attendance_badge_class }}">
+                                            {{ $myEval->attendance_label }}
+                                        </span>
+                                        @if($myEval->stars_awarded > 0)
+                                            <span class="block text-[11px] font-bold text-amber-500 font-mono mt-0.5">
+                                                ⭐ {{ $myEval->stars_awarded }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+
+                            @if($sess->lesson_objectives)
+                                <div class="bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100 text-xs space-y-1">
+                                    <span class="font-bold text-indigo-900 block">🎯 أهداف الحصة:</span>
+                                    <p class="text-slate-700 leading-relaxed text-[11px] whitespace-pre-line">{{ $sess->lesson_objectives }}</p>
+                                </div>
+                            @endif
+
+                            @if($sess->curriculum_objectives)
+                                <div class="bg-purple-50/50 p-2.5 rounded-xl border border-purple-100 text-xs space-y-1">
+                                    <span class="font-bold text-purple-900 block">📚 أهداف المنهج:</span>
+                                    <p class="text-purple-900 leading-relaxed text-[11px] whitespace-pre-line">{{ $sess->curriculum_objectives }}</p>
+                                </div>
+                            @endif
+
+                            @if($sess->lesson_summary || $sess->hasSummaryFile())
+                                <div class="bg-white p-3 rounded-xl border border-slate-200 text-xs space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-slate-800 flex items-center gap-1">
+                                            <span>📖</span>
+                                            <span>ملخص الدرس:</span>
+                                        </span>
+                                        @if($sess->hasSummaryFile())
+                                            <a href="{{ route('groups.sessions.download', ['sessionId' => $sess->id, 'type' => 'summary']) }}"
+                                               class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] rounded-lg border border-indigo-200 transition">
+                                                <span>{{ $sess->summary_file_icon }}</span>
+                                                <span>تحميل الملخص</span>
+                                            </a>
+                                        @endif
+                                    </div>
+                                    @if($sess->lesson_summary)
+                                        <p class="text-slate-600 leading-relaxed text-[11px] whitespace-pre-line">{{ $sess->lesson_summary }}</p>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @if($sess->homework_assigned || $sess->hasHomeworkFile())
+                                <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 text-xs space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-amber-950 flex items-center gap-1">
+                                            <span>📝</span>
+                                            <span>الواجب والتكليف:</span>
+                                        </span>
+                                        @if($sess->hasHomeworkFile())
+                                            <a href="{{ route('groups.sessions.download', ['sessionId' => $sess->id, 'type' => 'homework']) }}"
+                                               class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] rounded-lg border border-amber-300 transition">
+                                                <span>{{ $sess->homework_file_icon }}</span>
+                                                <span>تحميل ورقة الواجب</span>
+                                            </a>
+                                        @endif
+                                    </div>
+                                    @if($sess->homework_assigned)
+                                        <p class="text-amber-900 leading-relaxed text-[11px] whitespace-pre-line">{{ $sess->homework_assigned }}</p>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <!-- حائط التفاعل والمحادثة اليومية للمجموعة (Daily Feed & Submissions) -->
         <div class="bg-white rounded-3xl border border-purple-200/80 p-6 shadow-sm space-y-5">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">

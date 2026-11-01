@@ -77,27 +77,51 @@
             </div>
         @endif
 
-        @if($session->lesson_summary)
-            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 shadow-2xs">
-                <strong class="text-indigo-950 font-black block text-sm flex items-center gap-1.5">
-                    <span>📖</span>
-                    <span>ملخص محتوى الدرس والشرح:</span>
-                </strong>
-                <p class="text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100 whitespace-pre-line">
-                    {{ $session->lesson_summary }}
-                </p>
+        @if($session->lesson_summary || $session->hasSummaryFile())
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-3 shadow-2xs">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <strong class="text-indigo-950 font-black block text-sm flex items-center gap-1.5">
+                        <span>📖</span>
+                        <span>ملخص محتوى الدرس والشرح:</span>
+                    </strong>
+                    @if($session->hasSummaryFile())
+                        <a href="{{ route('groups.sessions.download', ['sessionId' => $session->id, 'type' => 'summary']) }}"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition shadow-2xs">
+                            <span class="text-sm">{{ $session->summary_file_icon }}</span>
+                            <span>تحميل ملف الملخص</span>
+                            <span class="text-[10px] text-indigo-500 font-mono">({{ $session->lesson_summary_file_name ?: 'ملخص' }})</span>
+                        </a>
+                    @endif
+                </div>
+                @if($session->lesson_summary)
+                    <p class="text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100 whitespace-pre-line">
+                        {{ $session->lesson_summary }}
+                    </p>
+                @endif
             </div>
         @endif
 
-        @if($session->homework_assigned)
-            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-2 shadow-2xs">
-                <strong class="text-amber-950 font-black block text-sm flex items-center gap-1.5">
-                    <span>📝</span>
-                    <span>الواجب والتكليف المنزلي:</span>
-                </strong>
-                <p class="text-amber-900 leading-relaxed bg-amber-50/50 p-3 rounded-2xl border border-amber-200 whitespace-pre-line">
-                    {{ $session->homework_assigned }}
-                </p>
+        @if($session->homework_assigned || $session->hasHomeworkFile())
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 space-y-3 shadow-2xs">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <strong class="text-amber-950 font-black block text-sm flex items-center gap-1.5">
+                        <span>📝</span>
+                        <span>الواجب والتكليف المنزلي:</span>
+                    </strong>
+                    @if($session->hasHomeworkFile())
+                        <a href="{{ route('groups.sessions.download', ['sessionId' => $session->id, 'type' => 'homework']) }}"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs rounded-xl border border-amber-200 transition shadow-2xs">
+                            <span class="text-sm">{{ $session->homework_file_icon }}</span>
+                            <span>تحميل ورقة الواجب والتكليف</span>
+                            <span class="text-[10px] text-amber-600 font-mono">({{ $session->homework_file_name ?: 'تكليف' }})</span>
+                        </a>
+                    @endif
+                </div>
+                @if($session->homework_assigned)
+                    <p class="text-amber-900 leading-relaxed bg-amber-50/50 p-3 rounded-2xl border border-amber-200 whitespace-pre-line">
+                        {{ $session->homework_assigned }}
+                    </p>
+                @endif
             </div>
         @endif
     </div>

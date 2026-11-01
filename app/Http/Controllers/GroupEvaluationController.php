@@ -152,7 +152,9 @@ class GroupEvaluationController extends Controller
             'lesson_objectives' => 'nullable|string',
             'curriculum_objectives' => 'nullable|string',
             'lesson_summary' => 'nullable|string',
+            'lesson_summary_file' => 'nullable|file|max:51200',
             'homework_assigned' => 'nullable|string',
+            'homework_file' => 'nullable|file|max:51200',
             'general_notes' => 'nullable|string',
             'evaluations' => 'required|array',
             'evaluations.*.attendance_status' => 'required|in:present,absent,late,excused',
@@ -162,6 +164,36 @@ class GroupEvaluationController extends Controller
             'evaluations.*.stars_awarded' => 'nullable|integer|min:0|max:50',
             'evaluations.*.teacher_notes' => 'nullable|string',
         ]);
+
+        $summaryFilePath = null;
+        $summaryFileName = null;
+        if ($request->hasFile('lesson_summary_file') && $request->file('lesson_summary_file')->isValid()) {
+            $file = $request->file('lesson_summary_file');
+            $summaryFileName = $file->getClientOriginalName();
+            $ext = $file->getClientOriginalExtension() ?: 'bin';
+            $uniqueName = 'summary_grp'.$group->id.'_'.time().'_'.uniqid().'.'.$ext;
+            $destinationPath = public_path('uploads/group_sessions');
+            if (! file_exists($destinationPath)) {
+                mkdir($destinationPath, 0777, true);
+            }
+            $file->move($destinationPath, $uniqueName);
+            $summaryFilePath = 'uploads/group_sessions/'.$uniqueName;
+        }
+
+        $homeworkFilePath = null;
+        $homeworkFileName = null;
+        if ($request->hasFile('homework_file') && $request->file('homework_file')->isValid()) {
+            $file = $request->file('homework_file');
+            $homeworkFileName = $file->getClientOriginalName();
+            $ext = $file->getClientOriginalExtension() ?: 'bin';
+            $uniqueName = 'homework_grp'.$group->id.'_'.time().'_'.uniqid().'.'.$ext;
+            $destinationPath = public_path('uploads/group_sessions');
+            if (! file_exists($destinationPath)) {
+                mkdir($destinationPath, 0777, true);
+            }
+            $file->move($destinationPath, $uniqueName);
+            $homeworkFilePath = 'uploads/group_sessions/'.$uniqueName;
+        }
 
         DB::beginTransaction();
         try {
@@ -195,7 +227,11 @@ class GroupEvaluationController extends Controller
                 'lesson_objectives' => $validated['lesson_objectives'] ?? null,
                 'curriculum_objectives' => $validated['curriculum_objectives'] ?? null,
                 'lesson_summary' => $validated['lesson_summary'] ?? null,
+                'lesson_summary_file' => $summaryFilePath,
+                'lesson_summary_file_name' => $summaryFileName,
                 'homework_assigned' => $validated['homework_assigned'] ?? null,
+                'homework_file' => $homeworkFilePath,
+                'homework_file_name' => $homeworkFileName,
                 'total_students' => $totalStudents,
                 'present_count' => $presentCount,
                 'absent_count' => $absentCount,
@@ -326,10 +362,82 @@ class GroupEvaluationController extends Controller
             }
         }
 
+        // حذف الملفات المرفقة إن وُجدت لتجنب بقاء ملفات يتيمة
+        if ($session->lesson_summary_file && file_exists(public_path($session->lesson_summary_file))) {
+            @unlink(public_path($session->lesson_summary_file));
+        }
+        if ($session->homework_file && file_exists(public_path($session->homework_file))) {
+            @unlink(public_path($session->homework_file));
+        }
+
         $session->delete();
 
         return redirect()->route('admin.groups.evaluations.index', ['group_id' => $groupId])
             ->with('success', 'تم حذف سجل الحصة وتقييماتها بنجاح وإعادة ضبط أرصدة النجوم.');
+    }
+
+    // تحميل ومعاينة ملفات ملخص الدرس والواجب المنزلي للحصة
+    public function downloadSessionFile(Request $request, $sessionId, $type)
+    {
+        $session = GroupSession::with(['group.students', 'group.teachers'])->findOrFail($sessionId);
+        $user = auth()->user();
+
+        // فحص الصلاحية: مسموح للمدير والمشرف ومعلم المجموعة، أو الطالب المسكن في نفس المجموعة أو ولي أمره
+        $isGroupStudent = $session->group->students->contains('id', $user->id);
+        $isGroupParent = $user->isParent() && $user->children()->whereHas('studyGroups', function ($q) use ($session) {
+            $q->where('study_groups.id', $session->study_group_id);
+        })->exists();
+        $isGroupTeacher = ($user->id === $session->teacher_id || $user->id === $session->group->teacher_id || $session->group->teachers->contains('id', $user->id));
+        $isAuthorized = ($user->isAdmin() || $user->isSupervisor() || $isGroupTeacher || $isGroupStudent || $isGroupParent);
+
+        if (! $isAuthorized) {
+            abort(403, 'عذراً، غير مصرح لك بتحميل أو معاينة ملفات هذه الحصة.');
+        }
+
+        if ($type === 'summary') {
+            $filePath = $session->lesson_summary_file;
+            $fileName = $session->lesson_summary_file_name ?: ('ملخص_الحصة_'.$session->session_number);
+        } elseif ($type === 'homework') {
+            $filePath = $session->homework_file;
+            $fileName = $session->homework_file_name ?: ('واجب_الحصة_'.$session->session_number);
+        } else {
+            abort(404, 'نوع الملف غير محدد.');
+        }
+
+        if (! $filePath) {
+            return back()->with('error', 'عذراً، لا يوجد ملف مرفوع لهذا البند في هذه الحصة.');
+        }
+
+        $cleanPath = ltrim(str_replace('\\', '/', $filePath), '/');
+        $candidatePaths = [
+            public_path($cleanPath),
+            base_path('public/'.$cleanPath),
+            base_path($cleanPath),
+            storage_path('app/public/'.$cleanPath),
+        ];
+
+        $foundPath = null;
+        foreach ($candidatePaths as $p) {
+            if (! empty($p) && file_exists($p) && ! is_dir($p)) {
+                $foundPath = $p;
+                break;
+            }
+        }
+
+        if (! $foundPath) {
+            return back()->with('error', "عذراً، لم يتم العثور على الملف المطلوب على الخادم (المسار: {$filePath}).");
+        }
+
+        if ($request->boolean('inline')) {
+            $mimeType = mime_content_type($foundPath) ?: 'application/octet-stream';
+
+            return response()->file($foundPath, [
+                'Content-Type' => $mimeType,
+                'Content-Disposition' => 'inline; filename="'.urlencode($fileName).'"',
+            ]);
+        }
+
+        return response()->download($foundPath, $fileName);
     }
 
     // طباعة التقارير الرسمية (يومي، أسبوعي، شهري، ونهائي للدبلوم)

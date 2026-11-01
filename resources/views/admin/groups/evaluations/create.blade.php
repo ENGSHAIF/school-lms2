@@ -25,7 +25,7 @@
         </a>
     </div>
 
-    <form method="POST" action="{{ route('admin.groups.evaluations.store', $group->id) }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.groups.evaluations.store', $group->id) }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
         <!-- 1. البيانات العامة للحصة والدرس -->
@@ -73,18 +73,64 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">ملخص محتوى الدرس والشرح (Course Summary):</label>
+                <!-- ملخص محتوى الدرس والشرح: كتابة نص أو رفع ملف -->
+                <div class="space-y-2 bg-slate-50/70 p-4 rounded-2xl border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <label class="block font-black text-slate-800">
+                            📖 ملخص محتوى الدرس والشرح (Course Summary):
+                        </label>
+                        <span class="text-[11px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md">نص أو ملف 📎</span>
+                    </div>
+
                     <textarea name="lesson_summary" rows="2" 
-                        placeholder="اكتب ملخصاً لما تم شرحه اليوم وتدريب الطلاب عليه..."
-                        class="w-full border border-slate-300 rounded-xl p-2.5 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ old('lesson_summary') }}</textarea>
+                        placeholder="اكتب ملخصاً لما تم شرحه وتدريبه في الحصة (أو ارفق الملف الجاهز أدناه)..."
+                        class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed">{{ old('lesson_summary') }}</textarea>
+
+                    <div>
+                        <label class="flex items-center justify-between p-2.5 bg-white border border-dashed border-indigo-300 hover:border-indigo-500 rounded-xl cursor-pointer transition group">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-lg shrink-0">📁</span>
+                                <div class="min-w-0">
+                                    <span class="font-bold text-indigo-700 block text-xs group-hover:underline truncate" id="summaryFileLabel">
+                                        رفع ملف ملخص الدرس (PDF / Word / صورة / صوت...)
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 block">اختياري - في حال جهزت ملخص الحصة كملف مستقل</span>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-black rounded-lg border border-indigo-200 shrink-0">اختيار ملف</span>
+                            <input type="file" name="lesson_summary_file" id="summaryFileInput" onchange="updateFileSelection(this, 'summaryFileLabel')" class="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.mp3,.wav,.m4a,.mp4,.zip">
+                        </label>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">الواجب والتكليف المنزلي المطلوب (Homework):</label>
+                <!-- الواجب والتكليف المنزلي: كتابة تكليف أو رفع ورقة عمل جاهزة -->
+                <div class="space-y-2 bg-slate-50/70 p-4 rounded-2xl border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <label class="block font-black text-slate-800">
+                            📝 الواجب والتكليف المنزلي المطلوب (Homework):
+                        </label>
+                        <span class="text-[11px] text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-md">تكليف أو ورقة عمل 📎</span>
+                    </div>
+
                     <textarea name="homework_assigned" rows="2" 
-                        placeholder="مثال: حل تمارين صفحة 45 من كتاب التمارين وتسجيل مقطع صوتي للنص..."
-                        class="w-full border border-slate-300 rounded-xl p-2.5 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ old('homework_assigned') }}</textarea>
+                        placeholder="اكتب الواجب المطلوب من الطلاب (أو ارفق ورقة العمل أو ملف التمارين الجاهز أدناه)..."
+                        class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed">{{ old('homework_assigned') }}</textarea>
+
+                    <div>
+                        <label class="flex items-center justify-between p-2.5 bg-white border border-dashed border-amber-300 hover:border-amber-500 rounded-xl cursor-pointer transition group">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-lg shrink-0">📎</span>
+                                <div class="min-w-0">
+                                    <span class="font-bold text-amber-800 block text-xs group-hover:underline truncate" id="homeworkFileLabel">
+                                        رفع ملف الواجب / ورقة العمل المجهزة مسبقاً
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 block">اختياري - لرفع ملف التمارين أو أوراق العمل (PDF / Word / صوت...)</span>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 bg-amber-50 text-amber-800 text-[10px] font-black rounded-lg border border-amber-200 shrink-0">اختيار ملف</span>
+                            <input type="file" name="homework_file" id="homeworkFileInput" onchange="updateFileSelection(this, 'homeworkFileLabel')" class="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.mp3,.wav,.m4a,.mp4,.zip">
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -242,6 +288,13 @@
 <script>
 function setAllPresent() {
     document.querySelectorAll('.status-present').forEach(el => el.checked = true);
+}
+
+function updateFileSelection(input, labelId) {
+    const label = document.getElementById(labelId);
+    if (input.files && input.files.length > 0) {
+        label.innerText = '✅ تم اختيار: ' + input.files[0].name;
+    }
 }
 </script>
 @endsection

@@ -89,17 +89,35 @@
                 </div>
             @endif
 
-            @if($session->lesson_summary)
+            @if($session->lesson_summary || $session->hasSummaryFile())
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <strong class="text-slate-700 block font-bold">ملخص محتوى الدرس والشرح:</strong>
-                    <p class="text-slate-600 leading-relaxed mt-0.5 whitespace-pre-line">{{ $session->lesson_summary }}</p>
+                    <div class="flex items-center justify-between font-bold text-slate-800 text-xs">
+                        <span>📖 ملخص محتوى الدرس والشرح:</span>
+                        @if($session->hasSummaryFile())
+                            <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded font-mono font-normal">
+                                📎 ملف مرفق: {{ $session->lesson_summary_file_name ?: 'ملف الملخص' }}
+                            </span>
+                        @endif
+                    </div>
+                    @if($session->lesson_summary)
+                        <p class="text-slate-600 leading-relaxed mt-1 whitespace-pre-line">{{ $session->lesson_summary }}</p>
+                    @endif
                 </div>
             @endif
 
-            @if($session->homework_assigned)
+            @if($session->homework_assigned || $session->hasHomeworkFile())
                 <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-200">
-                    <strong class="text-amber-950 block font-bold">الواجب والتكليف المنزلي:</strong>
-                    <p class="text-amber-900 leading-relaxed mt-0.5 whitespace-pre-line">{{ $session->homework_assigned }}</p>
+                    <div class="flex items-center justify-between font-bold text-amber-950 text-xs">
+                        <span>📝 الواجب والتكليف المنزلي:</span>
+                        @if($session->hasHomeworkFile())
+                            <span class="text-[10px] text-amber-900 bg-amber-100/80 border border-amber-300 px-2 py-0.5 rounded font-mono font-normal">
+                                📎 ملف مرفق: {{ $session->homework_file_name ?: 'ورقة الواجب' }}
+                            </span>
+                        @endif
+                    </div>
+                    @if($session->homework_assigned)
+                        <p class="text-amber-900 leading-relaxed mt-1 whitespace-pre-line">{{ $session->homework_assigned }}</p>
+                    @endif
                 </div>
             @endif
         </div>

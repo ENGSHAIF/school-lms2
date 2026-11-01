@@ -387,21 +387,75 @@
                         </div>
                     </div>
 
-                    <!-- كشف الجلسات الفردية -->
-                    <div class="space-y-2">
-                        <h4 class="font-black text-xs text-slate-900 mb-2">سجل الحصص المنعقدة:</h4>
+                    <!-- كشف الجلسات الفردية والملخصات والواجبات -->
+                    <div class="space-y-3">
+                        <h4 class="font-black text-xs text-slate-900 mb-2">سجل الحصص المنعقدة وملخصاتها والواجبات:</h4>
                         @forelse($evaluations as $ev)
-                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="text-base">📅</span>
-                                    <div>
-                                        <strong class="text-slate-900 block">{{ $ev->group?->name ?? 'شعبة دراسية' }}</strong>
-                                        <span class="text-[10px] text-slate-400 font-mono">{{ $ev->session?->session_date ? $ev->session->session_date->format('Y-m-d') : $ev->created_at->format('Y-m-d') }} | المعلم: {{ $ev->session?->teacher?->name }}</span>
+                            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-3">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200/80 pb-2">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="text-base">📅</span>
+                                        <div>
+                                            <strong class="text-slate-900 block">{{ $ev->group?->name ?? 'شعبة دراسية' }}</strong>
+                                            <span class="text-[10px] text-slate-400 font-mono">{{ $ev->session?->session_date ? $ev->session->session_date->format('Y-m-d') : $ev->created_at->format('Y-m-d') }} | المعلم: {{ $ev->session?->teacher?->name }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        @if($ev->stars_awarded > 0)
+                                            <span class="text-amber-500 font-bold font-mono">⭐ {{ $ev->stars_awarded }}</span>
+                                        @endif
+                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border {{ $ev->attendance_badge_class }}">
+                                            {{ $ev->attendance_label }}
+                                        </span>
                                     </div>
                                 </div>
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border {{ $ev->attendance_badge_class }}">
-                                    {{ $ev->attendance_label }}
-                                </span>
+
+                                @if($ev->session?->lesson_topic)
+                                    <div>
+                                        <strong class="text-slate-800">موضوع الدرس:</strong>
+                                        <span class="text-slate-700 font-semibold">{{ $ev->session->lesson_topic }}</span>
+                                    </div>
+                                @endif
+
+                                @if($ev->session?->lesson_summary || $ev->session?->hasSummaryFile())
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <strong class="text-slate-800 text-[11px] flex items-center gap-1">
+                                                <span>📖</span>
+                                                <span>ملخص الدرس:</span>
+                                            </strong>
+                                            @if($ev->session?->hasSummaryFile())
+                                                <a href="{{ route('groups.sessions.download', ['sessionId' => $ev->session->id, 'type' => 'summary']) }}" class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200 transition">
+                                                    <span>{{ $ev->session->summary_file_icon }}</span>
+                                                    <span>تحميل الملخص</span>
+                                                </a>
+                                            @endif
+                                        </div>
+                                        @if($ev->session?->lesson_summary)
+                                            <p class="text-slate-600 text-[11px] leading-relaxed whitespace-pre-line">{{ $ev->session->lesson_summary }}</p>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                @if($ev->session?->homework_assigned || $ev->session?->hasHomeworkFile())
+                                    <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <strong class="text-amber-950 text-[11px] flex items-center gap-1">
+                                                <span>📝</span>
+                                                <span>الواجب والتكليف:</span>
+                                            </strong>
+                                            @if($ev->session?->hasHomeworkFile())
+                                                <a href="{{ route('groups.sessions.download', ['sessionId' => $ev->session->id, 'type' => 'homework']) }}" class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded border border-amber-300 transition">
+                                                    <span>{{ $ev->session->homework_file_icon }}</span>
+                                                    <span>تحميل ورقة الواجب</span>
+                                                </a>
+                                            @endif
+                                        </div>
+                                        @if($ev->session?->homework_assigned)
+                                            <p class="text-amber-900 text-[11px] leading-relaxed whitespace-pre-line">{{ $ev->session->homework_assigned }}</p>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         @empty
                             <p class="text-xs text-slate-400 text-center py-4">لا توجد حصص مسجلة حتى الآن.</p>
