@@ -39,6 +39,18 @@
                 <span>المناهج والأسعار</span>
             </a>
 
+            <!-- زر أهداف المنهج والأساسيات -->
+            <button type="button" onclick="openEditCourseObjectivesModal()" class="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+                <span>🎯</span>
+                <span>أهداف المنهج والأساسيات</span>
+            </button>
+
+            <!-- زر إضافة مورد عام ثابت للدورة -->
+            <button type="button" onclick="openAddResourceModal(null, 'مورد عام للدورة', true, 'teacher')" class="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+                <span>🏛️</span>
+                <span>إضافة مورد عام للدورة</span>
+            </button>
+
             @if($course->level_id)
                 <a href="{{ route('admin.exams.create', $course->level_id) }}" class="px-4 py-2.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
                     <span>🎯</span>
@@ -47,9 +59,9 @@
             @endif
 
             <!-- زر إضافة عنوان / يوم دراسي جديد -->
-            <button type="button" onclick="openAddSectionModal()" class="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+            <button type="button" onclick="openAddSectionModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
                 <span>📌</span>
-                <span>إضافة عنوان / يوم دراسي</span>
+                <span>إضافة يوم / عنوان دراسي</span>
             </button>
 
             <!-- زر إضافة مورد تعليمي -->
@@ -101,6 +113,305 @@
                 </div>
             @endif
         </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- 1. بطاقة أهداف المنهج والدورة والأساسيات الثابتة (Objectives & Syllabus) -->
+    <!-- =============================================================== -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-7 space-y-5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-xl font-black shadow-xs shrink-0">
+                    🎯
+                </span>
+                <div>
+                    <h2 class="text-lg sm:text-xl font-black text-slate-900 leading-tight">
+                        أهداف المنهج والدورة والأساسيات الثابتة
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        الأهداف العامة للدورة، مخرجات التعلم، مفردات المنهج التأسيسية، والمتطلبات السابقة.
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" onclick="openEditCourseObjectivesModal()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-black text-xs rounded-xl transition border border-indigo-200 flex items-center gap-1.5 shrink-0">
+                <span>✏️</span>
+                <span>تعديل الأهداف والأساسيات</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <!-- 1. أهداف المنهج والدورة -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 via-white to-indigo-50/20 border border-indigo-100 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                        <span>🎯</span>
+                        <span>أهداف المنهج والدورة (Objectives)</span>
+                    </span>
+                    @if($course->course_objectives)
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="تم تحديد الأهداف"></span>
+                    @endif
+                </div>
+                @if($course->course_objectives)
+                    <div class="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-indigo-100/60 max-h-48 overflow-y-auto">
+                        {{ $course->course_objectives }}
+                    </div>
+                @else
+                    <div class="p-6 rounded-xl border border-dashed border-indigo-200 text-center text-xs text-indigo-400 space-y-2">
+                        <span class="text-2xl block">🎯</span>
+                        <p class="font-bold">لم تسجل أهداف الدورة بعد</p>
+                        <button type="button" onclick="openEditCourseObjectivesModal()" class="text-[11px] text-indigo-600 font-black hover:underline">
+                            + كتابة أهداف المنهج
+                        </button>
+                    </div>
+                @endif
+            </div>
+
+            <!-- 2. مفردات وخطة المنهج التأسيسية -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-purple-50/50 via-white to-purple-50/20 border border-purple-100 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-purple-950 flex items-center gap-1.5">
+                        <span>📋</span>
+                        <span>مفردات وخطة المنهج (Syllabus)</span>
+                    </span>
+                    @if($course->course_syllabus)
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="تم تحديد المفردات"></span>
+                    @endif
+                </div>
+                @if($course->course_syllabus)
+                    <div class="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-purple-100/60 max-h-48 overflow-y-auto">
+                        {{ $course->course_syllabus }}
+                    </div>
+                @else
+                    <div class="p-6 rounded-xl border border-dashed border-purple-200 text-center text-xs text-purple-400 space-y-2">
+                        <span class="text-2xl block">📋</span>
+                        <p class="font-bold">لم تسجل مفردات المنهج بعد</p>
+                        <button type="button" onclick="openEditCourseObjectivesModal()" class="text-[11px] text-purple-600 font-black hover:underline">
+                            + كتابة مفردات المنهج
+                        </button>
+                    </div>
+                @endif
+            </div>
+
+            <!-- 3. المتطلبات والأساسيات الهامة -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-amber-50/50 via-white to-amber-50/20 border border-amber-100 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                        <span>📌</span>
+                        <span>الأساسيات والمتطلبات (Prerequisites)</span>
+                    </span>
+                    @if($course->course_prerequisites)
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="تم تحديد المتطلبات"></span>
+                    @endif
+                </div>
+                @if($course->course_prerequisites)
+                    <div class="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-amber-100/60 max-h-48 overflow-y-auto">
+                        {{ $course->course_prerequisites }}
+                    </div>
+                @else
+                    <div class="p-6 rounded-xl border border-dashed border-amber-200 text-center text-xs text-amber-400 space-y-2">
+                        <span class="text-2xl block">📌</span>
+                        <p class="font-bold">لم تسجل المتطلبات بعد</p>
+                        <button type="button" onclick="openEditCourseObjectivesModal()" class="text-[11px] text-amber-600 font-black hover:underline">
+                            + كتابة المتطلبات الأساسية
+                        </button>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- 2. بنك الموارد العامة والتأسيسية الثابتة للدورة كامل (General Fixed Resources) -->
+    <!-- =============================================================== -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-7 space-y-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-5">
+            <div class="flex items-center gap-3">
+                <span class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-2xl font-black shadow-md shrink-0">
+                    🏛️
+                </span>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                            بنك الموارد العامة والتأسيسية الثابتة للدورة كامل
+                        </h2>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono">
+                            {{ $generalResources->count() }} موارد ثابتة
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                        موارد عامة تأسيسية ثابتة للدورة من البداية: موارد خاصة بالأستاذ (محمية)، موارد خاصة بالطالب، وموارد مشتركة.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="openAddResourceModal(null, 'مورد عام للدورة', true, 'teacher')" class="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs rounded-xl transition flex items-center gap-1.5">
+                    <span>🔒</span>
+                    <span>+ مورد للأستاذ</span>
+                </button>
+                <button type="button" onclick="openAddResourceModal(null, 'مورد عام للدورة', true, 'student')" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs rounded-xl transition flex items-center gap-1.5">
+                    <span>📘</span>
+                    <span>+ مورد للطالب</span>
+                </button>
+                <button type="button" onclick="openAddResourceModal(null, 'مورد عام للدورة', true, 'all')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+                    <span>➕</span>
+                    <span>إضافة مورد عام ثابت</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- الأقسام الثلاثة للموارد العامة (أستاذ / طالب / للكل) -->
+        <div class="space-y-6">
+            
+            <!-- أ) موارد خاصة بالأستاذ والمعلم (Teacher Only - محمي 🔒) -->
+            <div class="rounded-2xl border border-purple-200 bg-purple-50/20 p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-purple-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-sm">
+                            👨‍🏫
+                        </span>
+                        <div>
+                            <h3 class="font-black text-sm text-purple-950 flex items-center gap-2">
+                                <span>موارد خاصة بالأستاذ والمعلم فقط</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                                    🔒 محمي - محجوب عن حسابات الطلاب
+                                </span>
+                            </h3>
+                            <p class="text-[11px] text-purple-700">دليل المعلم، توزيع الخطة الأسبوعية، بنك نماذج الاختبارات ومفاتيح الإجابة، المصادر الإرشادية.</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-purple-800 font-mono bg-white px-2.5 py-1 rounded-lg border border-purple-200">
+                        {{ $teacherGeneralResources->count() }} ملفات
+                    </span>
+                </div>
+
+                @if($teacherGeneralResources->count() > 0)
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        @foreach($teacherGeneralResources as $res)
+                            @include('admin.courses.partials.resource_card', ['res' => $res, 'studyGroups' => $studyGroups])
+                        @endforeach
+                    </div>
+                @else
+                    <div class="p-6 text-center bg-white rounded-xl border border-dashed border-purple-200 text-xs text-purple-600 space-y-2">
+                        <span class="text-2xl block">📁</span>
+                        <p class="font-bold">لا توجد موارد خاصة بالأستاذ مضافة بعد.</p>
+                        <p class="text-[11px] text-slate-400">يمكنك رفع دليل المعلم أو خطة التحضير أو نماذج الاختبارات هنا وستكون محجوبة عن الطلاب تماماً.</p>
+                        <button type="button" onclick="openAddResourceModal(null, 'مورد عام للأستاذ', true, 'teacher')" class="mt-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition inline-flex items-center gap-1">
+                            <span>➕</span>
+                            <span>رفع دليل المعلم أو مورد خاص بالأستاذ</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+
+            <!-- ب) موارد خاصة بالطلاب (Student Only 👨‍🎓) -->
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50/20 p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-emerald-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm">
+                            👨‍🎓
+                        </span>
+                        <div>
+                            <h3 class="font-black text-sm text-emerald-950 flex items-center gap-2">
+                                <span>موارد خاصة بالطلاب</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    📘 يظهر في بوابة الطالب
+                                </span>
+                            </h3>
+                            <p class="text-[11px] text-emerald-700">الكتاب المقرر للدورة، القاموس المعتمد، ملخص القواعد، جداول التدريبات الإثرائية.</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-800 font-mono bg-white px-2.5 py-1 rounded-lg border border-emerald-200">
+                        {{ $studentGeneralResources->count() }} ملفات
+                    </span>
+                </div>
+
+                @if($studentGeneralResources->count() > 0)
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        @foreach($studentGeneralResources as $res)
+                            @include('admin.courses.partials.resource_card', ['res' => $res, 'studyGroups' => $studyGroups])
+                        @endforeach
+                    </div>
+                @else
+                    <div class="p-6 text-center bg-white rounded-xl border border-dashed border-emerald-200 text-xs text-emerald-600 space-y-2">
+                        <span class="text-2xl block">📚</span>
+                        <p class="font-bold">لا توجد موارد مخصصة للطلاب مرفوعة هنا بعد.</p>
+                        <p class="text-[11px] text-slate-400">يمكنك رفع الكتاب المقرر PDF أو القاموس أو مذكرات القواعد للدورة كاملة من البداية.</p>
+                        <button type="button" onclick="openAddResourceModal(null, 'مورد عام للطلاب', true, 'student')" class="mt-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition inline-flex items-center gap-1">
+                            <span>➕</span>
+                            <span>رفع الكتاب المقرر أو مورد للطلاب</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+
+            <!-- ج) موارد عامة مشتركة (Shared Resources 🌐) -->
+            <div class="rounded-2xl border border-blue-200 bg-blue-50/20 p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-blue-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-sm">
+                            👥
+                        </span>
+                        <div>
+                            <h3 class="font-black text-sm text-blue-950 flex items-center gap-2">
+                                <span>موارد عامة مشتركة</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                    🌐 متاح للجميع
+                                </span>
+                            </h3>
+                            <p class="text-[11px] text-blue-700">التوجيهات والتعليمات العامة، متطلبات النجاح، ومصادر تفاعلية مشتركة للأستاذ والطلاب.</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-blue-800 font-mono bg-white px-2.5 py-1 rounded-lg border border-blue-200">
+                        {{ $sharedGeneralResources->count() }} ملفات
+                    </span>
+                </div>
+
+                @if($sharedGeneralResources->count() > 0)
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        @foreach($sharedGeneralResources as $res)
+                            @include('admin.courses.partials.resource_card', ['res' => $res, 'studyGroups' => $studyGroups])
+                        @endforeach
+                    </div>
+                @else
+                    <div class="p-6 text-center bg-white rounded-xl border border-dashed border-blue-200 text-xs text-blue-600 space-y-2">
+                        <span class="text-2xl block">🌐</span>
+                        <p class="font-bold">لا توجد موارد عامة مشتركة مرفوعة بعد.</p>
+                        <p class="text-[11px] text-slate-400">يمكنك رفع تعليمات الدورة أو المراجع المشتركة هنا.</p>
+                        <button type="button" onclick="openAddResourceModal(null, 'مورد عام مشترك', true, 'all')" class="mt-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition inline-flex items-center gap-1">
+                            <span>➕</span>
+                            <span>رفع مورد عام مشترك</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- 3. ترويسة قسم موارد الأيام والحصص الدراسية (Daily Sessions Divider) -->
+    <!-- =============================================================== -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-2">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-base">
+                    📅
+                </span>
+                <h2 class="text-xl font-black text-slate-900">
+                    الحصص والأيام الدراسية للدورة (المحتوى اليومي والأسبوعي)
+                </h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                إضافة موارد وواجبات وفيديوهات مخصصة لكل يوم أو حصة دراسية معينة.
+            </p>
+        </div>
+
+        <button type="button" onclick="openAddSectionModal()" class="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition flex items-center gap-1.5 shrink-0">
+            <span>📌</span>
+            <span>إضافة عنوان / يوم دراسي جديد</span>
+        </button>
     </div>
 
     <!-- شريط فلترة وتبويبات الموارد وإحصائياتها والتحكم بالطي/التوسيع -->
@@ -312,64 +623,6 @@
                 </div>
             @endif
         @endforelse
-
-        <!-- قسم الموارد العامة / غير المخصصة لقسم معين (Unassigned / General Resources) -->
-        @if($unassignedResources->count() > 0)
-            <div class="section-card bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden" id="section-card-unassigned">
-                
-                <div class="p-5 sm:p-6 bg-gradient-to-r from-amber-50/60 via-white to-amber-50/60 border-b border-amber-200/60 cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none hover:bg-amber-100/30 transition" onclick="toggleSection('unassigned')">
-                    <div class="flex items-center gap-3.5">
-                        <span id="chevron-unassigned" class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-black transition-transform duration-300">
-                            ▼
-                        </span>
-                        <div>
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h3 class="text-base sm:text-lg font-black text-slate-900 leading-snug">
-                                    📁 موارد ومحتويات عامة للدورة (بدون قسم محدد)
-                                </h3>
-                                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                                    {{ $unassignedResources->count() }} مورد عام
-                                </span>
-                            </div>
-                            <p class="text-xs text-slate-500 mt-1">
-                                موارد وكتب تم رفعها على مستوى الدورة بشكل عام. يمكنك تعديل أي منها وتحديد العنوان المناسب له في أي وقت.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2 self-end md:self-center shrink-0" onclick="event.stopPropagation()">
-                        <button type="button" onclick="openAddResourceModal(null, 'مورد عام للدورة')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1">
-                            <span>➕</span>
-                            <span>إضافة مورد عام</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div id="section-body-unassigned" class="section-body p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        @foreach($unassignedResources as $res)
-                            @include('admin.courses.partials.resource_card', ['res' => $res, 'studyGroups' => $studyGroups])
-                        @endforeach
-
-                        <!-- بطاقة إضافة مورد عام إضافي -->
-                        <div class="border-2 border-dashed border-amber-200 hover:border-amber-500 bg-amber-50/20 hover:bg-amber-50/60 rounded-3xl p-6 transition flex flex-col items-center justify-center text-center space-y-3 cursor-pointer group min-h-[240px]" onclick="openAddResourceModal(null, 'مورد عام للدورة')">
-                            <span class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl font-black group-hover:scale-110 transition shadow-xs">
-                                ➕
-                            </span>
-                            <div>
-                                <h4 class="font-black text-sm text-amber-950 group-hover:text-amber-600 transition">إضافة مورد عام جديد</h4>
-                                <p class="text-[11px] text-slate-500 mt-1">رفع كتب أو ملفات عامة للدورة بدون تحديد قسم</p>
-                            </div>
-                            <span class="px-4 py-2 bg-amber-600 group-hover:bg-amber-700 text-white font-black text-xs rounded-xl shadow-xs transition">
-                                ➕ رفع مورد عام إضافي
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        @endif
-
     </div>
 
 </div>
@@ -477,15 +730,48 @@
         <form action="{{ route('admin.courses.resources.store', $course->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
             @csrf
 
-            <!-- اختيار العنوان / اليوم الدراسي التابع له -->
-            <div>
+            <!-- 1. موضع وتصنيف المورد (عام للدورة vs تابع ليوم/حصة محددة) -->
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+                <label class="block font-bold text-slate-800">موضع المورد الأكاديمي:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-indigo-400 select-none">
+                        <input type="radio" name="resource_scope" value="general" id="scopeGeneral" onchange="toggleResourceScopeFields()" checked class="text-indigo-600">
+                        <div>
+                            <span class="font-black text-slate-800 block text-[11px]">🏛️ مورد عام للدورة كامل</span>
+                            <span class="text-[10px] text-slate-400 block">ثابت للدورة (كتاب، دليل، قاموس)</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-indigo-400 select-none">
+                        <input type="radio" name="resource_scope" value="section" id="scopeSection" onchange="toggleResourceScopeFields()" class="text-indigo-600">
+                        <div>
+                            <span class="font-black text-slate-800 block text-[11px]">📌 تابع ليوم / حصة</span>
+                            <span class="text-[10px] text-slate-400 block">واجب، شرح درس، نشاط يومي</span>
+                        </div>
+                    </label>
+                </div>
+                <input type="hidden" name="is_general" id="addIsGeneralInput" value="1">
+            </div>
+
+            <!-- اختيار العنوان / اليوم الدراسي التابع له (يظهر فقط إذا اختير تابع ليوم) -->
+            <div id="sectionSelectContainer" class="hidden">
                 <label class="block font-bold text-slate-700 mb-1">العنوان / اليوم الدراسي التابع له <span class="text-indigo-600 font-normal">(اختر اليوم لتنظيم المورد داخله)</span></label>
                 <select name="course_section_id" id="resourceSectionSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-slate-800">
-                    <option value="">-- مورد عام للدورة (بدون قسم مخصص) --</option>
+                    <option value="">-- اختر العنوان / اليوم الدراسي --</option>
                     @foreach($sections as $sec)
                         <option value="{{ $sec->id }}">📌 {{ $sec->title }} (#{{ $sec->order_index }})</option>
                     @endforeach
                 </select>
+            </div>
+
+            <!-- الجمهور المستهدف -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">الجمهور المستهدف (صلاحية الرؤية) <span class="text-rose-500">*</span></label>
+                <select name="target_audience" id="resourceAudienceSelect" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-slate-800">
+                    <option value="all">👥 متاح للجميع (عام - يظهر للأستاذ والطلاب)</option>
+                    <option value="teacher">🔒 خاص بالأستاذ فقط (محمي - دليل المعلم، خطة التحضير، بنك الأسئلة)</option>
+                    <option value="student">👨‍🎓 خاص بالطلاب (الكتاب المقرر، القاموس، التكاليف المدرسية)</option>
+                </select>
+                <span class="text-[10px] text-slate-400 mt-0.5 block">الموارد الخاصة بالأستاذ فقط تُحجب تماماً عن حسابات وبوابات الطلاب وقاعاتهم.</span>
             </div>
 
             <!-- عنوان المورد -->
@@ -602,6 +888,180 @@
 </div>
 
 <!-- =============================================================== -->
+<!-- مودال تعديل بيانات المورد التعليمي (Edit Resource Modal) -->
+<!-- =============================================================== -->
+<div id="editResourceModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-5">
+        <div class="flex justify-between items-center border-b pb-3">
+            <div>
+                <h3 class="font-black text-slate-900 text-sm">تعديل بيانات المورد التعليمي</h3>
+                <p class="text-[11px] text-slate-500">تحديث العنوان أو موضع المورد أو تغيير الجمهور المستهدف أو استبدال الملف.</p>
+            </div>
+            <button type="button" onclick="closeEditResourceModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+        </div>
+
+        <form id="editResourceForm" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
+            @csrf
+
+            <!-- 1. موضع وتصنيف المورد (عام للدورة vs تابع ليوم/حصة محددة) -->
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+                <label class="block font-bold text-slate-800">موضع المورد الأكاديمي:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-indigo-400 select-none">
+                        <input type="radio" name="resource_scope" value="general" id="editScopeGeneral" onchange="toggleEditResourceScopeFields()" class="text-indigo-600">
+                        <div>
+                            <span class="font-black text-slate-800 block text-[11px]">🏛️ مورد عام للدورة كامل</span>
+                            <span class="text-[10px] text-slate-400 block">ثابت للدورة (كتاب، دليل، قاموس)</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-indigo-400 select-none">
+                        <input type="radio" name="resource_scope" value="section" id="editScopeSection" onchange="toggleEditResourceScopeFields()" class="text-indigo-600">
+                        <div>
+                            <span class="font-black text-slate-800 block text-[11px]">📌 تابع ليوم / حصة</span>
+                            <span class="text-[10px] text-slate-400 block">واجب، شرح درس، نشاط يومي</span>
+                        </div>
+                    </label>
+                </div>
+                <input type="hidden" name="is_general" id="editIsGeneralInput" value="0">
+            </div>
+
+            <!-- اختيار العنوان / اليوم الدراسي التابع له -->
+            <div id="editSectionSelectContainer" class="hidden">
+                <label class="block font-bold text-slate-700 mb-1">العنوان / اليوم الدراسي التابع له</label>
+                <select name="course_section_id" id="editResourceSectionSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-slate-800">
+                    <option value="">-- اختر العنوان / اليوم الدراسي --</option>
+                    @foreach($sections as $sec)
+                        <option value="{{ $sec->id }}">📌 {{ $sec->title }} (#{{ $sec->order_index }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- الجمهور المستهدف -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">الجمهور المستهدف (صلاحية الرؤية) <span class="text-rose-500">*</span></label>
+                <select name="target_audience" id="editResourceAudienceSelect" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-slate-800">
+                    <option value="all">👥 متاح للجميع (عام - يظهر للأستاذ والطلاب)</option>
+                    <option value="teacher">🔒 خاص بالأستاذ فقط (محمي - دليل المعلم، خطة التحضير، بنك الأسئلة)</option>
+                    <option value="student">👨‍🎓 خاص بالطلاب (الكتاب المقرر، القاموس، التكاليف المدرسية)</option>
+                </select>
+            </div>
+
+            <!-- عنوان المورد -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">عنوان المورد أو الملف <span class="text-rose-500">*</span></label>
+                <input type="text" name="title" id="editResourceTitle" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
+            </div>
+
+            <!-- نوع المورد -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">نوع المورد التعليمي <span class="text-rose-500">*</span></label>
+                <select name="type" id="editResourceTypeSelect" onchange="toggleEditResourceTypeFields()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
+                    <option value="video">🎥 محاضرة أو شرح مرئي (Video / Link)</option>
+                    <option value="audio">🎧 تسجيل صوتي للوحدة أو المحادثة (MP3 / Audio)</option>
+                    <option value="book">📚 كتاب ومقرر دراسي (PDF / Document)</option>
+                    <option value="image">🖼️ صورة نشاط أو بطاقة تعليمية (Image)</option>
+                    <option value="worksheet">📝 ورقة عمل وتطبيق منزلي (Worksheet)</option>
+                    <option value="quiz">🎯 كويز واختبار قصير (Quiz / Exam)</option>
+                </select>
+            </div>
+
+            <!-- استبدال الملف المرفق -->
+            <div id="editFileUploadContainer">
+                <label class="block font-bold text-slate-700 mb-1">استبدال الملف المرفق (اختياري - اتركه فارغاً للاحتفاظ بالملف الحالي)</label>
+                <input type="file" name="attachment" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            </div>
+
+            <!-- رابط خارجي للفيديو أو المستندات -->
+            <div id="editUrlContainer">
+                <label class="block font-bold text-slate-700 mb-1">رابط المحاضرة / الفيديو الخارجي (YouTube / Google Drive)</label>
+                <input type="url" name="external_url" id="editResourceExternalUrl" placeholder="https://..." dir="ltr" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <!-- مدة المورد بالساعات -->
+                <div id="editDurationContainer">
+                    <label class="block font-bold text-slate-700 mb-1">المدة المقدرة (بالساعات)</label>
+                    <input type="number" name="duration_hours" id="editResourceDurationHours" step="0.1" min="0.1" max="1000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
+                </div>
+
+                <!-- ترتيب المورد -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">الترتيب الرقمي في العرض</label>
+                    <input type="number" name="order_index" id="editResourceOrderIndex" min="1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
+                </div>
+            </div>
+
+            <!-- وصف المورد -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">ملاحظات وتعليمات للمدرسين والطلاب</label>
+                <textarea name="description" id="editResourceDescription" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeEditResourceModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
+                <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">حفظ التعديلات 💾</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =============================================================== -->
+<!-- مودال تعديل أهداف ومفردات المنهج والأساسيات للدورة -->
+<!-- =============================================================== -->
+<div id="editCourseObjectivesModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-7 space-y-5">
+        <div class="flex justify-between items-center border-b pb-3">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🎯</span>
+                <div>
+                    <h3 class="font-black text-slate-900 text-sm sm:text-base">تعديل أهداف ومفردات المنهج والأساسيات الثابتة للدورة</h3>
+                    <p class="text-[11px] text-slate-500">دورة: {{ $course->name_en }} ({{ $course->name_ar }})</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditCourseObjectivesModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+        </div>
+
+        <form action="{{ route('admin.courses.objectives.update', $course->id) }}" method="POST" class="space-y-4 text-xs">
+            @csrf
+
+            <!-- 1. أهداف المنهج والدورة -->
+            <div>
+                <label class="block font-bold text-indigo-950 mb-1 flex items-center gap-1.5">
+                    <span>🎯</span>
+                    <span>أهداف المنهج والدورة ومخرجات التعلم (Course Objectives)</span>
+                </label>
+                <textarea name="course_objectives" rows="4" placeholder="اكتب أهداف الدورة وما سيكتسبه الطالب عند إتمامها..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed">{{ $course->course_objectives }}</textarea>
+                <span class="text-[10px] text-slate-400">يمكنك كتابة كل هدف بسطر مستقل أو بنقاط واضحة.</span>
+            </div>
+
+            <!-- 2. مفردات وخطة المنهج التأسيسية -->
+            <div>
+                <label class="block font-bold text-purple-950 mb-1 flex items-center gap-1.5">
+                    <span>📋</span>
+                    <span>مفردات وخطة المنهج التأسيسية (Course Syllabus & Units)</span>
+                </label>
+                <textarea name="course_syllabus" rows="4" placeholder="المحاور الرئيسية، قائمة الوحدات والدروس، وتوزيع الساعات التدريبية..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed">{{ $course->course_syllabus }}</textarea>
+                <span class="text-[10px] text-slate-400">ملخص لمفردات المنهج وخطة تدريس الوحدات بالدورة.</span>
+            </div>
+
+            <!-- 3. المتطلبات والأساسيات الهامة -->
+            <div>
+                <label class="block font-bold text-amber-950 mb-1 flex items-center gap-1.5">
+                    <span>📌</span>
+                    <span>المتطلبات الأساسية والتعليمات الهامة (Prerequisites & Essentials)</span>
+                </label>
+                <textarea name="course_prerequisites" rows="3" placeholder="المعارف السابقة المطلوبة، شروط الحضور، الأدوات المطلوبة..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 outline-none leading-relaxed">{{ $course->course_prerequisites }}</textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeEditCourseObjectivesModal()" class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-xl">إلغاء</button>
+                <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition">حفظ أهداف المنهج والأساسيات 💾</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =============================================================== -->
 <!-- سكربت التحكم بالأكورديون والفلترة والمودالات -->
 <!-- =============================================================== -->
 <script>
@@ -677,13 +1137,77 @@
         }
     }
 
-    // مودال إضافة مورد (مع إمكانية تحديد قسم مسبق)
-    function openAddResourceModal(sectionId = null, sectionTitle = '') {
-        const select = document.getElementById('resourceSectionSelect');
-        if (select) {
-            select.value = sectionId ? sectionId : '';
+    function toggleEditResourceTypeFields() {
+        const type = document.getElementById('editResourceTypeSelect').value;
+        const urlContainer = document.getElementById('editUrlContainer');
+        const fileContainer = document.getElementById('editFileUploadContainer');
+        const durationContainer = document.getElementById('editDurationContainer');
+
+        if (type === 'video') {
+            if (urlContainer) urlContainer.classList.remove('hidden');
+            if (durationContainer) durationContainer.classList.remove('hidden');
         }
+    }
+
+    // تبديل موضع المورد في مودال الإضافة (عام للدورة vs تابع ليوم)
+    function toggleResourceScopeFields() {
+        const isGeneral = document.getElementById('scopeGeneral').checked;
+        const sectionContainer = document.getElementById('sectionSelectContainer');
+        const hiddenInput = document.getElementById('addIsGeneralInput');
+        const select = document.getElementById('resourceSectionSelect');
+
+        if (isGeneral) {
+            sectionContainer.classList.add('hidden');
+            hiddenInput.value = '1';
+            if (select) select.value = '';
+        } else {
+            sectionContainer.classList.remove('hidden');
+            hiddenInput.value = '0';
+        }
+    }
+
+    // تبديل موضع المورد في مودال التعديل
+    function toggleEditResourceScopeFields() {
+        const isGeneral = document.getElementById('editScopeGeneral').checked;
+        const sectionContainer = document.getElementById('editSectionSelectContainer');
+        const hiddenInput = document.getElementById('editIsGeneralInput');
+        const select = document.getElementById('editResourceSectionSelect');
+
+        if (isGeneral) {
+            sectionContainer.classList.add('hidden');
+            hiddenInput.value = '1';
+            if (select) select.value = '';
+        } else {
+            sectionContainer.classList.remove('hidden');
+            hiddenInput.value = '0';
+        }
+    }
+
+    // مودال إضافة مورد (مع إمكانية تحديد قسم مسبق أو تعيينه عام وتحديد الجمهور)
+    function openAddResourceModal(sectionId = null, sectionTitle = '', isGeneral = null, targetAudience = 'all') {
+        const select = document.getElementById('resourceSectionSelect');
         const badge = document.getElementById('modalSelectedSectionBadge');
+        const audienceSelect = document.getElementById('resourceAudienceSelect');
+
+        if (audienceSelect && targetAudience) {
+            audienceSelect.value = targetAudience;
+        }
+
+        if (sectionId) {
+            document.getElementById('scopeSection').checked = true;
+            document.getElementById('scopeGeneral').checked = false;
+            if (select) select.value = sectionId;
+        } else if (isGeneral === true) {
+            document.getElementById('scopeGeneral').checked = true;
+            document.getElementById('scopeSection').checked = false;
+            if (select) select.value = '';
+        } else {
+            document.getElementById('scopeGeneral').checked = true;
+            document.getElementById('scopeSection').checked = false;
+        }
+
+        toggleResourceScopeFields();
+
         if (badge) {
             if (sectionTitle) {
                 badge.innerText = '📌 سيتم إدراج هذا المورد داخل: ' + sectionTitle;
@@ -692,12 +1216,50 @@
                 badge.classList.add('hidden');
             }
         }
+
         document.getElementById('addResourceModal').classList.remove('hidden');
         toggleResourceTypeFields();
     }
 
     function closeAddResourceModal() {
         document.getElementById('addResourceModal').classList.add('hidden');
+    }
+
+    // مودال تعديل المورد الأكاديمي
+    function openEditResourceModal(res) {
+        document.getElementById('editResourceForm').action = '/admin/levels/resources/' + res.id + '/update';
+        document.getElementById('editResourceTitle').value = res.title || '';
+        document.getElementById('editResourceTypeSelect').value = res.type || 'book';
+        document.getElementById('editResourceAudienceSelect').value = res.target_audience || 'all';
+        document.getElementById('editResourceDescription').value = res.description || '';
+        document.getElementById('editResourceExternalUrl').value = res.external_url || '';
+        document.getElementById('editResourceDurationHours').value = res.duration_hours || '';
+        document.getElementById('editResourceOrderIndex').value = res.order_index || 1;
+
+        if (res.is_general || !res.course_section_id) {
+            document.getElementById('editScopeGeneral').checked = true;
+            document.getElementById('editScopeSection').checked = false;
+        } else {
+            document.getElementById('editScopeSection').checked = true;
+            document.getElementById('editScopeGeneral').checked = false;
+            document.getElementById('editResourceSectionSelect').value = res.course_section_id;
+        }
+
+        toggleEditResourceScopeFields();
+        document.getElementById('editResourceModal').classList.remove('hidden');
+    }
+
+    function closeEditResourceModal() {
+        document.getElementById('editResourceModal').classList.add('hidden');
+    }
+
+    // مودال أهداف الدورة ومفردات المنهج
+    function openEditCourseObjectivesModal() {
+        document.getElementById('editCourseObjectivesModal').classList.remove('hidden');
+    }
+
+    function closeEditCourseObjectivesModal() {
+        document.getElementById('editCourseObjectivesModal').classList.add('hidden');
     }
 
     // مودال إضافة عنوان / يوم دراسي
@@ -750,6 +1312,8 @@
             openAddResourceModal();
         } else if (urlParams.get('action') === 'add_section') {
             openAddSectionModal();
+        } else if (urlParams.get('action') === 'objectives') {
+            openEditCourseObjectivesModal();
         }
     });
 </script>

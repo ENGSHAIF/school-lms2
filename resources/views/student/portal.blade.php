@@ -599,7 +599,7 @@
                         </h2>
                         <span class="text-xs text-slate-400">شاهد المحاضرات المرئية وتدرب على النطق ومحتوى الكتاب</span>
                     </div>
-                    @php $videoItems = $activeLevel?->resources?->where('type', 'video') ?? collect(); @endphp
+                    @php $videoItems = $activeLevel?->resources?->filter(fn($r) => $r->isForStudent())->where('type', 'video') ?? collect(); @endphp
                     <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full font-mono">
                         {{ $videoItems->count() }} محاضرات
                     </span>
@@ -656,7 +656,7 @@
                         <span>📖</span>
                         <span>مكتبة المناهج والكتب الرقمية (PDF)</span>
                     </h2>
-                    @php $bookItems = $activeLevel?->resources?->where('type', 'book') ?? collect(); @endphp
+                    @php $bookItems = $activeLevel?->resources?->filter(fn($r) => $r->isForStudent())->where('type', 'book') ?? collect(); @endphp
                     <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-mono">
                         {{ $bookItems->count() }} كتب معتمدة
                     </span>
@@ -686,7 +686,7 @@
             </div>
 
             <!-- التسجيلات الصوتية للاستماع والمحادثة (Audios) -->
-            @php $audioItems = $activeLevel?->resources?->where('type', 'audio') ?? collect(); @endphp
+            @php $audioItems = $activeLevel?->resources?->filter(fn($r) => $r->isForStudent())->where('type', 'audio') ?? collect(); @endphp
             @if($audioItems->isNotEmpty())
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-3">

@@ -9,6 +9,8 @@ class LevelResource extends Model
     protected $fillable = [
         'course_id',
         'course_section_id',
+        'is_general',
+        'target_audience',
         'level_id',
         'title',
         'type',
@@ -27,6 +29,7 @@ class LevelResource extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_general' => 'boolean',
         'course_section_id' => 'integer',
         'duration_hours' => 'decimal:2',
         'duration_minutes' => 'integer',
@@ -139,5 +142,52 @@ class LevelResource extends Model
             'quiz' => 'bg-rose-50 text-rose-800 border-rose-200',
             default => 'bg-slate-100 text-slate-800 border-slate-200',
         };
+    }
+
+    // تسمية الجمهور المستهدف
+    public function getTargetAudienceLabelAttribute(): string
+    {
+        return match ($this->target_audience) {
+            'teacher' => 'خاص بالأستاذ فقط 🔒',
+            'student' => 'خاص بالطلاب 👨‍🎓',
+            default => 'متاح للجميع (عام) 🌐',
+        };
+    }
+
+    // شارة الجمهور المستهدف
+    public function getTargetAudienceBadgeClassAttribute(): string
+    {
+        return match ($this->target_audience) {
+            'teacher' => 'bg-purple-100 text-purple-800 border-purple-200',
+            'student' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+            default => 'bg-blue-100 text-blue-800 border-blue-200',
+        };
+    }
+
+    public function isForTeacherOnly(): bool
+    {
+        return $this->target_audience === 'teacher';
+    }
+
+    public function isForStudent(): bool
+    {
+        return in_array($this->target_audience, ['student', 'all'], true);
+    }
+
+    public function scopeForStudents($query)
+    {
+        return $query->whereIn('target_audience', ['student', 'all']);
+    }
+
+    public function scopeForTeachers($query)
+    {
+        return $query->whereIn('target_audience', ['teacher', 'all']);
+    }
+
+    public function scopeGeneral($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('is_general', true)->orWhereNull('course_section_id');
+        });
     }
 }

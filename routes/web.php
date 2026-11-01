@@ -13,6 +13,7 @@ use App\Http\Controllers\ChartOfAccountsController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\ClassroomRealtimeController;
 use App\Http\Controllers\CostCenterController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ExamManagementController;
 use App\Http\Controllers\FinancialReportController;
@@ -191,6 +192,7 @@ Route::middleware('auth')->group(function () {
         // 3.1.1 بنك موارد ومناهج الدورات والمستويات الأكاديمية
         Route::get('/admin/courses/{courseId}/resources', [LevelResourceController::class, 'courseResources'])->name('admin.courses.resources');
         Route::post('/admin/courses/{courseId}/resources', [LevelResourceController::class, 'storeCourseResource'])->name('admin.courses.resources.store');
+        Route::post('/admin/courses/{courseId}/objectives', [LevelResourceController::class, 'updateCourseObjectives'])->name('admin.courses.objectives.update');
         Route::post('/admin/courses/{courseId}/sections', [LevelResourceController::class, 'storeSection'])->name('admin.courses.sections.store');
         Route::post('/admin/courses/sections/{id}/update', [LevelResourceController::class, 'updateSection'])->name('admin.courses.sections.update');
         Route::delete('/admin/courses/sections/{id}', [LevelResourceController::class, 'destroySection'])->name('admin.courses.sections.destroy');
@@ -363,6 +365,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/accounting/cash-counts', [YemenSoftAccountingController::class, 'storeCashCount'])->name('accounting.cash_counts.store');
         Route::get('/accounting/posting', [YemenSoftAccountingController::class, 'posting'])->name('accounting.posting.index');
         Route::post('/accounting/posting/batch', [YemenSoftAccountingController::class, 'postBatch'])->name('accounting.posting.batch');
+
+        // 5.12 تهيئة بيانات العملات والمصارفة الآلية (المتكامل بلاس ERP)
+        Route::get('/accounting/currencies', [CurrencyController::class, 'index'])->name('accounting.currencies.index');
+        Route::post('/accounting/currencies', [CurrencyController::class, 'store'])->name('accounting.currencies.store');
+        Route::post('/accounting/currencies/{id}/update', [CurrencyController::class, 'update'])->name('accounting.currencies.update');
+        Route::post('/accounting/currencies/{id}/quick-rate', [CurrencyController::class, 'quickRateUpdate'])->name('accounting.currencies.quick_rate');
+        Route::post('/accounting/currencies/{id}/toggle-status', [CurrencyController::class, 'toggleStatus'])->name('accounting.currencies.toggle_status');
+        Route::delete('/accounting/currencies/{id}', [CurrencyController::class, 'destroy'])->name('accounting.currencies.destroy');
 
         // 6. لوحة تحكم المشرف الأكاديمي التجريبي (مراجعة واعتماد المستويات الأكاديمية)
         Route::get('/supervisor', [SupervisorController::class, 'dashboard'])->name('supervisor.dashboard');

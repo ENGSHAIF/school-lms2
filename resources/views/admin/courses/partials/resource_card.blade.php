@@ -18,6 +18,15 @@
                     <span class="w-2.5 h-2.5 rounded-full bg-slate-300" title="معطل مؤقتاً"></span>
                 @endif
             </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border {{ $res->target_audience_badge_class }}">
+                {{ $res->target_audience_label }}
+            </span>
+            @if($res->is_general)
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    🏛️ مورد عام ثابت للدورة
+                </span>
+            @endif
         </div>
 
         <!-- عنوان المورد -->
@@ -160,14 +169,34 @@
             @endif
         </div>
 
-        <!-- زر حذف المورد -->
-        <form action="{{ route('admin.levels.resources.destroy', $res->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا المورد نهائياً من بنك الدورة؟');">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition text-xs font-bold" title="حذف المورد">
-                🗑️
+        <div class="flex items-center gap-1">
+            <!-- زر تعديل المورد -->
+            <button type="button" onclick="openEditResourceModal({{ json_encode([
+                'id' => $res->id,
+                'title' => $res->title,
+                'type' => $res->type,
+                'is_general' => (bool)$res->is_general,
+                'target_audience' => $res->target_audience ?? 'all',
+                'course_section_id' => $res->course_section_id,
+                'description' => $res->description,
+                'external_url' => $res->external_url,
+                'duration_hours' => $res->duration_hours,
+                'duration_minutes' => $res->duration_minutes,
+                'order_index' => $res->order_index,
+                'is_active' => (bool)$res->is_active,
+            ]) }})" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition text-xs font-bold" title="تعديل بيانات المورد">
+                ✏️
             </button>
-        </form>
+
+            <!-- زر حذف المورد -->
+            <form action="{{ route('admin.levels.resources.destroy', $res->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا المورد نهائياً من بنك الدورة؟');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition text-xs font-bold" title="حذف المورد">
+                    🗑️
+                </button>
+            </form>
+        </div>
     </div>
 
 </div>

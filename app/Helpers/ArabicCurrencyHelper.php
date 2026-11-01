@@ -2,6 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Models\Currency;
+use Illuminate\Support\Facades\Schema;
+
 class ArabicCurrencyHelper
 {
     /**
@@ -9,12 +12,25 @@ class ArabicCurrencyHelper
      */
     public static function currencyName(?string $currency): string
     {
-        return match (strtoupper($currency ?? 'YER')) {
+        $code = strtoupper($currency ?? 'YER');
+        $fromDb = Schema::hasTable('currencies')
+            ? Currency::where('currency_code', $code)->value('name')
+            : null;
+
+        return $fromDb ?: match ($code) {
             'YER' => 'ريال يمني',
             'SAR' => 'ريال سعودي',
             'USD' => 'دولار أمريكي',
             default => $currency ?? 'ريال يمني',
         };
+    }
+
+    /**
+     * المصارفة الآلية للمبالغ بين العملات بالاعتماد على أسعار النظام المعتمدة
+     */
+    public static function convert(float $amount, string $fromCurrency, string $toCurrency): float
+    {
+        return Currency::convert($amount, $fromCurrency, $toCurrency);
     }
 
     /**
@@ -36,14 +52,15 @@ class ArabicCurrencyHelper
     public static function format(?float $amount, ?string $currency = 'YER', int $decimals = 2): string
     {
         $cur = strtoupper($currency ?? 'YER');
-        $formattedNumber = number_format((float)($amount ?? 0), $decimals);
+        $formattedNumber = number_format((float) ($amount ?? 0), $decimals);
 
         if ($cur === 'USD') {
-            return '$' . $formattedNumber;
+            return '$'.$formattedNumber;
         }
 
         $symbol = self::currencySymbol($cur);
-        return $formattedNumber . ' ' . $symbol;
+
+        return $formattedNumber.' '.$symbol;
     }
 
     /**
@@ -64,11 +81,11 @@ class ArabicCurrencyHelper
 
         $words = self::convertNumberToArabicWords($integerPart);
 
-        $result = 'فقط ' . $words . ' ' . $currencyName;
+        $result = 'فقط '.$words.' '.$currencyName;
 
         if ($decimalPart > 0) {
             $decimalWords = self::convertNumberToArabicWords($decimalPart);
-            $result .= ' و' . $decimalWords . ' ' . $fractionName;
+            $result .= ' و'.$decimalWords.' '.$fractionName;
         }
 
         $result .= ' لا غير';
@@ -105,7 +122,7 @@ class ArabicCurrencyHelper
         // Billions
         if ($number >= 1000000000) {
             $billions = (int) floor($number / 1000000000);
-            $words[] = self::convertNumberToArabicWords($billions) . ' مليار';
+            $words[] = self::convertNumberToArabicWords($billions).' مليار';
             $number %= 1000000000;
         }
 
@@ -117,9 +134,9 @@ class ArabicCurrencyHelper
             } elseif ($millions === 2) {
                 $words[] = 'مليونان';
             } elseif ($millions >= 3 && $millions <= 10) {
-                $words[] = self::convertNumberToArabicWords($millions) . ' ملايين';
+                $words[] = self::convertNumberToArabicWords($millions).' ملايين';
             } else {
-                $words[] = self::convertNumberToArabicWords($millions) . ' مليون';
+                $words[] = self::convertNumberToArabicWords($millions).' مليون';
             }
             $number %= 1000000;
         }
@@ -132,9 +149,9 @@ class ArabicCurrencyHelper
             } elseif ($thousands === 2) {
                 $words[] = 'ألفان';
             } elseif ($thousands >= 3 && $thousands <= 10) {
-                $words[] = self::convertNumberToArabicWords($thousands) . ' آلاف';
+                $words[] = self::convertNumberToArabicWords($thousands).' آلاف';
             } else {
-                $words[] = self::convertNumberToArabicWords($thousands) . ' ألف';
+                $words[] = self::convertNumberToArabicWords($thousands).' ألف';
             }
             $number %= 1000;
         }
@@ -151,7 +168,7 @@ class ArabicCurrencyHelper
             $t = (int) floor($number / 10);
             $o = $number % 10;
             if ($o > 0) {
-                $words[] = $ones[$o] . ' و' . $tens[$t];
+                $words[] = $ones[$o].' و'.$tens[$t];
             } else {
                 $words[] = $tens[$t];
             }

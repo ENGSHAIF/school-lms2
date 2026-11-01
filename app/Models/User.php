@@ -71,7 +71,11 @@ class User extends Authenticatable
                     default => 'STU',
                 };
                 $latestId = static::max('id') ?? 0;
-                $code = $prefix.'-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
+                $seq = $latestId + 1;
+                do {
+                    $code = $prefix.'-'.date('Y').'-'.str_pad($seq, 4, '0', STR_PAD_LEFT);
+                    $seq++;
+                } while (static::where('user_code', $code)->orWhere('student_code', $code)->exists());
                 $user->user_code = $code;
                 if (empty($user->student_code)) {
                     $user->student_code = $code;

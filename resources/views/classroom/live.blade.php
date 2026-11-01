@@ -319,9 +319,19 @@
         $levelResources = collect();
         if (isset($group) && $group && $group->level) {
             $levelResources = $group->level->resources ?? collect();
+            if ($group->course && $group->course->resources) {
+                $levelResources = $levelResources->merge($group->course->resources);
+            }
         } elseif (isset($booking) && $booking && $booking->student) {
             $enrollment = $booking->student->enrollments()->where('status', 'active')->first();
             $levelResources = $enrollment?->level?->resources ?? collect();
+            if ($enrollment?->course && $enrollment->course->resources) {
+                $levelResources = $levelResources->merge($enrollment->course->resources);
+            }
+        }
+        $isTeacherOrStaff = auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor() || auth()->user()->isTeacher());
+        if (! $isTeacherOrStaff) {
+            $levelResources = $levelResources->filter(fn($r) => $r->isForStudent());
         }
         $groupActivities = isset($group) && $group ? ($group->activities ?? collect()) : collect();
     @endphp

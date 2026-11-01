@@ -20,6 +20,9 @@ class Course extends Model
         'currency',
         'course_order',
         'description',
+        'course_objectives',
+        'course_syllabus',
+        'course_prerequisites',
         'is_active',
         'created_by',
         'updated_by',
@@ -92,6 +95,29 @@ class Course extends Model
     public function resources()
     {
         return $this->hasMany(LevelResource::class, 'course_id')->orderBy('order_index')->latest();
+    }
+
+    // الموارد العامة والتأسيسية الثابتة للدورة كامل (خاص بالأستاذ / خاص بالطالب / للكل)
+    public function generalResources()
+    {
+        return $this->resources()->where(function ($q) {
+            $q->where('is_general', true)->orWhereNull('course_section_id');
+        });
+    }
+
+    public function teacherGeneralResources()
+    {
+        return $this->generalResources()->where('target_audience', 'teacher');
+    }
+
+    public function studentGeneralResources()
+    {
+        return $this->generalResources()->where('target_audience', 'student');
+    }
+
+    public function sharedGeneralResources()
+    {
+        return $this->generalResources()->where('target_audience', 'all');
     }
 
     public function bookResources()

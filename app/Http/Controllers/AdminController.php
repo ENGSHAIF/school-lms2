@@ -154,10 +154,17 @@ class AdminController extends Controller
         ]);
 
         // 3. تحديث حساب الطالب المالي (مدين بالرسوم الدراسية - كشف حساب قياسي)
-        $studentAccount = FinancialAccount::where('user_id', $student->id)->first();
-        if ($studentAccount) {
-            $studentAccount->increment('current_balance', $feeAmount);
-        }
+        $studentAccount = FinancialAccount::firstOrCreate(
+            ['user_id' => $student->id],
+            [
+                'account_code' => '123'.str_pad($student->id, 5, '0', STR_PAD_LEFT),
+                'account_name' => 'حساب الطالب: '.$student->name,
+                'account_type' => 'student',
+                'currency' => $currency,
+                'current_balance' => 0.00,
+            ]
+        );
+        $studentAccount->increment('current_balance', $feeAmount);
 
         // 4. تفعيل حساب الطالب بالكامل وتوثيق من اعتمد وتاريخ الاعتماد وتصفير أي إلغاء سابق
         $student->update([

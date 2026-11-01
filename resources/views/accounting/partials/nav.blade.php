@@ -75,6 +75,12 @@
             <span>خيارات النظام</span>
         </a>
 
+        <a href="{{ route('accounting.currencies.index') }}" 
+           class="px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 {{ str_starts_with($currentRoute, 'accounting.currencies') ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900' }}">
+            <span>🪙</span>
+            <span>تهيئة العملات (ERP Plus)</span>
+        </a>
+
         <a href="{{ route('accounting.opening_balances.index') }}" 
            class="px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 {{ str_starts_with($currentRoute, 'accounting.opening_balances') ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-600 hover:bg-amber-50 hover:text-amber-900' }}">
             <span>⚖️</span>

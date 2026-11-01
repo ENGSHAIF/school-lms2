@@ -65,9 +65,30 @@ class LevelResourceController extends Controller
             ->get();
 
         $sections = $course->sections;
-        $unassignedResources = $course->resources->whereNull('course_section_id');
 
-        return view('admin.courses.resources', compact('course', 'stats', 'studyGroups', 'availableExams', 'sections', 'unassignedResources'));
+        // فصل الموارد العامة والتأسيسية الثابتة للدورة كامل (خاص بالأستاذ / خاص بالطالب / عام للجميع)
+        $generalResources = $course->resources->filter(function ($res) {
+            return $res->is_general || is_null($res->course_section_id);
+        });
+
+        $teacherGeneralResources = $generalResources->where('target_audience', 'teacher');
+        $studentGeneralResources = $generalResources->where('target_audience', 'student');
+        $sharedGeneralResources = $generalResources->where('target_audience', 'all');
+
+        $unassignedResources = $generalResources;
+
+        return view('admin.courses.resources', compact(
+            'course',
+            'stats',
+            'studyGroups',
+            'availableExams',
+            'sections',
+            'generalResources',
+            'teacherGeneralResources',
+            'studentGeneralResources',
+            'sharedGeneralResources',
+            'unassignedResources'
+        ));
     }
 
     // رفع وإضافة مورد تعليمي جديد لبنك الدورة
@@ -83,6 +104,8 @@ class LevelResourceController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:book,audio,video,worksheet,quiz,image',
+            'is_general' => 'nullable|boolean',
+            'target_audience' => 'nullable|in:all,teacher,student',
             'course_section_id' => 'nullable|exists:course_sections,id',
             'description' => 'nullable|string',
             'external_url' => 'nullable|url|max:500',
@@ -131,10 +154,15 @@ class LevelResourceController extends Controller
             $fileName = $originalName;
         }
 
+        $isGeneral = $request->boolean('is_general') || empty($validated['course_section_id']);
+        $targetAudience = $request->input('target_audience', 'all');
+
         $resource = LevelResource::create([
             'course_id' => $course->id,
             'level_id' => $course->level_id,
-            'course_section_id' => $validated['course_section_id'] ?? null,
+            'course_section_id' => $isGeneral ? null : ($validated['course_section_id'] ?? null),
+            'is_general' => $isGeneral,
+            'target_audience' => $targetAudience,
             'title' => $validated['title'],
             'type' => $validated['type'],
             'description' => $validated['description'] ?? null,
@@ -292,6 +320,8 @@ class LevelResourceController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:book,audio,video,worksheet,quiz,image',
+            'is_general' => 'nullable|boolean',
+            'target_audience' => 'nullable|in:all,teacher,student',
             'course_section_id' => 'nullable|exists:course_sections,id',
             'description' => 'nullable|string',
             'external_url' => 'nullable|url|max:500',
@@ -316,10 +346,15 @@ class LevelResourceController extends Controller
             $durationMinutes = null;
         }
 
+        $isGeneral = $request->has('is_general') ? $request->boolean('is_general') : $resource->is_general;
+        $targetAudience = $request->filled('target_audience') ? $request->input('target_audience') : $resource->target_audience;
+
         $data = [
             'title' => $validated['title'],
             'type' => $validated['type'],
-            'course_section_id' => $request->has('course_section_id') ? $request->input('course_section_id') : $resource->course_section_id,
+            'is_general' => $isGeneral,
+            'target_audience' => $targetAudience,
+            'course_section_id' => $isGeneral ? null : ($request->has('course_section_id') ? $request->input('course_section_id') : $resource->course_section_id),
             'description' => $validated['description'] ?? null,
             'external_url' => $validated['external_url'] ?? null,
             'duration_hours' => $durationHours,
@@ -555,10 +590,39 @@ class LevelResourceController extends Controller
         return back()->with('success', "تم حذف العنوان [{$title}] بنجاح.");
     }
 
+    // تحديث أهداف المنهج والدورة والأساسيات التأسيسية
+    public function updateCourseObjectives(Request $request, $courseId)
+    {
+        $user = auth()->user();
+        if (! $user->isAdmin() && ! $user->hasPermission('manage_courses')) {
+            return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل أهداف ومناهج الدورة.');
+        }
+
+        $course = Course::findOrFail($courseId);
+
+        $validated = $request->validate([
+            'course_objectives' => 'nullable|string',
+            'course_syllabus' => 'nullable|string',
+            'course_prerequisites' => 'nullable|string',
+        ]);
+
+        $course->update($validated);
+
+        return back()->with('success', "تم تحديث أهداف المنهج والدورة والأساسيات الثابتة للدورة [{$course->name_en}] بنجاح! 🎯");
+    }
+
     // بث وتشغيل ملف المورد (فيديو، صوت، مستند، صورة) مع دعم Range Requests لتشغيل وسلاسة الفيديو
     public function streamResource($id)
     {
         $resource = LevelResource::findOrFail($id);
+
+        // حماية الموارد الخاصة بالأستاذ فقط (منع وصول الطلاب إليها)
+        $user = auth()->user();
+        if ($resource->target_audience === 'teacher') {
+            if (! $user || (! $user->isAdmin() && ! $user->isSupervisor() && ! $user->isTeacher())) {
+                abort(403, 'عذراً، هذا المورد مخصص للكادر التعليمي والمعلمين فقط.');
+            }
+        }
 
         if ($resource->external_url && ! $resource->file_path) {
             return redirect()->away($resource->external_url);
@@ -619,6 +683,14 @@ class LevelResourceController extends Controller
     public function downloadResource($id)
     {
         $resource = LevelResource::findOrFail($id);
+
+        // حماية الموارد الخاصة بالأستاذ فقط (منع وصول الطلاب إليها)
+        $user = auth()->user();
+        if ($resource->target_audience === 'teacher') {
+            if (! $user || (! $user->isAdmin() && ! $user->isSupervisor() && ! $user->isTeacher())) {
+                abort(403, 'عذراً، هذا المورد مخصص للكادر التعليمي والمعلمين فقط.');
+            }
+        }
 
         if ($resource->external_url && ! $resource->file_path) {
             return redirect()->away($resource->external_url);

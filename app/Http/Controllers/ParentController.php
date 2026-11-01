@@ -198,8 +198,12 @@ class ParentController extends Controller
         ]);
 
         $latestId = User::max('id') ?? 0;
-        $studentCode = 'STU-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
-        $email = 'child_'.($latestId + 1).'@school.com';
+        $seq = $latestId + 1;
+        do {
+            $studentCode = 'STU-'.date('Y').'-'.str_pad($seq, 4, '0', STR_PAD_LEFT);
+            $seq++;
+        } while (User::where('student_code', $studentCode)->orWhere('user_code', $studentCode)->exists());
+        $email = 'child_'.$seq.'@school.com';
 
         $child = User::create([
             'name' => $validated['name'],

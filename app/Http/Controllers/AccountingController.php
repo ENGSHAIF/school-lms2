@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\ArabicCurrencyHelper;
 use App\Models\AccountingPeriod;
 use App\Models\Course;
+use App\Models\Currency;
 use App\Models\EducationalService;
 use App\Models\FinancialAccount;
 use App\Models\JournalEntry;
@@ -132,14 +133,87 @@ class AccountingController extends Controller
             return back()->with('error', 'عذراً، ليس لديك صلاحية استعراض وطباعة كشف الحساب.');
         }
 
-        $student = User::with('financialAccount')->findOrFail($studentId);
+        $student = User::with(['financialAccount', 'studentProfile.parent'])->findOrFail($studentId);
         $account = $student->financialAccount;
 
-        // جلب حركات السندات الخاصة بالطالب
-        $vouchers = Voucher::where('account_id', $account?->id)->orderBy('created_at')->get();
-        $installments = StudentInstallment::with('level')->where('user_id', $student->id)->get();
+        if (! $account) {
+            $account = FinancialAccount::create([
+                'user_id' => $student->id,
+                'account_code' => '123'.str_pad($student->id, 5, '0', STR_PAD_LEFT),
+                'name' => 'حساب الطالب: '.$student->name,
+                'account_type' => 'student',
+                'currency' => 'YER',
+                'current_balance' => 0.00,
+            ]);
+        }
 
-        return view('accounting.statement', compact('student', 'account', 'vouchers', 'installments'));
+        // 1. الأقساط والرسوم المستحقة (مدين - Debit)
+        $installments = StudentInstallment::with(['level', 'course'])
+            ->where('user_id', $student->id)
+            ->orderBy('created_at')
+            ->get();
+
+        // 2. سندات القبض المالية المسددة (دائن - Credit)
+        // تشمل السندات الفردية وبنود السندات المركبة/الجماعية
+        $directVouchers = Voucher::where('account_id', $account->id)
+            ->where('voucher_type', 'receipt')
+            ->orderBy('created_at')
+            ->get();
+
+        $compoundItems = VoucherItem::with('voucher')
+            ->where('account_id', $account->id)
+            ->whereHas('voucher', fn ($q) => $q->where('voucher_type', 'receipt')->where('is_compound', true))
+            ->get();
+
+        // تجميع سندات القبض في قائمة موحدة
+        $receiptList = collect();
+        foreach ($directVouchers as $v) {
+            if (! $v->is_compound) {
+                $receiptList->push((object) [
+                    'id' => $v->id,
+                    'created_at' => $v->created_at,
+                    'voucher_no' => $v->voucher_no,
+                    'manual_no' => $v->manual_no,
+                    'statement' => $v->statement,
+                    'amount' => (float) $v->amount,
+                    'currency' => $v->currency ?: 'YER',
+                    'payment_method' => $v->payment_method,
+                ]);
+            }
+        }
+        foreach ($compoundItems as $item) {
+            $v = $item->voucher;
+            if ($v) {
+                $receiptList->push((object) [
+                    'id' => $v->id,
+                    'created_at' => $item->created_at ?: $v->created_at,
+                    'voucher_no' => $v->voucher_no,
+                    'manual_no' => $v->manual_no,
+                    'statement' => $item->statement ?: $v->statement,
+                    'amount' => (float) $item->amount,
+                    'currency' => $v->currency ?: 'YER',
+                    'payment_method' => $v->payment_method,
+                ]);
+            }
+        }
+        $receiptList = $receiptList->sortBy('created_at')->values();
+
+        // 3. العملات المتاحة وأسعار الصرف الحالية
+        $availableCurrencies = Currency::where('is_active', true)->where('is_stopped', false)->get();
+        $rateSAR = Currency::getRate('SAR');
+        $rateUSD = Currency::getRate('USD');
+        $rateYER = Currency::getRate('YER');
+
+        return view('accounting.statement', compact(
+            'student',
+            'account',
+            'installments',
+            'receiptList',
+            'availableCurrencies',
+            'rateSAR',
+            'rateUSD',
+            'rateYER'
+        ));
     }
 
     public function storeReceipt(Request $request)

@@ -223,7 +223,11 @@ class AuthController extends Controller
 
         // توليد كود الطالب التلقائي ورقم المستخدم الفريد
         $latestId = User::max('id') ?? 0;
-        $studentCode = 'STU-'.date('Y').'-'.str_pad($latestId + 1, 4, '0', STR_PAD_LEFT);
+        $seq = $latestId + 1;
+        do {
+            $studentCode = 'STU-'.date('Y').'-'.str_pad($seq, 4, '0', STR_PAD_LEFT);
+            $seq++;
+        } while (User::where('student_code', $studentCode)->orWhere('user_code', $studentCode)->exists());
 
         $email = ! empty($validated['email']) ? trim($validated['email']) : null;
         $academicNumber = ! empty($validated['academic_number']) ? trim($validated['academic_number']) : null;
