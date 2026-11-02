@@ -2980,14 +2980,27 @@
         });
     }
 
-    // التنقل بأسهم لوحة المفاتيح لتصفح صفحات الكتاب كقارئ PDF حقيقي
+    // التنقل والتمرير بأسهم لوحة المفاتيح: السهمان فوق وتحت لتمرير الكتاب بسلاسة دون القفز بين الصفحات
     document.addEventListener('keydown', (e) => {
         if (e.target.closest('input, textarea, select')) return;
         if (wbCurrentBg && wbCurrentBg.type === 'pdf') {
-            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+            const container = document.getElementById('whiteboardContainer');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (container) {
+                    container.scrollBy({ top: 120, behavior: 'smooth' });
+                    syncScrollToPeersThrottled();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (container) {
+                    container.scrollBy({ top: -120, behavior: 'smooth' });
+                    syncScrollToPeersThrottled();
+                }
+            } else if (e.key === 'PageDown' || e.key === 'ArrowLeft') {
                 e.preventDefault();
                 changeWbPage(1);
-            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+            } else if (e.key === 'PageUp' || e.key === 'ArrowRight') {
                 e.preventDefault();
                 changeWbPage(-1);
             } else if (e.key === 'Home') {
@@ -3170,7 +3183,8 @@
 
         const drawCanvas = document.getElementById('whiteboardDrawCanvas');
         if (drawCanvas) {
-            drawCanvas.className = 'absolute inset-0 w-full h-full object-contain z-[10]';
+            const cursorClasses = ['cursor-default', 'cursor-pen', 'cursor-brush', 'cursor-highlighter', 'cursor-magic', 'cursor-eraser', 'cursor-laser', 'cursor-text', 'cursor-pointer', 'cursor-crosshair'];
+            drawCanvas.classList.remove(...cursorClasses);
             if (tool === 'select') {
                 drawCanvas.style.pointerEvents = 'none';
                 drawCanvas.classList.add('cursor-default');
@@ -3904,36 +3918,18 @@
     function renderLocalLaser(normX, normY) {
         const laserEl = document.getElementById('liveLaserPointer');
         if (!laserEl) return;
-        const box = getWbContentBox();
-        if (box) {
-            laserEl.style.left = (box.contentLeftInContainer + normX * box.renderedWidth) + 'px';
-            laserEl.style.top = (box.contentTopInContainer + normY * box.renderedHeight) + 'px';
-        } else {
-            laserEl.style.left = (normX * 100) + '%';
-            laserEl.style.top = (normY * 100) + '%';
-        }
+        laserEl.style.left = (normX * 100) + '%';
+        laserEl.style.top = (normY * 100) + '%';
         laserEl.classList.remove('hidden');
-        const badge = document.getElementById('laserUserBadge');
-        if (badge) badge.textContent = `🔴 ${CURRENT_USER_NAME}`;
     }
 
     function renderRemoteLaser(state) {
         const laserEl = document.getElementById('liveLaserPointer');
         if (!laserEl) return;
         if (state && state.active) {
-            const box = getWbContentBox();
-            if (box) {
-                laserEl.style.left = (box.contentLeftInContainer + state.x * box.renderedWidth) + 'px';
-                laserEl.style.top = (box.contentTopInContainer + state.y * box.renderedHeight) + 'px';
-            } else {
-                laserEl.style.left = (state.x * 100) + '%';
-                laserEl.style.top = (state.y * 100) + '%';
-            }
+            laserEl.style.left = (state.x * 100) + '%';
+            laserEl.style.top = (state.y * 100) + '%';
             laserEl.classList.remove('hidden');
-            const badge = document.getElementById('laserUserBadge');
-            if (badge && state.user_name) {
-                badge.textContent = `🔴 ${state.user_name}`;
-            }
         } else {
             if (wbCurrentTool !== 'laser') {
                 laserEl.classList.add('hidden');
@@ -4398,7 +4394,20 @@
         xhr.send(formData);
     }
 
-    // رندرة وتصفح صفحات ملفات الـ PDF
+    // تحويل رقم الصفحة إلى قيمة المنزلق الرأسي (بحيث تكون الصفحة 1 في الأعلى دائماً)
+    function pageToSliderVal(p) {
+        if (!wbTotalPages || wbTotalPages <= 1) return 1;
+        return (wbTotalPages + 1) - p;
+    }
+
+    // تحويل قيمة المنزلق الرأسي إلى رقم الصفحة الحقيقي
+    function sliderValToPage(val) {
+        const v = parseInt(val, 10);
+        if (isNaN(v) || !wbTotalPages || wbTotalPages <= 1) return 1;
+        return Math.min(Math.max(1, (wbTotalPages + 1) - v), wbTotalPages);
+    }
+
+    // رندرة وتصفح صفحات ملفات الـ PDF مع دعم كامل ودقيق للخطوط العربية وملء العرض
     async function renderPdfPage(url, pageNum, customScale = null) {
         if (!window.pdfjsLib) {
             console.warn('pdfjsLib is not loaded');
@@ -4406,7 +4415,15 @@
         }
         try {
             if (!wbPdfDoc || wbPdfDoc._url !== url) {
-                wbPdfDoc = await pdfjsLib.getDocument(url).promise;
+                const loadingTask = pdfjsLib.getDocument({
+                    url: url,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                    cMapPacked: true,
+                    standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+                    enableXfa: true,
+                    disableFontFace: false
+                });
+                wbPdfDoc = await loadingTask.promise;
                 wbPdfDoc._url = url;
                 wbTotalPages = wbPdfDoc.numPages;
                 const totalText = document.getElementById('wbTotalPagesText');
@@ -4423,7 +4440,7 @@
             const slider = document.getElementById('wbPdfVerticalSlider');
             if (slider) {
                 slider.max = wbTotalPages;
-                slider.value = wbCurrentPage;
+                slider.value = pageToSliderVal(wbCurrentPage);
             }
 
             const sideNav = document.getElementById('wbPdfSideNavigator');
@@ -4442,18 +4459,55 @@
             }
 
             const page = await wbPdfDoc.getPage(wbCurrentPage);
-            const scaleToUse = customScale || wbPdfScale;
-            const viewport = page.getViewport({ scale: scaleToUse });
+            const baseViewport = page.getViewport({ scale: 1.0 });
 
+            const container = document.getElementById('whiteboardContainer');
+            const stage = document.getElementById('wbCanvasStage');
             const bgCanvas = document.getElementById('whiteboardBgCanvas');
             const drawCanvas = document.getElementById('whiteboardDrawCanvas');
-            bgCanvas.width = viewport.width;
-            bgCanvas.height = viewport.height;
-            drawCanvas.width = viewport.width;
-            drawCanvas.height = viewport.height;
+
+            // حساب العرض المناسب لملء الشاشة مع ترك مساحة مريحة للأدوات
+            const contWidth = container ? container.clientWidth : 1200;
+            const targetWidth = Math.max(640, contWidth - 70);
+            const fitScale = targetWidth / baseViewport.width;
+            wbPdfScale = customScale || fitScale;
+
+            const displayWidth = Math.round(baseViewport.width * wbPdfScale);
+            const displayHeight = Math.round(baseViewport.height * wbPdfScale);
+
+            // دقة رندرة عالية High-DPI لضمان صفاء ووضوح الخط العربي والإنجليزي فائق الجودة
+            const dpr = Math.max(window.devicePixelRatio || 1, 1.75);
+            const renderViewport = page.getViewport({ scale: wbPdfScale * dpr });
+
+            bgCanvas.width = renderViewport.width;
+            bgCanvas.height = renderViewport.height;
+            drawCanvas.width = renderViewport.width;
+            drawCanvas.height = renderViewport.height;
+
+            bgCanvas.style.width = displayWidth + 'px';
+            bgCanvas.style.height = displayHeight + 'px';
+            drawCanvas.style.width = displayWidth + 'px';
+            drawCanvas.style.height = displayHeight + 'px';
+
+            if (stage) {
+                stage.style.width = displayWidth + 'px';
+                stage.style.height = displayHeight + 'px';
+                stage.style.marginTop = '12px';
+                stage.style.marginBottom = '24px';
+            }
+
+            if (container) {
+                container.classList.add('overflow-y-auto');
+                container.classList.remove('overflow-hidden');
+            }
+
+            const zoomLabel = document.getElementById('wbZoomLabel');
+            if (zoomLabel) {
+                zoomLabel.textContent = Math.round((wbPdfScale / fitScale) * 100) + '%';
+            }
 
             const ctx = bgCanvas.getContext('2d');
-            await page.render({ canvasContext: ctx, viewport }).promise;
+            await page.render({ canvasContext: ctx, viewport: renderViewport, intent: 'display' }).promise;
             redrawWhiteboard();
         } catch (e) {
             console.error('PDF rendering error:', e);
@@ -4471,6 +4525,8 @@
         if (!wbPdfDoc || !IS_TEACHER) return;
         targetPage = Math.min(Math.max(1, targetPage), wbTotalPages);
         if (targetPage !== wbCurrentPage || wbCurrentBg.page_num !== targetPage) {
+            const container = document.getElementById('whiteboardContainer');
+            if (container) container.scrollTop = 0;
             await openResourceInWorkspace(wbCurrentBg.url, wbCurrentBg.title, 'pdf', targetPage);
         }
     }
@@ -4483,31 +4539,35 @@
     }
 
     function onPdfSliderInput(val) {
+        const page = sliderValToPage(val);
         const bubble = document.getElementById('wbPdfSliderBubble');
         const bubbleNum = document.getElementById('wbPdfSliderBubbleNum');
         if (bubble && bubbleNum) {
-            bubbleNum.textContent = val;
+            bubbleNum.textContent = page;
             bubble.classList.remove('hidden');
+            if (wbTotalPages > 1) {
+                const pct = Math.min(90, Math.max(5, ((page - 1) / (wbTotalPages - 1)) * 80 + 10));
+                bubble.style.top = pct + '%';
+            }
         }
     }
 
     function onPdfSliderChange(val) {
         document.getElementById('wbPdfSliderBubble')?.classList.add('hidden');
-        const p = parseInt(val, 10);
-        if (!isNaN(p)) {
-            changeWbPageTo(p);
-        }
+        const page = sliderValToPage(val);
+        changeWbPageTo(page);
     }
 
-    // ملاءمة عرض الكتاب مع الشاشة
+    // ملاءمة عرض الكتاب مع الشاشة لملء العرض وإلغاء الفراغات
     async function fitPdfWidth() {
         if (!wbPdfDoc) return;
         try {
             const container = document.getElementById('whiteboardContainer');
             const page = await wbPdfDoc.getPage(wbCurrentPage);
             const baseViewport = page.getViewport({ scale: 1.0 });
-            const contWidth = (container ? container.clientWidth : 1200) - 40;
-            wbPdfScale = Math.max(0.5, Math.min(3.5, contWidth / baseViewport.width));
+            const contWidth = container ? container.clientWidth : 1200;
+            const targetWidth = Math.max(640, contWidth - 70);
+            wbPdfScale = targetWidth / baseViewport.width;
             await renderPdfPage(wbCurrentBg.url, wbCurrentPage, wbPdfScale);
         } catch(e) { console.error(e); }
     }
@@ -4519,13 +4579,29 @@
             const container = document.getElementById('whiteboardContainer');
             const page = await wbPdfDoc.getPage(wbCurrentPage);
             const baseViewport = page.getViewport({ scale: 1.0 });
-            const contWidth = (container ? container.clientWidth : 1200) - 40;
+            const contWidth = (container ? container.clientWidth : 1200) - 70;
             const contHeight = (container ? container.clientHeight : 800) - 40;
-            const scaleW = contWidth / baseViewport.width;
-            const scaleH = contHeight / baseViewport.height;
-            wbPdfScale = Math.max(0.4, Math.min(scaleW, scaleH));
+            wbPdfScale = Math.min(contWidth / baseViewport.width, contHeight / baseViewport.height);
             await renderPdfPage(wbCurrentBg.url, wbCurrentPage, wbPdfScale);
         } catch(e) { console.error(e); }
+    }
+
+    // مزامنة التمرير اللحظي للطلاب عند قيام المعلم بالتمرير
+    let lastScrollSyncTime = 0;
+    function syncScrollToPeersThrottled() {
+        if (!IS_TEACHER || !wbCurrentBg || wbCurrentBg.type !== 'pdf') return;
+        const now = Date.now();
+        if (now - lastScrollSyncTime < 80) return;
+        lastScrollSyncTime = now;
+        const container = document.getElementById('whiteboardContainer');
+        if (!container) return;
+        const maxScroll = container.scrollHeight - container.clientHeight;
+        const scrollRatio = maxScroll > 0 ? (container.scrollTop / maxScroll) : 0;
+        broadcastP2P({
+            type: 'wb_scroll',
+            scrollTop: container.scrollTop,
+            scrollRatio: scrollRatio
+        });
     }
 
     // دوال مشغل الفيديو التعليمي وعناصر التحكم العائمة
@@ -4623,12 +4699,35 @@
         img.onload = () => {
             const bgCanvas = document.getElementById('whiteboardBgCanvas');
             const drawCanvas = document.getElementById('whiteboardDrawCanvas');
+            const stage = document.getElementById('wbCanvasStage');
+            const container = document.getElementById('whiteboardContainer');
+            if (!bgCanvas || !drawCanvas) return;
+
+            if (container) {
+                container.classList.remove('overflow-y-auto');
+                container.classList.add('overflow-hidden');
+                container.scrollTop = 0;
+            }
+
             const w = img.naturalWidth || 1600;
             const h = img.naturalHeight || 1000;
             bgCanvas.width = w;
             bgCanvas.height = h;
             drawCanvas.width = w;
             drawCanvas.height = h;
+
+            if (stage) {
+                stage.style.width = '100%';
+                stage.style.height = '100%';
+                stage.style.marginTop = '0';
+                stage.style.marginBottom = '0';
+            }
+            bgCanvas.style.width = '100%';
+            bgCanvas.style.height = '100%';
+            bgCanvas.style.objectFit = 'contain';
+            drawCanvas.style.width = '100%';
+            drawCanvas.style.height = '100%';
+            drawCanvas.style.objectFit = 'contain';
 
             const ctx = bgCanvas.getContext('2d');
             ctx.clearRect(0, 0, w, h);
@@ -4641,13 +4740,35 @@
     function renderBlankBackground(type) {
         const bgCanvas = document.getElementById('whiteboardBgCanvas');
         const drawCanvas = document.getElementById('whiteboardDrawCanvas');
+        const stage = document.getElementById('wbCanvasStage');
+        const container = document.getElementById('whiteboardContainer');
         if (!bgCanvas || !drawCanvas) return;
+
+        if (container) {
+            container.classList.remove('overflow-y-auto');
+            container.classList.add('overflow-hidden');
+            container.scrollTop = 0;
+        }
+
         const w = 1600;
         const h = 1000;
         bgCanvas.width = w;
         bgCanvas.height = h;
         drawCanvas.width = w;
         drawCanvas.height = h;
+
+        if (stage) {
+            stage.style.width = '100%';
+            stage.style.height = '100%';
+            stage.style.marginTop = '0';
+            stage.style.marginBottom = '0';
+        }
+        bgCanvas.style.width = '100%';
+        bgCanvas.style.height = '100%';
+        bgCanvas.style.objectFit = 'contain';
+        drawCanvas.style.width = '100%';
+        drawCanvas.style.height = '100%';
+        drawCanvas.style.objectFit = 'contain';
 
         const ctx = bgCanvas.getContext('2d');
         if (type === 'blackboard') {
@@ -4672,10 +4793,19 @@
     }
 
     function zoomWb(delta) {
+        if (wbCurrentBg && wbCurrentBg.type === 'pdf') {
+            wbPdfScale = Math.min(3.5, Math.max(0.4, wbPdfScale + delta));
+            renderPdfPage(wbCurrentBg.url, wbCurrentPage, wbPdfScale);
+            return;
+        }
         wbZoom = Math.min(2.5, Math.max(0.5, wbZoom + delta));
         applyWbZoom();
     }
     function resetWbZoom() {
+        if (wbCurrentBg && wbCurrentBg.type === 'pdf') {
+            fitPdfWidth();
+            return;
+        }
         wbZoom = 1.0;
         applyWbZoom();
     }
