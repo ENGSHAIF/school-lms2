@@ -116,7 +116,7 @@ class StudyGroupController extends Controller
         // البيانات المساعدة للنوافذ المنبثقة
         $courses = Course::with('level')->where('is_active', true)->get();
         $levels = Level::with('courses')->where('is_active', true)->get();
-        $teachers = User::where('role', 'teacher')->where('status', 'active')->orderBy('name')->get();
+        $teachers = User::where('status', 'active')->teachersAndInstructors()->orderBy('name')->get();
         $supervisors = User::where('role', 'supervisor')->where('status', 'active')->orderBy('name')->get();
 
         // خيارات الأترام والدفعات المتاحة للفلترة
@@ -245,8 +245,14 @@ class StudyGroupController extends Controller
         $validated['name_ar'] = $nameAr;
         $validated['name_en'] = $nameEn;
         $validated['name'] = $fullName;
-        $validated['teacher_id'] = $request->primary_teacher_id ?: ($request->teacher_id ?: $group->teacher_id);
-        $validated['supervisor_id'] = $request->primary_supervisor_id ?: ($request->supervisor_id ?: $group->supervisor_id);
+
+        // تحديث المعلم الرئيسي والمشرف الرئيسي مع إمكانية التغيير أو إلغاء التعيين
+        if ($request->has('primary_teacher_id') || $request->has('teacher_id')) {
+            $validated['teacher_id'] = $request->filled('primary_teacher_id') ? $request->primary_teacher_id : ($request->filled('teacher_id') ? $request->teacher_id : null);
+        }
+        if ($request->has('primary_supervisor_id') || $request->has('supervisor_id')) {
+            $validated['supervisor_id'] = $request->filled('primary_supervisor_id') ? $request->primary_supervisor_id : ($request->filled('supervisor_id') ? $request->supervisor_id : null);
+        }
 
         $group->update($validated);
 
@@ -254,7 +260,7 @@ class StudyGroupController extends Controller
         $this->syncGroupTeachersAndSupervisors($group, $request);
 
         return redirect()->route('admin.groups.index')
-            ->with('success', "تم تحديث بيانات المجموعة [{$group->name}] وتعيين الكادر التدريسي بنجاح.");
+            ->with('success', "تم تحديث بيانات المجموعة [{$group->name}] وتعيين الكادر التدريسي والإشرافي بنجاح.");
     }
 
     // دالة مساعدة لمزامنة المعلمين والمشرفين المتعددين
@@ -262,8 +268,8 @@ class StudyGroupController extends Controller
     {
         // 1. مزامنة المعلمين (المعلم الرئيسي + المعلمون المساعدون)
         $primaryTeacherId = $request->primary_teacher_id ?: $request->teacher_id;
-        $assistantTeacherIds = (array) ($request->assistant_teacher_ids ?: []);
-        $teacherRoles = (array) ($request->teacher_roles ?: []);
+        $assistantTeacherIds = (array) ($request->assistant_teacher_ids ?: ($request->assistant_teachers ?: []));
+        $teacherRoles = (array) ($request->teacher_roles ?: ($request->assistant_roles ?: []));
 
         $teachersPivotData = [];
 
@@ -287,7 +293,7 @@ class StudyGroupController extends Controller
 
         // 2. مزامنة المشرفين
         $primarySupervisorId = $request->primary_supervisor_id ?: $request->supervisor_id;
-        $assistantSupervisorIds = (array) ($request->assistant_supervisor_ids ?: []);
+        $assistantSupervisorIds = (array) ($request->assistant_supervisor_ids ?: ($request->assistant_supervisors ?: []));
 
         $supervisorsPivotData = [];
 

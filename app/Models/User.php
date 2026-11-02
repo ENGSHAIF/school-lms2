@@ -288,6 +288,53 @@ class User extends Authenticatable
         return $this->role === 'supervisor';
     }
 
+    /**
+     * التحقق مما إذا كان المستخدم يملك صلاحية التدريس
+     * (المعلمون، مديرو النظام، أو المشرفون المصرح لهم بالتدريس)
+     */
+    public function canTeach(): bool
+    {
+        if ($this->role === 'teacher' || $this->role === 'admin') {
+            return true;
+        }
+
+        if ($this->role === 'supervisor') {
+            $perms = $this->permissions;
+            if (is_array($perms)) {
+                if (! empty($perms['teachers.can_teach']) || ! empty($perms['can_teach']) ||
+                    in_array('teachers.can_teach', $perms, true) || in_array('can_teach', $perms, true)) {
+                    return true;
+                }
+            }
+            if ($this->permissionGroup && ($this->permissionGroup->hasPermission('teachers.can_teach') || $this->permissionGroup->hasPermission('can_teach'))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * نطاق لجلب كافة المعلمين والمشرفين المتاحين للتدريس
+     */
+    public function scopeTeachersAndInstructors($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('role', 'teacher')
+                ->orWhere(function ($sq) {
+                    $sq->where('role', 'supervisor')
+                        ->where(function ($ssq) {
+                            $ssq->whereJsonContains('permissions->can_teach', '1')
+                                ->orWhereJsonContains('permissions->can_teach', true)
+                                ->orWhereJsonContains('permissions', 'can_teach')
+                                ->orWhereJsonContains('permissions->teachers.can_teach', '1')
+                                ->orWhereJsonContains('permissions->teachers.can_teach', true)
+                                ->orWhereJsonContains('permissions', 'teachers.can_teach');
+                        });
+                });
+        });
+    }
+
     // علاقة الحساب المالي للطالب أو المعلم
     public function financialAccount()
     {

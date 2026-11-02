@@ -432,6 +432,16 @@ class AdminController extends Controller
             return back()->with('error', 'عذراً، ليس لديك صلاحية إضافة مستخدمين للنظام.');
         }
 
+        // معالجة الحقول الاختيارية مثل البريد والرقم الأكاديمي لمنع الاصطدام إذا كانت فارغة
+        if ($request->has('email')) {
+            $emailVal = trim((string) $request->input('email'));
+            $request->merge(['email' => $emailVal !== '' ? $emailVal : null]);
+        }
+        if ($request->has('academic_number')) {
+            $acadVal = trim((string) $request->input('academic_number'));
+            $request->merge(['academic_number' => $acadVal !== '' ? $acadVal : null]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
@@ -448,8 +458,14 @@ class AdminController extends Controller
             'must_change_password' => 'nullable|boolean',
             'permissions' => 'nullable|array',
         ], [
+            'name.required' => 'يرجى إدخال اسم المستخدم كاملاً.',
             'gender.required' => 'يرجى تحديد الجنس (ذكر أو أنثى).',
             'parent_id.exists' => 'ولي الأمر المختار غير موجود في النظام.',
+            'email.unique' => 'البريد الإلكتروني المدخل مستخدم مسبقاً في النظام من قِبل حساب آخر، يرجى كتابة بريد مختلف أو تركه فارغاً (حيث أن البريد اختياري).',
+            'email.email' => 'صيغة البريد الإلكتروني المدخل غير صالحة.',
+            'phone_whatsapp.required' => 'رقم الهاتف والواتساب مطلوب.',
+            'password.required' => 'كلمة المرور مطلوبة.',
+            'password.min' => 'كلمة المرور يجب ألا تقل عن 6 أحرف أو أرقام.',
         ]);
 
         $status = $validated['status'] ?? 'active';
@@ -472,6 +488,10 @@ class AdminController extends Controller
 
         // إسناد الصلاحيات: إذا أرسلها النموذج تؤخذ، وإلا تؤخذ الافتراضية للدور
         $permissions = $validated['permissions'] ?? User::defaultPermissionsForRole($validated['role']);
+        if (! empty($permissions['teachers.can_teach']) || ! empty($permissions['can_teach'])) {
+            $permissions['teachers.can_teach'] = '1';
+            $permissions['can_teach'] = '1';
+        }
 
         $email = ! empty($validated['email']) ? trim($validated['email']) : null;
         $academicNumber = ! empty($validated['academic_number']) ? trim($validated['academic_number']) : null;
@@ -577,6 +597,15 @@ class AdminController extends Controller
 
         $user = User::findOrFail($id);
 
+        if ($request->has('email')) {
+            $emailVal = trim((string) $request->input('email'));
+            $request->merge(['email' => $emailVal !== '' ? $emailVal : null]);
+        }
+        if ($request->has('academic_number')) {
+            $acadVal = trim((string) $request->input('academic_number'));
+            $request->merge(['academic_number' => $acadVal !== '' ? $acadVal : null]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
@@ -593,8 +622,13 @@ class AdminController extends Controller
             'must_change_password' => 'nullable|boolean',
             'permissions' => 'nullable|array',
         ], [
+            'name.required' => 'يرجى إدخال اسم المستخدم كاملاً.',
             'gender.required' => 'يرجى تحديد الجنس (ذكر أو أنثى).',
             'parent_id.exists' => 'ولي الأمر المختار غير موجود في النظام.',
+            'email.unique' => 'البريد الإلكتروني المدخل مستخدم مسبقاً في النظام من قِبل حساب آخر، يرجى كتابة بريد مختلف أو تركه فارغاً (حيث أن البريد اختياري).',
+            'email.email' => 'صيغة البريد الإلكتروني المدخل غير صالحة.',
+            'phone_whatsapp.required' => 'رقم الهاتف والواتساب مطلوب.',
+            'password.min' => 'كلمة المرور يجب ألا تقل عن 6 أحرف أو أرقام.',
         ]);
 
         $permissionGroupId = ! empty($validated['permission_group_id']) ? $validated['permission_group_id'] : null;
@@ -633,6 +667,10 @@ class AdminController extends Controller
         // تحديث الصلاحيات: إذا أرسلت في النموذج يتم تخزينها مع الحفاظ على خصائص حساب الاستعراض إن وجدت
         if (in_array($validated['role'], ['admin', 'supervisor', 'accountant', 'teacher'])) {
             $submittedPerms = $validated['permissions'] ?? [];
+            if (! empty($submittedPerms['teachers.can_teach']) || ! empty($submittedPerms['can_teach'])) {
+                $submittedPerms['teachers.can_teach'] = '1';
+                $submittedPerms['can_teach'] = '1';
+            }
             if ($user->isReviewer() || ! empty($user->permissions['is_reviewer'])) {
                 $submittedPerms['is_reviewer'] = '1';
             }

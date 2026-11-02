@@ -627,7 +627,7 @@
                     <select name="teacher_id" class="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 focus:ring-2 focus:ring-amber-500 outline-none bg-white font-bold">
                         <option value="">-- اختر المعلم الرئيسي --</option>
                         @foreach($teachers as $t)
-                            <option value="{{ $t->id }}">👨‍🏫 {{ $t->name }}</option>
+                            <option value="{{ $t->id }}">👨‍🏫 {{ $t->name }} {{ $t->role === 'supervisor' ? '• [مشرف مصرح له بالتدريس]' : '' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -638,7 +638,12 @@
                         @foreach($teachers as $t)
                             <div class="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg">
                                 <input type="checkbox" name="assistant_teachers[]" value="{{ $t->id }}" id="asst_create_{{ $t->id }}" class="rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
-                                <label for="asst_create_{{ $t->id }}" class="font-bold text-slate-800 flex-1 cursor-pointer">{{ $t->name }}</label>
+                                <label for="asst_create_{{ $t->id }}" class="font-bold text-slate-800 flex-1 cursor-pointer">
+                                    {{ $t->name }}
+                                    @if($t->role === 'supervisor')
+                                        <span class="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-bold border border-indigo-200">مشرف يدرّس</span>
+                                    @endif
+                                </label>
                                 <input type="text" name="assistant_roles[{{ $t->id }}]" placeholder="الدور: محادثة / استماع" class="w-36 px-2 py-1 text-[11px] rounded-lg border border-slate-200 focus:ring-1 focus:ring-indigo-500 outline-none">
                             </div>
                         @endforeach
@@ -927,7 +932,7 @@
                     <select name="teacher_id" id="editTeacherId" class="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 focus:ring-2 focus:ring-amber-500 outline-none bg-white font-bold">
                         <option value="">-- لم يحدد بعد --</option>
                         @foreach($teachers as $t)
-                            <option value="{{ $t->id }}">👨‍🏫 {{ $t->name }}</option>
+                            <option value="{{ $t->id }}">👨‍🏫 {{ $t->name }} {{ $t->role === 'supervisor' ? '• [مشرف مصرح له بالتدريس]' : '' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -938,7 +943,12 @@
                         @foreach($teachers as $t)
                             <div class="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg">
                                 <input type="checkbox" name="assistant_teachers[]" value="{{ $t->id }}" id="asst_edit_{{ $t->id }}" class="edit-asst-teacher rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
-                                <label for="asst_edit_{{ $t->id }}" class="font-bold text-slate-800 flex-1 cursor-pointer">{{ $t->name }}</label>
+                                <label for="asst_edit_{{ $t->id }}" class="font-bold text-slate-800 flex-1 cursor-pointer">
+                                    {{ $t->name }}
+                                    @if($t->role === 'supervisor')
+                                        <span class="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-bold border border-indigo-200">مشرف يدرّس</span>
+                                    @endif
+                                </label>
                                 <input type="text" name="assistant_roles[{{ $t->id }}]" id="asst_role_edit_{{ $t->id }}" placeholder="الدور: محادثة / استماع" class="edit-asst-role w-36 px-2 py-1 text-[11px] rounded-lg border border-slate-200 focus:ring-1 focus:ring-indigo-500 outline-none">
                             </div>
                         @endforeach

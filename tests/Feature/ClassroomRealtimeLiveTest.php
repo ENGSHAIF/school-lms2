@@ -24,6 +24,19 @@ class ClassroomRealtimeLiveTest extends TestCase
         ]);
     }
 
+    protected function getStudent(): User
+    {
+        return User::where('role', 'student')->first() ?? User::create([
+            'name' => 'طالب تجريبي',
+            'email' => 'student_wb_'.rand(100, 999).'@test.com',
+            'phone_whatsapp' => '96773'.rand(1000000, 9999999),
+            'password' => Hash::make('Secret123!'),
+            'role' => 'student',
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+    }
+
     public function test_classroom_sync_registers_participant_and_returns_realtime_state(): void
     {
         $admin = $this->getAdmin();
@@ -223,6 +236,163 @@ class ClassroomRealtimeLiveTest extends TestCase
             'action' => 'toggle_policy',
         ]);
         $unauthRes->assertStatus(403);
+
+        // تنظيف
+        ClassroomParticipant::where('room_id', $roomId)->delete();
+        ClassroomMessage::where('room_id', $roomId)->delete();
+        ClassroomRoomControl::where('room_id', $roomId)->delete();
+        $student->delete();
+    }
+
+    public function test_teacher_can_update_whiteboard_and_laser_pointer_and_student_syncs(): void
+    {
+        $admin = $this->getAdmin();
+        $roomId = 'test-room-wb-'.rand(100, 999);
+
+        $student = User::create([
+            'name' => 'طالب السبورة',
+            'email' => null,
+            'phone_whatsapp' => '96773'.rand(1000000, 9999999),
+            'password' => Hash::make('Secret123!'),
+            'role' => 'student',
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        // 1. المعلم يفتح كتاب في مساحة الشرح
+        $setBgRes = $this->actingAs($admin)->postJson(route('classroom.whiteboard', $roomId), [
+            'action' => 'set_background',
+            'bg_type' => 'pdf',
+            'bg_url' => 'https://example.com/books/grammar.pdf',
+            'bg_title' => 'كتاب القواعد الأساسية',
+            'page_num' => 3,
+        ]);
+        $setBgRes->assertOk();
+        $setBgRes->assertJson(['success' => true]);
+
+        // 2. المعلم يحفظ خطوط رسم على السبورة
+        $saveStateRes = $this->actingAs($admin)->postJson(route('classroom.whiteboard', $roomId), [
+            'action' => 'save_state',
+            'state' => [
+                'bg_type' => 'pdf',
+                'bg_url' => 'https://example.com/books/grammar.pdf',
+                'bg_title' => 'كتاب القواعد الأساسية',
+                'page_num' => 3,
+                'strokes' => [
+                    [
+                        'tool' => 'pen',
+                        'color' => '#ef4444',
+                        'size' => 4,
+                        'points' => [['x' => 10, 'y' => 20], ['x' => 30, 'y' => 40]],
+                    ],
+                    [
+                        'tool' => 'highlighter',
+                        'color' => '#facc15',
+                        'size' => 18,
+                        'points' => [['x' => 100, 'y' => 120], ['x' => 200, 'y' => 120]],
+                    ],
+                ],
+            ],
+        ]);
+        $saveStateRes->assertOk();
+        $this->assertEquals(2, $saveStateRes->json('whiteboard_version'));
+
+        // 3. المعلم يحرك مؤشر الليزر
+        $laserRes = $this->actingAs($admin)->postJson(route('classroom.whiteboard', $roomId), [
+            'action' => 'laser_move',
+            'x' => 0.45,
+            'y' => 0.60,
+            'active' => true,
+        ]);
+        $laserRes->assertOk();
+
+        // 4. الطالب يقوم بالمزامنة فيحصل على السبورة ومؤشر الليزر
+        $syncRes = $this->actingAs($student)->getJson(route('classroom.sync', ['roomId' => $roomId, 'whiteboard_version' => 0]));
+        $syncRes->assertOk();
+        $syncRes->assertJson([
+            'success' => true,
+            'whiteboard_version' => 2,
+        ]);
+        $this->assertEquals('كتاب القواعد الأساسية', $syncRes->json('whiteboard_state.bg_title'));
+        $this->assertEquals(0.45, $syncRes->json('laser_state.x'));
+        $this->assertEquals(0.60, $syncRes->json('laser_state.y'));
+        $this->assertTrue($syncRes->json('laser_state.active'));
+
+        // 5. محاولة طالب الرسم دون إذن تعيد 403
+        $studentWbRes = $this->actingAs($student)->postJson(route('classroom.whiteboard', $roomId), [
+            'action' => 'clear',
+        ]);
+        $studentWbRes->assertStatus(403);
+
+        // 6. المعلم يمسح السبورة
+        $clearRes = $this->actingAs($admin)->postJson(route('classroom.whiteboard', $roomId), [
+            'action' => 'clear',
+        ]);
+        $clearRes->assertOk();
+        $this->assertEquals(3, $clearRes->json('whiteboard_version'));
+
+        // تنظيف
+        ClassroomParticipant::where('room_id', $roomId)->delete();
+        ClassroomMessage::where('room_id', $roomId)->delete();
+        ClassroomRoomControl::where('room_id', $roomId)->delete();
+        $student->delete();
+    }
+
+    public function test_whiteboard_browser_and_video_synchronization(): void
+    {
+        $admin = $this->getAdmin();
+        $student = $this->getStudent();
+        $roomId = 'test-room-wb-media-'.rand(100, 999);
+
+        // إنشاء سجل التحكم بالفصل
+        ClassroomRoomControl::create([
+            'room_id' => $roomId,
+            'is_live' => true,
+            'requires_admission' => false,
+            'whiteboard_version' => 0,
+        ]);
+
+        // انضمام الطالب
+        ClassroomParticipant::create([
+            'room_id' => $roomId,
+            'user_id' => $student->id,
+            'peer_id' => 'peer_student_media',
+            'admission_status' => 'admitted',
+            'last_seen_at' => now(),
+        ]);
+
+        // 1. المعلم يفتح متصفح جوجل داخل السبورة
+        $browserRes = $this->actingAs($admin)->postJson(route('classroom.whiteboard', $roomId), [
+            'action' => 'set_background',
+            'bg_type' => 'browser',
+            'bg_url' => 'https://www.google.com/search?igu=1&q=kids+educational+games',
+            'bg_title' => 'بحث جوجل: kids educational games',
+        ]);
+        $browserRes->assertOk();
+        $this->assertEquals(1, $browserRes->json('whiteboard_version'));
+
+        // 2. مزامنة الطالب وتحقق من استلام المتصفح
+        $syncStudent1 = $this->actingAs($student)->getJson(route('classroom.sync', ['roomId' => $roomId, 'whiteboard_version' => 0]));
+        $syncStudent1->assertOk();
+        $this->assertEquals('browser', $syncStudent1->json('whiteboard_state.bg_type'));
+        $this->assertStringContainsString('google.com/search', $syncStudent1->json('whiteboard_state.bg_url'));
+
+        // 3. المعلم يرفع ملف فيديو محلي MP4 للشرح عليه
+        $fakeVideo = UploadedFile::fake()->create('science_lesson.mp4', 500, 'video/mp4');
+        $uploadVideoRes = $this->actingAs($admin)->postJson(route('classroom.whiteboard', $roomId), [
+            'action' => 'upload_bg_file',
+            'file' => $fakeVideo,
+        ]);
+        $uploadVideoRes->assertOk();
+        $this->assertEquals('video', $uploadVideoRes->json('bg_type'));
+        $this->assertEquals(2, $uploadVideoRes->json('whiteboard_version'));
+
+        // 4. مزامنة الطالب وتحقق من استلام الفيديو
+        $syncStudent2 = $this->actingAs($student)->getJson(route('classroom.sync', ['roomId' => $roomId, 'whiteboard_version' => 1]));
+        $syncStudent2->assertOk();
+        $this->assertEquals(2, $syncStudent2->json('whiteboard_version'));
+        $this->assertEquals('video', $syncStudent2->json('whiteboard_state.bg_type'));
+        $this->assertStringContainsString('science-lesson', $syncStudent2->json('whiteboard_state.bg_url'));
 
         // تنظيف
         ClassroomParticipant::where('room_id', $roomId)->delete();

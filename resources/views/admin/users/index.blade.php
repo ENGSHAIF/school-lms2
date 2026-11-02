@@ -1105,51 +1105,58 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-xs">
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الاسم الكامل بالعربية <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required placeholder="محمد شائف عبدالواحد علي" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="text" name="name" required value="{{ old('name') }}" placeholder="محمد شائف عبدالواحد علي" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('name') ? 'border-red-400 bg-red-50/30' : 'border-slate-300' }} focus:ring-2 focus:ring-indigo-500 outline-none">
+                        @error('name') <span class="text-[11px] text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الاسم بالإنجليزية (Full English Name) <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="text" name="name_en" placeholder="mohammed shaif abdulwahid ali" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
+                        <input type="text" name="name_en" value="{{ old('name_en') }}" placeholder="mohammed shaif abdulwahid ali" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" dir="ltr">
                     </div>
 
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الجنس (Gender) <span class="text-red-500">*</span></label>
                         <select name="gender" required class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
-                            <option value="male" selected>ذكر 👨 (Male)</option>
-                            <option value="female">أنثى 👩 (Female)</option>
+                            <option value="male" {{ old('gender', 'male') === 'male' ? 'selected' : '' }}>ذكر 👨 (Male)</option>
+                            <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>أنثى 👩 (Female)</option>
                         </select>
                     </div>
 
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">تاريخ الميلاد <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="date" name="birth_date" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="date" name="birth_date" value="{{ old('birth_date') }}" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
 
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="email" name="email" placeholder="email@asots.org (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="email" name="email" value="{{ old('email') }}" placeholder="email@asots.org (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('email') ? 'border-red-400 bg-red-50/30 ring-2 ring-red-200' : 'border-slate-300' }} focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        @error('email')
+                            <span class="text-[11px] text-red-600 font-bold block mt-1">⚠️ {{ $message }}</span>
+                        @else
+                            <span class="text-[10px] text-slate-400 block mt-1">البريد اختياري، اتركه فارغاً إذا لم يتوفر بريد خاص به.</span>
+                        @enderror
                     </div>
 
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الرقم الأكاديمي اليدوي / السابق <span class="text-slate-400 font-normal">(اختياري)</span></label>
-                        <input type="text" name="academic_number" placeholder="مثال: 2023-A-104 (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="text" name="academic_number" value="{{ old('academic_number') }}" placeholder="مثال: 2023-A-104 (اختياري)" class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
                     </div>
 
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">رقم الهاتف والواتساب <span class="text-red-500">*</span></label>
-                        <input type="text" name="phone_whatsapp" required placeholder="+967 " class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        <input type="text" name="phone_whatsapp" required value="{{ old('phone_whatsapp') }}" placeholder="+967 " class="w-full max-w-full px-3.5 py-2.5 rounded-xl border {{ $errors->has('phone_whatsapp') ? 'border-red-400 bg-red-50/30' : 'border-slate-300' }} focus:ring-2 focus:ring-indigo-500 outline-none font-mono" dir="ltr">
+                        @error('phone_whatsapp') <span class="text-[11px] text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="min-w-0">
                         <label class="block font-bold text-slate-700 mb-1">الدور في المنصة (Role) <span class="text-red-500">*</span></label>
                         <select name="role" id="addRoleSelect" onchange="onRoleChange(this.value, 'add')" required class="w-full max-w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold">
-                            <option value="supervisor" selected>🛡️ مشرف أكاديمي (Supervisor)</option>
-                            <option value="accountant">💼 محاسب مالي (Accountant)</option>
-                            <option value="teacher">👨‍🏫 معلم (Teacher)</option>
-                            <option value="student">🎓 طالب (Student)</option>
-                            <option value="parent">👨‍👧‍👦 ولي أمر (Parent)</option>
-                            <option value="admin">👑 مدير نظام (Administrator)</option>
+                            <option value="supervisor" {{ old('role') === 'supervisor' ? 'selected' : '' }}>🛡️ مشرف أكاديمي (Supervisor)</option>
+                            <option value="accountant" {{ old('role') === 'accountant' ? 'selected' : '' }}>💼 محاسب مالي (Accountant)</option>
+                            <option value="teacher" {{ old('role') === 'teacher' ? 'selected' : '' }}>👨‍🏫 معلم (Teacher)</option>
+                            <option value="student" {{ old('role') === 'student' ? 'selected' : '' }}>🎓 طالب (Student)</option>
+                            <option value="parent" {{ old('role') === 'parent' ? 'selected' : '' }}>👨‍👧‍👦 ولي أمر (Parent)</option>
+                            <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>👑 مدير نظام (Administrator)</option>
                         </select>
                     </div>
 
@@ -1164,6 +1171,17 @@
                             @endforeach
                         </select>
                         <span class="text-[10px] text-slate-400 block mt-1">يرث المستخدم كامل صلاحيات المجموعة فوراً</span>
+                    </div>
+
+                    <!-- خيار صلاحية التدريس للمشرفين والإداريين -->
+                    <div id="addSupervisorTeachingOption" class="col-span-1 sm:col-span-2 p-3.5 bg-gradient-to-r from-amber-50 to-indigo-50 rounded-2xl border border-amber-200/80 space-y-1">
+                        <label class="flex items-center gap-2.5 cursor-pointer">
+                            <input type="checkbox" name="permissions[teachers.can_teach]" value="1" id="addCanTeachCb" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                            <span class="text-xs font-black text-slate-800">👨‍🏫 تمكين صلاحية التدريس الميداني (إسناد كمدرس رئيسي أو مساعد للشعب الدراسية)</span>
+                        </label>
+                        <p class="text-[11px] text-slate-500 pr-6">
+                            تتيح للمشرف الأكاديمي أو الإداري ممارسة التدريس، والظهور في قوائم المعلمين للمجموعات، وإدارة السبورة والبث الحي كمعلم دون أي تعارض مع صلاحياته الإشرافية.
+                        </p>
                     </div>
 
                     <div class="min-w-0">
@@ -1373,6 +1391,17 @@
                             @endforeach
                         </select>
                         <span class="text-[10px] text-slate-400 block mt-1">يرث المستخدم صلاحيات المجموعة المختارة مباشرة</span>
+                    </div>
+
+                    <!-- خيار صلاحية التدريس للمشرفين والإداريين في التعديل -->
+                    <div id="editSupervisorTeachingOption" class="col-span-1 sm:col-span-2 p-3.5 bg-gradient-to-r from-amber-50 to-indigo-50 rounded-2xl border border-amber-200/80 space-y-1">
+                        <label class="flex items-center gap-2.5 cursor-pointer">
+                            <input type="checkbox" name="permissions[teachers.can_teach]" value="1" id="editCanTeachCb" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                            <span class="text-xs font-black text-slate-800">👨‍🏫 تمكين صلاحية التدريس الميداني (إسناد كمدرس رئيسي أو مساعد للشعب الدراسية)</span>
+                        </label>
+                        <p class="text-[11px] text-slate-500 pr-6">
+                            تتيح للمشرف الأكاديمي أو الإداري ممارسة التدريس، والظهور في قوائم المعلمين للمجموعات، وإدارة السبورة والبث الحي كمعلم دون أي تعارض مع صلاحياته الإشرافية.
+                        </p>
                     </div>
 
                     <div class="min-w-0">
@@ -1990,6 +2019,11 @@
             editParentSelect.value = user.student_profile ? (user.student_profile.parent_id || '') : '';
         }
 
+        // ضبط خيار صلاحية التدريس للمشرف
+        const canTeachChecked = user.role === 'teacher' || (user.permissions && (user.permissions['teachers.can_teach'] == 1 || user.permissions['can_teach'] == 1 || (Array.isArray(user.permissions) && (user.permissions.includes('teachers.can_teach') || user.permissions.includes('can_teach')))));
+        const editCanTeachCb = document.getElementById('editCanTeachCb');
+        if (editCanTeachCb) editCanTeachCb.checked = Boolean(canTeachChecked);
+
         onRoleChange(user.role, 'edit');
         document.getElementById('editUserModal').classList.remove('hidden');
     }
@@ -2070,6 +2104,16 @@
                 parentSec.classList.add('hidden');
                 const pSelect = document.getElementById(prefix + 'ParentSelect');
                 if (pSelect) pSelect.value = '';
+            }
+        }
+
+        // إظهار أو إخفاء خيار صلاحية التدريس الميداني للمشرفين
+        const teachSec = document.getElementById(prefix + 'SupervisorTeachingOption');
+        if (teachSec) {
+            if (role === 'supervisor' || role === 'admin') {
+                teachSec.classList.remove('hidden');
+            } else {
+                teachSec.classList.add('hidden');
             }
         }
     }
@@ -2286,6 +2330,12 @@
             closeManageChildrenModal();
         }
     });
+
+    @if($errors->any() && old('name'))
+        document.addEventListener('DOMContentLoaded', function() {
+            openAddModal();
+        });
+    @endif
 </script>
 @endsection
 

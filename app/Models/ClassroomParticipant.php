@@ -15,6 +15,7 @@ class ClassroomParticipant extends Model
         'has_mic',
         'is_hand_raised',
         'is_muted_by_host',
+        'admission_status',
         'last_seen_at',
     ];
 

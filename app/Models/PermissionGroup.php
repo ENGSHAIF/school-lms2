@@ -110,6 +110,8 @@ class PermissionGroup extends Model
             'groups.live' => ['groups.live'],
             'groups.activities' => ['groups.activities'],
             'groups.delete' => ['groups.delete'],
+            'can_teach' => ['teachers.can_teach'],
+            'teachers.can_teach' => ['can_teach', 'teachers.can_teach'],
         ];
     }
 
@@ -323,6 +325,12 @@ class PermissionGroup extends Model
                         'desc' => 'معاينة كشف الحركة المالية للحصص المنفذة وسندات الصرف',
                         'badge' => 'طباعة 🖨️',
                         'type' => 'print',
+                    ],
+                    'teachers.can_teach' => [
+                        'label' => 'صلاحية التدريس للمشرفين والإداريين (العمل كمعلم للمجموعات)',
+                        'desc' => 'تمكين المشرف الأكاديمي أو الإداري من التدريس، والظهور كمعلم رئيسي أو مساعد للمجموعات، وإدارة البث المباشر للشعب',
+                        'badge' => 'تدريس 👨‍🏫',
+                        'type' => 'assign',
                     ],
                 ],
             ],
