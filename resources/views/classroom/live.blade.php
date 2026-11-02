@@ -1631,6 +1631,40 @@
                             vSyncEl.pause();
                         }
                     }
+                case 'wb_scroll':
+                    if (!IS_TEACHER) {
+                        const wbCont = document.getElementById('whiteboardContainer');
+                        if (wbCont) {
+                            const maxScroll = wbCont.scrollHeight - wbCont.clientHeight;
+                            const targetScroll = typeof data.scrollRatio === 'number' && maxScroll > 0
+                                ? (data.scrollRatio * maxScroll)
+                                : data.scrollTop;
+                            wbCont.scrollTo({ top: targetScroll, behavior: 'smooth' });
+                        }
+                    }
+                    break;
+                case 'chat_cleared':
+                    clearChatContainerUI();
+                    break;
+                case 'force_refresh':
+                    window.location.reload();
+                    break;
+                case 'force_mute_all':
+                    if (!IS_TEACHER) {
+                        if (isMicEnabled) toggleLocalMic();
+                        alert('قام المعلم بكتم صوت جميع الطلاب 🔇');
+                    }
+                    break;
+                case 'force_mute_user':
+                    if (data.target_user_id === CURRENT_USER_ID) {
+                        if (isMicEnabled) toggleLocalMic();
+                        alert('قام المعلم بكتم صوتك 🔇');
+                    }
+                    break;
+                case 'allow_speak_user':
+                    if (data.target_user_id === CURRENT_USER_ID) {
+                        alert('أذن لك المعلم بالتحدث الآن! يمكنك تشغيل المايك 🎙️');
+                    }
                     break;
             }
         } catch (e) {
@@ -2382,6 +2416,7 @@
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
                 body: JSON.stringify({ action: 'mute_user', user_id: userId })
             });
+            broadcastP2P({ type: 'force_mute_user', target_user_id: userId });
         } catch (e) { console.error(e); }
     }
 
@@ -2393,6 +2428,7 @@
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
                 body: JSON.stringify({ action: 'allow_speak', user_id: userId })
             });
+            broadcastP2P({ type: 'allow_speak_user', target_user_id: userId });
         } catch (e) { console.error(e); }
     }
 
@@ -2420,8 +2456,168 @@
     }
 
     function muteAllParticipants() {
+        muteAllStudentsNow();
+    }
+
+    // مسح سجل المحادثة بالكامل للمعلم
+    async function confirmClearChat() {
         if (!IS_TEACHER) return;
-        toggleRoomPolicy();
+        if (!confirm('هل أنت متأكد من رغبتك في مسح سجل المحادثة بالكامل لجميع الطلاب؟')) return;
+        
+        try {
+            const res = await fetch(`/classroom/${ROOM_ID}/controls`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ action: 'clear_chat' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                clearChatContainerUI();
+                broadcastP2P({ type: 'chat_cleared' });
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    function clearChatContainerUI() {
+        const container = document.getElementById('liveChatMessagesContainer');
+        if (!container) return;
+        const welcomeBox = container.firstElementChild;
+        container.innerHTML = '';
+        if (welcomeBox) container.appendChild(welcomeBox);
+        const clearedNotice = document.createElement('div');
+        clearedNotice.className = 'text-center text-[11px] text-slate-500 py-2';
+        clearedNotice.textContent = 'تم مسح المحادثة بواسطة المعلم 🧹';
+        container.appendChild(clearedNotice);
+    }
+
+    // كتم صوت جميع الطلاب فوراً
+    async function muteAllStudentsNow() {
+        if (!IS_TEACHER) return;
+        if (!confirm('هل تريد كتم المايك لجميع الطلاب فوراً؟')) return;
+
+        try {
+            const res = await fetch(`/classroom/${ROOM_ID}/controls`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ action: 'mute_all' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                broadcastP2P({ type: 'force_mute_all' });
+                currentRoomPolicy = 'permission';
+                updatePolicyUI('permission');
+                alert('تم كتم صوت جميع الطلاب بنجاح 🔇');
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // تحديث وإعادة تحميل الفصل
+    function refreshClassroom() {
+        if (IS_TEACHER) {
+            if (confirm('هل ترغب في إعادة تحميل وتحديث الفصل لك ولجميع الطلاب المتصلين؟ (مفيد لحل مشاكل الاتصال)')) {
+                broadcastP2P({ type: 'force_refresh' });
+                window.location.reload();
+                return;
+            }
+        }
+        window.location.reload();
+    }
+
+    // مشاركة الشاشة (Screen Sharing)
+    let isSharingScreen = false;
+    let screenStream = null;
+
+    async function toggleScreenShare() {
+        if (!IS_TEACHER) return;
+        if (isSharingScreen) {
+            stopScreenShare();
+        } else {
+            await startScreenShare();
+        }
+    }
+
+    async function startScreenShare() {
+        try {
+            screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: { cursor: 'always' },
+                audio: false
+            });
+
+            const screenTrack = screenStream.getVideoTracks()[0];
+            
+            // استبدال مسار الفيديو في جميع اتصالات الأقران
+            Object.values(peerConnections).forEach(pc => {
+                const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                if (sender) {
+                    sender.replaceTrack(screenTrack).catch(console.error);
+                }
+            });
+
+            // إظهار الشاشة محلياً في بطاقة المعلم
+            const myVideo = document.getElementById('mySelfVideo');
+            if (myVideo) {
+                myVideo.srcObject = screenStream;
+                myVideo.classList.remove('hidden');
+                document.getElementById('mySelfAvatar')?.classList.add('hidden');
+            }
+
+            isSharingScreen = true;
+            const btn = document.getElementById('btnScreenShare');
+            if (btn) {
+                btn.classList.add('bg-rose-600', 'text-white');
+                btn.classList.remove('bg-indigo-950/80', 'text-indigo-200');
+            }
+
+            screenTrack.onended = () => {
+                stopScreenShare();
+            };
+        } catch (err) {
+            console.error('Screen share error:', err);
+            if (err.name !== 'NotAllowedError') {
+                alert('تعذر مشاركة الشاشة: ' + (err.message || 'خطأ'));
+            }
+        }
+    }
+
+    function stopScreenShare() {
+        if (screenStream) {
+            screenStream.getTracks().forEach(t => t.stop());
+            screenStream = null;
+        }
+        isSharingScreen = false;
+
+        // استعادة مسار الكاميرا الأصلية
+        const camTrack = localStream ? localStream.getVideoTracks()[0] : null;
+        Object.values(peerConnections).forEach(pc => {
+            const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+            if (sender && camTrack) {
+                sender.replaceTrack(camTrack).catch(console.error);
+            }
+        });
+
+        const myVideo = document.getElementById('mySelfVideo');
+        if (myVideo) {
+            if (localStream && isCamEnabled) {
+                myVideo.srcObject = localStream;
+            } else {
+                myVideo.classList.add('hidden');
+                document.getElementById('mySelfAvatar')?.classList.remove('hidden');
+            }
+        }
+
+        const btn = document.getElementById('btnScreenShare');
+        if (btn) {
+            btn.classList.remove('bg-rose-600', 'text-white');
+            btn.classList.add('bg-indigo-950/80', 'text-indigo-200');
+        }
     }
 
     // 6.1 إدارة غرفة الانتظار والموافقة على انضمام الطلاب (Waiting Room & Admission Control)
@@ -3073,6 +3269,12 @@
 
         // تهيئة مستمعات مشغل الفيديو التعليمي
         initHtml5VideoListeners();
+
+        // مزامنة التمرير في السبورة وحاوية الكتاب للطلاب
+        const wbContainer = document.getElementById('whiteboardContainer');
+        if (wbContainer) {
+            wbContainer.addEventListener('scroll', syncScrollToPeersThrottled, { passive: true });
+        }
 
         // تحديث المظهر الافتراضي للأدوات
         selectWbTool('pen');
