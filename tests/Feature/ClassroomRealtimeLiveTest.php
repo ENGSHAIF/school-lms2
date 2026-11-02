@@ -400,4 +400,115 @@ class ClassroomRealtimeLiveTest extends TestCase
         ClassroomRoomControl::where('room_id', $roomId)->delete();
         $student->delete();
     }
+
+    public function test_proxy_browse_blocks_ssrf_and_handles_wordwall_embed(): void
+    {
+        $admin = $this->getAdmin();
+
+        // 1. SSRF check for localhost
+        $ssrfRes = $this->actingAs($admin)->get(route('classroom.proxy_browse', ['url' => 'http://127.0.0.1:8000/admin']));
+        $ssrfRes->assertStatus(403);
+
+        // 2. Wordwall resource auto-embed redirect
+        $wwRes = $this->actingAs($admin)->get(route('classroom.proxy_browse', ['url' => 'https://wordwall.net/resource/12345678']));
+        $wwRes->assertRedirect('https://wordwall.net/embed/12345678');
+    }
+
+    public function test_clear_chat_action_deletes_messages_and_sync_flags_chat_cleared(): void
+    {
+        $admin = $this->getAdmin();
+        $student = $this->getStudent();
+        $roomId = 'test-room-clear-'.uniqid();
+
+        ClassroomRoomControl::create([
+            'room_id' => $roomId,
+            'policy' => 'open',
+            'is_live' => true,
+            'requires_admission' => false,
+        ]);
+
+        ClassroomParticipant::create([
+            'room_id' => $roomId,
+            'user_id' => $student->id,
+            'peer_id' => 'peer_student_clr',
+            'admission_status' => 'admitted',
+            'last_seen_at' => now(),
+        ]);
+
+        // إضافة رسالة
+        $msg = ClassroomMessage::create([
+            'room_id' => $roomId,
+            'user_id' => $student->id,
+            'type' => 'text',
+            'content' => 'رسالة سيتم مسحها',
+        ]);
+
+        $this->assertDatabaseHas('classroom_messages', ['id' => $msg->id]);
+
+        // المعلم أو الإدارة ينفذ مسح المحادثة
+        $clearRes = $this->actingAs($admin)->postJson(route('classroom.controls', $roomId), [
+            'action' => 'clear_chat',
+        ]);
+        $clearRes->assertOk();
+        $clearRes->assertJson(['success' => true, 'cleared' => true]);
+
+        $this->assertDatabaseMissing('classroom_messages', ['id' => $msg->id]);
+
+        // مزامنة الطالب ترسل last_message_id = msg.id -> تتلقى chat_cleared = true
+        $syncRes = $this->actingAs($student)->getJson(route('classroom.sync', [
+            'roomId' => $roomId,
+            'last_message_id' => $msg->id,
+        ]));
+        $syncRes->assertOk();
+        $this->assertTrue($syncRes->json('chat_cleared'));
+
+        // تنظيف
+        ClassroomParticipant::where('room_id', $roomId)->delete();
+        ClassroomRoomControl::where('room_id', $roomId)->delete();
+    }
+
+    public function test_refresh_all_bumps_version_and_flags_force_refresh_for_students(): void
+    {
+        $admin = $this->getAdmin();
+        $student = $this->getStudent();
+        $roomId = 'test-room-refresh-'.uniqid();
+
+        $control = ClassroomRoomControl::create([
+            'room_id' => $roomId,
+            'policy' => 'open',
+            'is_live' => true,
+            'requires_admission' => false,
+            'whiteboard_version' => 1,
+        ]);
+
+        ClassroomParticipant::create([
+            'room_id' => $roomId,
+            'user_id' => $student->id,
+            'peer_id' => 'peer_student_ref',
+            'admission_status' => 'admitted',
+            'last_seen_at' => now(),
+        ]);
+
+        // المعلم يطلب تحديث للجميع
+        $refreshRes = $this->actingAs($admin)->postJson(route('classroom.controls', $roomId), [
+            'action' => 'refresh_all',
+        ]);
+        $refreshRes->assertOk();
+        $refreshRes->assertJson(['success' => true, 'refreshed' => true]);
+
+        $control->refresh();
+        $this->assertEquals(2, $control->whiteboard_version);
+
+        // مزامنة الطالب مع session_start أقدم من وقت التحديث
+        $syncRes = $this->actingAs($student)->getJson(route('classroom.sync', [
+            'roomId' => $roomId,
+            'session_start' => time() - 10,
+        ]));
+        $syncRes->assertOk();
+        $this->assertTrue($syncRes->json('force_refresh'));
+
+        // تنظيف
+        ClassroomParticipant::where('room_id', $roomId)->delete();
+        ClassroomRoomControl::where('room_id', $roomId)->delete();
+    }
 }

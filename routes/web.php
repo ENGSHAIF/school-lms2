@@ -105,6 +105,7 @@ Route::middleware('auth')->group(function () {
     // 2.1 مسارات نموذج ASOTS (حجز الحصص 25 دقيقة، الفصل التفاعلي الحي، والباقات)
     Route::get('/student/booking', [BookingController::class, 'index'])->name('student.booking');
     Route::post('/student/booking', [BookingController::class, 'book'])->name('student.book.post');
+    Route::get('/classroom/proxy-browse', [ClassroomRealtimeController::class, 'proxyBrowse'])->name('classroom.proxy_browse');
     Route::get('/classroom/{roomId}', [BookingController::class, 'showClassroom'])->name('classroom.show');
     Route::get('/classroom/{roomId}/status', [BookingController::class, 'checkStatus'])->name('classroom.status');
     Route::post('/classroom/booking/{bookingId}/toggle-live', [BookingController::class, 'toggleBookingLive'])->name('classroom.booking.toggle_live');

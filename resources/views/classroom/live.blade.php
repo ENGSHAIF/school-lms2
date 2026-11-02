@@ -49,6 +49,7 @@
         .wb-vertical-slider {
             -webkit-appearance: slider-vertical;
             writing-mode: vertical-lr;
+            direction: rtl;
             width: 14px;
             height: 100%;
             min-height: 140px;
@@ -244,9 +245,10 @@
                         </button>
                     @endif
 
-                    <!-- زر التحديث F5 -->
-                    <button type="button" onclick="refreshClassroom()" id="btnRefreshClassroom" class="bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-700 flex items-center gap-1 transition" title="تحديث محتويات الفصل">
+                    <!-- زر التحديث والمزامنة F5 للجميع (معلمين وطلاب وإدارة) -->
+                    <button type="button" onclick="refreshClassroom()" id="btnRefreshClassroom" class="bg-cyan-950/80 hover:bg-cyan-900 text-cyan-200 hover:text-white text-[11px] font-bold px-2.5 py-1 rounded-lg border border-cyan-700/60 flex items-center gap-1 transition shadow-sm" title="تحديث ومزامنة بيانات الفصل والشاشة والسبورة (F5)">
                         <span>🔄</span>
+                        <span>تحديث</span>
                     </button>
 
                     <!-- زر فتح/إغلاق البث للمعلم -->
@@ -324,8 +326,8 @@
                                     <span>👋</span>
                                     <span>محادثة الفصل التفاعلي المباشر</span>
                                 </div>
-                                @if($isTeacher)
-                                    <button type="button" onclick="confirmClearChat()" class="text-[10px] text-rose-300 hover:text-white bg-rose-950/70 hover:bg-rose-900 border border-rose-800/80 px-2 py-0.5 rounded-lg flex items-center gap-1 transition shadow-sm" title="مسح محتوى المحادثة بالكامل لجميع الطلاب">
+                                @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                    <button type="button" onclick="confirmClearChat()" class="text-[10px] text-rose-300 hover:text-white bg-rose-950/80 hover:bg-rose-900 border border-rose-800/80 px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-sm font-bold" title="حذف ومسح محتوى المحادثة بالكامل للمجموعة">
                                         <span>🗑️</span>
                                         <span>مسح المحادثة</span>
                                     </button>
@@ -760,6 +762,12 @@
                         <button type="button" onclick="resetWbZoom()" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-400 rounded" title="إعادة ضبط الحجم">⟲</button>
                     </div>
 
+                    <!-- زر تحديث ومزامنة الشاشة والسبورة للجميع -->
+                    <button type="button" onclick="refreshClassroom()" class="bg-cyan-950/80 hover:bg-cyan-900 text-cyan-200 hover:text-white border border-cyan-700/60 font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition shadow" title="تحديث ومزامنة الشاشة والسبورة والمحتوى فوراً (F5)">
+                        <span>🔄</span>
+                        <span class="hidden md:inline">تحديث ومزامنة</span>
+                    </button>
+
                     <!-- حفظ لقطة من الشرح والسبورة -->
                     <button type="button" onclick="downloadWhiteboardSnapshot()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition shadow" title="تصدير وحفظ صورة الشرح كاملة مع الملاحظات">
                         <span>💾</span>
@@ -805,30 +813,51 @@
                     </div>
                 </div>
 
-                <!-- طبقة مستعرض جوجل ومسابقات الأطفال التفاعلية داخل السبورة -->
+                <!-- طبقة مستعرض جوجل ومسابقات الأطفال التفاعلية داخل السبورة (Whiteboard Mini-Chrome Browser) -->
                 <div id="whiteboardBrowserWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col bg-slate-900 z-[5]">
-                    <div class="p-1 sm:p-1.5 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between gap-1.5 shrink-0 z-20 text-xs">
-                        <div class="flex items-center gap-1.5 flex-1 min-w-0">
-                            <button type="button" onclick="reloadBrowserIframe()" class="p-1 rounded hover:bg-slate-800 text-slate-300 text-xs" title="إعادة تحميل">🔄</button>
-                            <span class="text-slate-400 font-mono text-[10px] hidden sm:inline">URL:</span>
-                            <input type="text" id="wbBrowserCurrentUrl" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5 text-xs text-white truncate font-mono" readonly>
+                    <!-- شريط أدوات وتصفح كروم المصغر -->
+                    <div class="p-1 sm:p-1.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-1.5 shrink-0 z-20 text-xs">
+                        <div class="flex items-center gap-1 flex-1 min-w-[280px]">
+                            <!-- أزرار التنقل الأساسية للخلف وللأمام والتحديث -->
+                            <div class="flex items-center gap-0.5 bg-slate-900 border border-slate-800 rounded-lg p-0.5 shrink-0">
+                                <button type="button" onclick="navigateBrowserBack()" class="px-1.5 py-1 rounded hover:bg-slate-800 text-slate-300 text-xs transition" title="للخلف">⬅️</button>
+                                <button type="button" onclick="navigateBrowserForward()" class="px-1.5 py-1 rounded hover:bg-slate-800 text-slate-300 text-xs transition" title="للأمام">➡️</button>
+                                <button type="button" onclick="reloadBrowserIframe()" class="px-1.5 py-1 rounded hover:bg-slate-800 text-cyan-300 text-xs transition" title="إعادة تحميل الصفحة">🔄</button>
+                                <button type="button" onclick="openBrowserModal()" class="px-1.5 py-1 rounded hover:bg-slate-800 text-amber-300 text-xs transition" title="الرئيسية والمواقع المفضلة">🏠</button>
+                            </div>
+
+                            <!-- شريط كتابة العنوان والبحث مثل كروم -->
+                            <div class="flex-1 relative flex items-center min-w-0">
+                                <span class="absolute right-2.5 text-slate-400 text-xs pointer-events-none">🌐</span>
+                                <input type="text" id="wbBrowserCurrentUrl" class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-lg pr-7 pl-16 py-1 text-xs text-white placeholder-slate-500 font-mono focus:outline-none transition" placeholder="اكتب عنوان الموقع أو ابحث في جوجل..." onkeydown="if(event.key==='Enter') navigateBrowserToUrl()">
+                                <button type="button" onclick="navigateBrowserToUrl()" class="absolute left-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded transition shadow-sm" title="الانتقال للموقع">
+                                    ذهاب ⏎
+                                </button>
+                            </div>
+
+                            <!-- زر الفتح في تبويب خارجي مستقل -->
+                            <button type="button" onclick="openBrowserExternalTab()" class="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs shrink-0 transition" title="فتح الموقع في تبويب جوجل كروم جديد">
+                                ↗️
+                            </button>
                         </div>
+
                         <div class="flex items-center gap-1 shrink-0">
-                            <span class="text-[10px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 hidden md:inline font-bold">
-                                💡 اختر الماوس 🖱️ للتفاعل أو القلم ✏️ للشرح فوق الصفحة
+                            <span class="text-[10px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 hidden lg:inline font-bold">
+                                💡 اختر الماوس 🖱️ للتفاعل مع الموقع أو القلم ✏️ للشرح فوقه
                             </span>
                             @if($isTeacher)
-                                <button type="button" onclick="openBrowserModal()" class="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] shadow transition">
-                                    🔍 بحث جديد
+                                <button type="button" onclick="openBrowserModal()" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] shadow transition flex items-center gap-1">
+                                    <span>🔍</span>
+                                    <span>مسابقات ومواقع</span>
                                 </button>
-                                <button type="button" onclick="closeWbMediaLayer()" class="px-2 py-0.5 rounded bg-rose-600/30 hover:bg-rose-600 text-rose-200 hover:text-white font-bold text-[11px] border border-rose-500/40 transition" title="إنهاء العرض والرجوع للسبورة">
+                                <button type="button" onclick="closeWbMediaLayer()" class="px-2 py-1 rounded-lg bg-rose-600/30 hover:bg-rose-600 text-rose-200 hover:text-white font-bold text-[11px] border border-rose-500/40 transition" title="إنهاء التصفح والرجوع للسبورة">
                                     ✕ إنهاء
                                 </button>
                             @endif
                         </div>
                     </div>
                     <div class="flex-1 relative w-full h-full bg-white overflow-hidden">
-                        <iframe id="whiteboardBrowserIframe" src="about:blank" class="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        <iframe id="whiteboardBrowserIframe" src="about:blank" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
                 </div>
 
@@ -1228,6 +1257,26 @@
                         <strong class="text-xs text-white block">Educaplay</strong>
                         <span class="text-[10px] text-slate-400 block truncate">كلمات متقاطعة وتوصيل</span>
                     </button>
+                    <button type="button" onclick="openPresetGame('https://ar.wikipedia.org', 'موسوعة ويكيبيديا العربية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">📚</span>
+                        <strong class="text-xs text-white block">Wikipedia</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">الموسوعة الحرة</span>
+                    </button>
+                    <button type="button" onclick="openPresetGame('https://www.geogebra.org/calculator', 'حاسبة GeoGebra التفاعلية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">🧮</span>
+                        <strong class="text-xs text-white block">GeoGebra</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">رياضيات ورسوم بيانية</span>
+                    </button>
+                    <button type="button" onclick="openPresetGame('https://phet.colorado.edu/ar_SA/simulations/filter?type=html', 'محاكاة العلوم PhET')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">🔬</span>
+                        <strong class="text-xs text-white block">PhET Science</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">تجارب فيزياء وكيمياء</span>
+                    </button>
+                    <button type="button" onclick="openPresetGame('https://wheelofnames.com/ar', 'عجلة الحظ التفاعلية للطلاب')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">🎲</span>
+                        <strong class="text-xs text-white block">عجلة الأسماء</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">سحب عشوائي للطلاب</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1509,6 +1558,8 @@
     const CURRENT_USER_ID = {{ auth()->id() }};
     const CURRENT_USER_NAME = "{{ addslashes(auth()->user()->name) }}";
     const IS_TEACHER = {{ $isTeacher ? 'true' : 'false' }};
+    const CAN_MANAGE_ROOM = {{ ($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor()))) ? 'true' : 'false' }};
+    const clientSessionStart = Math.floor(Date.now() / 1000);
     const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     // المعرف الفريد للنظير (WebRTC Peer ID)
@@ -2088,7 +2139,8 @@
                 has_mic: isMicEnabled ? '1' : '0',
                 is_hand_raised: isHandRaised ? '1' : '0',
                 last_message_id: lastMessageId,
-                whiteboard_version: currentWbVersion
+                whiteboard_version: currentWbVersion,
+                session_start: clientSessionStart
             });
 
             if (requestAdmissionFlag) {
@@ -2107,6 +2159,15 @@
             if (!response.ok) return;
             const data = await response.json();
             if (!data.success) return;
+
+            if (data.chat_cleared) {
+                clearChatContainerUI();
+            }
+
+            if (data.force_refresh) {
+                window.location.reload();
+                return;
+            }
 
             // أ) التحقق من حالة دخول الطالب وغرفة الانتظار (Waiting Room Flow)
             if (!IS_TEACHER) {
@@ -2459,10 +2520,10 @@
         muteAllStudentsNow();
     }
 
-    // مسح سجل المحادثة بالكامل للمعلم
+    // مسح سجل المحادثة بالكامل للمعلم والإدارة
     async function confirmClearChat() {
-        if (!IS_TEACHER) return;
-        if (!confirm('هل أنت متأكد من رغبتك في مسح سجل المحادثة بالكامل لجميع الطلاب؟')) return;
+        if (!CAN_MANAGE_ROOM) return;
+        if (!confirm('هل أنت متأكد من مسح جميع رسائل الدردشة في هذه المجموعة نهائياً؟ لن يمكن استرجاعها.')) return;
         
         try {
             const res = await fetch(`/classroom/${ROOM_ID}/controls`, {
@@ -2479,7 +2540,7 @@
                 clearChatContainerUI();
                 broadcastP2P({ type: 'chat_cleared' });
             }
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Clear chat error:', e); }
     }
 
     function clearChatContainerUI() {
@@ -2489,9 +2550,10 @@
         container.innerHTML = '';
         if (welcomeBox) container.appendChild(welcomeBox);
         const clearedNotice = document.createElement('div');
-        clearedNotice.className = 'text-center text-[11px] text-slate-500 py-2';
-        clearedNotice.textContent = 'تم مسح المحادثة بواسطة المعلم 🧹';
+        clearedNotice.className = 'text-center text-[11px] text-slate-500 py-2 font-medium';
+        clearedNotice.textContent = 'تم مسح سجل المحادثة 🧹';
         container.appendChild(clearedNotice);
+        lastMessageId = 0;
     }
 
     // كتم صوت جميع الطلاب فوراً
@@ -2519,15 +2581,36 @@
         } catch(e) { console.error(e); }
     }
 
-    // تحديث وإعادة تحميل الفصل
-    function refreshClassroom() {
-        if (IS_TEACHER) {
-            if (confirm('هل ترغب في إعادة تحميل وتحديث الفصل لك ولجميع الطلاب المتصلين؟ (مفيد لحل مشاكل الاتصال)')) {
+    // تحديث ومزامنة الفصل والشاشة تلقائياً (Universal Refresh & Sync F5)
+    async function refreshClassroom() {
+        if (CAN_MANAGE_ROOM) {
+            const syncEveryone = confirm(
+                "تحديث ومزامنة بيانات الفصل والشاشة (F5):\n\n" +
+                "• اضغط [موافق / OK]: لتحديث ومزامنة شاشة وسبورة جميع الطلاب مع شاشتك فوراً وإعادة تحميل البيانات للكل.\n" +
+                "• اضغط [إلغاء / Cancel]: لتحديث ومزامنة شاشتك أنت فقط."
+            );
+            if (syncEveryone) {
                 broadcastP2P({ type: 'force_refresh' });
+                try {
+                    await fetch(`/classroom/${ROOM_ID}/controls`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify({ action: 'refresh_all' })
+                    });
+                } catch(e) { console.error(e); }
                 window.location.reload();
                 return;
             }
+            window.location.reload();
+            return;
         }
+
+        // للطالب: طلب مزامنة فورية وسريعة من الأستاذ والسيرفر وإعادة تحميل الصفحة
+        broadcastP2P({ type: 'request_wb_state' });
+        currentWbVersion = -1;
+        try {
+            await syncClassroom();
+        } catch(e) {}
         window.location.reload();
     }
 
@@ -3176,21 +3259,72 @@
         });
     }
 
-    // التنقل والتمرير بأسهم لوحة المفاتيح: السهمان فوق وتحت لتمرير الكتاب بسلاسة دون القفز بين الصفحات
-    document.addEventListener('keydown', (e) => {
+    // التنقل والتمرير المستمر بأسهم لوحة المفاتيح: التحرك فوق وتحت والتنقل التلقائي بين الصفحات عند نهايتها
+    let isTransitioningWbPage = false;
+    document.addEventListener('keydown', async (e) => {
         if (e.target.closest('input, textarea, select')) return;
         if (wbCurrentBg && wbCurrentBg.type === 'pdf') {
             const container = document.getElementById('whiteboardContainer');
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                if (container) {
-                    container.scrollBy({ top: 120, behavior: 'smooth' });
+                if (!container || isTransitioningWbPage) return;
+
+                const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+                const isAtBottom = maxScroll <= 15 || container.scrollTop >= maxScroll - 25;
+
+                if (isAtBottom) {
+                    // وصل لنهاية الصفحة الحالية -> استمرار النزول بالانتقال للصفحة التالية تلقائياً!
+                    if (wbCurrentPage < wbTotalPages) {
+                        isTransitioningWbPage = true;
+                        try {
+                            container.scrollTo({ top: container.scrollTop, behavior: 'instant' });
+                            await changeWbPageTo(wbCurrentPage + 1, 'top');
+                            if (container) {
+                                container.scrollTo({ top: 0, behavior: 'instant' });
+                                container.scrollBy({ top: 70, behavior: 'smooth' });
+                                syncScrollToPeersThrottled();
+                            }
+                        } catch (err) {
+                            console.error('Error transitioning to next PDF page:', err);
+                        } finally {
+                            setTimeout(() => { isTransitioningWbPage = false; }, 120);
+                        }
+                    }
+                } else {
+                    // ما زال داخل الصفحة -> استمرار التمرير لأسفل بسلاسة
+                    container.scrollBy({ top: 100, behavior: 'smooth' });
                     syncScrollToPeersThrottled();
                 }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (container) {
-                    container.scrollBy({ top: -120, behavior: 'smooth' });
+                if (!container || isTransitioningWbPage) return;
+
+                const isAtTop = container.scrollTop <= 25;
+
+                if (isAtTop) {
+                    // وصل لأعلى الصفحة الحالية -> استمرار الصعود بالانتقال للصفحة السابقة والبدء من أسفلها!
+                    if (wbCurrentPage > 1) {
+                        isTransitioningWbPage = true;
+                        try {
+                            container.scrollTo({ top: 0, behavior: 'instant' });
+                            await changeWbPageTo(wbCurrentPage - 1, 'bottom');
+                            if (container) {
+                                requestAnimationFrame(() => {
+                                    const bottomPos = Math.max(0, container.scrollHeight - container.clientHeight);
+                                    container.scrollTo({ top: bottomPos, behavior: 'instant' });
+                                    container.scrollBy({ top: -70, behavior: 'smooth' });
+                                    syncScrollToPeersThrottled();
+                                });
+                            }
+                        } catch (err) {
+                            console.error('Error transitioning to previous PDF page:', err);
+                        } finally {
+                            setTimeout(() => { isTransitioningWbPage = false; }, 120);
+                        }
+                    }
+                } else {
+                    // ما زال داخل الصفحة -> استمرار التمرير لأعلى بسلاسة
+                    container.scrollBy({ top: -100, behavior: 'smooth' });
                     syncScrollToPeersThrottled();
                 }
             } else if (e.key === 'PageDown' || e.key === 'ArrowLeft') {
@@ -3201,11 +3335,38 @@
                 changeWbPage(-1);
             } else if (e.key === 'Home') {
                 e.preventDefault();
-                changeWbPageTo(1);
+                changeWbPageTo(1, 'top');
             } else if (e.key === 'End') {
                 e.preventDefault();
-                changeWbPageTo(wbTotalPages);
+                changeWbPageTo(wbTotalPages, 'top');
             }
+        }
+    });
+
+    // التمرير التلقائي بعجلة الفأرة (Mouse Wheel) عند الوصول لأعلى أو أسفل الصفحة
+    let wheelTransitionTimeout = null;
+    window.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('whiteboardContainer');
+        if (container) {
+            container.addEventListener('wheel', (e) => {
+                if (!wbCurrentBg || wbCurrentBg.type !== 'pdf' || isTransitioningWbPage) return;
+                const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+                if (e.deltaY > 30 && (maxScroll <= 15 || container.scrollTop >= maxScroll - 25)) {
+                    if (wbCurrentPage < wbTotalPages) {
+                        clearTimeout(wheelTransitionTimeout);
+                        wheelTransitionTimeout = setTimeout(() => {
+                            changeWbPageTo(wbCurrentPage + 1, 'top');
+                        }, 80);
+                    }
+                } else if (e.deltaY < -30 && container.scrollTop <= 25) {
+                    if (wbCurrentPage > 1) {
+                        clearTimeout(wheelTransitionTimeout);
+                        wheelTransitionTimeout = setTimeout(() => {
+                            changeWbPageTo(wbCurrentPage - 1, 'bottom');
+                        }, 80);
+                    }
+                }
+            }, { passive: true });
         }
     });
 
@@ -4253,14 +4414,88 @@
         document.getElementById('wbVideoModal')?.classList.add('hidden');
     }
 
+    function resolveClassroomBrowserUrl(rawUrl) {
+        if (!rawUrl) return '';
+        let url = rawUrl.trim();
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            // إذا كان النص لا يحتوي على نقطة أو يحتوي على مسافات، فهو استعلام بحث!
+            if (url.includes(' ') || !url.includes('.')) {
+                const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(url)}`;
+                return `/classroom/proxy-browse?url=${encodeURIComponent(searchUrl)}`;
+            }
+            url = 'https://' + url;
+        }
+
+        // تحويل ألعاب ومسابقات Wordwall إلى صيغة التضمين الرسمية الخفيفة
+        const wordwallMatch = url.match(/wordwall\.net\/(?:[a-z]{2}-[a-z]{2}\/)?(?:resource|play)\/([0-9]+)/i);
+        if (wordwallMatch) {
+            return `https://wordwall.net/embed/${wordwallMatch[1]}`;
+        }
+
+        // روابط التضمين المباشرة المدعومة
+        if (url.includes('wordwall.net/embed/') || url.includes('youtube.com/embed/') || url.includes('geogebra.org/calculator')) {
+            return url;
+        }
+
+        // توجيه المواقع الخارجية عبر البروكسي الداخلي لإزالة X-Frame-Options و CSP
+        return `/classroom/proxy-browse?url=${encodeURIComponent(url)}`;
+    }
+
+    function navigateBrowserBack() {
+        const iframe = document.getElementById('whiteboardBrowserIframe');
+        try {
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.history.back();
+            }
+        } catch (e) {
+            console.warn('Browser back error:', e);
+        }
+    }
+
+    function navigateBrowserForward() {
+        const iframe = document.getElementById('whiteboardBrowserIframe');
+        try {
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.history.forward();
+            }
+        } catch (e) {
+            console.warn('Browser forward error:', e);
+        }
+    }
+
+    function navigateBrowserToUrl() {
+        const input = document.getElementById('wbBrowserCurrentUrl');
+        if (!input) return;
+        const rawVal = input.value.trim();
+        if (!rawVal) return;
+        const resolved = resolveClassroomBrowserUrl(rawVal);
+        openBrowserInWorkspace(resolved, `تصفح: ${rawVal}`);
+    }
+
+    function openBrowserExternalTab() {
+        const input = document.getElementById('wbBrowserCurrentUrl');
+        let target = input ? input.value.trim() : '';
+        if (!target && wbCurrentBg && wbCurrentBg.url) {
+            target = wbCurrentBg.url;
+        }
+        if (target.includes('/classroom/proxy-browse?url=')) {
+            try {
+                const parsed = new URL(target, window.location.origin);
+                target = parsed.searchParams.get('url') || target;
+            } catch (e) {}
+        }
+        if (target) {
+            window.open(target, '_blank', 'noopener,noreferrer');
+        }
+    }
+
     function executeBrowserSearch() {
         const input = document.getElementById('wbGoogleSearchInput');
         const query = input ? input.value.trim() : '';
-        const url = query
-            ? `https://www.google.com/search?igu=1&q=${encodeURIComponent(query)}`
-            : 'https://www.google.com/search?igu=1';
-        const title = query ? `بحث جوجل: ${query}` : 'محرك بحث جوجل التفاعلي';
-        openBrowserInWorkspace(url, title);
+        if (!query) return;
+        const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+        const proxied = `/classroom/proxy-browse?url=${encodeURIComponent(searchUrl)}`;
+        openBrowserInWorkspace(proxied, `بحث: ${query}`);
         closeWbMediaModals();
     }
 
@@ -4268,15 +4503,14 @@
         const input = document.getElementById('wbDirectUrlInput');
         let url = input ? input.value.trim() : '';
         if (!url) return;
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = 'https://' + url;
-        }
-        openBrowserInWorkspace(url, `تصفح: ${url}`);
+        const resolved = resolveClassroomBrowserUrl(url);
+        openBrowserInWorkspace(resolved, `موقع: ${url}`);
         closeWbMediaModals();
     }
 
     function openPresetGame(url, title) {
-        openBrowserInWorkspace(url, title);
+        const resolved = resolveClassroomBrowserUrl(url);
+        openBrowserInWorkspace(resolved, title);
         closeWbMediaModals();
     }
 
@@ -4356,7 +4590,16 @@
         const currentUrlInput = document.getElementById('wbBrowserCurrentUrl');
         if (browserWrapper && browserIframe) {
             browserWrapper.classList.remove('hidden');
-            if (currentUrlInput) currentUrlInput.value = url;
+            if (currentUrlInput) {
+                let displayUrl = url;
+                if (url.includes('/classroom/proxy-browse?url=')) {
+                    try {
+                        const parsed = new URL(url, window.location.origin);
+                        displayUrl = decodeURIComponent(parsed.searchParams.get('url') || url);
+                    } catch (e) {}
+                }
+                currentUrlInput.value = displayUrl;
+            }
             if (browserIframe.src !== url) {
                 browserIframe.src = url;
             }
@@ -4441,7 +4684,7 @@
     }
 
     async function openResourceInWorkspace(url, title, type, pageNum = 1) {
-        if (!IS_TEACHER) return;
+        const canManage = (typeof CAN_MANAGE_ROOM !== 'undefined' && CAN_MANAGE_ROOM) || (typeof IS_TEACHER !== 'undefined' && IS_TEACHER);
         closeAllWbFlyouts();
         hideMediaLayers();
 
@@ -4467,7 +4710,10 @@
         wbUndoStack = [];
         wbRedoStack = [];
         redrawWhiteboard();
-        broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
+
+        if (canManage) {
+            broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
+        }
 
         if (type === 'pdf') {
             await renderPdfPage(url, pageNum);
@@ -4478,15 +4724,18 @@
             document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
         }
 
-        fetch(`/classroom/${ROOM_ID}/whiteboard`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
-            body: JSON.stringify({ action: 'set_background', bg_type: type, bg_url: url, bg_title: title, page_num: pageNum })
-        }).catch(console.error);
+        if (canManage) {
+            fetch(`/classroom/${ROOM_ID}/whiteboard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'set_background', bg_type: type, bg_url: url, bg_title: title, page_num: pageNum })
+            }).catch(console.error);
+        }
     }
 
     function setWhiteboardBg(type) {
-        if (!IS_TEACHER) return;
+        const canManage = (typeof CAN_MANAGE_ROOM !== 'undefined' && CAN_MANAGE_ROOM) || (typeof IS_TEACHER !== 'undefined' && IS_TEACHER);
+        if (!canManage) return;
         closeAllWbFlyouts();
         hideMediaLayers();
         const titles = { whiteboard: 'سبورة بيضاء تفاعلية', blackboard: 'سبورة سوداء', grid: 'شبكة مربعات الشرح' };
@@ -4596,17 +4845,17 @@
         xhr.send(formData);
     }
 
-    // تحويل رقم الصفحة إلى قيمة المنزلق الرأسي (بحيث تكون الصفحة 1 في الأعلى دائماً)
+    // تحويل رقم الصفحة إلى قيمة المنزلق الرأسي (الصفحة 1 في الأعلى دائماً إلى آخر صفحة بالأسفل)
     function pageToSliderVal(p) {
         if (!wbTotalPages || wbTotalPages <= 1) return 1;
-        return (wbTotalPages + 1) - p;
+        return Math.min(Math.max(1, p), wbTotalPages);
     }
 
     // تحويل قيمة المنزلق الرأسي إلى رقم الصفحة الحقيقي
     function sliderValToPage(val) {
         const v = parseInt(val, 10);
         if (isNaN(v) || !wbTotalPages || wbTotalPages <= 1) return 1;
-        return Math.min(Math.max(1, (wbTotalPages + 1) - v), wbTotalPages);
+        return Math.min(Math.max(1, v), wbTotalPages);
     }
 
     // رندرة وتصفح صفحات ملفات الـ PDF مع دعم كامل ودقيق للخطوط العربية وملء العرض
@@ -4718,18 +4967,31 @@
 
     // التنقل بين صفحات الـ PDF (خطوة للأمام أو للخلف)
     async function changeWbPage(delta) {
-        if (!wbPdfDoc || !IS_TEACHER) return;
+        if (!wbPdfDoc) return;
         changeWbPageTo(wbCurrentPage + delta);
     }
 
-    // الانتقال المباشر لأي صفحة محددة
-    async function changeWbPageTo(targetPage) {
-        if (!wbPdfDoc || !IS_TEACHER) return;
+    // الانتقال المباشر لأي صفحة محددة مع تحديد موضع البداية (أعلى الصفحة أو أسفلها)
+    async function changeWbPageTo(targetPage, initialScroll = 'top') {
+        if (!wbPdfDoc) return;
         targetPage = Math.min(Math.max(1, targetPage), wbTotalPages);
-        if (targetPage !== wbCurrentPage || wbCurrentBg.page_num !== targetPage) {
+        if (targetPage !== wbCurrentPage || (wbCurrentBg && wbCurrentBg.page_num !== targetPage)) {
+            const currentUrl = (wbCurrentBg && wbCurrentBg.url) ? wbCurrentBg.url : (wbPdfDoc ? wbPdfDoc._url : null);
+            const currentTitle = (wbCurrentBg && wbCurrentBg.title) ? wbCurrentBg.title : 'كتاب PDF';
+            await openResourceInWorkspace(currentUrl, currentTitle, 'pdf', targetPage);
             const container = document.getElementById('whiteboardContainer');
-            if (container) container.scrollTop = 0;
-            await openResourceInWorkspace(wbCurrentBg.url, wbCurrentBg.title, 'pdf', targetPage);
+            if (container) {
+                if (initialScroll === 'bottom') {
+                    requestAnimationFrame(() => {
+                        const bottomPos = Math.max(0, container.scrollHeight - container.clientHeight);
+                        container.scrollTo({ top: bottomPos, behavior: 'instant' });
+                        syncScrollToPeersThrottled();
+                    });
+                } else {
+                    container.scrollTo({ top: 0, behavior: 'instant' });
+                    syncScrollToPeersThrottled();
+                }
+            }
         }
     }
 

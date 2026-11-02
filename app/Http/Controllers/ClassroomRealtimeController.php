@@ -11,6 +11,8 @@ use App\Models\GroupActivity;
 use App\Models\StudyGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class ClassroomRealtimeController extends Controller
@@ -137,6 +139,9 @@ class ClassroomRealtimeController extends Controller
 
         // جلب الرسائل والتسجيلات الجديدة منذ آخر رسالة
         $lastMessageId = (int) $request->input('last_message_id', 0);
+        $actualMaxId = ClassroomMessage::where('room_id', $roomId)->max('id') ?? 0;
+        $chatWasCleared = ($lastMessageId > 0 && $actualMaxId < $lastMessageId);
+
         $messages = [];
         if ($participant->admission_status === 'admitted') {
             $messages = ClassroomMessage::with('user')
@@ -168,6 +173,13 @@ class ClassroomRealtimeController extends Controller
             $whiteboardPayload = json_decode($control->whiteboard_state, true) ?: $control->whiteboard_state;
         }
 
+        $forceRefreshTime = Cache::get('classroom_force_refresh_'.$roomId);
+        $clientSessionStart = (int) $request->input('session_start', 0);
+        $forceRefresh = false;
+        if ($forceRefreshTime && $clientSessionStart > 0 && $forceRefreshTime > $clientSessionStart) {
+            $forceRefresh = true;
+        }
+
         return response()->json([
             'success' => true,
             'my_peer_id' => $peerId,
@@ -177,6 +189,8 @@ class ClassroomRealtimeController extends Controller
             'pending_requests' => $pendingRequests,
             'signals' => $signals,
             'messages' => $messages,
+            'chat_cleared' => $chatWasCleared,
+            'force_refresh' => $forceRefresh,
             'whiteboard_version' => $serverWhiteboardVersion,
             'whiteboard_state' => $whiteboardPayload,
             'laser_state' => $control->laser_state,
@@ -471,6 +485,10 @@ class ClassroomRealtimeController extends Controller
         }
 
         if ($action === 'refresh_all') {
+            $control->whiteboard_version = ($control->whiteboard_version ?? 0) + 1;
+            $control->save();
+            Cache::put('classroom_force_refresh_'.$roomId, time(), 30);
+
             return response()->json(['success' => true, 'refreshed' => true]);
         }
 
@@ -608,5 +626,118 @@ class ClassroomRealtimeController extends Controller
         }
 
         return response()->json(['error' => 'إجراء غير معروف للسبورة'], 400);
+    }
+
+    /**
+     * بروتوكول تصفح الويب الآمن وتخطي قيود التضمين بالسبورة (Whiteboard Mini-Browser Proxy)
+     */
+    public function proxyBrowse(Request $request)
+    {
+        $url = $request->query('url');
+        if (! $url) {
+            return response('<!DOCTYPE html><html dir="rtl"><body style="font-family:sans-serif;text-align:center;padding:50px;"><h3>يرجى تحديد رابط للتصفح</h3></body></html>', 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+        }
+
+        if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
+            $url = 'https://'.$url;
+        }
+
+        $parsed = parse_url($url);
+        $host = strtolower($parsed['host'] ?? '');
+
+        // حظر العناوين المحلية والشبكات الداخلية لحماية الخادم (SSRF Protection)
+        if (empty($host) || in_array($host, ['localhost', '127.0.0.1', '::1', '0.0.0.0']) || str_ends_with($host, '.local') || str_ends_with($host, '.internal')) {
+            return response('غير مسموح بتصفح هذا النطاق محلياً', 403, ['Content-Type' => 'text/plain; charset=UTF-8']);
+        }
+
+        $ip = gethostbyname($host);
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return response('غير مسموح بالوصول إلى عناوين الشبكة الداخلية الخاصة', 403, ['Content-Type' => 'text/plain; charset=UTF-8']);
+            }
+        }
+
+        // التحويل التلقائي لألعاب ومسابقات Wordwall إلى وضع التضمين التفاعلي الخفيف
+        if (preg_match('#wordwall\.net/(?:[a-z]{2}-[a-z]{2}/)?(?:resource|play)/([0-9]+)#i', $url, $m)) {
+            return redirect()->away('https://wordwall.net/embed/'.$m[1]);
+        }
+
+        try {
+            $response = Http::withoutVerifying()
+                ->timeout(12)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                    'Accept-Language' => 'ar,en-US;q=0.9,en;q=0.8',
+                ])
+                ->get($url);
+
+            $contentType = $response->header('Content-Type') ?: 'text/html; charset=UTF-8';
+
+            if (! str_contains(strtolower($contentType), 'text/html')) {
+                return response($response->body(), $response->status(), [
+                    'Content-Type' => $contentType,
+                    'Access-Control-Allow-Origin' => '*',
+                ]);
+            }
+
+            $html = $response->body();
+            $baseUrl = ($parsed['scheme'] ?? 'https').'://'.($parsed['host'] ?? '');
+            if (isset($parsed['port'])) {
+                $baseUrl .= ':'.$parsed['port'];
+            }
+            $basePath = isset($parsed['path']) ? dirname($parsed['path']) : '/';
+            $fullBase = rtrim($baseUrl.$basePath, '/').'/';
+
+            $baseTag = '<base href="'.htmlspecialchars($fullBase, ENT_QUOTES, 'UTF-8').'">';
+            $proxyScript = <<<'JS'
+<script>
+document.addEventListener('click', function(e) {
+    var a = e.target.closest('a');
+    if (a && a.href && !a.href.startsWith('javascript:') && !a.href.startsWith('#')) {
+        e.preventDefault();
+        window.location.href = '/classroom/proxy-browse?url=' + encodeURIComponent(a.href);
+    }
+}, true);
+</script>
+JS;
+
+            if (stripos($html, '<head>') !== false) {
+                $html = preg_replace('#<head>#i', '<head>'.$baseTag.$proxyScript, $html, 1);
+            } else {
+                $html = $baseTag.$proxyScript.$html;
+            }
+
+            return response($html, $response->status(), [
+                'Content-Type' => 'text/html; charset=UTF-8',
+                'X-Frame-Options' => 'ALLOWALL',
+                'Access-Control-Allow-Origin' => '*',
+            ]);
+        } catch (\Throwable $e) {
+            $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+
+            return response(<<<HTML
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="utf-8"><title>تصفح الموقع</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box;text-align:center;}
+.card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:32px;max-width:480px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);}
+a.btn{display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:bold;margin-top:20px;transition:0.2s;}
+a.btn:hover{background:#4338ca;}
+</style>
+</head>
+<body>
+<div class="card">
+    <div style="font-size:44px;margin-bottom:12px;">🌐</div>
+    <h3 style="margin:0 0 10px 0;font-size:18px;">الموقع يتطلب فتحاً مباشراً في تبويب خارجي</h3>
+    <p style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:16px;">الموقع المستهدف يفرض حماية تمنع التضمين، يمكنك فتحه بكبسة زر في متصفح كروم والاستمرار في الشرح.</p>
+    <a href="{$safeUrl}" target="_blank" rel="noopener" class="btn">فتح الموقع في تبويب كروم جديد ↗️</a>
+</div>
+</body>
+</html>
+HTML
+                , 200, ['Content-Type' => 'text/html; charset=UTF-8', 'X-Frame-Options' => 'ALLOWALL']);
+        }
     }
 }
