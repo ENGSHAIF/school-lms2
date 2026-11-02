@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\FinancialAccount;
-use App\Models\CostCenter;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class ChartOfAccountsSeeder extends Seeder
@@ -20,8 +19,8 @@ class ChartOfAccountsSeeder extends Seeder
             // دالة مساعدة
             $syncAcc = function ($code, $name, $type, $category, $nature, $level, $isParent, $parentId = null, $allowCC = false) {
                 $acc = FinancialAccount::where('account_code', $code)->first();
-                if (!$acc) {
-                    $acc = new FinancialAccount();
+                if (! $acc) {
+                    $acc = new FinancialAccount;
                     $acc->account_code = $code;
                 }
                 $acc->account_name = $name;
@@ -34,6 +33,7 @@ class ChartOfAccountsSeeder extends Seeder
                 $acc->allow_cost_center = $allowCC;
                 $acc->is_active = true;
                 $acc->save();
+
                 return $acc;
             };
 

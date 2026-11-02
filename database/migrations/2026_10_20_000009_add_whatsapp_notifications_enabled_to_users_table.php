@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('users', 'whatsapp_notifications_enabled')) {
+        if (! Schema::hasColumn('users', 'whatsapp_notifications_enabled')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->boolean('whatsapp_notifications_enabled')->default(true)->after('phone_whatsapp');
             });

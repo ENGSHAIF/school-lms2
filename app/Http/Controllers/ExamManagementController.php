@@ -7,7 +7,6 @@ use App\Models\Course;
 use App\Models\CourseGradeScale;
 use App\Models\Exam;
 use App\Models\Level;
-use App\Models\SiteSetting;
 use App\Models\StudentCourseGrade;
 use App\Models\StudyGroup;
 use App\Models\SystemAuditLog;
@@ -25,7 +24,7 @@ class ExamManagementController extends Controller
     protected function authorizeAccess(string $permission = 'exams_management.view')
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             abort(401, 'يرجى تسجيل الدخول أولاً.');
         }
 
@@ -57,12 +56,12 @@ class ExamManagementController extends Controller
 
         // تصفية المجموعات بحسب دور المعلم إذا لم يكن مديراً أو مشرفاً
         $groupsQuery = StudyGroup::with(['course', 'level', 'teacher']);
-        if ($user->isTeacher() && !$user->isAdmin() && !$user->isSupervisor()) {
+        if ($user->isTeacher() && ! $user->isAdmin() && ! $user->isSupervisor()) {
             $groupsQuery->where(function ($q) use ($user) {
                 $q->where('teacher_id', $user->id)
-                  ->orWhereHas('teachers', function ($tq) use ($user) {
-                      $tq->where('users.id', $user->id);
-                  });
+                    ->orWhereHas('teachers', function ($tq) use ($user) {
+                        $tq->where('users.id', $user->id);
+                    });
             });
         }
         $groups = $groupsQuery->latest()->get();
@@ -109,7 +108,7 @@ class ExamManagementController extends Controller
             $selectedGroup = StudyGroup::with(['course', 'level', 'teacher', 'students'])->find($groupId);
             if ($selectedGroup) {
                 $groupScale = CourseGradeScale::getScaleForGroup($selectedGroup->id, $selectedGroup->course_id);
-                
+
                 // جلب سجلات الدرجات المسجلة مسبقاً
                 $existingGrades = StudentCourseGrade::where('study_group_id', $selectedGroup->id)
                     ->get()
@@ -121,7 +120,7 @@ class ExamManagementController extends Controller
 
                 foreach ($studentsList as $st) {
                     $grade = $existingGrades->get($st->id);
-                    if (!$grade) {
+                    if (! $grade) {
                         $grade = new StudentCourseGrade([
                             'student_id' => $st->id,
                             'study_group_id' => $selectedGroup->id,
@@ -159,8 +158,8 @@ class ExamManagementController extends Controller
 
                 $gradingStats['total_students'] = $studentsList->count();
                 $gradingStats['average_score'] = $gradedCount > 0 ? round($totalScoresSum / $gradedCount, 1) : 0;
-                $gradingStats['completion_rate'] = $gradingStats['total_students'] > 0 
-                    ? round(($gradedCount / $gradingStats['total_students']) * 100, 1) 
+                $gradingStats['completion_rate'] = $gradingStats['total_students'] > 0
+                    ? round(($gradedCount / $gradingStats['total_students']) * 100, 1)
                     : 0;
             }
         }
@@ -229,11 +228,15 @@ class ExamManagementController extends Controller
         ]);
 
         // إذا تم اختيار مجموعة ولم تحدد الدورة أو المستوى، نجلبهم من المجموعة تلقائياً
-        if (!empty($validated['study_group_id'])) {
+        if (! empty($validated['study_group_id'])) {
             $grp = StudyGroup::find($validated['study_group_id']);
             if ($grp) {
-                if (empty($validated['course_id'])) $validated['course_id'] = $grp->course_id;
-                if (empty($validated['level_id'])) $validated['level_id'] = $grp->level_id;
+                if (empty($validated['course_id'])) {
+                    $validated['course_id'] = $grp->course_id;
+                }
+                if (empty($validated['level_id'])) {
+                    $validated['level_id'] = $grp->level_id;
+                }
             }
         }
 
@@ -271,11 +274,15 @@ class ExamManagementController extends Controller
             'passing_score' => 'required|numeric|min:1|max:100',
         ]);
 
-        if (!empty($validated['study_group_id'])) {
+        if (! empty($validated['study_group_id'])) {
             $grp = StudyGroup::find($validated['study_group_id']);
             if ($grp) {
-                if (empty($validated['course_id'])) $validated['course_id'] = $grp->course_id;
-                if (empty($validated['level_id'])) $validated['level_id'] = $grp->level_id;
+                if (empty($validated['course_id'])) {
+                    $validated['course_id'] = $grp->course_id;
+                }
+                if (empty($validated['level_id'])) {
+                    $validated['level_id'] = $grp->level_id;
+                }
             }
         }
 
@@ -305,21 +312,21 @@ class ExamManagementController extends Controller
             'passing_percentage' => 'required|numeric|min:40|max:90',
         ]);
 
-        $totalMax = (float)$validated['attendance_max']
-                  + (float)$validated['participation_max']
-                  + (float)$validated['activities_max']
-                  + (float)$validated['midterm_max']
-                  + (float)$validated['practical_max']
-                  + (float)$validated['final_exam_max'];
+        $totalMax = (float) $validated['attendance_max']
+                  + (float) $validated['participation_max']
+                  + (float) $validated['activities_max']
+                  + (float) $validated['midterm_max']
+                  + (float) $validated['practical_max']
+                  + (float) $validated['final_exam_max'];
 
         $validated['total_max'] = $totalMax;
         $validated['updated_by'] = Auth::id();
 
         // البحث عن سلم قائم لنفس المجموعة أو الدورة أو إنشاء جديد
         $query = CourseGradeScale::query();
-        if (!empty($validated['study_group_id'])) {
+        if (! empty($validated['study_group_id'])) {
             $query->where('study_group_id', $validated['study_group_id']);
-        } elseif (!empty($validated['course_id'])) {
+        } elseif (! empty($validated['course_id'])) {
             $query->where('course_id', $validated['course_id'])->whereNull('study_group_id');
         } else {
             $query->whereNull('course_id')->whereNull('study_group_id');
@@ -351,9 +358,9 @@ class ExamManagementController extends Controller
         $group = StudyGroup::with(['course', 'level'])->findOrFail($groupId);
 
         // التحقق من صلاحية المعلم الخاصة بمجموعته
-        if ($user->isTeacher() && !$user->isAdmin() && !$user->isSupervisor()) {
+        if ($user->isTeacher() && ! $user->isAdmin() && ! $user->isSupervisor()) {
             $isAssigned = $group->teacher_id == $user->id || $group->teachers()->where('users.id', $user->id)->exists();
-            if (!$isAssigned) {
+            if (! $isAssigned) {
                 abort(403, 'غير مصرح لك برصد درجات مجموعة لست معلماً لها.');
             }
         }
@@ -366,18 +373,18 @@ class ExamManagementController extends Controller
         try {
             foreach ($gradesInput as $studentId => $scores) {
                 $grade = StudentCourseGrade::firstOrNew([
-                    'student_id' => (int)$studentId,
+                    'student_id' => (int) $studentId,
                     'study_group_id' => $group->id,
                 ]);
 
                 $grade->course_id = $group->course_id;
                 $grade->level_id = $group->level_id;
-                $grade->attendance_score = (float)($scores['attendance'] ?? 0);
-                $grade->participation_score = (float)($scores['participation'] ?? 0);
-                $grade->activities_score = (float)($scores['activities'] ?? 0);
-                $grade->midterm_score = (float)($scores['midterm'] ?? 0);
-                $grade->practical_score = (float)($scores['practical'] ?? 0);
-                $grade->final_exam_score = (float)($scores['final_exam'] ?? 0);
+                $grade->attendance_score = (float) ($scores['attendance'] ?? 0);
+                $grade->participation_score = (float) ($scores['participation'] ?? 0);
+                $grade->activities_score = (float) ($scores['activities'] ?? 0);
+                $grade->midterm_score = (float) ($scores['midterm'] ?? 0);
+                $grade->practical_score = (float) ($scores['practical'] ?? 0);
+                $grade->final_exam_score = (float) ($scores['final_exam'] ?? 0);
                 $grade->teacher_notes = $scores['notes'] ?? null;
                 $grade->reviewed_by = Auth::id();
                 if ($finalize) {
@@ -391,9 +398,9 @@ class ExamManagementController extends Controller
 
             SystemAuditLog::record(
                 $finalize ? 'grade.finalize' : 'grade.update',
-                $finalize 
-                    ? "اعتماد وتثبيت درجات ونتائج المجموعة [{$group->name}] نهائياً لعدد (" . count($gradesInput) . ") طالب"
-                    : "رصد وتعديل درجات الطلاب في المجموعة [{$group->name}] لعدد (" . count($gradesInput) . ") طالب",
+                $finalize
+                    ? "اعتماد وتثبيت درجات ونتائج المجموعة [{$group->name}] نهائياً لعدد (".count($gradesInput).') طالب'
+                    : "رصد وتعديل درجات الطلاب في المجموعة [{$group->name}] لعدد (".count($gradesInput).') طالب',
                 $group,
                 [
                     'group_id' => $group->id,
@@ -405,11 +412,12 @@ class ExamManagementController extends Controller
             );
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'حدث خطأ أثناء حفظ الدرجات: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'حدث خطأ أثناء حفظ الدرجات: '.$e->getMessage());
         }
 
-        $msg = $finalize 
-            ? "تم رصد وتثبيت درجات المجموعة «{$group->name}» واعتماد النتائج النهائية بنجاح." 
+        $msg = $finalize
+            ? "تم رصد وتثبيت درجات المجموعة «{$group->name}» واعتماد النتائج النهائية بنجاح."
             : "تم حفظ ورصد درجات المجموعة «{$group->name}» بنجاح.";
 
         return redirect()->route('admin.exams_management.index', [
@@ -434,9 +442,9 @@ class ExamManagementController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        $studentsWithGrades = $group->students->map(function ($st) use ($grades, $group, $scale) {
+        $studentsWithGrades = $group->students->map(function ($st) use ($grades, $group) {
             $g = $grades->get($st->id);
-            if (!$g) {
+            if (! $g) {
                 $g = new StudentCourseGrade([
                     'student_id' => $st->id,
                     'study_group_id' => $group->id,
@@ -455,6 +463,7 @@ class ExamManagementController extends Controller
                 ]);
             }
             $st->course_grade = $g;
+
             return $st;
         });
 
@@ -497,11 +506,11 @@ class ExamManagementController extends Controller
         }
 
         $certType = $request->get('type', 'course'); // course | diploma | level
-        $certTitle = $request->filled('title') 
-            ? $request->title 
+        $certTitle = $request->filled('title')
+            ? $request->title
             : ($group->course?->displayName ?: $group->name);
 
-        $hours = $group->course?->hours ?: ($request->filled('hours') ? (int)$request->hours : 40);
+        $hours = $group->course?->hours ?: ($request->filled('hours') ? (int) $request->hours : 40);
         $issueDate = $request->filled('issue_date') ? $request->issue_date : now()->toDateString();
 
         $generatedCount = 0;
@@ -511,7 +520,9 @@ class ExamManagementController extends Controller
         try {
             foreach ($passedGrades as $grade) {
                 $student = $grade->student;
-                if (!$student) continue;
+                if (! $student) {
+                    continue;
+                }
 
                 $cert = Certificate::firstOrNew([
                     'student_id' => $student->id,
@@ -523,8 +534,8 @@ class ExamManagementController extends Controller
                 } else {
                     // توليد رقم شهادة معتمد فريد: ASOTS-2026-XXXX
                     $randomPart = strtoupper(Str::random(5));
-                    $cert->certificate_number = 'ASOTS-' . date('Y') . '-' . str_pad($student->id, 4, '0', STR_PAD_LEFT) . '-' . $randomPart;
-                    $cert->qr_code_hash = sha1($cert->certificate_number . '|' . $student->id . '|' . $group->id);
+                    $cert->certificate_number = 'ASOTS-'.date('Y').'-'.str_pad($student->id, 4, '0', STR_PAD_LEFT).'-'.$randomPart;
+                    $cert->qr_code_hash = sha1($cert->certificate_number.'|'.$student->id.'|'.$group->id);
                     $generatedCount++;
                 }
 
@@ -549,7 +560,8 @@ class ExamManagementController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'حدث خطأ أثناء إصدار الشهائد: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'حدث خطأ أثناء إصدار الشهائد: '.$e->getMessage());
         }
 
         $msg = "تم تصميم وإصدار {$generatedCount} شهادة أكاديمية جديدة بنجاح لكافة الطلاب الناجحين في المجموعة.";
@@ -590,10 +602,10 @@ class ExamManagementController extends Controller
             'study_group_id' => $group->id,
         ]);
 
-        if (!$cert->exists) {
+        if (! $cert->exists) {
             $randomPart = strtoupper(Str::random(5));
-            $cert->certificate_number = 'ASOTS-' . date('Y') . '-' . str_pad($student->id, 4, '0', STR_PAD_LEFT) . '-' . $randomPart;
-            $cert->qr_code_hash = sha1($cert->certificate_number . '|' . $student->id . '|' . $group->id);
+            $cert->certificate_number = 'ASOTS-'.date('Y').'-'.str_pad($student->id, 4, '0', STR_PAD_LEFT).'-'.$randomPart;
+            $cert->qr_code_hash = sha1($cert->certificate_number.'|'.$student->id.'|'.$group->id);
         }
 
         $cert->course_id = $group->course_id;
@@ -605,11 +617,11 @@ class ExamManagementController extends Controller
         $cert->course_name_ar = $group->course?->name_ar ?: ($group->course?->name ?: $group->name);
         $cert->course_name_en = $group->course?->name_en ?: 'English Language Course';
         $cert->level_name_en = $group->level?->name_en ?: ($group->level?->name ?: 'Standard Level');
-        $cert->hours = !empty($validated['hours']) ? (int)$validated['hours'] : ($group->course?->hours ?: 40);
+        $cert->hours = ! empty($validated['hours']) ? (int) $validated['hours'] : ($group->course?->hours ?: 40);
         $cert->total_score = $grade ? $grade->total_score : 100.00;
         $cert->percentage = $grade ? $grade->percentage : 100.00;
         $cert->grade_letter = $grade ? $grade->grade_letter : 'ممتاز (Excellent)';
-        $cert->issue_date = !empty($validated['issue_date']) ? $validated['issue_date'] : now()->toDateString();
+        $cert->issue_date = ! empty($validated['issue_date']) ? $validated['issue_date'] : now()->toDateString();
         $cert->is_verified = true;
         $cert->issued_by = Auth::id();
         $cert->save();
@@ -671,7 +683,7 @@ class ExamManagementController extends Controller
                     'رقم الشهادة' => $num,
                     'اسم الطالب' => $studentName,
                     'الدورة' => $courseName,
-                    'التقدير' => $certificate->grade_letter ?? ($certificate->percentage . '%'),
+                    'التقدير' => $certificate->grade_letter ?? ($certificate->percentage.'%'),
                     'تاريخ الإصدار' => $certificate->issue_date,
                 ],
                 'new_values' => [

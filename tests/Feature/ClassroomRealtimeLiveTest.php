@@ -40,7 +40,7 @@ class ClassroomRealtimeLiveTest extends TestCase
     public function test_classroom_sync_registers_participant_and_returns_realtime_state(): void
     {
         $admin = $this->getAdmin();
-        $roomId = 'test-room-sync-'.rand(100, 999);
+        $roomId = 'test-room-sync-'.uniqid();
 
         $response = $this->actingAs($admin)->postJson(route('classroom.sync', $roomId), [
             'peer_id' => 'peer_admin_test',
@@ -89,7 +89,7 @@ class ClassroomRealtimeLiveTest extends TestCase
         ]);
 
         $group = StudyGroup::create([
-            'name' => 'مجموعة بث مباشر '.rand(100, 999),
+            'name' => 'مجموعة بث مباشر '.uniqid(),
             'course_id' => Course::first()?->id,
             'level_id' => Level::first()?->id,
             'status' => 'active',
@@ -148,7 +148,7 @@ class ClassroomRealtimeLiveTest extends TestCase
     public function test_webrtc_signaling_exchange(): void
     {
         $admin = $this->getAdmin();
-        $roomId = 'test-room-signal-'.rand(100, 999);
+        $roomId = 'test-room-signal-'.uniqid();
 
         $signalPayload = ['sdp' => 'v=0...', 'type' => 'offer'];
 
@@ -195,7 +195,7 @@ class ClassroomRealtimeLiveTest extends TestCase
             'is_active' => true,
         ]);
 
-        $roomId = 'test-room-moderator-'.rand(100, 999);
+        $roomId = 'test-room-moderator-'.uniqid();
 
         // 1. الطالب يرفع يده
         $handRes = $this->actingAs($student)->postJson(route('classroom.hand', $roomId));
@@ -247,7 +247,7 @@ class ClassroomRealtimeLiveTest extends TestCase
     public function test_teacher_can_update_whiteboard_and_laser_pointer_and_student_syncs(): void
     {
         $admin = $this->getAdmin();
-        $roomId = 'test-room-wb-'.rand(100, 999);
+        $roomId = 'test-room-wb-'.uniqid();
 
         $student = User::create([
             'name' => 'طالب السبورة',
@@ -342,7 +342,7 @@ class ClassroomRealtimeLiveTest extends TestCase
     {
         $admin = $this->getAdmin();
         $student = $this->getStudent();
-        $roomId = 'test-room-wb-media-'.rand(100, 999);
+        $roomId = 'test-room-wb-media-'.uniqid();
 
         // إنشاء سجل التحكم بالفصل
         ClassroomRoomControl::create([

@@ -935,6 +935,7 @@ class StudyGroupController extends Controller
         // أحدث رسائل في البث الحي لهذه المجموعة
         $recentMessages = ClassroomMessage::with('user')
             ->where('room_id', $group->room_id)
+            ->where('type', '!=', 'system')
             ->latest('id')
             ->take(12)
             ->get()

@@ -56,27 +56,27 @@ class PaymentRequest extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
-            'draft'             => 'مسودة',
+        return match ($this->status) {
+            'draft' => 'مسودة',
             'pending_financial' => 'بانتظار المراجعة المالية',
-            'pending_manager'   => 'بانتظار اعتماد الإدارة',
-            'approved'          => 'معتمد وجاهز للتنفيذ',
-            'executed'          => 'تم الصرف/القبض بنجاح',
-            'rejected'          => 'مرفوض',
-            default             => $this->status,
+            'pending_manager' => 'بانتظار اعتماد الإدارة',
+            'approved' => 'معتمد وجاهز للتنفيذ',
+            'executed' => 'تم الصرف/القبض بنجاح',
+            'rejected' => 'مرفوض',
+            default => $this->status,
         };
     }
 
     public function getStatusBadgeClassAttribute(): string
     {
-        return match($this->status) {
-            'draft'             => 'bg-slate-100 text-slate-700 border-slate-200',
+        return match ($this->status) {
+            'draft' => 'bg-slate-100 text-slate-700 border-slate-200',
             'pending_financial' => 'bg-amber-50 text-amber-800 border-amber-200',
-            'pending_manager'   => 'bg-indigo-50 text-indigo-800 border-indigo-200',
-            'approved'          => 'bg-emerald-50 text-emerald-800 border-emerald-200',
-            'executed'          => 'bg-teal-50 text-teal-800 border-teal-200',
-            'rejected'          => 'bg-rose-50 text-rose-800 border-rose-200',
-            default             => 'bg-slate-50 text-slate-800 border-slate-200',
+            'pending_manager' => 'bg-indigo-50 text-indigo-800 border-indigo-200',
+            'approved' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+            'executed' => 'bg-teal-50 text-teal-800 border-teal-200',
+            'rejected' => 'bg-rose-50 text-rose-800 border-rose-200',
+            default => 'bg-slate-50 text-slate-800 border-slate-200',
         };
     }
 }

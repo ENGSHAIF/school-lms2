@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class Package extends Model
@@ -29,16 +30,16 @@ class Package extends Model
 
     public function getCurrencyNameAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencyName($this->currency);
+        return ArabicCurrencyHelper::currencyName($this->currency);
     }
 
     public function getCurrencySymbolAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencySymbol($this->currency);
+        return ArabicCurrencyHelper::currencySymbol($this->currency);
     }
 
     public function getFormattedPriceAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->price, $this->currency, 0);
+        return ArabicCurrencyHelper::format($this->price, $this->currency, 0);
     }
 }

@@ -10,16 +10,16 @@ return new class extends Migration
     {
         // 1. إضافة تسعيرة تدريس المعلم وأجر الساعة في جدول الدورات
         Schema::table('courses', function (Blueprint $table) {
-            if (!Schema::hasColumn('courses', 'teacher_fee')) {
+            if (! Schema::hasColumn('courses', 'teacher_fee')) {
                 $table->decimal('teacher_fee', 12, 2)->default(0.00)->after('fee_amount');
             }
-            if (!Schema::hasColumn('courses', 'teacher_hourly_rate')) {
+            if (! Schema::hasColumn('courses', 'teacher_hourly_rate')) {
                 $table->decimal('teacher_hourly_rate', 10, 2)->default(0.00)->after('teacher_fee');
             }
         });
 
         // 2. جدول الخدمات والمهام التعليمية الإضافية وأسعارها (إعداد اختبارات، تصحيح، إشراف، أنشطة)
-        if (!Schema::hasTable('educational_services')) {
+        if (! Schema::hasTable('educational_services')) {
             Schema::create('educational_services', function (Blueprint $table) {
                 $table->id();
                 $table->string('service_code')->unique();
@@ -38,19 +38,19 @@ return new class extends Migration
 
         // 3. تحديث جدول عقود المعلمين وأنماط التوظيف (موظف براتب ثابت، متعاقد بالدورة، بالساعة، نسبة)
         Schema::table('teacher_contracts', function (Blueprint $table) {
-            if (!Schema::hasColumn('teacher_contracts', 'contract_type')) {
+            if (! Schema::hasColumn('teacher_contracts', 'contract_type')) {
                 $table->string('contract_type')->default('per_course')->after('teacher_id');
             }
-            if (!Schema::hasColumn('teacher_contracts', 'monthly_salary')) {
+            if (! Schema::hasColumn('teacher_contracts', 'monthly_salary')) {
                 $table->decimal('monthly_salary', 12, 2)->default(0.00)->after('rate');
             }
-            if (!Schema::hasColumn('teacher_contracts', 'default_hourly_rate')) {
+            if (! Schema::hasColumn('teacher_contracts', 'default_hourly_rate')) {
                 $table->decimal('default_hourly_rate', 10, 2)->default(0.00)->after('monthly_salary');
             }
         });
 
         // 4. جدول إثبات مستحقات المعلمين (Teacher Entitlements / Accruals Posting)
-        if (!Schema::hasTable('teacher_entitlements')) {
+        if (! Schema::hasTable('teacher_entitlements')) {
             Schema::create('teacher_entitlements', function (Blueprint $table) {
                 $table->id();
                 $table->string('entitlement_no')->unique(); // ENT-2026-00001

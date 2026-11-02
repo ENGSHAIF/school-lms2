@@ -30,10 +30,31 @@
         .laser-glow {
             box-shadow: 0 0 15px 4px rgba(239, 68, 68, 0.9), 0 0 30px 8px rgba(239, 68, 68, 0.4);
         }
-        .cursor-pen { cursor: crosshair; }
-        .cursor-highlighter { cursor: crosshair; }
-        .cursor-eraser { cursor: cell; }
+        .cursor-pen {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M2 30 L3 24 L6 21 L21 6 L24 3 C26 1 28 3 29 4 C30 5 30 7 29 8 L26 11 L11 26 L8 29 Z' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/%3E%3Cpath d='M21 6 L24 3 C26 1 28 3 29 4 C30 5 30 7 29 8 L26 11 Z' fill='%23f43f5e' stroke='%230f172a' stroke-width='1'/%3E%3Cpolygon points='6,21 21,6 26,11 11,26' fill='%233b82f6' stroke='%230f172a' stroke-width='1'/%3E%3Cpolygon points='8.5,18.5 23.5,3.5 25,5 10,20' fill='%2393c5fd' opacity='0.7'/%3E%3Cpolygon points='3,24 6,21 11,26 8,29' fill='%23fbbf24' stroke='%230f172a' stroke-width='1'/%3E%3Cpolygon points='2,30 3,24 8,29' fill='%230f172a'/%3E%3Ccircle cx='2' cy='30' r='1' fill='%23ffffff'/%3E%3C/svg%3E") 2 30, auto;
+        }
+        .cursor-brush {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M2 30 C3 27 5 24 7 22 L22 7 C24 5 27 5 29 7 C31 9 31 12 29 14 L14 29 C12 31 9 32 2 30 Z' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M7 22 L22 7 C24 5 27 5 29 7 C31 9 31 12 29 14 L14 29 Z' fill='%2392400e' stroke='%23451a03' stroke-width='1'/%3E%3Cpath d='M2 30 C3 27 5 24 7 22 L14 29 C12 31 9 32 2 30 Z' fill='%231e293b' stroke='%230f172a' stroke-width='1'/%3E%3Ccircle cx='2' cy='30' r='1' fill='%23ffffff'/%3E%3C/svg%3E") 2 30, auto;
+        }
+        .cursor-highlighter {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M2 30 L6 22 L11 27 L5 31 Z' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpolygon points='6,22 20,8 25,13 11,27' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpolygon points='2,30 6,22 11,27 5,31' fill='%23eab308' stroke='%23ca8a04' stroke-width='1'/%3E%3Cpolygon points='6,22 20,8 25,13 11,27' fill='%23fef08a' stroke='%23ca8a04' stroke-width='1'/%3E%3Cpolygon points='20,8 24,4 29,9 25,13' fill='%2371717a' stroke='%233f3f46' stroke-width='1'/%3E%3C/svg%3E") 2 30, auto;
+        }
+        .cursor-magic {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M2 30 L3 24 L6 21 L21 6 L24 3 C26 1 28 3 29 4 C30 5 30 7 29 8 L26 11 L11 26 L8 29 Z' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linejoin='round'/%3E%3Cpolygon points='6,21 21,6 26,11 11,26' fill='%23a855f7' stroke='%237e22ce' stroke-width='1'/%3E%3Cpolygon points='3,24 6,21 11,26 8,29' fill='%23c084fc' stroke='%237e22ce' stroke-width='1'/%3E%3Cpolygon points='2,30 3,24 8,29' fill='%23581c87'/%3E%3Ccircle cx='2' cy='30' r='1' fill='%23ffffff'/%3E%3Ccircle cx='27' cy='5' r='2' fill='%23fbbf24'/%3E%3Cpath d='M27 1 L27 9 M23 5 L31 5' stroke='%23fbbf24' stroke-width='1'/%3E%3C/svg%3E") 2 30, auto;
+        }
+        .cursor-eraser {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-30 16 16)'%3E%3Crect x='6' y='9' width='20' height='14' rx='3' fill='none' stroke='%23ffffff' stroke-width='3'/%3E%3Crect x='6' y='9' width='10' height='14' rx='2' fill='%23fb7185' stroke='%23e11d48' stroke-width='1'/%3E%3Crect x='16' y='9' width='10' height='14' rx='2' fill='%23f1f5f9' stroke='%2394a3b8' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E") 6 26, auto;
+        }
         .cursor-laser { cursor: none !important; }
+        .wb-vertical-slider {
+            -webkit-appearance: slider-vertical;
+            writing-mode: vertical-lr;
+            width: 14px;
+            height: 100%;
+            min-height: 140px;
+            padding: 0;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="min-h-screen lg:h-screen flex flex-col overflow-y-auto lg:overflow-hidden select-none">
@@ -113,136 +134,7 @@
         </div>
     @endif
 
-    <!-- شريط الأدوات العلوي للفصل التفاعلي -->
-    <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 px-3 sm:px-5 py-2.5 flex flex-wrap justify-between items-center gap-2 z-20 shrink-0">
-        <div class="flex items-center gap-2 sm:gap-3">
-            <span class="w-3 h-3 {{ (isset($group) && $group->is_live) || (isset($booking) && $booking->is_live) ? 'bg-red-500 animate-ping' : 'bg-slate-500' }} rounded-full"></span>
-            <span class="bg-red-500/20 text-red-400 text-xs px-2.5 py-0.5 rounded-full font-bold border border-red-500/30">
-                {{ isset($isGroup) && $isGroup ? 'فصل جماعي حي • Live Group' : 'مباشر حي • Live 1-on-1' }}
-            </span>
-            <h1 class="text-xs sm:text-sm font-black text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md">
-                {{ $title ?? ($booking->topic ?? 'الفصل التفاعلي المباشر') }}
-            </h1>
-        </div>
 
-        <!-- أزرار التحكم بالبث الحي وإدارة الحضور والمشاركات -->
-        <div class="flex items-center flex-wrap gap-2">
-            
-            <!-- زر طلبات الانضمام المعلقة بغرفة الانتظار (للمعلم والإدارة) -->
-            @if($isTeacher)
-                <button type="button" onclick="toggleSidePanel('participants')" id="btnHeaderAdmission" class="hidden bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-500/40 flex items-center gap-1.5 transition animate-pulse">
-                    <span>🔔</span>
-                    <span>طلبات الانضمام (<strong id="headerAdmissionCount" class="font-mono text-amber-200">0</strong>)</span>
-                </button>
-            @endif
-
-            <!-- زر لوحة تحكم المجموعة وبطاقات الطلاب (للمعلم والإدارة) -->
-            @if($isTeacher && isset($group) && $group)
-                <a href="{{ route('admin.groups.dashboard', $group->id) }}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition" title="فتح لوحة تحكم المجموعة وبطاقات الطلاب">
-                    <span>🎛️</span>
-                    <span class="hidden md:inline">لوحة التحكم</span>
-                </a>
-            @endif
-
-            <!-- زر قائمة الحاضرين في البث الحي مع تنبيه رفع اليد -->
-            <button type="button" onclick="toggleSidePanel('participants')" id="btnHeaderParticipants" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition relative">
-                <span>👥</span>
-                <span>الحاضرون (<strong id="headerParticipantsCount" class="font-mono text-emerald-400">1</strong>)</span>
-                <span id="headerHandBadge" class="hidden px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black animate-bounce">
-                    ✋ طلب كلمة
-                </span>
-            </button>
-
-            <!-- زر رفع اليد لطلب الكلمة (للطلاب) -->
-            @if(auth()->user()->isStudent())
-                <button type="button" onclick="toggleHandRaise()" id="btnRaiseHand" class="bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
-                    <span id="iconRaiseHand">✋</span>
-                    <span id="txtRaiseHand">طلب الكلمة</span>
-                </button>
-            @endif
-
-            <!-- زر سياسة الغرفة: مسموح للكل / بإذن الأستاذ (للمعلم والإدارة) -->
-            @if($isTeacher)
-                <button type="button" onclick="toggleRoomPolicy()" id="btnPolicyToggle" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition" title="تبديل سياسة التحدث في الجلسة">
-                    <span id="iconPolicy">📢</span>
-                    <span id="txtPolicy">الكلام: مسموح</span>
-                </button>
-            @endif
-
-            <!-- أزرار تشغيل/كتم المايكروفون والكاميرا الخاصة بي -->
-            <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                <button type="button" onclick="toggleLocalMic()" id="btnMyMic" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-sm" title="كتم/تشغيل المايك الخاص بي">
-                    <span id="iconMyMic">🎙️</span>
-                    <span id="txtMyMic" class="hidden md:inline">المايك</span>
-                </button>
-                <button type="button" onclick="toggleLocalCam()" id="btnMyCam" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 border border-slate-700 transition" title="إيقاف/تشغيل الكاميرا الخاصة بي">
-                    <span id="iconMyCam">📷</span>
-                    <span id="txtMyCam" class="hidden md:inline">الكاميرا</span>
-                </button>
-            </div>
-
-            <!-- أزرار فتح وغلق البث الحي للمعلم -->
-            @if($isTeacher)
-                @if(isset($group) && $group)
-                    @if($group->is_live)
-                        <form method="POST" action="{{ route('groups.live.stop', $group->id) }}" class="inline">
-                            @csrf
-                            <button type="submit" class="text-[11px] font-bold bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-xl transition shadow-sm">
-                                ⏹️ إغلاق البث
-                            </button>
-                        </form>
-                    @else
-                        <form method="POST" action="{{ route('groups.live.start', $group->id) }}" class="inline">
-                            @csrf
-                            <button type="submit" class="text-[11px] font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-xl transition shadow-md flex items-center gap-1">
-                                <span>📡</span>
-                                <span>فتح البث الآن</span>
-                            </button>
-                        </form>
-                    @endif
-                @elseif(isset($booking) && $booking)
-                    <form method="POST" action="{{ route('classroom.booking.toggle_live', $booking->id) }}" class="inline">
-                        @csrf
-                        <button type="submit" class="text-[11px] font-bold {{ $booking->is_live ? 'bg-rose-600 text-white' : 'bg-emerald-500 text-slate-950' }} px-3 py-1.5 rounded-xl transition">
-                            {{ $booking->is_live ? '⏹️ إغلاق البث' : '📡 فتح البث' }}
-                        </button>
-                    </form>
-                @endif
-            @endif
-
-            <!-- زر المحادثة وأوراق الإجابة -->
-            <button type="button" onclick="toggleSidePanel('chat')" id="btnToggleChat" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-indigo-400/30 flex items-center gap-1.5 transition shadow-sm relative">
-                <span>💬</span>
-                <span>المحادثة</span>
-                <span id="unreadMessagesDot" class="hidden w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            </button>
-
-            <!-- زر بنك المناهج والكتب -->
-            <button type="button" onclick="toggleSidePanel('resources')" id="btnToggleResources" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
-                <span>📚</span>
-                <span class="hidden sm:inline">المنهج</span>
-            </button>
-
-            <!-- عداد النجوم -->
-            <div class="bg-slate-800 border border-amber-500/40 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                <span>⭐</span>
-                <span id="starsCount" class="text-xs font-black text-amber-400 font-mono">0</span>
-            </div>
-
-            <!-- العداد التنازلي للحصة -->
-            <div class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl font-mono text-xs font-bold text-emerald-400 flex items-center gap-1">
-                <span>⏱️</span>
-                <span id="sessionTimer">25:00</span>
-            </div>
-
-            <!-- زر مغادرة الفصل -->
-            <a href="{{ auth()->user()->isStudent() ? route('student.portal') : (auth()->user()->isTeacher() ? route('teacher.dashboard') : route('admin.groups.index')) }}" 
-               onclick="return confirm('هل ترغب بمغادرة الفصل التفاعلي المباشر الآن؟');"
-               class="text-xs text-rose-400 hover:text-white bg-slate-800 hover:bg-rose-700 px-3 py-1.5 rounded-xl transition font-bold">
-                مغادرة ✕
-            </a>
-        </div>
-    </header>
 
     @php
         $levelResources = collect();
@@ -263,15 +155,143 @@
             $levelResources = $levelResources->filter(fn($r) => $r->isForStudent());
         }
         $groupActivities = isset($group) && $group ? ($group->activities ?? collect()) : collect();
-        $groupBooks = $levelResources->where('type', 'book');
-        $groupVideos = $levelResources->where('type', 'video');
+        $groupBooks = $levelResources->filter(fn($r) => $r->type === 'book' || str_ends_with(strtolower($r->file_path ?? ''), '.pdf'));
+        if ($groupBooks->isEmpty() && isset($group) && $group && $group->level_id) {
+            $groupBooks = \App\Models\LevelResource::where('level_id', $group->level_id)->where(function($q) {
+                $q->where('type', 'book')->orWhere('file_path', 'like', '%.pdf');
+            })->get();
+        }
+        $groupVideos = $levelResources->filter(fn($r) => $r->type === 'video' || in_array(strtolower(pathinfo($r->file_path ?? '', PATHINFO_EXTENSION)), ['mp4', 'webm', 'mov']));
+        $groupWallPdfs = $groupActivities->filter(fn($a) => !empty($a->file_path) && (str_ends_with(strtolower($a->file_path), '.pdf') || in_array($a->type, ['worksheet', 'assignment'])));
     @endphp
 
     <!-- مساحة العمل الكلية: الجانب الأيمن (محادثة وحضور ومنهج وتحكم) + الجزء الوسط الكبير (شاشة الشرح والسبورة نفس الزوم) -->
-    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden p-2 sm:p-3 gap-2 sm:gap-3">
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden p-1 sm:p-1.5 lg:p-2 gap-1.5 sm:gap-2 relative">
 
-        <!-- 1. العمود الأيمن المخصص: المحادثة + الحضور والكاميرات + المنهج + أدوات التحكم والمغادرة -->
-        <aside id="liveInteractivePanel" class="w-full lg:w-[350px] xl:w-[390px] shrink-0 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl z-20">
+        <!-- 1. العمود الأيمن المخصص: أدوات التحكم بالجلسة والحضور + المحادثة + المنهج -->
+        <aside id="liveInteractivePanel" class="w-full lg:w-[320px] xl:w-[350px] shrink-0 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl z-20 transition-all duration-300 ease-in-out relative">
+            
+            <!-- زر طي/توسيع الشريط الجانبي لتكبير السبورة ملء الشاشة -->
+            <button type="button" onclick="toggleSidebarCollapse()" id="btnToggleSidebar" class="hidden lg:flex items-center justify-center absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 w-7 h-12 bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-slate-300 hover:text-white rounded-r-none rounded-l-xl shadow-xl transition group" title="طي/توسيع الشريط الجانبي لتكبير مساحة السبورة ملء الشاشة">
+                <span id="sidebarToggleIcon" class="text-xs transition-transform group-hover:scale-125">◀</span>
+            </button>
+
+            <!-- شريط أدوات التحكم بالجلسة والمشاركين في رأس العمود الأيمن (صفين منظمين) -->
+            <div class="p-2 bg-slate-950 border-b border-slate-800 shrink-0 space-y-1.5">
+                <!-- الصف الأول: لوحة التحكم + الحاضرون + سياسة الكلام + كتم الجميع + طلبات الانضمام -->
+                <div class="flex items-center gap-1 justify-between flex-wrap text-xs">
+                    @if($isTeacher && isset($group) && $group)
+                        <a href="{{ route('admin.groups.dashboard', $group->id) }}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-700 flex items-center gap-1 transition" title="فتح لوحة تحكم المجموعة">
+                            <span>🎛️</span>
+                            <span>لوحة التحكم</span>
+                        </a>
+                    @endif
+
+                    <!-- زر الحاضرين في البث -->
+                    <button type="button" onclick="switchLiveTab('participants')" id="btnHeaderParticipants" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-700 flex items-center gap-1 transition relative">
+                        <span>👥</span>
+                        <span>الحاضرون (<strong id="headerParticipantsCount" class="font-mono text-emerald-400">1</strong>)</span>
+                        <span id="headerHandBadge" class="hidden px-1 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black animate-bounce">✋</span>
+                    </button>
+
+                    <!-- زر سياسة الكلام وكتم الجميع للمعلم -->
+                    @if($isTeacher)
+                        <button type="button" onclick="muteAllStudentsNow()" id="btnMuteAll" class="bg-rose-950/70 hover:bg-rose-900 text-rose-300 text-[11px] font-bold px-1.5 py-1 rounded-lg border border-rose-800/80 flex items-center gap-1 transition" title="كتم صوت جميع الطلاب فوراً">
+                            <span>🔇</span>
+                            <span>كتم للكل</span>
+                        </button>
+                        <button type="button" onclick="toggleRoomPolicy()" id="btnPolicyToggle" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold px-1.5 py-1 rounded-lg border border-slate-700 flex items-center gap-1 transition" title="تبديل سياسة التحدث">
+                            <span id="iconPolicy">📢</span>
+                            <span id="txtPolicy">مسموح</span>
+                        </button>
+                    @endif
+
+                    @if(auth()->user()->isStudent())
+                        <button type="button" onclick="toggleHandRaise()" id="btnRaiseHand" class="bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-700 flex items-center gap-1 transition">
+                            <span id="iconRaiseHand">✋</span>
+                            <span id="txtRaiseHand">طلب كلمة</span>
+                        </button>
+                    @endif
+
+                    <!-- زر طلبات الانضمام للمعلم -->
+                    @if($isTeacher)
+                        <button type="button" onclick="switchLiveTab('participants')" id="btnHeaderAdmission" class="hidden bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-bold px-2 py-1 rounded-lg border border-amber-500/40 flex items-center gap-1 transition animate-pulse">
+                            <span>🔔</span>
+                            <span>طلبات (<strong id="headerAdmissionCount" class="font-mono text-amber-200">0</strong>)</span>
+                        </button>
+                    @endif
+                </div>
+
+                <!-- الصف الثاني: المايك + الكاميرا + مشاركة الشاشة + التحديث + إغلاق/فتح البث + المؤقت + مغادرة -->
+                <div class="flex items-center gap-1 justify-between flex-wrap text-xs pt-1 border-t border-slate-900">
+                    <!-- أزرار المايك والكاميرا -->
+                    <div class="flex items-center gap-1 bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+                        <button type="button" onclick="toggleLocalMic()" id="btnMyMic" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-2 py-1 rounded-md flex items-center gap-1 transition" title="كتم/تشغيل المايك">
+                            <span id="iconMyMic">🎙️</span>
+                            <span id="txtMyMic" class="hidden sm:inline">المايك</span>
+                        </button>
+                        <button type="button" onclick="toggleLocalCam()" id="btnMyCam" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold px-2 py-1 rounded-md flex items-center gap-1 border border-slate-700 transition" title="إيقاف/تشغيل الكاميرا">
+                            <span id="iconMyCam">📷</span>
+                            <span id="txtMyCam" class="hidden sm:inline">الكاميرا</span>
+                        </button>
+                    </div>
+
+                    @if($isTeacher)
+                        <!-- زر مشاركة الشاشة -->
+                        <button type="button" onclick="toggleScreenShare()" id="btnScreenShare" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-200 text-[11px] font-bold px-2 py-1 rounded-lg border border-indigo-700/60 flex items-center gap-1 transition" title="مشاركة الشاشة">
+                            <span id="iconScreenShare">🖥️</span>
+                            <span>شاشة</span>
+                        </button>
+                    @endif
+
+                    <!-- زر التحديث F5 -->
+                    <button type="button" onclick="refreshClassroom()" id="btnRefreshClassroom" class="bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-700 flex items-center gap-1 transition" title="تحديث محتويات الفصل">
+                        <span>🔄</span>
+                    </button>
+
+                    <!-- زر فتح/إغلاق البث للمعلم -->
+                    @if($isTeacher)
+                        @if(isset($group) && $group)
+                            @if($group->is_live)
+                                <form method="POST" action="{{ route('groups.live.stop', $group->id) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-[10px] font-bold bg-rose-600 hover:bg-rose-500 text-white px-2 py-1 rounded-lg transition">
+                                        ⏹️ إغلاق
+                                    </button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ route('groups.live.start', $group->id) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-[10px] font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2 py-1 rounded-lg transition flex items-center gap-0.5">
+                                        <span>📡</span>
+                                        <span>فتح</span>
+                                    </button>
+                                </form>
+                            @endif
+                        @elseif(isset($booking) && $booking)
+                            <form method="POST" action="{{ route('classroom.booking.toggle_live', $booking->id) }}" class="inline">
+                                @csrf
+                                <button type="submit" class="text-[10px] font-bold {{ $booking->is_live ? 'bg-rose-600 text-white' : 'bg-emerald-500 text-slate-950' }} px-2 py-1 rounded-lg transition">
+                                    {{ $booking->is_live ? '⏹️ إغلاق' : '📡 فتح' }}
+                                </button>
+                            </form>
+                        @endif
+                    @endif
+
+                    <!-- العداد التنازلي -->
+                    <div class="bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg font-mono text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                        <span>⏱️</span>
+                        <span id="sessionTimer">25:00</span>
+                    </div>
+
+                    <!-- زر مغادرة الفصل -->
+                    <a href="{{ auth()->user()->isStudent() ? route('student.portal') : (auth()->user()->isTeacher() ? route('teacher.dashboard') : route('admin.groups.index')) }}" 
+                       onclick="return confirm('هل ترغب بمغادرة الفصل التفاعلي المباشر الآن؟');"
+                       class="text-[11px] text-rose-400 hover:text-white bg-slate-900 hover:bg-rose-900 border border-slate-800 px-2 py-1 rounded-lg transition font-bold">
+                        ✕ مغادرة
+                    </a>
+                </div>
+            </div>
             
             <!-- ترويسة التبويبات الثلاثة (المحادثة / الحضور / المنهج) -->
             <div class="p-2 bg-slate-950 border-b border-slate-800 shrink-0">
@@ -299,9 +319,17 @@
                 <div id="liveTabChat" class="h-full flex flex-col justify-between">
                     <div id="liveChatMessagesContainer" class="flex-1 p-3 space-y-2.5 overflow-y-auto text-xs">
                         <div class="bg-indigo-950/60 border border-indigo-800/60 rounded-2xl p-3 text-indigo-200 space-y-1">
-                            <div class="font-bold flex items-center gap-1.5 text-indigo-300 text-xs">
-                                <span>👋</span>
-                                <span>محادثة الفصل التفاعلي المباشر</span>
+                            <div class="flex justify-between items-center">
+                                <div class="font-bold flex items-center gap-1.5 text-indigo-300 text-xs">
+                                    <span>👋</span>
+                                    <span>محادثة الفصل التفاعلي المباشر</span>
+                                </div>
+                                @if($isTeacher)
+                                    <button type="button" onclick="confirmClearChat()" class="text-[10px] text-rose-300 hover:text-white bg-rose-950/70 hover:bg-rose-900 border border-rose-800/80 px-2 py-0.5 rounded-lg flex items-center gap-1 transition shadow-sm" title="مسح محتوى المحادثة بالكامل لجميع الطلاب">
+                                        <span>🗑️</span>
+                                        <span>مسح المحادثة</span>
+                                    </button>
+                                @endif
                             </div>
                             <p class="text-[11px] leading-relaxed text-indigo-200/80">
                                 الرسائل النصية، والتسجيلات الصوتية 🎙️، وأوراق الإجابة 📸 تظهر لجميع أعضاء المجموعة والمعلم لحظياً.
@@ -310,37 +338,39 @@
 
                         @if(isset($chatMessages) && $chatMessages->isNotEmpty())
                             @foreach($chatMessages as $msg)
-                                @php $isMine = ($msg->user_id === auth()->id()); @endphp
-                                <div id="chatMsg_{{ $msg->id }}" class="p-2.5 rounded-xl border {{ $msg->user?->isStudent() ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-indigo-800/40 bg-indigo-950/20' }} space-y-1">
-                                    <div class="flex justify-between items-center text-[10px]">
-                                        <span class="font-bold flex items-center gap-1 text-slate-300">
-                                            <span>{{ $msg->user?->isStudent() ? '🎒' : '👨‍🏫' }}</span>
-                                            <span>{{ $msg->user?->name ?? 'مشارك' }} {{ $isMine ? '(أنت)' : '' }}</span>
-                                        </span>
-                                        <span class="text-slate-500 font-mono">{{ $msg->created_at->format('H:i') }}</span>
-                                    </div>
-                                    @if($msg->content)
-                                        <div class="text-xs text-slate-200 leading-relaxed">{{ $msg->content }}</div>
-                                    @endif
-                                    @if(($msg->type === 'image' || $msg->type === 'worksheet') && $msg->file_path)
-                                        <div class="relative group mt-1">
-                                            <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-32 flex items-center justify-center" onclick="openLiveImageModal('{{ asset($msg->file_path) }}', '{{ addslashes($msg->content ?? '') }}')">
-                                                <img src="{{ asset($msg->file_path) }}" class="w-full h-full object-cover">
+                                @if($msg->type !== 'system')
+                                    @php $isMine = ($msg->user_id === auth()->id()); @endphp
+                                    <div id="chatMsg_{{ $msg->id }}" class="p-2.5 rounded-xl border {{ $msg->user?->isStudent() ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-indigo-800/40 bg-indigo-950/20' }} space-y-1">
+                                        <div class="flex justify-between items-center text-[10px]">
+                                            <span class="font-bold flex items-center gap-1 text-slate-300">
+                                                <span>{{ $msg->user?->isStudent() ? '🎒' : '👨‍🏫' }}</span>
+                                                <span>{{ $msg->user?->name ?? 'مشارك' }} {{ $isMine ? '(أنت)' : '' }}</span>
+                                            </span>
+                                            <span class="text-slate-500 font-mono">{{ $msg->created_at->format('H:i') }}</span>
+                                        </div>
+                                        @if($msg->content)
+                                            <div class="text-xs text-slate-200 leading-relaxed">{{ $msg->content }}</div>
+                                        @endif
+                                        @if(($msg->type === 'image' || $msg->type === 'worksheet') && $msg->file_path)
+                                            <div class="relative group mt-1">
+                                                <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-32 flex items-center justify-center" onclick="openLiveImageModal('{{ asset($msg->file_path) }}', '{{ addslashes($msg->content ?? '') }}')">
+                                                    <img src="{{ asset($msg->file_path) }}" class="w-full h-full object-cover">
+                                                </div>
+                                                @if($isTeacher)
+                                                    <button type="button" onclick="openResourceInWorkspace('{{ asset($msg->file_path) }}', 'ورقة إجابة: {{ addslashes($msg->user?->name ?? '') }}', 'image')" class="mt-1 w-full bg-emerald-600/90 hover:bg-emerald-600 text-white text-[10px] font-bold py-1 px-2 rounded-lg transition flex items-center justify-center gap-1 shadow">
+                                                        <span>🎨</span>
+                                                        <span>فتح للشرح والتصحيح بالسبورة</span>
+                                                    </button>
+                                                @endif
                                             </div>
-                                            @if($isTeacher)
-                                                <button type="button" onclick="openResourceInWorkspace('{{ asset($msg->file_path) }}', 'ورقة إجابة: {{ addslashes($msg->user?->name ?? '') }}', 'image')" class="mt-1 w-full bg-emerald-600/90 hover:bg-emerald-600 text-white text-[10px] font-bold py-1 px-2 rounded-lg transition flex items-center justify-center gap-1 shadow">
-                                                    <span>🎨</span>
-                                                    <span>فتح للشرح والتصحيح بالسبورة</span>
-                                                </button>
-                                            @endif
-                                        </div>
-                                    @endif
-                                    @if($msg->type === 'audio' && $msg->file_path)
-                                        <div class="bg-purple-950/40 p-1.5 rounded-xl border border-purple-800/40 mt-1">
-                                            <audio controls src="{{ asset($msg->file_path) }}" class="w-full h-7"></audio>
-                                        </div>
-                                    @endif
-                                </div>
+                                        @endif
+                                        @if($msg->type === 'audio' && $msg->file_path)
+                                            <div class="bg-purple-950/40 p-1.5 rounded-xl border border-purple-800/40 mt-1">
+                                                <audio controls src="{{ asset($msg->file_path) }}" class="w-full h-7"></audio>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
                             @endforeach
                         @endif
                     </div>
@@ -612,71 +642,25 @@
 
             </div>
 
-            <!-- الشريط السفلي للتحكم السريع والمغادرة المنسقة بالجانب الأيمن -->
-            <div class="p-2.5 bg-slate-950 border-t border-slate-800 space-y-2 shrink-0">
-                <div class="flex items-center gap-1.5 justify-between">
-                    <button type="button" onclick="toggleLocalMic()" id="btnMyMic" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition shadow-sm" title="كتم/تشغيل المايك">
-                        <span id="iconMyMic">🎙️</span>
-                        <span id="txtMyMic">المايك</span>
+            <!-- الشريط السفلي البسيط بالجانب الأيمن -->
+            @if($isTeacher)
+                <div class="p-2 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
+                    <button type="button" onclick="rewardStar()" class="flex-1 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold rounded-xl border border-amber-500/30 flex items-center justify-center gap-1.5 transition" title="مكافأة بنجمة للطلاب">
+                        <span>⭐ مكافأة بنجمة</span>
+                        <span id="starsCount" class="font-mono bg-amber-500/30 px-1.5 py-0.2 rounded-full text-amber-200">0</span>
                     </button>
-                    <button type="button" onclick="toggleLocalCam()" id="btnMyCam" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl flex items-center justify-center gap-1 border border-slate-700 transition" title="تشغيل/إيقاف الكاميرا">
-                        <span id="iconMyCam">📷</span>
-                        <span id="txtMyCam">الكاميرا</span>
+                    <button type="button" onclick="openReportModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow flex items-center gap-1" title="إنهاء وإصدار تقرير الحصة">
+                        <span>📋 تقرير الحصة</span>
                     </button>
-                    @if(auth()->user()->isStudent())
-                        <button type="button" onclick="toggleHandRaise()" id="btnRaiseHand" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold rounded-xl border border-slate-700 flex items-center justify-center gap-1 transition">
-                            <span id="iconRaiseHand">✋</span>
-                            <span id="txtRaiseHand">طلب كلمة</span>
-                        </button>
-                    @endif
-                    @if($isTeacher)
-                        <button type="button" onclick="rewardStar()" class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold rounded-xl border border-amber-500/40 flex items-center justify-center gap-1 transition" title="مكافأة بنجمة">
-                            <span>⭐</span>
-                            <span id="starsCount">0</span>
-                        </button>
-                    @endif
                 </div>
-
-                <div class="flex items-center gap-1.5 justify-between">
-                    @if($isTeacher)
-                        @if(isset($group) && $group)
-                            @if($group->is_live)
-                                <form method="POST" action="{{ route('groups.live.stop', $group->id) }}" class="flex-1">
-                                    @csrf
-                                    <button type="submit" class="w-full text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white py-1.5 rounded-xl transition shadow">
-                                        ⏹️ إغلاق البث
-                                    </button>
-                                </form>
-                            @else
-                                <form method="POST" action="{{ route('groups.live.start', $group->id) }}" class="flex-1">
-                                    @csrf
-                                    <button type="submit" class="w-full text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-1.5 rounded-xl transition shadow">
-                                        📡 فتح البث
-                                    </button>
-                                </form>
-                            @endif
-                        @elseif(isset($booking) && $booking)
-                            <form method="POST" action="{{ route('classroom.booking.toggle_live', $booking->id) }}" class="flex-1">
-                                @csrf
-                                <button type="submit" class="w-full text-xs font-bold {{ $booking->is_live ? 'bg-rose-600 text-white' : 'bg-emerald-500 text-slate-950' }} py-1.5 rounded-xl transition">
-                                    {{ $booking->is_live ? '⏹️ إغلاق البث' : '📡 فتح البث' }}
-                                </button>
-                            </form>
-                        @endif
-
-                        <button type="button" onclick="openReportModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow" title="إنهاء وإصدار تقرير الحصة">
-                            📋 تقرير
-                        </button>
-                    @endif
-
-                    <a href="{{ auth()->user()->isStudent() ? route('student.portal') : (auth()->user()->isTeacher() ? route('teacher.dashboard') : route('admin.groups.index')) }}" 
-                       onclick="return confirm('هل ترغب بمغادرة الفصل التفاعلي المباشر الآن؟');"
-                       class="px-3 py-1.5 bg-slate-800 hover:bg-rose-700 text-rose-300 hover:text-white rounded-xl text-xs font-bold border border-slate-700 transition">
-                        مغادرة ✕
-                    </a>
-                </div>
-            </div>
+            @endif
         </aside>
+
+        <!-- زر استعادة الشريط الأيمن العائم (يظهر عند طي الشريط لتوسيع السبورة) -->
+        <button type="button" onclick="toggleSidebarCollapse()" id="btnRestoreSidebar" class="hidden absolute right-3 top-3 z-40 bg-slate-900/95 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 text-slate-200 hover:text-white px-3 py-1.5 rounded-xl shadow-2xl transition flex items-center gap-1.5 text-xs font-bold backdrop-blur-md" title="إظهار لوحة المحادثة والمنهج">
+            <span>▶</span>
+            <span>الدردشة والمنهج</span>
+        </button>
 
         <!-- 2. الجزء الوسط واليسار الكبير: مساحة الشرح والمشاركة المباشرة (Zoom Live Presentation & Whiteboard) -->
         <section class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative min-h-[500px] lg:min-h-0">
@@ -684,15 +668,23 @@
             <!-- الشريط العلوي لمساحة الشرح والسبورة -->
             <div class="p-2 sm:p-2.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0 z-10 text-xs">
                 
-                <!-- شارة المحتوى المفتوح حالياً -->
-                <div class="flex items-center gap-2 min-w-0">
-                    <span class="bg-indigo-600/30 text-indigo-300 font-bold px-2.5 py-1 rounded-lg border border-indigo-500/40 flex items-center gap-1.5 shrink-0">
-                        <span id="wbModeIcon">📋</span>
-                        <span id="wbModeText" class="truncate max-w-[180px] sm:max-w-[280px]">سبورة بيضاء تفاعلية</span>
+                <!-- شارة المحتوى المفتوح حالياً وعنوان المجموعة في رأس الصفحة -->
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-black shrink-0">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                        <span>{{ isset($group) && $group ? 'فصل حي' : 'جلسة خاصة' }}</span>
                     </span>
-                    <span id="wbSyncBadge" class="hidden sm:inline-flex items-center gap-1 text-[11px] text-emerald-400 font-bold">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>شرح مباشر متزامن</span>
+                    <span class="font-bold text-slate-300 text-xs truncate max-w-[140px] sm:max-w-[240px] hidden md:inline" title="{{ isset($group) && $group ? $group->name : (isset($booking) && $booking ? ('جلسة تدريب فردية - ' . ($booking->student?->name ?? 'طالب')) : 'فصل دراسي حي') }}">
+                        {{ isset($group) && $group ? $group->name : (isset($booking) && $booking ? ('جلسة فردية - ' . ($booking->student?->name ?? 'طالب')) : 'فصل دراسي حي') }}
+                    </span>
+                    <span class="w-px h-3 bg-slate-800 hidden md:inline"></span>
+                    <span class="bg-indigo-600/30 text-indigo-300 font-bold px-2 py-0.5 rounded-lg border border-indigo-500/40 flex items-center gap-1 shrink-0">
+                        <span id="wbModeIcon">📋</span>
+                        <span id="wbModeText" class="truncate max-w-[120px] sm:max-w-[180px]">سبورة بيضاء</span>
+                    </span>
+                    <span id="wbSyncBadge" class="hidden xl:inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>متزامن</span>
                     </span>
                 </div>
 
@@ -715,24 +707,14 @@
                             </button>
                         </div>
 
-                        <!-- قائمة منسدلة سريعة لكتب المنهج والمقررات -->
-                        @if($groupBooks->isNotEmpty())
-                            <div class="relative inline-block text-right">
-                                <button type="button" onclick="toggleBooksDropdown()" id="btnBooksDropdown" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1 shadow transition">
-                                    <span>📖</span>
-                                    <span>كتب المنهج ▾</span>
-                                </button>
-                                <div id="booksDropdownMenu" class="hidden absolute left-0 sm:right-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 p-1.5 space-y-1">
-                                    <span class="text-[10px] text-slate-400 px-2 py-1 block font-bold border-b border-slate-800">اختر كتاباً لفتحه والشرح عليه للطلاب:</span>
-                                    @foreach($groupBooks as $bk)
-                                        <button type="button" onclick="openResourceInWorkspace('{{ asset($bk->file_path) }}', '{{ addslashes($bk->title) }}', 'pdf')" class="w-full text-right p-2 rounded-lg hover:bg-indigo-600/30 text-white text-xs font-bold transition flex items-center justify-between">
-                                            <span class="truncate">{{ $bk->title }}</span>
-                                            <span class="text-[10px] text-emerald-400">فتح 🚀</span>
-                                        </button>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
+                        <!-- زر فتح مكتبة كتب ومذكرات الدورة المعتمدة -->
+                        <button type="button" onclick="openBooksLibraryModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow transition" title="فتح كتب المنهج ومذكرات المجموعة ورفع كتاب PDF من جهازك">
+                            <span>📖</span>
+                            <span>مكتبة الكتب والمذكرات</span>
+                            @if($groupBooks->isNotEmpty() || $groupWallPdfs->isNotEmpty())
+                                <span class="bg-indigo-950 text-indigo-200 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupBooks->count() + $groupWallPdfs->count() }}</span>
+                            @endif
+                        </button>
 
                         <!-- مستعرض وبحث جوجل والمسابقات -->
                         <button type="button" onclick="openBrowserModal()" class="bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition shadow" title="فتح مستعرض جوجل والبحث عن معلومات أو مسابقات وألعاب للطلاب">
@@ -754,11 +736,20 @@
                         </button>
                     @endif
 
-                    <!-- التنقل بين صفحات الكتب والـ PDF -->
+                    <!-- قارئ وتصفح صفحات الكتب والـ PDF (متقدم) -->
                     <div id="wbPageNavControls" class="hidden flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-xl border border-slate-800 text-[11px] font-bold">
-                        <button type="button" onclick="changeWbPage(-1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="الصفحة السابقة">◀</button>
-                        <span class="text-slate-400">صفحة <strong id="wbCurrentPageText" class="text-white font-mono">1</strong> / <span id="wbTotalPagesText" class="font-mono">1</span></span>
-                        <button type="button" onclick="changeWbPage(1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="الصفحة التالية">▶</button>
+                        <button type="button" onclick="changeWbPageTo(1)" class="px-1 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="أول صفحة (Home)">⏮️</button>
+                        <button type="button" onclick="changeWbPage(-1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="الصفحة السابقة (◀ / PageUp)">◀</button>
+                        <span class="text-slate-400 flex items-center gap-1">
+                            <span>صفحة</span>
+                            <input type="number" id="wbPageDirectInput" min="1" value="1" onchange="onPageDirectInputChange(this.value)" class="w-12 bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-center text-white font-mono text-xs font-bold focus:border-indigo-500 focus:outline-none" title="اكتب رقم الصفحة واضغط Enter للانتقال السريع">
+                            <span>من <span id="wbTotalPagesText" class="font-mono text-white">1</span></span>
+                        </span>
+                        <button type="button" onclick="changeWbPage(1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="الصفحة التالية (▶ / PageDown)">▶</button>
+                        <button type="button" onclick="changeWbPageTo(wbTotalPages)" class="px-1 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="آخر صفحة (End)">⏭️</button>
+                        <span class="w-px h-3 bg-slate-700 mx-0.5"></span>
+                        <button type="button" onclick="fitPdfWidth()" class="px-1.5 py-0.5 hover:bg-slate-800 text-indigo-300 rounded" title="ملاءمة عرض الشاشة">📐 عرض</button>
+                        <button type="button" onclick="fitPdfPage()" class="px-1.5 py-0.5 hover:bg-slate-800 text-indigo-300 rounded" title="ملاءمة كامل الصفحة">📄 صفحة</button>
                     </div>
 
                     <!-- أزرار التكبير والتصغير -->
@@ -778,9 +769,41 @@
             </div>
 
             <!-- حاوية الرسم والعرض التفاعلية (Dual Canvas + Laser + Text Input + Browser & Video Layers) -->
-            <div id="whiteboardContainer" class="flex-1 relative overflow-hidden bg-slate-950 flex items-center justify-center select-none">
-                <!-- طبقة خلفية الكتاب أو الصورة أو السبورة النظيفة -->
-                <canvas id="whiteboardBgCanvas" class="absolute inset-0 w-full h-full object-contain pointer-events-none z-[1]"></canvas>
+            <div id="whiteboardContainer" class="flex-1 relative overflow-y-auto overflow-x-hidden bg-slate-950 flex flex-col items-center select-none scrollbar-thin">
+                <!-- شريط تقدم رفع ومعالجة الملفات والفيديوهات الكبيرة -->
+                <div id="wbUploadProgressBar" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 border border-indigo-500/50 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-3 backdrop-blur-md min-w-[280px]">
+                    <div class="w-5 h-5 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin shrink-0"></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-200 mb-1">
+                            <span id="wbUploadStatusText" class="truncate">جاري معالجة الملف...</span>
+                            <span id="wbUploadPercentText" class="font-mono text-indigo-400">0%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div id="wbUploadProgressFill" class="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 w-0 transition-all duration-150"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مسرح اللوحات والكانفاس المزدوج (Canvas Stage) -->
+                <div id="wbCanvasStage" class="relative my-auto transition-all duration-75 flex items-center justify-center">
+                    <!-- طبقة خلفية الكتاب أو الصورة أو السبورة النظيفة -->
+                    <canvas id="whiteboardBgCanvas" class="block pointer-events-none z-[1]"></canvas>
+
+                    <!-- طبقة الرسم والكتابة التفاعلية بالقلم والأشكال -->
+                    <canvas id="whiteboardDrawCanvas" class="absolute inset-0 w-full h-full cursor-pen z-[10]"></canvas>
+
+                    <!-- مؤشر الليزر الحي (Red Laser Pointer) -->
+                    <div id="liveLaserPointer" class="hidden absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 transition-all duration-75">
+                        <div class="w-6 h-6 rounded-full bg-red-500 laser-glow animate-ping opacity-75 absolute -inset-0.5"></div>
+                        <div class="w-4 h-4 rounded-full bg-red-600 border-2 border-white shadow-xl relative z-10"></div>
+                        <span id="laserUserBadge" class="hidden absolute top-5 right-1/2 translate-x-1/2 text-[9px] bg-red-950/90 text-red-200 border border-red-500/50 px-1.5 py-0.5 rounded font-bold whitespace-nowrap shadow-md">🔴</span>
+                    </div>
+
+                    <!-- مربع إدخال النص على السبورة -->
+                    <div id="wbTextInputWrapper" class="hidden absolute z-30">
+                        <input type="text" id="wbTextInput" class="bg-slate-900/95 border-2 border-indigo-500 text-white px-2.5 py-1 rounded-xl text-sm outline-none shadow-2xl font-bold" placeholder="اكتب الملاحظة هنا واضغط Enter..." onkeydown="handleWbTextKey(event)">
+                    </div>
+                </div>
 
                 <!-- طبقة مستعرض جوجل ومسابقات الأطفال التفاعلية داخل السبورة -->
                 <div id="whiteboardBrowserWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col bg-slate-900 z-[5]">
@@ -819,27 +842,52 @@
                             </button>
                         @endif
                     </div>
-                    <video id="whiteboardHtml5Video" controls playsinline class="hidden w-full h-full max-h-full object-contain"></video>
+                    <video id="whiteboardHtml5Video" playsinline class="hidden w-full h-full max-h-full object-contain"></video>
                     <iframe id="whiteboardYoutubeFrame" class="hidden w-full h-full max-w-full max-h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+                    <!-- شريط التحكم العائم بالفيديو فوق الكانفاس (z-30) للتحكم والشرح في نفس الوقت -->
+                    <div id="wbVideoCustomControls" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-11/12 max-w-2xl bg-slate-900/95 backdrop-blur-md border border-slate-700/90 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-2 transition">
+                        <div class="flex items-center gap-2">
+                            <input type="range" id="wbVideoSeekSlider" min="0" max="100" value="0" step="0.1" oninput="onVideoSeekInput(this.value)" class="w-full accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                            <span id="wbVideoTimeLabel" class="text-[10px] font-mono text-slate-300 shrink-0">00:00 / 00:00</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="toggleHtml5VideoPlay()" id="btnWbVideoPlay" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center gap-1 shadow">
+                                    <span id="iconWbVideoPlay">▶️</span>
+                                    <span id="txtWbVideoPlay">تشغيل</span>
+                                </button>
+                                <button type="button" onclick="rewindHtml5Video(10)" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="تراجع 10 ثواني">⏪ 10ث</button>
+                                <button type="button" onclick="forwardHtml5Video(10)" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="تقديم 10 ثواني">10ث ⏩</button>
+                                <button type="button" onclick="toggleHtml5VideoMute()" id="btnWbVideoMute" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="كتم/تشغيل الصوت">🔊</button>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-amber-300 font-bold hidden sm:inline">💡 أوقف الفيديو واستخدم القلم ✏️ للشرح فوقه</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <!-- طبقة الرسم والكتابة التفاعلية بالقلم والأشكال -->
-                <canvas id="whiteboardDrawCanvas" class="absolute inset-0 w-full h-full object-contain cursor-pen z-[10]"></canvas>
-
-                <!-- مؤشر الليزر الحي (Red Laser Pointer) -->
-                <div id="liveLaserPointer" class="hidden absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 transition-all duration-75">
-                    <div class="w-6 h-6 rounded-full bg-red-500 laser-glow animate-ping opacity-75 absolute -inset-0.5"></div>
-                    <div class="w-4 h-4 rounded-full bg-red-600 border-2 border-white shadow-xl relative z-10"></div>
-                    <span id="laserUserBadge" class="absolute top-5 right-1/2 translate-x-1/2 text-[9px] bg-red-950/90 text-red-200 border border-red-500/50 px-1.5 py-0.5 rounded font-bold whitespace-nowrap shadow-md">🔴 مؤشر المعلم</span>
+            <!-- شريط التمرير الرأسي السريع لصفحات الـ PDF (Vertical Scrubber / Quick Navigator) -->
+            <div id="wbPdfSideNavigator" class="hidden absolute right-3 top-14 bottom-14 z-30 flex flex-col items-center justify-between bg-slate-900/90 backdrop-blur border border-slate-700/80 rounded-2xl py-2 px-1 shadow-2xl transition">
+                <button type="button" onclick="changeWbPageTo(1)" class="text-xs text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800" title="أول صفحة (Home)">⏮️</button>
+                <div class="relative flex-1 flex items-center justify-center py-2 my-1">
+                    <!-- فقاعة رقم الصفحة التوضيحية عند السحب -->
+                    <div id="wbPdfSliderBubble" class="hidden absolute right-8 bg-indigo-600 text-white font-mono font-bold text-xs px-2.5 py-1 rounded-xl shadow-2xl pointer-events-none whitespace-nowrap border border-indigo-400/50">
+                        صفحة <span id="wbPdfSliderBubbleNum">1</span>
+                    </div>
+                    <input type="range" id="wbPdfVerticalSlider" min="1" max="1" value="1" 
+                        oninput="onPdfSliderInput(this.value)" 
+                        onchange="onPdfSliderChange(this.value)" 
+                        class="wb-vertical-slider accent-indigo-500 cursor-pointer"
+                        title="اسحب للتنقل السريع بين صفحات الكتاب">
                 </div>
+                <button type="button" onclick="changeWbPageTo(wbTotalPages)" class="text-xs text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800" title="آخر صفحة (End)">⏭️</button>
+            </div>
 
-                <!-- مربع إدخال النص على السبورة -->
-                <div id="wbTextInputWrapper" class="hidden absolute z-30">
-                    <input type="text" id="wbTextInput" class="bg-slate-900/95 border-2 border-indigo-500 text-white px-2.5 py-1 rounded-xl text-sm outline-none shadow-2xl font-bold" placeholder="اكتب الملاحظة هنا واضغط Enter..." onkeydown="handleWbTextKey(event)">
-                </div>
-
-                <!-- شريط أدوات الشرح باليسار نفس الزوم (Left Floating Annotation Toolbar - Zoom Style) -->
-                <div id="wbLeftToolbar" class="absolute left-3 top-3 bottom-3 z-30 flex flex-col items-center justify-between bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-2xl p-1.5 shadow-2xl space-y-1 text-xs overflow-y-auto max-h-[96%] scrollbar-none">
+            <!-- شريط أدوات الشرح باليسار نفس الزوم (Left Floating Annotation Toolbar - Zoom Style) -->
+            <div id="wbLeftToolbar" class="absolute left-3 top-14 bottom-3 z-30 flex flex-col items-center justify-between bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-2xl p-1.5 shadow-2xl space-y-1 text-xs overflow-y-auto max-h-[96%] scrollbar-none">
                     <div class="flex flex-col items-center gap-1">
                         <!-- مؤشر التحديد والماوس -->
                         <button type="button" onclick="selectWbTool('select')" id="toolBtn_select" class="wb-tool-btn p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition relative" title="مؤشر الماوس والتحديد">
@@ -867,70 +915,14 @@
                         </button>
 
                         <!-- قائمة الأشكال الهندسية الموسعة -->
-                        <div class="relative">
-                            <button type="button" onclick="toggleShapesFlyout()" id="toolBtn_shapes" class="wb-tool-btn p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition relative" title="الأشكال الهندسية والرسومات">
-                                <span id="activeShapeIcon" class="text-base">🔲</span>
-                            </button>
-                            <div id="shapesFlyoutMenu" class="hidden absolute left-12 top-0 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 z-50 w-44">
-                                <span class="text-[10px] text-slate-400 font-bold border-b border-slate-800 pb-1">اختر الشكل الهندسي:</span>
-                                <div class="grid grid-cols-2 gap-1 text-xs font-bold">
-                                    <button type="button" onclick="selectWbShape('rect')" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center gap-1">
-                                        <span>🔲</span> <span>مستطيل</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('rounded_rect')" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center gap-1">
-                                        <span>◽</span> <span>مستدير</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('circle')" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center gap-1">
-                                        <span>⭕</span> <span>دائرة</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('triangle')" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center gap-1">
-                                        <span>🔺</span> <span>مثلث</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('line')" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center gap-1">
-                                        <span>➖</span> <span>خط</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('arrow')" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center gap-1">
-                                        <span>➡️</span> <span>سهم</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('double_arrow')" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center gap-1">
-                                        <span>↔️</span> <span>سهمين</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('star')" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center gap-1">
-                                        <span>⭐</span> <span>نجمة</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('checkmark')" class="p-1.5 rounded-lg hover:bg-emerald-600 text-white flex items-center gap-1">
-                                        <span>✔️</span> <span>صح</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('cross')" class="p-1.5 rounded-lg hover:bg-rose-600 text-white flex items-center gap-1">
-                                        <span>❌</span> <span>خطأ</span>
-                                    </button>
-                                    <button type="button" onclick="selectWbShape('bubble')" class="col-span-2 p-1.5 rounded-lg hover:bg-indigo-600 text-white flex items-center justify-center gap-1">
-                                        <span>💬</span> <span>فقاعة كلام</span>
-                                    </button>
-                                </div>
-                                <div class="pt-1.5 border-t border-slate-800">
-                                    <button type="button" onclick="toggleShapeFill()" id="btnShapeFill" class="w-full py-1 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-between transition">
-                                        <span>تعبئة اللون:</span>
-                                        <span id="shapeFillState" class="text-indigo-400">مفرغ 🔲</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <button type="button" onclick="toggleShapesFlyout()" id="toolBtn_shapes" class="wb-tool-btn p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition relative" title="الأشكال الهندسية والرسومات">
+                            <span id="activeShapeIcon" class="text-base">🔲</span>
+                        </button>
 
                         <!-- قائمة أختام التشجيع والتقييم (Stamps) -->
-                        <div class="relative">
-                            <button type="button" onclick="toggleStampsFlyout()" id="toolBtn_stamp" class="wb-tool-btn p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition relative" title="أختام التشجيع والتقييم للطلاب">
-                                <span id="activeStampIcon" class="text-base">⭐</span>
-                            </button>
-                            <div id="stampsFlyoutMenu" class="hidden absolute left-12 top-0 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 grid grid-cols-3 gap-1 z-50 w-36">
-                                <button type="button" onclick="selectWbStamp('⭐')" class="p-2 rounded-xl hover:bg-indigo-600 text-center text-xl transition" title="نجمة إبداع">⭐</button>
-                                <button type="button" onclick="selectWbStamp('💯')" class="p-2 rounded-xl hover:bg-indigo-600 text-center text-xl transition" title="ممتاز 100%">💯</button>
-                                <button type="button" onclick="selectWbStamp('👍')" class="p-2 rounded-xl hover:bg-indigo-600 text-center text-xl transition" title="إعجاب ورائع">👍</button>
-                                <button type="button" onclick="selectWbStamp('👏')" class="p-2 rounded-xl hover:bg-indigo-600 text-center text-xl transition" title="أحسنت وتصفيق">👏</button>
-                                <button type="button" onclick="selectWbStamp('❤️')" class="p-2 rounded-xl hover:bg-indigo-600 text-center text-xl transition" title="مميز ومحبوب">❤️</button>
-                                <button type="button" onclick="selectWbStamp('👑')" class="p-2 rounded-xl hover:bg-indigo-600 text-center text-xl transition" title="بطل الحصة">👑</button>
-                            </div>
-                        </div>
+                        <button type="button" onclick="toggleStampsFlyout()" id="toolBtn_stamp" class="wb-tool-btn p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition relative" title="أختام التشجيع والتقييم للطلاب">
+                            <span id="activeStampIcon" class="text-base">⭐</span>
+                        </button>
 
                         <!-- أداة الملاحظة اللاصقة (Sticky Note) -->
                         <button type="button" onclick="selectWbTool('note')" id="toolBtn_note" class="wb-tool-btn p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition relative" title="ملصق وملاحظة لاصقة ملونة">
@@ -951,70 +943,13 @@
                     <div class="w-6 h-px bg-slate-700/60 my-1"></div>
 
                     <div class="flex flex-col items-center gap-1.5">
-                        <!-- لوحة الألوان الموسعة (20 لوناً + منتقي مخصص) -->
-                        <div class="relative">
-                            <button type="button" onclick="toggleColorFlyout()" class="w-6 h-6 rounded-full border-2 border-white shadow transition transform hover:scale-110 flex items-center justify-center" id="activeColorPreview" style="background-color: #ef4444;" title="لوحة الألوان المتنوعة"></button>
-                            <div id="colorFlyoutMenu" class="hidden absolute left-12 bottom-0 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-2 z-50 w-52">
-                                <span class="text-[10px] text-slate-400 font-bold">لوحة ألوان الشرح:</span>
-                                <div class="grid grid-cols-5 gap-1.5">
-                                    <button type="button" onclick="setWbColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 border border-white/40 hover:scale-125 transition" title="أحمر فاتح"></button>
-                                    <button type="button" onclick="setWbColor('#dc2626')" class="w-6 h-6 rounded-full bg-red-700 border border-white/40 hover:scale-125 transition" title="أحمر قاني"></button>
-                                    <button type="button" onclick="setWbColor('#ec4899')" class="w-6 h-6 rounded-full bg-pink-500 border border-white/40 hover:scale-125 transition" title="وردي"></button>
-                                    <button type="button" onclick="setWbColor('#a855f7')" class="w-6 h-6 rounded-full bg-purple-500 border border-white/40 hover:scale-125 transition" title="بنفسجي"></button>
-                                    <button type="button" onclick="setWbColor('#6366f1')" class="w-6 h-6 rounded-full bg-indigo-500 border border-white/40 hover:scale-125 transition" title="نيلي"></button>
-                                    <button type="button" onclick="setWbColor('#3b82f6')" class="w-6 h-6 rounded-full bg-blue-500 border border-white/40 hover:scale-125 transition" title="أزرق"></button>
-                                    <button type="button" onclick="setWbColor('#1d4ed8')" class="w-6 h-6 rounded-full bg-blue-700 border border-white/40 hover:scale-125 transition" title="كحلي"></button>
-                                    <button type="button" onclick="setWbColor('#06b6d4')" class="w-6 h-6 rounded-full bg-cyan-500 border border-white/40 hover:scale-125 transition" title="سماوي"></button>
-                                    <button type="button" onclick="setWbColor('#14b8a6')" class="w-6 h-6 rounded-full bg-teal-500 border border-white/40 hover:scale-125 transition" title="تركواز"></button>
-                                    <button type="button" onclick="setWbColor('#10b981')" class="w-6 h-6 rounded-full bg-emerald-500 border border-white/40 hover:scale-125 transition" title="زمردي"></button>
-                                    <button type="button" onclick="setWbColor('#22c55e')" class="w-6 h-6 rounded-full bg-green-500 border border-white/40 hover:scale-125 transition" title="أخضر عشبي"></button>
-                                    <button type="button" onclick="setWbColor('#84cc16')" class="w-6 h-6 rounded-full bg-lime-500 border border-white/40 hover:scale-125 transition" title="ليموني فسفوري"></button>
-                                    <button type="button" onclick="setWbColor('#facc15')" class="w-6 h-6 rounded-full bg-yellow-400 border border-white/40 hover:scale-125 transition" title="أصفر فاقع"></button>
-                                    <button type="button" onclick="setWbColor('#f59e0b')" class="w-6 h-6 rounded-full bg-amber-500 border border-white/40 hover:scale-125 transition" title="كهرماني"></button>
-                                    <button type="button" onclick="setWbColor('#f97316')" class="w-6 h-6 rounded-full bg-orange-500 border border-white/40 hover:scale-125 transition" title="برتقالي"></button>
-                                    <button type="button" onclick="setWbColor('#ea580c')" class="w-6 h-6 rounded-full bg-orange-700 border border-white/40 hover:scale-125 transition" title="برتقالي ناري"></button>
-                                    <button type="button" onclick="setWbColor('#78350f')" class="w-6 h-6 rounded-full bg-amber-900 border border-white/40 hover:scale-125 transition" title="بني"></button>
-                                    <button type="button" onclick="setWbColor('#64748b')" class="w-6 h-6 rounded-full bg-slate-500 border border-white/40 hover:scale-125 transition" title="رمادي أردوازي"></button>
-                                    <button type="button" onclick="setWbColor('#0f172a')" class="w-6 h-6 rounded-full bg-slate-900 border border-white/40 hover:scale-125 transition" title="أسود فاحم"></button>
-                                    <button type="button" onclick="setWbColor('#ffffff')" class="w-6 h-6 rounded-full bg-white border border-slate-400 hover:scale-125 transition" title="أبيض ناصع"></button>
-                                </div>
-                                <div class="pt-1.5 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-300">
-                                    <span>لون مخصص:</span>
-                                    <input type="color" id="wbCustomColorInput" value="#ef4444" onchange="setWbColor(this.value)" class="w-7 h-7 rounded-lg cursor-pointer border border-slate-600 bg-transparent p-0" title="اختر أي لون مخصص">
-                                </div>
-                            </div>
-                        </div>
+                        <!-- لوحة الألوان المتنوعة (زر الفتح) -->
+                        <button type="button" onclick="toggleColorFlyout()" class="w-6 h-6 rounded-full border-2 border-white shadow transition transform hover:scale-110 flex items-center justify-center shrink-0" id="activeColorPreview" style="background-color: #ef4444;" title="لوحة ألوان الشرح (42 لوناً)"></button>
 
-                        <!-- سماكة وحجم الخط والقلم (7 أحجام) -->
-                        <div class="relative">
-                            <button type="button" onclick="toggleSizeFlyout()" class="p-1 rounded-lg text-slate-300 hover:bg-slate-800 transition font-mono font-bold text-[10px]" title="سماكة الخط">
-                                <span id="activeSizePreview">4px</span>
-                            </button>
-                            <div id="sizeFlyoutMenu" class="hidden absolute left-12 bottom-0 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 z-50 w-32">
-                                <span class="text-[10px] text-slate-400 font-bold border-b border-slate-800 pb-1">سماكة القلم:</span>
-                                <button type="button" onclick="setWbSize(1)" class="p-1 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between">
-                                    <span>دقيق جداً</span> <span class="font-mono text-[10px]">1px</span>
-                                </button>
-                                <button type="button" onclick="setWbSize(2)" class="p-1 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between">
-                                    <span>رفيع</span> <span class="font-mono text-[10px]">2px</span>
-                                </button>
-                                <button type="button" onclick="setWbSize(4)" class="p-1 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between">
-                                    <span>متوسط</span> <span class="font-mono text-[10px]">4px</span>
-                                </button>
-                                <button type="button" onclick="setWbSize(8)" class="p-1 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between">
-                                    <span>عريض</span> <span class="font-mono text-[10px]">8px</span>
-                                </button>
-                                <button type="button" onclick="setWbSize(14)" class="p-1 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between">
-                                    <span>ماركر</span> <span class="font-mono text-[10px]">14px</span>
-                                </button>
-                                <button type="button" onclick="setWbSize(24)" class="p-1 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between">
-                                    <span>عريض جداً</span> <span class="font-mono text-[10px]">24px</span>
-                                </button>
-                                <button type="button" onclick="setWbSize(36)" class="p-1 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between">
-                                    <span>جامبو</span> <span class="font-mono text-[10px]">36px</span>
-                                </button>
-                            </div>
-                        </div>
+                        <!-- سماكة وحجم الخط والقلم (زر الفتح) -->
+                        <button type="button" onclick="toggleSizeFlyout()" id="activeSizePreviewBtn" class="p-1 rounded-lg text-slate-300 hover:bg-slate-800 transition font-mono font-bold text-[10px]" title="سماكة الخط">
+                            <span id="activeSizePreview">4px</span>
+                        </button>
                     </div>
 
                     <!-- التراجع والإعادة والمسح -->
@@ -1033,7 +968,189 @@
                     </div>
                 </div>
 
-            </div>
+                <!-- قوائم الأدوات المنبثقة خارج الشريط لتفادي القص العرضي ومشاكل التمرير (Unclipped Floating Menus) -->
+                <!-- 1. قائمة الأشكال الهندسية الموسعة (13 شكلاً + تنزيل مباشر) -->
+                <div id="shapesFlyoutMenu" class="wb-flyout-menu hidden absolute left-16 top-10 bg-slate-900/98 border border-slate-700/90 rounded-2xl shadow-2xl p-3 flex flex-col gap-2 z-40 w-56 backdrop-blur-md">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                        <span class="text-xs text-white font-black flex items-center gap-1.5">
+                            <span>📐</span> <span>الأشكال والرسومات:</span>
+                        </span>
+                        <button type="button" onclick="closeAllWbFlyouts()" class="text-slate-400 hover:text-white text-xs">✕</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 text-xs font-bold max-h-56 overflow-y-auto scrollbar-none">
+                        <button type="button" onclick="selectWbShape('rect')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>🔲</span> <span>مستطيل</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('rounded_rect')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>◽</span> <span>مستدير</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('circle')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>⭕</span> <span>دائرة</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('triangle')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>🔺</span> <span>مثلث</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('diamond')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>🔶</span> <span>معين</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('star')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>⭐</span> <span>نجمة</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('heart')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>❤️</span> <span>قلب</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('line')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>➖</span> <span>خط</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('arrow')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>➡️</span> <span>سهم</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('double_arrow')" class="p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>↔️</span> <span>سهمين</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('checkmark')" class="p-1.5 rounded-xl hover:bg-emerald-600/80 text-emerald-200 flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>✔️</span> <span>صح</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('cross')" class="p-1.5 rounded-xl hover:bg-rose-600/80 text-rose-200 flex items-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>❌</span> <span>خطأ</span>
+                        </button>
+                        <button type="button" onclick="selectWbShape('bubble')" class="col-span-2 p-1.5 rounded-xl hover:bg-indigo-600/80 text-white flex items-center justify-center gap-1.5 bg-slate-800/60 border border-slate-700/50 transition">
+                            <span>💬</span> <span>فقاعة كلام وشرح</span>
+                        </button>
+                    </div>
+                    <div class="pt-1.5 border-t border-slate-800 space-y-1.5">
+                        <button type="button" onclick="toggleShapeFill()" id="btnShapeFill" class="w-full py-1 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-between transition">
+                            <span>تعبئة الشكل:</span>
+                            <span id="shapeFillState" class="text-indigo-400">مفرغ 🔲</span>
+                        </button>
+                        <button type="button" onclick="insertWbShapeAtCenter()" class="w-full py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition" title="إدراج الشكل المختار فوراً في منتصف السبورة">
+                            <span>📥</span> <span>تنزيل الشكل في وسط السبورة</span>
+                        </button>
+                        <p class="text-[10px] text-slate-400 text-center">أو انقر بالماوس/المس في أي مكان لتنزيل الشكل</p>
+                    </div>
+                </div>
+
+                <!-- 2. قائمة أختام التشجيع والتقييم (Stamps) -->
+                <div id="stampsFlyoutMenu" class="wb-flyout-menu hidden absolute left-16 top-28 bg-slate-900/98 border border-slate-700/90 rounded-2xl shadow-2xl p-2.5 grid grid-cols-3 gap-1.5 z-40 w-44 backdrop-blur-md">
+                    <div class="col-span-3 flex items-center justify-between border-b border-slate-800 pb-1 mb-1">
+                        <span class="text-[11px] text-slate-300 font-bold">أختام تشجيعية:</span>
+                        <button type="button" onclick="closeAllWbFlyouts()" class="text-slate-400 hover:text-white text-xs">✕</button>
+                    </div>
+                    <button type="button" onclick="selectWbStamp('⭐')" class="p-2 rounded-xl bg-slate-800/70 hover:bg-indigo-600 text-center text-xl transition shadow" title="نجمة إبداع">⭐</button>
+                    <button type="button" onclick="selectWbStamp('💯')" class="p-2 rounded-xl bg-slate-800/70 hover:bg-indigo-600 text-center text-xl transition shadow" title="ممتاز 100%">💯</button>
+                    <button type="button" onclick="selectWbStamp('👍')" class="p-2 rounded-xl bg-slate-800/70 hover:bg-indigo-600 text-center text-xl transition shadow" title="إعجاب ورائع">👍</button>
+                    <button type="button" onclick="selectWbStamp('👏')" class="p-2 rounded-xl bg-slate-800/70 hover:bg-indigo-600 text-center text-xl transition shadow" title="أحسنت وتصفيق">👏</button>
+                    <button type="button" onclick="selectWbStamp('❤️')" class="p-2 rounded-xl bg-slate-800/70 hover:bg-indigo-600 text-center text-xl transition shadow" title="مميز ومحبوب">❤️</button>
+                    <button type="button" onclick="selectWbStamp('👑')" class="p-2 rounded-xl bg-slate-800/70 hover:bg-indigo-600 text-center text-xl transition shadow" title="بطل الحصة">👑</button>
+                </div>
+
+                <!-- 3. لوحة الألوان المتكاملة (42 لوناً رائعاً + منتقي مخصص بدقة) -->
+                <div id="colorFlyoutMenu" class="wb-flyout-menu hidden absolute left-16 bottom-6 bg-slate-900/98 border border-slate-700/90 rounded-2xl shadow-2xl p-3 flex flex-col gap-2 z-40 w-64 backdrop-blur-md max-h-[85vh] overflow-y-auto scrollbar-none">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-4 h-4 rounded-full border border-white shadow-sm" id="colorIndicatorSwatch" style="background-color: #ef4444;"></div>
+                            <span class="text-xs text-white font-black">لوحة الألوان (42 لوناً):</span>
+                        </div>
+                        <span id="activeColorHex" class="font-mono text-[10px] text-indigo-300 font-bold">#EF4444</span>
+                    </div>
+
+                    <!-- شبكة الـ 42 لوناً (7 صفوف × 6 أعمدة) -->
+                    <div class="grid grid-cols-6 gap-2 py-1">
+                        <!-- صف 1: أحمر وتدرجاته -->
+                        <button type="button" onclick="setWbColor('#ef4444')" data-color="#ef4444" class="wb-color-swatch w-7 h-7 rounded-full bg-red-500 border border-white/30 hover:scale-125 transition shadow-sm" title="أحمر فاتح"></button>
+                        <button type="button" onclick="setWbColor('#dc2626')" data-color="#dc2626" class="wb-color-swatch w-7 h-7 rounded-full bg-red-600 border border-white/30 hover:scale-125 transition shadow-sm" title="أحمر ساطع"></button>
+                        <button type="button" onclick="setWbColor('#b91c1c')" data-color="#b91c1c" class="wb-color-swatch w-7 h-7 rounded-full bg-red-700 border border-white/30 hover:scale-125 transition shadow-sm" title="أحمر كلاسيكي"></button>
+                        <button type="button" onclick="setWbColor('#991b1b')" data-color="#991b1b" class="wb-color-swatch w-7 h-7 rounded-full bg-red-800 border border-white/30 hover:scale-125 transition shadow-sm" title="عنابي داكن"></button>
+                        <button type="button" onclick="setWbColor('#f43f5e')" data-color="#f43f5e" class="wb-color-swatch w-7 h-7 rounded-full bg-rose-500 border border-white/30 hover:scale-125 transition shadow-sm" title="مرجاني وردي"></button>
+                        <button type="button" onclick="setWbColor('#be123c')" data-color="#be123c" class="wb-color-swatch w-7 h-7 rounded-full bg-rose-700 border border-white/30 hover:scale-125 transition shadow-sm" title="قرمزي داكن"></button>
+
+                        <!-- صف 2: وردي وبنفسجي -->
+                        <button type="button" onclick="setWbColor('#ec4899')" data-color="#ec4899" class="wb-color-swatch w-7 h-7 rounded-full bg-pink-500 border border-white/30 hover:scale-125 transition shadow-sm" title="وردي زاهي"></button>
+                        <button type="button" onclick="setWbColor('#db2777')" data-color="#db2777" class="wb-color-swatch w-7 h-7 rounded-full bg-pink-600 border border-white/30 hover:scale-125 transition shadow-sm" title="فوشيا"></button>
+                        <button type="button" onclick="setWbColor('#d946ef')" data-color="#d946ef" class="wb-color-swatch w-7 h-7 rounded-full bg-fuchsia-500 border border-white/30 hover:scale-125 transition shadow-sm" title="ماجنتا"></button>
+                        <button type="button" onclick="setWbColor('#a855f7')" data-color="#a855f7" class="wb-color-swatch w-7 h-7 rounded-full bg-purple-500 border border-white/30 hover:scale-125 transition shadow-sm" title="بنفسجي مشرق"></button>
+                        <button type="button" onclick="setWbColor('#7e22ce')" data-color="#7e22ce" class="wb-color-swatch w-7 h-7 rounded-full bg-purple-700 border border-white/30 hover:scale-125 transition shadow-sm" title="أرجواني غامق"></button>
+                        <button type="button" onclick="setWbColor('#581c87')" data-color="#581c87" class="wb-color-swatch w-7 h-7 rounded-full bg-purple-900 border border-white/30 hover:scale-125 transition shadow-sm" title="بنفسجي ملكي"></button>
+
+                        <!-- صف 3: نيلي وأزرق غامق -->
+                        <button type="button" onclick="setWbColor('#818cf8')" data-color="#818cf8" class="wb-color-swatch w-7 h-7 rounded-full bg-indigo-400 border border-white/30 hover:scale-125 transition shadow-sm" title="نيلي فاتح"></button>
+                        <button type="button" onclick="setWbColor('#6366f1')" data-color="#6366f1" class="wb-color-swatch w-7 h-7 rounded-full bg-indigo-500 border border-white/30 hover:scale-125 transition shadow-sm" title="نيلي ساطع"></button>
+                        <button type="button" onclick="setWbColor('#4338ca')" data-color="#4338ca" class="wb-color-swatch w-7 h-7 rounded-full bg-indigo-700 border border-white/30 hover:scale-125 transition shadow-sm" title="نيلي داكن"></button>
+                        <button type="button" onclick="setWbColor('#3b82f6')" data-color="#3b82f6" class="wb-color-swatch w-7 h-7 rounded-full bg-blue-500 border border-white/30 hover:scale-125 transition shadow-sm" title="أزرق مشرق"></button>
+                        <button type="button" onclick="setWbColor('#1d4ed8')" data-color="#1d4ed8" class="wb-color-swatch w-7 h-7 rounded-full bg-blue-700 border border-white/30 hover:scale-125 transition shadow-sm" title="أزرق ملكي"></button>
+                        <button type="button" onclick="setWbColor('#1e3a8a')" data-color="#1e3a8a" class="wb-color-swatch w-7 h-7 rounded-full bg-blue-900 border border-white/30 hover:scale-125 transition shadow-sm" title="كحلي بحري"></button>
+
+                        <!-- صف 4: سماوي وتركواز -->
+                        <button type="button" onclick="setWbColor('#38bdf8')" data-color="#38bdf8" class="wb-color-swatch w-7 h-7 rounded-full bg-sky-400 border border-white/30 hover:scale-125 transition shadow-sm" title="سماوي فاتح"></button>
+                        <button type="button" onclick="setWbColor('#0284c7')" data-color="#0284c7" class="wb-color-swatch w-7 h-7 rounded-full bg-sky-600 border border-white/30 hover:scale-125 transition shadow-sm" title="أزرق بحري"></button>
+                        <button type="button" onclick="setWbColor('#06b6d4')" data-color="#06b6d4" class="wb-color-swatch w-7 h-7 rounded-full bg-cyan-500 border border-white/30 hover:scale-125 transition shadow-sm" title="سماوي مائي"></button>
+                        <button type="button" onclick="setWbColor('#0891b2')" data-color="#0891b2" class="wb-color-swatch w-7 h-7 rounded-full bg-cyan-600 border border-white/30 hover:scale-125 transition shadow-sm" title="تركواز بترولي"></button>
+                        <button type="button" onclick="setWbColor('#14b8a6')" data-color="#14b8a6" class="wb-color-swatch w-7 h-7 rounded-full bg-teal-500 border border-white/30 hover:scale-125 transition shadow-sm" title="تركواز مشرق"></button>
+                        <button type="button" onclick="setWbColor('#0f766e')" data-color="#0f766e" class="wb-color-swatch w-7 h-7 rounded-full bg-teal-700 border border-white/30 hover:scale-125 transition shadow-sm" title="أخضر تركوازي"></button>
+
+                        <!-- صف 5: زمردي وأخضر -->
+                        <button type="button" onclick="setWbColor('#34d399')" data-color="#34d399" class="wb-color-swatch w-7 h-7 rounded-full bg-emerald-400 border border-white/30 hover:scale-125 transition shadow-sm" title="زمردي فاتح"></button>
+                        <button type="button" onclick="setWbColor('#10b981')" data-color="#10b981" class="wb-color-swatch w-7 h-7 rounded-full bg-emerald-500 border border-white/30 hover:scale-125 transition shadow-sm" title="زمردي نضر"></button>
+                        <button type="button" onclick="setWbColor('#047857')" data-color="#047857" class="wb-color-swatch w-7 h-7 rounded-full bg-emerald-700 border border-white/30 hover:scale-125 transition shadow-sm" title="أخضر زمردي داكن"></button>
+                        <button type="button" onclick="setWbColor('#22c55e')" data-color="#22c55e" class="wb-color-swatch w-7 h-7 rounded-full bg-green-500 border border-white/30 hover:scale-125 transition shadow-sm" title="أخضر عشبي"></button>
+                        <button type="button" onclick="setWbColor('#15803d')" data-color="#15803d" class="wb-color-swatch w-7 h-7 rounded-full bg-green-700 border border-white/30 hover:scale-125 transition shadow-sm" title="أخضر غابات"></button>
+                        <button type="button" onclick="setWbColor('#84cc16')" data-color="#84cc16" class="wb-color-swatch w-7 h-7 rounded-full bg-lime-500 border border-white/30 hover:scale-125 transition shadow-sm" title="ليموني فاقع"></button>
+
+                        <!-- صف 6: أصفر وبرتقالي -->
+                        <button type="button" onclick="setWbColor('#a3e635')" data-color="#a3e635" class="wb-color-swatch w-7 h-7 rounded-full bg-lime-400 border border-white/30 hover:scale-125 transition shadow-sm" title="أخضر فسفوري"></button>
+                        <button type="button" onclick="setWbColor('#facc15')" data-color="#facc15" class="wb-color-swatch w-7 h-7 rounded-full bg-yellow-400 border border-white/30 hover:scale-125 transition shadow-sm" title="أصفر ذهبي"></button>
+                        <button type="button" onclick="setWbColor('#eab308')" data-color="#eab308" class="wb-color-swatch w-7 h-7 rounded-full bg-yellow-500 border border-white/30 hover:scale-125 transition shadow-sm" title="أصفر فاقع"></button>
+                        <button type="button" onclick="setWbColor('#f59e0b')" data-color="#f59e0b" class="wb-color-swatch w-7 h-7 rounded-full bg-amber-500 border border-white/30 hover:scale-125 transition shadow-sm" title="كهرماني"></button>
+                        <button type="button" onclick="setWbColor('#f97316')" data-color="#f97316" class="wb-color-swatch w-7 h-7 rounded-full bg-orange-500 border border-white/30 hover:scale-125 transition shadow-sm" title="برتقالي مشرق"></button>
+                        <button type="button" onclick="setWbColor('#ea580c')" data-color="#ea580c" class="wb-color-swatch w-7 h-7 rounded-full bg-orange-600 border border-white/30 hover:scale-125 transition shadow-sm" title="برتقالي ناري"></button>
+
+                        <!-- صف 7: بني، رمادي وأبيض وأسود -->
+                        <button type="button" onclick="setWbColor('#c2410c')" data-color="#c2410c" class="wb-color-swatch w-7 h-7 rounded-full bg-orange-800 border border-white/30 hover:scale-125 transition shadow-sm" title="طوبي محروق"></button>
+                        <button type="button" onclick="setWbColor('#9a3412')" data-color="#9a3412" class="wb-color-swatch w-7 h-7 rounded-full bg-amber-800 border border-white/30 hover:scale-125 transition shadow-sm" title="بني دافئ"></button>
+                        <button type="button" onclick="setWbColor('#78350f')" data-color="#78350f" class="wb-color-swatch w-7 h-7 rounded-full bg-amber-950 border border-white/30 hover:scale-125 transition shadow-sm" title="بني غامق"></button>
+                        <button type="button" onclick="setWbColor('#64748b')" data-color="#64748b" class="wb-color-swatch w-7 h-7 rounded-full bg-slate-500 border border-white/30 hover:scale-125 transition shadow-sm" title="رمادي أردوازي"></button>
+                        <button type="button" onclick="setWbColor('#0f172a')" data-color="#0f172a" class="wb-color-swatch w-7 h-7 rounded-full bg-slate-900 border border-white/50 hover:scale-125 transition shadow-sm" title="أسود فاحم"></button>
+                        <button type="button" onclick="setWbColor('#ffffff')" data-color="#ffffff" class="wb-color-swatch w-7 h-7 rounded-full bg-white border border-slate-400 hover:scale-125 transition shadow-sm" title="أبيض ناصع"></button>
+                    </div>
+
+                    <!-- اختيار لون مخصص إضافي -->
+                    <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                        <span class="font-bold">لون مخصص إضافي:</span>
+                        <div class="flex items-center gap-1.5">
+                            <input type="color" id="wbCustomColorInput" value="#ef4444" onchange="setWbColor(this.value)" class="w-8 h-8 rounded-xl cursor-pointer border border-slate-600 bg-transparent p-0 shadow transition hover:scale-110" title="اختر أي لون مخصص بدقة">
+                            <span class="text-[10px] text-slate-400">انقر للاختيار</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. قائمة سماكة وحجم الخط والقلم (7 أحجام) -->
+                <div id="sizeFlyoutMenu" class="wb-flyout-menu hidden absolute left-16 bottom-16 bg-slate-900/98 border border-slate-700/90 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 z-40 w-36 backdrop-blur-md">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-1 mb-1">
+                        <span class="text-[11px] text-slate-300 font-bold">سماكة القلم:</span>
+                        <button type="button" onclick="closeAllWbFlyouts()" class="text-slate-400 hover:text-white text-xs">✕</button>
+                    </div>
+                    <button type="button" onclick="setWbSize(1)" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between transition">
+                        <span>دقيق جداً</span> <span class="font-mono text-[10px] text-indigo-300">1px</span>
+                    </button>
+                    <button type="button" onclick="setWbSize(2)" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between transition">
+                        <span>رفيع</span> <span class="font-mono text-[10px] text-indigo-300">2px</span>
+                    </button>
+                    <button type="button" onclick="setWbSize(4)" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between transition">
+                        <span>متوسط</span> <span class="font-mono text-[10px] text-indigo-300">4px</span>
+                    </button>
+                    <button type="button" onclick="setWbSize(8)" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between transition">
+                        <span>عريض</span> <span class="font-mono text-[10px] text-indigo-300">8px</span>
+                    </button>
+                    <button type="button" onclick="setWbSize(14)" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between transition">
+                        <span>ماركر</span> <span class="font-mono text-[10px] text-indigo-300">14px</span>
+                    </button>
+                    <button type="button" onclick="setWbSize(24)" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between transition">
+                        <span>عريض جداً</span> <span class="font-mono text-[10px] text-indigo-300">24px</span>
+                    </button>
+                    <button type="button" onclick="setWbSize(36)" class="p-1.5 rounded-lg hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-between transition">
+                        <span>جامبو</span> <span class="font-mono text-[10px] text-indigo-300">36px</span>
+                    </button>
+                </div>
         </section>
 
     </main>
@@ -1168,6 +1285,146 @@
                 <button type="button" onclick="closeWbMediaModals(); document.getElementById('wbLocalFileInput').click();" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition shadow">
                     اختر ملف فيديو 📤
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة مكتبة كتب ومذكرات الدورة المتكاملة (PDF Books & Documents Library Modal) -->
+    <div id="wbBooksLibraryModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5" onclick="closeBooksLibraryModal()">
+        <div class="max-w-3xl w-full bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden" onclick="event.stopPropagation()">
+            
+            <!-- ترويسة النافذة المنبثقة -->
+            <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-xl shadow-inner">
+                        <span>📖</span>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-white">مكتبة كتب ومذكرات الدورة التدريبية</h3>
+                        <p class="text-xs text-slate-400">استعرض كتب المنهج ومذكرات المجموعة واشرح للطلاب عليها كقارئ PDF متكامل</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeBooksLibraryModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-400 flex items-center justify-center transition font-bold text-sm">✕</button>
+            </div>
+
+            <!-- أزرار التبويبات الثلاثة -->
+            <div class="p-2.5 bg-slate-950/50 border-b border-slate-800 shrink-0">
+                <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-2xl border border-slate-800 text-xs font-bold">
+                    <button type="button" onclick="switchBookLibTab('curriculum')" id="btnBookLibTab_curriculum" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white transition flex items-center justify-center gap-1.5 shadow">
+                        <span>📚</span>
+                        <span>كتب المنهج المعتمدة</span>
+                        <span class="bg-indigo-950 text-indigo-200 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupBooks->count() }}</span>
+                    </button>
+                    <button type="button" onclick="switchBookLibTab('wall')" id="btnBookLibTab_wall" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
+                        <span>📝</span>
+                        <span>حائط وأنشطة المجموعة</span>
+                        <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupWallPdfs->count() }}</span>
+                    </button>
+                    <button type="button" onclick="switchBookLibTab('upload')" id="btnBookLibTab_upload" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
+                        <span>📤</span>
+                        <span>رفع كتاب من جهازي</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- المحتوى التفاعلي للتبويبات -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+                
+                <!-- 1. تبويب كتب المنهج المعتمدة للمستوى -->
+                <div id="bookLibTab_curriculum" class="space-y-3">
+                    <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-2xl text-xs text-indigo-200 flex items-start gap-2">
+                        <span class="text-base shrink-0">💡</span>
+                        <span>كتب المنهج المعتمدة تفتح داخل السبورة كقارئ PDF كامل، مع إمكانية التنقل بين جميع الصفحات بالأسهم والرسم والشرح فوقها للطلاب.</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        @forelse($groupBooks as $bk)
+                            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 flex flex-col justify-between gap-3 transition group">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-800/60 flex items-center justify-center text-lg shrink-0">
+                                        <span>📕</span>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-bold text-white text-xs truncate group-hover:text-indigo-300 transition" title="{{ $bk->title }}">{{ $bk->title }}</h4>
+                                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5">PDF • كتاب الدورة المعتمد</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
+                                    @if($isTeacher)
+                                        <button type="button" onclick="openResourceInWorkspace('{{ asset($bk->file_path) }}', '{{ addslashes($bk->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                            <span>🚀</span>
+                                            <span>فتح للشرح الآن</span>
+                                        </button>
+                                    @endif
+                                    <a href="{{ asset($bk->file_path) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة أو تنزيل">
+                                        <span>⬇️</span>
+                                    </a>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
+                                <span>لا توجد كتب PDF مسجلة لهذا المستوى حالياً. يمكنك استخدام تبويب "رفع كتاب من جهازي" لمشاركة أي كتاب فوراً.</span>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- 2. تبويب ملفات وأوراق عمل حائط المجموعة -->
+                <div id="bookLibTab_wall" class="hidden space-y-3">
+                    <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-2xl text-xs text-indigo-200 flex items-start gap-2">
+                        <span class="text-base shrink-0">📌</span>
+                        <span>أوراق العمل والمذكرات المنشورة في أنشطة وحائط المجموعة قابلة للاستعراض والشرح الفوري.</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        @forelse($groupWallPdfs as $act)
+                            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 flex flex-col justify-between gap-3 transition">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-800/60 flex items-center justify-center text-lg shrink-0">
+                                        <span>📄</span>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-bold text-white text-xs truncate" title="{{ $act->title }}">{{ $act->title }}</h4>
+                                        <span class="text-[10px] text-purple-300 font-mono block mt-0.5">مذكرة / ورقة عمل</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
+                                    @if($isTeacher)
+                                        <button type="button" onclick="openResourceInWorkspace('{{ asset($act->file_path) }}', '{{ addslashes($act->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                            <span>🚀</span>
+                                            <span>فتح للشرح الآن</span>
+                                        </button>
+                                    @endif
+                                    <a href="{{ asset($act->file_path) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة">
+                                        <span>⬇️</span>
+                                    </a>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
+                                <span>لا توجد مذكرات أو ملفات PDF منشورة بحائط المجموعة بعد.</span>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- 3. تبويب رفع كتاب PDF من الجهاز فوراً -->
+                <div id="bookLibTab_upload" class="hidden space-y-4">
+                    <div class="border-2 border-dashed border-indigo-500/40 hover:border-indigo-400 bg-indigo-950/20 hover:bg-indigo-950/30 rounded-3xl p-6 sm:p-8 text-center transition cursor-pointer" onclick="document.getElementById('wbLocalFileInput').click(); closeBooksLibraryModal();">
+                        <div class="w-16 h-16 mx-auto rounded-3xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-3xl mb-3 shadow-inner">
+                            <span>📕</span>
+                        </div>
+                        <h4 class="text-sm font-black text-white mb-1">انقر هنا لاختيار كتاب أو مذكرة PDF من جهازك</h4>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                            سيتم فتح الكتاب فوراً داخل مساحة الشرح بجميع صفحاته، لتبدأ التصفح والشرح للطلاب دون أي تأخير، مع رفعه ومزامنته تلقائياً.
+                        </p>
+                        <button type="button" class="mt-4 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition inline-flex items-center gap-2">
+                            <span>📂</span>
+                            <span>استعراض ملفات جهازي</span>
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -1361,6 +1618,19 @@
                     break;
                 case 'laser_hide':
                     renderRemoteLaser({ active: false });
+                    break;
+                case 'wb_video_state':
+                    const vSyncEl = document.getElementById('whiteboardHtml5Video');
+                    if (vSyncEl && !IS_TEACHER) {
+                        if (typeof data.time === 'number' && Math.abs(vSyncEl.currentTime - data.time) > 1.5) {
+                            vSyncEl.currentTime = data.time;
+                        }
+                        if (data.action === 'play') {
+                            vSyncEl.play().catch(() => {});
+                        } else if (data.action === 'pause') {
+                            vSyncEl.pause();
+                        }
+                    }
                     break;
             }
         } catch (e) {
@@ -2369,43 +2639,37 @@
     }
 
     function appendLiveChatMessage(msg) {
+        if (!msg || msg.type === 'system') return;
         const container = document.getElementById('liveChatMessagesContainer');
         if (!container) return;
 
         // التحقق من عدم التكرار
         if (document.getElementById('chatMsg_' + msg.id)) return;
 
-        const isSystem = msg.type === 'system';
+        const isMine = msg.user_id === CURRENT_USER_ID;
         const div = document.createElement('div');
         div.id = 'chatMsg_' + msg.id;
-
-        if (isSystem) {
-            div.className = "p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-amber-300 text-center font-bold";
-            div.textContent = msg.content;
-        } else {
-            const isMine = msg.user_id === CURRENT_USER_ID;
-            div.className = `p-3 rounded-2xl border ${msg.is_student ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-indigo-800/40 bg-indigo-950/20'} space-y-1.5`;
-            div.innerHTML = `
-                <div class="flex justify-between items-center text-[10px]">
-                    <span class="font-bold flex items-center gap-1 text-slate-300">
-                        <span>${msg.is_student ? '🎒' : '👨‍🏫'}</span>
-                        <span>${msg.user_name} ${isMine ? '(أنت)' : ''}</span>
-                    </span>
-                    <span class="text-slate-500 font-mono">${msg.time}</span>
+        div.className = `p-3 rounded-2xl border ${msg.is_student ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-indigo-800/40 bg-indigo-950/20'} space-y-1.5`;
+        div.innerHTML = `
+            <div class="flex justify-between items-center text-[10px]">
+                <span class="font-bold flex items-center gap-1 text-slate-300">
+                    <span>${msg.is_student ? '🎒' : '👨‍🏫'}</span>
+                    <span>${msg.user_name} ${isMine ? '(أنت)' : ''}</span>
+                </span>
+                <span class="text-slate-500 font-mono">${msg.time}</span>
+            </div>
+            ${msg.content ? `<div class="text-xs text-slate-200 leading-relaxed">${msg.content}</div>` : ''}
+            ${msg.type === 'image' || msg.type === 'worksheet' ? `
+                <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-36 flex items-center justify-center mt-1" onclick="openLiveImageModal('${msg.file_path}', '${addslashes(msg.content || '')}')">
+                    <img src="${msg.file_path}" class="w-full h-full object-cover">
                 </div>
-                ${msg.content ? `<div class="text-xs text-slate-200 leading-relaxed">${msg.content}</div>` : ''}
-                ${msg.type === 'image' || msg.type === 'worksheet' ? `
-                    <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-36 flex items-center justify-center mt-1" onclick="openLiveImageModal('${msg.file_path}', '${addslashes(msg.content || '')}')">
-                        <img src="${msg.file_path}" class="w-full h-full object-cover">
-                    </div>
-                ` : ''}
-                ${msg.type === 'audio' ? `
-                    <div class="bg-purple-950/40 p-2 rounded-xl border border-purple-800/40 mt-1">
-                        <audio controls src="${msg.file_path}" class="w-full h-8"></audio>
-                    </div>
-                ` : ''}
-            `;
-        }
+            ` : ''}
+            ${msg.type === 'audio' ? `
+                <div class="bg-purple-950/40 p-2 rounded-xl border border-purple-800/40 mt-1">
+                    <audio controls src="${msg.file_path}" class="w-full h-8"></audio>
+                </div>
+            ` : ''}
+        `;
 
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
@@ -2628,13 +2892,6 @@
             document.getElementById('modalStarsInput').value = stars;
         }
 
-        // إرسال تنبيه في الشات لجميع الطلاب
-        fetch(`/classroom/${ROOM_ID}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
-            body: JSON.stringify({ type: 'system', content: `⭐ كافأ المعلم طلاب المجموعة بنجمة تشجيعية جديدة! (إجمالي النجوم: ${stars})` })
-        }).catch(console.error);
-
         alert('🌟 أحسنت! تم منح نجمة تشجيعية.');
     }
 
@@ -2669,11 +2926,79 @@
     }
 
     function openReportModal() {
-        document.getElementById('reportModal').classList.remove('hidden');
+        document.getElementById('reportModal')?.classList.remove('hidden');
     }
     function closeReportModal() {
-        document.getElementById('reportModal').classList.add('hidden');
+        document.getElementById('reportModal')?.classList.add('hidden');
     }
+
+    // طي وتوسيع الشريط الجانبي الأيمن لتوفير مساحة 100% للسبورة والشرح
+    function toggleSidebarCollapse() {
+        const aside = document.getElementById('liveInteractivePanel');
+        const restoreBtn = document.getElementById('btnRestoreSidebar');
+        const toggleIcon = document.getElementById('sidebarToggleIcon');
+        if (!aside) return;
+
+        const isCollapsed = aside.classList.contains('lg:hidden') || aside.classList.contains('hidden');
+        if (isCollapsed) {
+            aside.classList.remove('lg:hidden', 'hidden');
+            if (restoreBtn) restoreBtn.classList.add('hidden');
+            if (toggleIcon) toggleIcon.textContent = '◀';
+        } else {
+            aside.classList.add('lg:hidden', 'hidden');
+            if (restoreBtn) restoreBtn.classList.remove('hidden');
+            if (toggleIcon) toggleIcon.textContent = '▶';
+        }
+
+        // إعادة ضبط أبعاد الكانفاس فوراً لتمديد السبورة على كامل العرض الجديد
+        setTimeout(() => {
+            ensureCanvasLayerDimensions();
+        }, 180);
+    }
+
+    // دوال نافذة مكتبة كتب ومذكرات الدورة المتكاملة (PDF Books Library)
+    function openBooksLibraryModal() {
+        document.getElementById('wbBooksLibraryModal')?.classList.remove('hidden');
+    }
+    function closeBooksLibraryModal() {
+        document.getElementById('wbBooksLibraryModal')?.classList.add('hidden');
+    }
+    function switchBookLibTab(tab) {
+        const tabs = ['curriculum', 'wall', 'upload'];
+        tabs.forEach(t => {
+            const pane = document.getElementById('bookLibTab_' + t);
+            const btn = document.getElementById('btnBookLibTab_' + t);
+            if (t === tab) {
+                pane?.classList.remove('hidden');
+                btn?.classList.add('bg-indigo-600', 'text-white', 'shadow');
+                btn?.classList.remove('text-slate-400');
+            } else {
+                pane?.classList.add('hidden');
+                btn?.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+                btn?.classList.add('text-slate-400');
+            }
+        });
+    }
+
+    // التنقل بأسهم لوحة المفاتيح لتصفح صفحات الكتاب كقارئ PDF حقيقي
+    document.addEventListener('keydown', (e) => {
+        if (e.target.closest('input, textarea, select')) return;
+        if (wbCurrentBg && wbCurrentBg.type === 'pdf') {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+                e.preventDefault();
+                changeWbPage(1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                changeWbPage(-1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                changeWbPageTo(1);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                changeWbPageTo(wbTotalPages);
+            }
+        }
+    });
 
     // ==========================================
     // محرك مساحة الشرح والسبورة التفاعلية (Zoom Live Engine)
@@ -2695,6 +3020,11 @@
     let wbPdfDoc = null;
     let wbTotalPages = 1;
     let wbCurrentPage = 1;
+    let wbPdfScale = 1.8;
+    const wbPdfPageStrokesCache = {}; // حفظ شروحات وملاحظات كل صفحة في الكتاب
+    function getPdfCacheKey(url, pageNum) {
+        return (url || 'current') + '_p_' + pageNum;
+    }
     let wbMagicStrokes = [];
     let wbLastLaserSentAt = 0;
     let wbTextCoords = null;
@@ -2720,7 +3050,7 @@
 
         // إغلاق القوائم المنبثقة عند النقر في أي مكان آخر
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#wbLeftToolbar') && !e.target.closest('#btnBooksDropdown')) {
+            if (!e.target.closest('#wbLeftToolbar') && !e.target.closest('.wb-flyout-menu') && !e.target.closest('#btnBooksDropdown')) {
                 closeAllWbFlyouts();
             }
         });
@@ -2728,25 +3058,100 @@
         // حلقة التلاشي للقلم السحري (Magic vanishing ink)
         requestAnimationFrame(magicStrokesAnimationLoop);
 
+        // تهيئة مستمعات مشغل الفيديو التعليمي
+        initHtml5VideoListeners();
+
         // تحديث المظهر الافتراضي للأدوات
         selectWbTool('pen');
         setWbColor('#ef4444');
         setWbSize(4);
     }
 
+    function getWbContentBox() {
+        const canvas = document.getElementById('whiteboardDrawCanvas');
+        const container = document.getElementById('whiteboardContainer');
+        if (!canvas || !container) return null;
+
+        const rect = canvas.getBoundingClientRect();
+        const contRect = container.getBoundingClientRect();
+        const cw = canvas.width || 1600;
+        const ch = canvas.height || 1000;
+        const rw = rect.width;
+        const rh = rect.height;
+        if (rw === 0 || rh === 0) return null;
+
+        const canvasAspect = cw / ch;
+        const elementAspect = rw / rh;
+        let renderedWidth, renderedHeight, offsetX, offsetY;
+
+        if (elementAspect > canvasAspect) {
+            renderedHeight = rh;
+            renderedWidth = rh * canvasAspect;
+            offsetX = (rw - renderedWidth) / 2;
+            offsetY = 0;
+        } else {
+            renderedWidth = rw;
+            renderedHeight = rw / canvasAspect;
+            offsetX = 0;
+            offsetY = (rh - renderedHeight) / 2;
+        }
+
+        return {
+            cw, ch, rw, rh,
+            rect, contRect,
+            renderedWidth, renderedHeight,
+            offsetX, offsetY,
+            contentLeftInContainer: (rect.left - contRect.left) + offsetX,
+            contentTopInContainer: (rect.top - contRect.top) + offsetY,
+        };
+    }
+
     function getWbCoords(e) {
         const canvas = document.getElementById('whiteboardDrawCanvas');
-        if (!canvas) return { x: 0, y: 0, normX: 0, normY: 0 };
+        if (!canvas) return { x: 0, y: 0, normX: 0, normY: 0, clientX: 0, clientY: 0 };
         const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY;
+        const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : (e.clientX ?? 0);
+        const clientY = (e.touches && e.touches[0]) ? e.touches[0].clientY : (e.clientY ?? 0);
 
-        const x = (clientX - rect.left) * (canvas.width / rect.width);
-        const y = (clientY - rect.top) * (canvas.height / rect.height);
-        const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+        const cw = canvas.width;
+        const ch = canvas.height;
+        const rw = rect.width;
+        const rh = rect.height;
 
-        return { x, y, normX, normY };
+        if (rw === 0 || rh === 0 || cw === 0 || ch === 0) {
+            return { x: 0, y: 0, normX: 0, normY: 0, clientX, clientY };
+        }
+
+        const canvasAspect = cw / ch;
+        const elementAspect = rw / rh;
+
+        let renderedWidth, renderedHeight, offsetX, offsetY;
+
+        if (elementAspect > canvasAspect) {
+            renderedHeight = rh;
+            renderedWidth = rh * canvasAspect;
+            offsetX = (rw - renderedWidth) / 2;
+            offsetY = 0;
+        } else {
+            renderedWidth = rw;
+            renderedHeight = rw / canvasAspect;
+            offsetX = 0;
+            offsetY = (rh - renderedHeight) / 2;
+        }
+
+        const clickXInElement = clientX - rect.left;
+        const clickYInElement = clientY - rect.top;
+
+        const contentX = clickXInElement - offsetX;
+        const contentY = clickYInElement - offsetY;
+
+        const x = contentX * (cw / renderedWidth);
+        const y = contentY * (ch / renderedHeight);
+
+        const normX = Math.max(0, Math.min(1, contentX / renderedWidth));
+        const normY = Math.max(0, Math.min(1, contentY / renderedHeight));
+
+        return { x, y, normX, normY, clientX, clientY };
     }
 
     function selectWbTool(tool) {
@@ -2771,8 +3176,10 @@
                 drawCanvas.classList.add('cursor-default');
             } else {
                 drawCanvas.style.pointerEvents = 'auto';
-                if (tool === 'pen' || tool === 'brush') drawCanvas.classList.add('cursor-pen');
+                if (tool === 'pen') drawCanvas.classList.add('cursor-pen');
+                else if (tool === 'brush') drawCanvas.classList.add('cursor-brush');
                 else if (tool === 'highlighter') drawCanvas.classList.add('cursor-highlighter');
+                else if (tool === 'magic') drawCanvas.classList.add('cursor-magic');
                 else if (tool === 'eraser') drawCanvas.classList.add('cursor-eraser');
                 else if (tool === 'laser') drawCanvas.classList.add('cursor-laser');
                 else if (tool === 'text') drawCanvas.classList.add('cursor-text');
@@ -2817,10 +3224,12 @@
             rounded_rect: '◽',
             circle: '⭕',
             triangle: '🔺',
+            diamond: '🔶',
+            heart: '❤️',
+            star: '⭐',
             line: '➖',
             arrow: '➡️',
             double_arrow: '↔️',
-            star: '⭐',
             checkmark: '✔️',
             cross: '❌',
             bubble: '💬'
@@ -2830,12 +3239,78 @@
         closeAllWbFlyouts();
     }
 
+    function insertWbShapeAtCenter(shape = null) {
+        if (shape) {
+            selectWbShape(shape);
+        }
+        const canvas = document.getElementById('whiteboardDrawCanvas');
+        const cw = canvas ? canvas.width : 1600;
+        const ch = canvas ? canvas.height : 1000;
+        const shapeToInsert = shape || wbActiveShape || 'rect';
+
+        const stroke = {
+            tool: 'shapes',
+            shape: shapeToInsert,
+            filled: wbShapeFilled,
+            color: wbCurrentColor,
+            size: wbCurrentSize,
+            createdAt: Date.now()
+        };
+
+        if (shapeToInsert === 'line' || shapeToInsert === 'arrow' || shapeToInsert === 'double_arrow') {
+            stroke.x1 = (cw / 2) - 100;
+            stroke.y1 = ch / 2;
+            stroke.x2 = (cw / 2) + 100;
+            stroke.y2 = ch / 2;
+        } else if (shapeToInsert === 'checkmark' || shapeToInsert === 'cross') {
+            const sz = 60;
+            stroke.x1 = (cw / 2) - sz;
+            stroke.y1 = (ch / 2) - sz;
+            stroke.x2 = (cw / 2) + sz;
+            stroke.y2 = (ch / 2) + sz;
+        } else {
+            const w = 180;
+            const h = 130;
+            stroke.x1 = (cw / 2) - (w / 2);
+            stroke.y1 = (ch / 2) - (h / 2);
+            stroke.x2 = (cw / 2) + (w / 2);
+            stroke.y2 = (ch / 2) + (h / 2);
+        }
+
+        wbStrokes.push(stroke);
+        wbUndoStack.push(JSON.parse(JSON.stringify(wbStrokes)));
+        wbRedoStack = [];
+        redrawWhiteboard();
+        commitWhiteboardChange();
+        broadcastP2P({ type: 'wb_stroke', stroke: stroke });
+        closeAllWbFlyouts();
+    }
+
     function setWbColor(color) {
         wbCurrentColor = color;
         const preview = document.getElementById('activeColorPreview');
         if (preview) preview.style.backgroundColor = color;
+        const swatch = document.getElementById('colorIndicatorSwatch');
+        if (swatch) swatch.style.backgroundColor = color;
+        const hex = document.getElementById('activeColorHex');
+        if (hex) hex.textContent = color.toUpperCase();
         const customInput = document.getElementById('wbCustomColorInput');
         if (customInput) customInput.value = color;
+
+        // تمييز اللون المختار في لوحة الألوان
+        document.querySelectorAll('.wb-color-swatch').forEach(btn => {
+            if (btn.getAttribute('data-color')?.toLowerCase() === color.toLowerCase()) {
+                btn.classList.add('ring-2', 'ring-white', 'scale-125');
+            } else {
+                btn.classList.remove('ring-2', 'ring-white', 'scale-125');
+            }
+        });
+
+        // إذا كان المعلم على الممحاة أو الماوس، نقله تلقائياً للقلم للكتابة باللون الجديد فوراً
+        if (wbCurrentTool === 'eraser' || wbCurrentTool === 'select') {
+            selectWbTool('pen');
+        }
+
         closeAllWbFlyouts();
     }
 
@@ -2933,7 +3408,7 @@
         }
 
         if (wbCurrentTool === 'text') {
-            openWbTextInput(coords.x, coords.y, e.clientX, e.clientY);
+            openWbTextInput(coords.x, coords.y, coords.clientX, coords.clientY);
             return;
         }
 
@@ -3000,6 +3475,35 @@
             wbCurrentStroke = null;
             commitWhiteboardChange();
             return;
+        }
+
+        if (wbCurrentTool === 'shapes') {
+            const dx = Math.abs(wbCurrentStroke.x2 - wbCurrentStroke.x1);
+            const dy = Math.abs(wbCurrentStroke.y2 - wbCurrentStroke.y1);
+            // إذا نقر المعلم نقرة واحدة على السبورة دون سحب، نقوم بتنزيل الشكل مباشرة بحجم مناسب في موضع النقرة
+            if (dx < 10 && dy < 10) {
+                const clickX = wbCurrentStroke.x1;
+                const clickY = wbCurrentStroke.y1;
+                const shape = wbCurrentStroke.shape;
+                if (shape === 'line' || shape === 'arrow' || shape === 'double_arrow') {
+                    wbCurrentStroke.x1 = clickX - 70;
+                    wbCurrentStroke.y1 = clickY;
+                    wbCurrentStroke.x2 = clickX + 70;
+                    wbCurrentStroke.y2 = clickY;
+                } else if (shape === 'checkmark' || shape === 'cross') {
+                    wbCurrentStroke.x1 = clickX - 35;
+                    wbCurrentStroke.y1 = clickY - 35;
+                    wbCurrentStroke.x2 = clickX + 35;
+                    wbCurrentStroke.y2 = clickY + 35;
+                } else {
+                    const defW = 140;
+                    const defH = 100;
+                    wbCurrentStroke.x1 = clickX - (defW / 2);
+                    wbCurrentStroke.y1 = clickY - (defH / 2);
+                    wbCurrentStroke.x2 = clickX + (defW / 2);
+                    wbCurrentStroke.y2 = clickY + (defH / 2);
+                }
+            }
         }
 
         wbStrokes.push(wbCurrentStroke);
@@ -3189,6 +3693,22 @@
                 const cy = ry + rh / 2;
                 const outer = Math.max(rw, rh) / 2;
                 drawStar(ctx, cx, cy, 5, outer, outer * 0.45, stroke.filled);
+            } else if (stroke.shape === 'diamond') {
+                const cx = rx + rw / 2;
+                const cy = ry + rh / 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, ry);
+                ctx.lineTo(rx + rw, cy);
+                ctx.lineTo(cx, ry + rh);
+                ctx.lineTo(rx, cy);
+                ctx.closePath();
+                if (stroke.filled) {
+                    ctx.fillStyle = stroke.color + '45';
+                    ctx.fill();
+                }
+                ctx.stroke();
+            } else if (stroke.shape === 'heart') {
+                drawHeart(ctx, x1, y1, x2, y2, stroke.filled);
             } else if (stroke.shape === 'checkmark') {
                 drawCheckmark(ctx, x1, y1, x2, y2);
             } else if (stroke.shape === 'cross') {
@@ -3333,6 +3853,24 @@
         ctx.stroke();
     }
 
+    function drawHeart(ctx, x1, y1, x2, y2, filled = false) {
+        const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
+        const rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+        ctx.beginPath();
+        const topCurveHeight = rh * 0.3;
+        ctx.moveTo(rx + rw / 2, ry + topCurveHeight);
+        ctx.bezierCurveTo(rx + rw / 2, ry, rx, ry, rx, ry + topCurveHeight);
+        ctx.bezierCurveTo(rx, ry + (rh + topCurveHeight) / 2, rx + rw / 2, ry + (rh + topCurveHeight) / 2, rx + rw / 2, ry + rh);
+        ctx.bezierCurveTo(rx + rw / 2, ry + (rh + topCurveHeight) / 2, rx + rw, ry + (rh + topCurveHeight) / 2, rx + rw, ry + topCurveHeight);
+        ctx.bezierCurveTo(rx + rw, ry, rx + rw / 2, ry, rx + rw / 2, ry + topCurveHeight);
+        ctx.closePath();
+        if (filled) {
+            ctx.fillStyle = ctx.strokeStyle + '45';
+            ctx.fill();
+        }
+        ctx.stroke();
+    }
+
     function redrawWhiteboard(withCurrent = false) {
         const canvas = document.getElementById('whiteboardDrawCanvas');
         if (!canvas) return;
@@ -3366,8 +3904,14 @@
     function renderLocalLaser(normX, normY) {
         const laserEl = document.getElementById('liveLaserPointer');
         if (!laserEl) return;
-        laserEl.style.left = (normX * 100) + '%';
-        laserEl.style.top = (normY * 100) + '%';
+        const box = getWbContentBox();
+        if (box) {
+            laserEl.style.left = (box.contentLeftInContainer + normX * box.renderedWidth) + 'px';
+            laserEl.style.top = (box.contentTopInContainer + normY * box.renderedHeight) + 'px';
+        } else {
+            laserEl.style.left = (normX * 100) + '%';
+            laserEl.style.top = (normY * 100) + '%';
+        }
         laserEl.classList.remove('hidden');
         const badge = document.getElementById('laserUserBadge');
         if (badge) badge.textContent = `🔴 ${CURRENT_USER_NAME}`;
@@ -3377,8 +3921,14 @@
         const laserEl = document.getElementById('liveLaserPointer');
         if (!laserEl) return;
         if (state && state.active) {
-            laserEl.style.left = (state.x * 100) + '%';
-            laserEl.style.top = (state.y * 100) + '%';
+            const box = getWbContentBox();
+            if (box) {
+                laserEl.style.left = (box.contentLeftInContainer + state.x * box.renderedWidth) + 'px';
+                laserEl.style.top = (box.contentTopInContainer + state.y * box.renderedHeight) + 'px';
+            } else {
+                laserEl.style.left = (state.x * 100) + '%';
+                laserEl.style.top = (state.y * 100) + '%';
+            }
             laserEl.classList.remove('hidden');
             const badge = document.getElementById('laserUserBadge');
             if (badge && state.user_name) {
@@ -3578,16 +4128,26 @@
         const container = document.getElementById('whiteboardContainer');
         const drawCanvas = document.getElementById('whiteboardDrawCanvas');
         const bgCanvas = document.getElementById('whiteboardBgCanvas');
-        if (container && drawCanvas) {
+        if (!container || !drawCanvas) return;
+
+        if (wbCurrentBg.type === 'pdf' && wbCurrentBg.url) {
+            renderPdfPage(wbCurrentBg.url, wbCurrentPage);
+        } else if (wbCurrentBg.type === 'image' && wbCurrentBg.url) {
+            renderImageBackground(wbCurrentBg.url);
+        } else if (wbCurrentBg.type === 'browser' || wbCurrentBg.type === 'video') {
             const w = container.clientWidth || 1600;
             const h = container.clientHeight || 1000;
             drawCanvas.width = w;
             drawCanvas.height = h;
-            if (bgCanvas) {
-                bgCanvas.width = w;
-                bgCanvas.height = h;
-            }
+            if (bgCanvas) { bgCanvas.width = w; bgCanvas.height = h; }
             redrawWhiteboard();
+        } else {
+            const w = container.clientWidth || 1600;
+            const h = container.clientHeight || 1000;
+            drawCanvas.width = w;
+            drawCanvas.height = h;
+            if (bgCanvas) { bgCanvas.width = w; bgCanvas.height = h; }
+            renderBlankBackground(wbCurrentBg.type);
         }
     }
 
@@ -3639,6 +4199,7 @@
         if (modeIcon) modeIcon.textContent = '🌐';
         if (modeText) modeText.textContent = title;
         document.getElementById('wbPageNavControls')?.classList.add('hidden');
+        document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
 
         wbCurrentBg = { type: 'browser', url: url, title: title, page_num: 1 };
         wbStrokes = [];
@@ -3661,6 +4222,7 @@
         if (modeIcon) modeIcon.textContent = '🎬';
         if (modeText) modeText.textContent = title;
         document.getElementById('wbPageNavControls')?.classList.add('hidden');
+        document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
 
         wbCurrentBg = { type: 'video', url: url, title: title, page_num: 1 };
         wbStrokes = [];
@@ -3685,13 +4247,27 @@
         closeAllWbFlyouts();
         hideMediaLayers();
 
+        // 1. حفظ شروحات وملاحظات الصفحة الحالية في الكاش إن وجد كتاب PDF مفتوح
+        if (wbCurrentBg && wbCurrentBg.type === 'pdf' && wbCurrentBg.url && wbCurrentPage) {
+            wbPdfPageStrokesCache[getPdfCacheKey(wbCurrentBg.url, wbCurrentPage)] = JSON.parse(JSON.stringify(wbStrokes));
+        }
+
         const modeIcon = document.getElementById('wbModeIcon');
         const modeText = document.getElementById('wbModeText');
         if (modeIcon) modeIcon.textContent = (type === 'pdf') ? '📖' : '🖼️';
         if (modeText) modeText.textContent = title;
 
         wbCurrentBg = { type: type, url: url, title: title, page_num: pageNum };
-        wbStrokes = [];
+
+        // 2. تحميل شروحات وملاحظات الصفحة الجديدة إذا وُجدت
+        if (type === 'pdf') {
+            const cacheKey = getPdfCacheKey(url, pageNum);
+            wbStrokes = wbPdfPageStrokesCache[cacheKey] ? JSON.parse(JSON.stringify(wbPdfPageStrokesCache[cacheKey])) : [];
+        } else {
+            wbStrokes = [];
+        }
+        wbUndoStack = [];
+        wbRedoStack = [];
         redrawWhiteboard();
         broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
 
@@ -3701,6 +4277,7 @@
         } else {
             renderImageBackground(url);
             document.getElementById('wbPageNavControls')?.classList.add('hidden');
+            document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
         }
 
         fetch(`/classroom/${ROOM_ID}/whiteboard`, {
@@ -3720,6 +4297,7 @@
         document.getElementById('wbModeIcon').textContent = icons[type] || '📋';
         document.getElementById('wbModeText').textContent = titles[type] || 'سبورة تفاعلية';
         document.getElementById('wbPageNavControls')?.classList.add('hidden');
+        document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
 
         wbCurrentBg = { type: type, url: null, title: titles[type], page_num: 1 };
         renderBlankBackground(type);
@@ -3732,34 +4310,96 @@
         }).catch(console.error);
     }
 
+    // مشاركة ورفع الملفات من الجهاز (صورة، كتاب PDF، فيديو) مع تشغيل مباشر وشريط تقدم رفع حي
     async function handleWbLocalFileUpload(input) {
         if (!input.files || !input.files[0]) return;
         const file = input.files[0];
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        const isVideo = file.type.startsWith('video/') || ['mp4', 'webm', 'mov', 'm4v', 'avi', 'mkv', 'flv'].includes(fileExt);
+        const isPdf = file.type === 'application/pdf' || fileExt === 'pdf';
+        const isImage = file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
+
+        // 1. فتح فوري محلياً عبر Blob URL ليبدأ المعلم الشرح أو المشاهدة فوراً بدون أي تأخير
+        const localBlobUrl = URL.createObjectURL(file);
+        if (isVideo) {
+            openVideoInWorkspace(localBlobUrl, file.name, false);
+        } else if (isPdf) {
+            openResourceInWorkspace(localBlobUrl, file.name, 'pdf', 1);
+        } else if (isImage) {
+            openResourceInWorkspace(localBlobUrl, file.name, 'image', 1);
+        }
+
+        // 2. إظهار شريط تقدم الرفع
+        const pBar = document.getElementById('wbUploadProgressBar');
+        const pFill = document.getElementById('wbUploadProgressFill');
+        const pPct = document.getElementById('wbUploadPercentText');
+        const pStatus = document.getElementById('wbUploadStatusText');
+        if (pBar) {
+            pBar.classList.remove('hidden');
+            if (pStatus) pStatus.textContent = `جاري رفع ومزامنة: ${file.name}`;
+            if (pPct) pPct.textContent = '0%';
+            if (pFill) pFill.style.width = '0%';
+        }
+
+        // 3. إرسال عبر XMLHttpRequest مع تتبع شريط التقدم
         const formData = new FormData();
         formData.append('action', 'upload_bg_file');
         formData.append('file', file);
 
-        try {
-            const res = await fetch(`/classroom/${ROOM_ID}/whiteboard`, {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
-                body: formData
-            });
-            const data = await res.json();
-            if (data.success) {
-                if (data.bg_type === 'video') {
-                    openVideoInWorkspace(data.url, data.title, false);
-                } else {
-                    openResourceInWorkspace(data.url, data.title, data.bg_type, 1);
-                }
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `/classroom/${ROOM_ID}/whiteboard`, true);
+        xhr.setRequestHeader('X-CSRF-TOKEN', CSRF_TOKEN);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const pct = Math.round((e.loaded / e.total) * 100);
+                if (pPct) pPct.textContent = pct + '%';
+                if (pFill) pFill.style.width = pct + '%';
             }
-        } catch (e) {
-            console.error('Upload whiteboard file error:', e);
-        }
-        input.value = '';
+        };
+
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success && data.url) {
+                        if (pStatus) pStatus.textContent = '✅ اكتمل الرفع وجاري المزامنة للطلاب!';
+                        if (pFill) pFill.style.width = '100%';
+                        if (pPct) pPct.textContent = '100%';
+
+                        // استبدال الرابط المؤقت بالرابط السيرفري المعتمد وبثه للطلاب
+                        wbCurrentBg.url = data.url;
+                        wbCurrentBg.title = data.title || file.name;
+                        broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
+                        commitWhiteboardChange();
+
+                        setTimeout(() => {
+                            pBar?.classList.add('hidden');
+                        }, 1200);
+                    }
+                } catch (err) {
+                    console.error('Error parsing upload response:', err);
+                    if (pBar) pBar.classList.add('hidden');
+                }
+            } else {
+                console.error('Upload failed with status', xhr.status);
+                if (pBar) pBar.classList.add('hidden');
+            }
+            input.value = '';
+        };
+
+        xhr.onerror = () => {
+            console.error('Upload network error');
+            if (pBar) pBar.classList.add('hidden');
+            input.value = '';
+        };
+
+        xhr.send(formData);
     }
 
-    async function renderPdfPage(url, pageNum) {
+    // رندرة وتصفح صفحات ملفات الـ PDF
+    async function renderPdfPage(url, pageNum, customScale = null) {
         if (!window.pdfjsLib) {
             console.warn('pdfjsLib is not loaded');
             return;
@@ -3777,8 +4417,33 @@
             const currentText = document.getElementById('wbCurrentPageText');
             if (currentText) currentText.textContent = wbCurrentPage;
 
+            const directInput = document.getElementById('wbPageDirectInput');
+            if (directInput) directInput.value = wbCurrentPage;
+
+            const slider = document.getElementById('wbPdfVerticalSlider');
+            if (slider) {
+                slider.max = wbTotalPages;
+                slider.value = wbCurrentPage;
+            }
+
+            const sideNav = document.getElementById('wbPdfSideNavigator');
+            if (sideNav) {
+                if (wbTotalPages > 1) {
+                    sideNav.classList.remove('hidden');
+                } else {
+                    sideNav.classList.add('hidden');
+                }
+            }
+
+            // استرجاع شروحات الصفحة الحالية من الكاش
+            const cacheKey = getPdfCacheKey(url, wbCurrentPage);
+            if (wbPdfPageStrokesCache[cacheKey]) {
+                wbStrokes = JSON.parse(JSON.stringify(wbPdfPageStrokesCache[cacheKey]));
+            }
+
             const page = await wbPdfDoc.getPage(wbCurrentPage);
-            const viewport = page.getViewport({ scale: 1.8 });
+            const scaleToUse = customScale || wbPdfScale;
+            const viewport = page.getViewport({ scale: scaleToUse });
 
             const bgCanvas = document.getElementById('whiteboardBgCanvas');
             const drawCanvas = document.getElementById('whiteboardDrawCanvas');
@@ -3795,11 +4460,160 @@
         }
     }
 
+    // التنقل بين صفحات الـ PDF (خطوة للأمام أو للخلف)
     async function changeWbPage(delta) {
         if (!wbPdfDoc || !IS_TEACHER) return;
-        const targetPage = wbCurrentPage + delta;
-        if (targetPage >= 1 && targetPage <= wbTotalPages) {
+        changeWbPageTo(wbCurrentPage + delta);
+    }
+
+    // الانتقال المباشر لأي صفحة محددة
+    async function changeWbPageTo(targetPage) {
+        if (!wbPdfDoc || !IS_TEACHER) return;
+        targetPage = Math.min(Math.max(1, targetPage), wbTotalPages);
+        if (targetPage !== wbCurrentPage || wbCurrentBg.page_num !== targetPage) {
             await openResourceInWorkspace(wbCurrentBg.url, wbCurrentBg.title, 'pdf', targetPage);
+        }
+    }
+
+    function onPageDirectInputChange(val) {
+        const p = parseInt(val, 10);
+        if (!isNaN(p)) {
+            changeWbPageTo(p);
+        }
+    }
+
+    function onPdfSliderInput(val) {
+        const bubble = document.getElementById('wbPdfSliderBubble');
+        const bubbleNum = document.getElementById('wbPdfSliderBubbleNum');
+        if (bubble && bubbleNum) {
+            bubbleNum.textContent = val;
+            bubble.classList.remove('hidden');
+        }
+    }
+
+    function onPdfSliderChange(val) {
+        document.getElementById('wbPdfSliderBubble')?.classList.add('hidden');
+        const p = parseInt(val, 10);
+        if (!isNaN(p)) {
+            changeWbPageTo(p);
+        }
+    }
+
+    // ملاءمة عرض الكتاب مع الشاشة
+    async function fitPdfWidth() {
+        if (!wbPdfDoc) return;
+        try {
+            const container = document.getElementById('whiteboardContainer');
+            const page = await wbPdfDoc.getPage(wbCurrentPage);
+            const baseViewport = page.getViewport({ scale: 1.0 });
+            const contWidth = (container ? container.clientWidth : 1200) - 40;
+            wbPdfScale = Math.max(0.5, Math.min(3.5, contWidth / baseViewport.width));
+            await renderPdfPage(wbCurrentBg.url, wbCurrentPage, wbPdfScale);
+        } catch(e) { console.error(e); }
+    }
+
+    // ملاءمة كامل صفحة الكتاب طولاً وعرضاً
+    async function fitPdfPage() {
+        if (!wbPdfDoc) return;
+        try {
+            const container = document.getElementById('whiteboardContainer');
+            const page = await wbPdfDoc.getPage(wbCurrentPage);
+            const baseViewport = page.getViewport({ scale: 1.0 });
+            const contWidth = (container ? container.clientWidth : 1200) - 40;
+            const contHeight = (container ? container.clientHeight : 800) - 40;
+            const scaleW = contWidth / baseViewport.width;
+            const scaleH = contHeight / baseViewport.height;
+            wbPdfScale = Math.max(0.4, Math.min(scaleW, scaleH));
+            await renderPdfPage(wbCurrentBg.url, wbCurrentPage, wbPdfScale);
+        } catch(e) { console.error(e); }
+    }
+
+    // دوال مشغل الفيديو التعليمي وعناصر التحكم العائمة
+    function initHtml5VideoListeners() {
+        const video = document.getElementById('whiteboardHtml5Video');
+        if (!video) return;
+
+        video.addEventListener('timeupdate', () => {
+            const slider = document.getElementById('wbVideoSeekSlider');
+            const timeLabel = document.getElementById('wbVideoTimeLabel');
+            if (slider && video.duration) {
+                slider.value = (video.currentTime / video.duration) * 100;
+            }
+            if (timeLabel) {
+                timeLabel.textContent = `${formatVideoTime(video.currentTime)} / ${formatVideoTime(video.duration || 0)}`;
+            }
+        });
+
+        video.addEventListener('play', () => {
+            const icon = document.getElementById('iconWbVideoPlay');
+            const txt = document.getElementById('txtWbVideoPlay');
+            if (icon) icon.textContent = '⏸️';
+            if (txt) txt.textContent = 'إيقاف';
+            if (IS_TEACHER) {
+                broadcastP2P({ type: 'wb_video_state', action: 'play', time: video.currentTime });
+            }
+        });
+
+        video.addEventListener('pause', () => {
+            const icon = document.getElementById('iconWbVideoPlay');
+            const txt = document.getElementById('txtWbVideoPlay');
+            if (icon) icon.textContent = '▶️';
+            if (txt) txt.textContent = 'تشغيل';
+            if (IS_TEACHER) {
+                broadcastP2P({ type: 'wb_video_state', action: 'pause', time: video.currentTime });
+            }
+        });
+    }
+
+    function formatVideoTime(sec) {
+        if (isNaN(sec)) return '00:00';
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function toggleHtml5VideoPlay() {
+        const video = document.getElementById('whiteboardHtml5Video');
+        if (!video) return;
+        if (video.paused) {
+            video.play().catch(console.error);
+        } else {
+            video.pause();
+        }
+    }
+
+    function rewindHtml5Video(seconds = 10) {
+        const video = document.getElementById('whiteboardHtml5Video');
+        if (!video) return;
+        video.currentTime = Math.max(0, video.currentTime - seconds);
+        if (IS_TEACHER) {
+            broadcastP2P({ type: 'wb_video_state', action: video.paused ? 'pause' : 'play', time: video.currentTime });
+        }
+    }
+
+    function forwardHtml5Video(seconds = 10) {
+        const video = document.getElementById('whiteboardHtml5Video');
+        if (!video) return;
+        video.currentTime = Math.min(video.duration || 0, video.currentTime + seconds);
+        if (IS_TEACHER) {
+            broadcastP2P({ type: 'wb_video_state', action: video.paused ? 'pause' : 'play', time: video.currentTime });
+        }
+    }
+
+    function toggleHtml5VideoMute() {
+        const video = document.getElementById('whiteboardHtml5Video');
+        const btn = document.getElementById('btnWbVideoMute');
+        if (!video) return;
+        video.muted = !video.muted;
+        if (btn) btn.textContent = video.muted ? '🔇' : '🔊';
+    }
+
+    function onVideoSeekInput(percent) {
+        const video = document.getElementById('whiteboardHtml5Video');
+        if (!video || !video.duration) return;
+        video.currentTime = (percent / 100) * video.duration;
+        if (IS_TEACHER) {
+            broadcastP2P({ type: 'wb_video_state', action: video.paused ? 'pause' : 'play', time: video.currentTime });
         }
     }
 
@@ -3955,9 +4769,11 @@
             if (wbCurrentBg.type === 'browser' && wbCurrentBg.url) {
                 renderBrowserBackground(wbCurrentBg.url, wbCurrentBg.title);
                 document.getElementById('wbPageNavControls')?.classList.add('hidden');
+                document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
             } else if (wbCurrentBg.type === 'video' && wbCurrentBg.url) {
                 renderVideoBackground(wbCurrentBg.url, wbCurrentBg.title);
                 document.getElementById('wbPageNavControls')?.classList.add('hidden');
+                document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
             } else if (wbCurrentBg.type === 'pdf' && wbCurrentBg.url) {
                 hideMediaLayers();
                 await renderPdfPage(wbCurrentBg.url, wbCurrentBg.page_num);
@@ -3966,10 +4782,12 @@
                 hideMediaLayers();
                 renderImageBackground(wbCurrentBg.url);
                 document.getElementById('wbPageNavControls')?.classList.add('hidden');
+                document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
             } else {
                 hideMediaLayers();
                 renderBlankBackground(wbCurrentBg.type);
                 document.getElementById('wbPageNavControls')?.classList.add('hidden');
+                document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
             }
         }
 

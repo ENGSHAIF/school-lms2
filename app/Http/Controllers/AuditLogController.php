@@ -8,7 +8,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class AuditLogController extends Controller
 {
@@ -18,9 +17,10 @@ class AuditLogController extends Controller
     protected function authorizeAccess()
     {
         $user = Auth::user();
-        if (!$user || (!$user->isAdmin() && !$user->hasPermission('view_reports') && !$user->hasPermission('system.audit_view'))) {
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('view_reports') && ! $user->hasPermission('system.audit_view'))) {
             abort(403, 'عذراً، ليس لديك صلاحية الوصول لمركز الرقابة وسجلات التدقيق.');
         }
+
         return $user;
     }
 
@@ -42,19 +42,19 @@ class AuditLogController extends Controller
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('action', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%")
-                         ->orWhere('user_code', 'like', "%{$search}%")
-                         ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('action', 'like', "%{$search}%")
+                    ->orWhere('ip_address', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                            ->orWhere('user_code', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
         // 2. فلتر المستخدم المنفذ للعملية
         if ($request->filled('user_id')) {
-            $query->where('user_id', (int)$request->user_id);
+            $query->where('user_id', (int) $request->user_id);
         }
 
         // 3. فلتر القسم والوحدة (Module)
@@ -66,23 +66,23 @@ class AuditLogController extends Controller
                 // توافق مع السجلات القديمة عبر بادئات الـ action
                 if ($modKey === 'finance') {
                     $q->orWhere('action', 'like', 'voucher.%')
-                      ->orWhere('action', 'like', 'cash_box.%')
-                      ->orWhere('action', 'like', 'teacher_entitlement.%');
+                        ->orWhere('action', 'like', 'cash_box.%')
+                        ->orWhere('action', 'like', 'teacher_entitlement.%');
                 } elseif ($modKey === 'pricing') {
                     $q->orWhere('action', 'like', '%pricing%')
-                      ->orWhere('action', 'like', 'course.pricing%')
-                      ->orWhere('action', 'like', 'level.pricing%')
-                      ->orWhere('action', 'like', 'package.pricing%');
+                        ->orWhere('action', 'like', 'course.pricing%')
+                        ->orWhere('action', 'like', 'level.pricing%')
+                        ->orWhere('action', 'like', 'package.pricing%');
                 } elseif ($modKey === 'users') {
                     $q->orWhere('action', 'like', 'user.%')
-                      ->orWhere('action', 'like', 'auth.%');
+                        ->orWhere('action', 'like', 'auth.%');
                 } elseif ($modKey === 'exams') {
                     $q->orWhere('action', 'like', 'grade.%')
-                      ->orWhere('action', 'like', 'certificate.%')
-                      ->orWhere('action', 'like', 'exam.%');
+                        ->orWhere('action', 'like', 'certificate.%')
+                        ->orWhere('action', 'like', 'exam.%');
                 } elseif ($modKey === 'settings') {
                     $q->orWhere('action', 'like', 'whatsapp.%')
-                      ->orWhere('action', 'like', 'setting.%');
+                        ->orWhere('action', 'like', 'setting.%');
                 }
             });
         }
@@ -93,28 +93,28 @@ class AuditLogController extends Controller
             if ($type === 'delete') {
                 $query->where(function ($q) {
                     $q->where('action', 'like', '%delete%')
-                      ->orWhere('action', 'like', '%destroy%')
-                      ->orWhere('action', 'like', '%cancel%');
+                        ->orWhere('action', 'like', '%destroy%')
+                        ->orWhere('action', 'like', '%cancel%');
                 });
             } elseif ($type === 'update') {
                 $query->where(function ($q) {
                     $q->where('action', 'like', '%update%')
-                      ->orWhere('action', 'like', '%edit%')
-                      ->orWhere('action', 'like', '%reconcile%');
+                        ->orWhere('action', 'like', '%edit%')
+                        ->orWhere('action', 'like', '%reconcile%');
                 });
             } elseif ($type === 'create') {
                 $query->where(function ($q) {
                     $q->where('action', 'like', '%create%')
-                      ->orWhere('action', 'like', '%store%')
-                      ->orWhere('action', 'like', '%batch%');
+                        ->orWhere('action', 'like', '%store%')
+                        ->orWhere('action', 'like', '%batch%');
                 });
             } elseif ($type === 'pricing') {
                 $query->where('action', 'like', '%pricing%');
             } elseif ($type === 'auth') {
                 $query->where(function ($q) {
                     $q->where('action', 'like', 'auth.%')
-                      ->orWhere('action', 'like', '%login%')
-                      ->orWhere('action', 'like', '%logout%');
+                        ->orWhere('action', 'like', '%login%')
+                        ->orWhere('action', 'like', '%logout%');
                 });
             }
         }
@@ -133,13 +133,13 @@ class AuditLogController extends Controller
             'today' => SystemAuditLog::whereDate('created_at', Carbon::today())->count(),
             'deletions' => SystemAuditLog::where(function ($q) {
                 $q->where('action', 'like', '%delete%')
-                  ->orWhere('action', 'like', '%destroy%')
-                  ->orWhere('action', 'like', '%cancel%');
+                    ->orWhere('action', 'like', '%destroy%')
+                    ->orWhere('action', 'like', '%cancel%');
             })->count(),
             'finance' => SystemAuditLog::where(function ($q) {
                 $q->where('details->module', 'finance')
-                  ->orWhere('action', 'like', 'voucher.%')
-                  ->orWhere('action', 'like', 'cash_box.%');
+                    ->orWhere('action', 'like', 'voucher.%')
+                    ->orWhere('action', 'like', 'cash_box.%');
             })->count(),
             'pricing' => SystemAuditLog::where('action', 'like', '%pricing%')->count(),
         ];
@@ -180,13 +180,13 @@ class AuditLogController extends Controller
         }
 
         // 3. فترة الاحتفاظ بالسجلات (بالأيام)
-        $retentionDays = max(7, (int)$request->input('audit_retention_days', 90));
-        SiteSetting::set('audit_retention_days', (string)$retentionDays, 'audit');
+        $retentionDays = max(7, (int) $request->input('audit_retention_days', 90));
+        SiteSetting::set('audit_retention_days', (string) $retentionDays, 'audit');
 
         // توثيق تعديل إعدادات الرقابة نفسها
         SystemAuditLog::record(
             'setting.audit_control_update',
-            "تحديث وضبط إعدادات ومفاتيح نظام الرقابة والتدقيق الشامل (المفتاح الرئيسي: " . ($masterEnabled === '1' ? 'مفعل' : 'معطل') . ")",
+            'تحديث وضبط إعدادات ومفاتيح نظام الرقابة والتدقيق الشامل (المفتاح الرئيسي: '.($masterEnabled === '1' ? 'مفعل' : 'معطل').')',
             null,
             [
                 'master_enabled' => $masterEnabled === '1',
@@ -249,7 +249,7 @@ class AuditLogController extends Controller
             $query->where('description', 'like', "%{$search}%");
         }
         if ($request->filled('user_id')) {
-            $query->where('user_id', (int)$request->user_id);
+            $query->where('user_id', (int) $request->user_id);
         }
         if ($request->filled('module') && $request->module !== 'all') {
             $modKey = $request->module;
@@ -277,10 +277,10 @@ class AuditLogController extends Controller
         $query = SystemAuditLog::with('user')->latest();
 
         if ($request->filled('search')) {
-            $query->where('description', 'like', '%' . trim($request->search) . '%');
+            $query->where('description', 'like', '%'.trim($request->search).'%');
         }
         if ($request->filled('user_id')) {
-            $query->where('user_id', (int)$request->user_id);
+            $query->where('user_id', (int) $request->user_id);
         }
         if ($request->filled('module') && $request->module !== 'all') {
             $query->where('details->module', $request->module);
@@ -294,19 +294,19 @@ class AuditLogController extends Controller
 
         $logs = $query->limit(2000)->get();
 
-        $filename = "audit_report_" . date('Y-m-d_His') . ".csv";
+        $filename = 'audit_report_'.date('Y-m-d_His').'.csv';
         $headers = [
-            "Content-type" => "text/csv; charset=UTF-8",
-            "Content-Disposition" => "attachment; filename={$filename}",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0",
+            'Content-type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename={$filename}",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
         ];
 
         $callback = function () use ($logs) {
             $file = fopen('php://output', 'w');
             // إضافة BOM للتعامل الصحيح مع اللغة العربية في Excel
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
             fputcsv($file, [
                 'رقم السجل',
@@ -346,11 +346,11 @@ class AuditLogController extends Controller
     {
         $user = $this->authorizeAccess();
 
-        if (!$user->isAdmin()) {
+        if (! $user->isAdmin()) {
             return redirect()->back()->with('error', 'عذراً، صلاحية مسح السجلات القديمة مقتصرة حصرياً على مدير النظام.');
         }
 
-        $days = (int)$request->input('days', SiteSetting::get('audit_retention_days', 90));
+        $days = (int) $request->input('days', SiteSetting::get('audit_retention_days', 90));
         $keepFinancial = $request->boolean('keep_financial', true);
 
         $deletedCount = SystemAuditLog::pruneOld($days, $keepFinancial);
@@ -358,7 +358,7 @@ class AuditLogController extends Controller
         // توثيق عملية مسح السجلات
         SystemAuditLog::record(
             'system.audit_prune',
-            "قام مدير النظام ({$user->name}) بتنظيف الأرشيف الرقابي وحذف ({$deletedCount}) سجل أقدم من ({$days}) يوم مع " . ($keepFinancial ? "حماية العمليات المالية" : "مسح كامل"),
+            "قام مدير النظام ({$user->name}) بتنظيف الأرشيف الرقابي وحذف ({$deletedCount}) سجل أقدم من ({$days}) يوم مع ".($keepFinancial ? 'حماية العمليات المالية' : 'مسح كامل'),
             null,
             ['deleted_count' => $deletedCount, 'days' => $days, 'keep_financial' => $keepFinancial]
         );

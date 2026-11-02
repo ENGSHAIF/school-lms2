@@ -33,7 +33,7 @@ class Testimonial extends Model
 
     public function getStarsStringAttribute(): string
     {
-        return str_repeat('⭐', max(1, min(5, (int)$this->rating)));
+        return str_repeat('⭐', max(1, min(5, (int) $this->rating)));
     }
 
     public function getUserTypeLabelAttribute(): string

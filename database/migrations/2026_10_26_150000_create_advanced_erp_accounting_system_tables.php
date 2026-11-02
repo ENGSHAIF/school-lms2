@@ -52,7 +52,7 @@ return new class extends Migration
                 'pending_manager',    // بانتظار اعتماد المشرف / المدير العام
                 'approved',           // معتمد وجاهز للتنفيذ والصرف
                 'executed',           // تم الصرف وإنشاء السند الفعلي
-                'rejected'            // مرفوض
+                'rejected',            // مرفوض
             ])->default('draft');
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('approved_at')->nullable();

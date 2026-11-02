@@ -69,12 +69,12 @@ class StudentCourseGrade extends Model
         $totalMax = $scale ? $scale->total_max : 100.00;
         $passPercentage = $scale ? $scale->passing_percentage : 60.00;
 
-        $total = (float)$this->attendance_score
-               + (float)$this->participation_score
-               + (float)$this->activities_score
-               + (float)$this->midterm_score
-               + (float)$this->practical_score
-               + (float)$this->final_exam_score;
+        $total = (float) $this->attendance_score
+               + (float) $this->participation_score
+               + (float) $this->activities_score
+               + (float) $this->midterm_score
+               + (float) $this->practical_score
+               + (float) $this->final_exam_score;
 
         $pct = $totalMax > 0 ? round(($total / $totalMax) * 100, 1) : 0;
 
@@ -91,10 +91,19 @@ class StudentCourseGrade extends Model
 
     public static function computeGradeLetter(float $pct): string
     {
-        if ($pct >= 90) return 'ممتاز (Excellent)';
-        if ($pct >= 80) return 'جيد جداً (Very Good)';
-        if ($pct >= 70) return 'جيد (Good)';
-        if ($pct >= 60) return 'مقبول (Pass)';
+        if ($pct >= 90) {
+            return 'ممتاز (Excellent)';
+        }
+        if ($pct >= 80) {
+            return 'جيد جداً (Very Good)';
+        }
+        if ($pct >= 70) {
+            return 'جيد (Good)';
+        }
+        if ($pct >= 60) {
+            return 'مقبول (Pass)';
+        }
+
         return 'راسب (Fail)';
     }
 
@@ -132,6 +141,7 @@ class StudentCourseGrade extends Model
         if (str_contains($this->grade_letter, 'مقبول')) {
             return 'bg-amber-100 text-amber-900 border-amber-300 font-bold';
         }
+
         return 'bg-rose-100 text-rose-900 border-rose-300 font-bold';
     }
 }

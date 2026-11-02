@@ -43,12 +43,12 @@ class PackageController extends Controller
         // 2. إصدار سند قبض رسمي (المعايير المحاسبية المعتمدة)
         $studentAccount = FinancialAccount::firstOrCreate(
             ['user_id' => $user->id],
-            ['account_code' => '21' . str_pad($user->id, 4, '0', STR_PAD_LEFT), 'account_name' => 'حساب الطالب: ' . $user->name, 'account_type' => 'student', 'currency' => $package->currency]
+            ['account_code' => '21'.str_pad($user->id, 4, '0', STR_PAD_LEFT), 'account_name' => 'حساب الطالب: '.$user->name, 'account_type' => 'student', 'currency' => $package->currency]
         );
         $cashBox = FinancialAccount::where('account_type', 'cash_box')->first();
 
         $count = Voucher::count() + 1;
-        $voucherNo = 'REC-' . date('Y') . '-' . str_pad($count, 5, '0', STR_PAD_LEFT);
+        $voucherNo = 'REC-'.date('Y').'-'.str_pad($count, 5, '0', STR_PAD_LEFT);
 
         $voucher = Voucher::create([
             'voucher_no' => $voucherNo,

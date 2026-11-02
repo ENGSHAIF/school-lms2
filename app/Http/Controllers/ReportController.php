@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ArabicCurrencyHelper;
 use App\Models\Course;
 use App\Models\FinancialAccount;
 use App\Models\Level;
 use App\Models\Package;
 use App\Models\StudentInstallment;
+use App\Models\StudentProfile;
 use App\Models\StudyGroup;
 use App\Models\StudyGroupStudent;
+use App\Models\TeacherEntitlement;
 use App\Models\User;
 use App\Models\Voucher;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -23,7 +26,7 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        if (!$user || (!$user->isAdmin() && !$user->hasPermission('view_reports'))) {
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('view_reports'))) {
             return redirect()->route('home')->with('error', 'عذراً، ليس لديك صلاحية الوصول لمركز التقارير.');
         }
 
@@ -123,7 +126,7 @@ class ReportController extends Controller
     public function printReport(Request $request)
     {
         $user = Auth::user();
-        if (!$user || (!$user->isAdmin() && !$user->hasPermission('view_reports'))) {
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('view_reports'))) {
             return redirect()->route('home')->with('error', 'عذراً، ليس لديك صلاحية طباعة التقارير.');
         }
 
@@ -174,17 +177,17 @@ class ReportController extends Controller
                 $title = 'كشف السندات المالية وحركة الصناديق';
                 $subtitle = 'سجل سندات القبض والصرف الرسمية مع بيان النقدية';
                 if ($request->filled('voucher_from') || $request->filled('voucher_to')) {
-                    $subtitle .= " | من رقم سند: " . ($request->voucher_from ?? 'البداية') . " إلى: " . ($request->voucher_to ?? 'النهاية');
+                    $subtitle .= ' | من رقم سند: '.($request->voucher_from ?? 'البداية').' إلى: '.($request->voucher_to ?? 'النهاية');
                 }
                 if ($request->filled('date_from') || $request->filled('date_to')) {
-                    $subtitle .= " | الفترة من: " . ($request->date_from ?? 'البداية') . " إلى: " . ($request->date_to ?? 'اليوم');
+                    $subtitle .= ' | الفترة من: '.($request->date_from ?? 'البداية').' إلى: '.($request->date_to ?? 'اليوم');
                 }
                 $data = $this->queryVouchersReport($request);
                 $summary = [
                     'عدد السندات المعروضة' => $data['vouchers']->count(),
-                    'إجمالي سندات القبض' => number_format($data['total_receipts_amount'], 2) . ' YER',
-                    'إجمالي سندات الصرف' => number_format($data['total_payments_amount'], 2) . ' YER',
-                    'صافي حركة الفترة' => number_format($data['net_amount'], 2) . ' YER',
+                    'إجمالي سندات القبض' => number_format($data['total_receipts_amount'], 2).' YER',
+                    'إجمالي سندات الصرف' => number_format($data['total_payments_amount'], 2).' YER',
+                    'صافي حركة الفترة' => number_format($data['net_amount'], 2).' YER',
                 ];
                 break;
 
@@ -237,10 +240,10 @@ class ReportController extends Controller
 
         // الصناديق المالية
         $cashBox = FinancialAccount::where('account_type', 'cash_box')->first();
-        $cashBoxBalance = $cashBox ? (float)$cashBox->current_balance : 0.0;
+        $cashBoxBalance = $cashBox ? (float) $cashBox->current_balance : 0.0;
 
         $bankAccount = FinancialAccount::where('account_type', 'bank')->first();
-        $bankBalance = $bankAccount ? (float)$bankAccount->current_balance : 0.0;
+        $bankBalance = $bankAccount ? (float) $bankAccount->current_balance : 0.0;
 
         // السندات المالية
         $receiptsSum = Voucher::where('voucher_type', 'receipt')->sum('amount');
@@ -323,9 +326,9 @@ class ReportController extends Controller
             $tId = $request->teacher_id;
             $query->where(function ($q) use ($tId) {
                 $q->where('teacher_id', $tId)
-                  ->orWhereHas('teachers', function ($t) use ($tId) {
-                      $t->where('users.id', $tId);
-                  });
+                    ->orWhereHas('teachers', function ($t) use ($tId) {
+                        $t->where('users.id', $tId);
+                    });
             });
         }
 
@@ -334,18 +337,18 @@ class ReportController extends Controller
             $sId = $request->supervisor_id;
             $query->where(function ($q) use ($sId) {
                 $q->where('supervisor_id', $sId)
-                  ->orWhereHas('supervisors', function ($s) use ($sId) {
-                      $s->where('users.id', $sId);
-                  });
+                    ->orWhereHas('supervisors', function ($s) use ($sId) {
+                        $s->where('users.id', $sId);
+                    });
             });
         }
 
         // فلترة "من مجموعة إلى مجموعة" (بواسطة المعرف الرقمي أو الترتيبي)
         if ($request->filled('from_group')) {
-            $query->where('id', '>=', (int)$request->from_group);
+            $query->where('id', '>=', (int) $request->from_group);
         }
         if ($request->filled('to_group')) {
-            $query->where('id', '<=', (int)$request->to_group);
+            $query->where('id', '<=', (int) $request->to_group);
         }
 
         // بحث بالاسم أو الترم أو المعلم
@@ -353,14 +356,14 @@ class ReportController extends Controller
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('term', 'like', "%{$s}%")
-                  ->orWhere('batch', 'like', "%{$s}%")
-                  ->orWhere('program_type', 'like', "%{$s}%");
+                    ->orWhere('term', 'like', "%{$s}%")
+                    ->orWhere('batch', 'like', "%{$s}%")
+                    ->orWhere('program_type', 'like', "%{$s}%");
             });
         }
 
         if ($request->filled('limit')) {
-            $query->take((int)$request->limit);
+            $query->take((int) $request->limit);
         }
 
         $groups = $query->orderBy('id', 'asc')->get();
@@ -407,7 +410,7 @@ class ReportController extends Controller
         }
 
         if ($request->filled('limit')) {
-            $query->take((int)$request->limit);
+            $query->take((int) $request->limit);
         }
 
         $courses = $query->orderBy('name')->get();
@@ -467,9 +470,9 @@ class ReportController extends Controller
             $from = trim($request->voucher_from);
             if (is_numeric($from)) {
                 $query->where(function ($q) use ($from) {
-                    $q->where('id', '>=', (int)$from)
-                      ->orWhere('voucher_no', 'like', "%{$from}%")
-                      ->orWhere('manual_no', '>=', $from);
+                    $q->where('id', '>=', (int) $from)
+                        ->orWhere('voucher_no', 'like', "%{$from}%")
+                        ->orWhere('manual_no', '>=', $from);
                 });
             } else {
                 $query->where('voucher_no', '>=', $from);
@@ -480,9 +483,9 @@ class ReportController extends Controller
             $to = trim($request->voucher_to);
             if (is_numeric($to)) {
                 $query->where(function ($q) use ($to) {
-                    $q->where('id', '<=', (int)$to)
-                      ->orWhere('voucher_no', 'like', "%{$to}%")
-                      ->orWhere('manual_no', '<=', $to);
+                    $q->where('id', '<=', (int) $to)
+                        ->orWhere('voucher_no', 'like', "%{$to}%")
+                        ->orWhere('manual_no', '<=', $to);
                 });
             } else {
                 $query->where('voucher_no', '<=', $to);
@@ -507,13 +510,13 @@ class ReportController extends Controller
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('voucher_no', 'like', "%{$s}%")
-                  ->orWhere('manual_no', 'like', "%{$s}%")
-                  ->orWhere('statement', 'like', "%{$s}%");
+                    ->orWhere('manual_no', 'like', "%{$s}%")
+                    ->orWhere('statement', 'like', "%{$s}%");
             });
         }
 
         if ($request->filled('limit')) {
-            $query->take((int)$request->limit);
+            $query->take((int) $request->limit);
         }
 
         $vouchers = $query->latest('id')->get();
@@ -551,7 +554,7 @@ class ReportController extends Controller
             'studyGroups.level',
             'studyGroups.teachers',
             'studyGroups.supervisors',
-            'enrollments.level'
+            'enrollments.level',
         ]);
 
         if ($request->filled('student_status') && $request->student_status !== 'all') {
@@ -609,9 +612,9 @@ class ReportController extends Controller
             $tId = $request->teacher_id;
             $query->whereHas('studyGroups', function ($q) use ($tId) {
                 $q->where('study_groups.teacher_id', $tId)
-                  ->orWhereHas('teachers', function ($t) use ($tId) {
-                      $t->where('users.id', $tId);
-                  });
+                    ->orWhereHas('teachers', function ($t) use ($tId) {
+                        $t->where('users.id', $tId);
+                    });
             });
         }
 
@@ -620,31 +623,31 @@ class ReportController extends Controller
             $sId = $request->supervisor_id;
             $query->whereHas('studyGroups', function ($q) use ($sId) {
                 $q->where('study_groups.supervisor_id', $sId)
-                  ->orWhereHas('supervisors', function ($s) use ($sId) {
-                      $s->where('users.id', $sId);
-                  });
+                    ->orWhereHas('supervisors', function ($s) use ($sId) {
+                        $s->where('users.id', $sId);
+                    });
             });
         }
 
         if ($request->filled('from_id')) {
-            $query->where('id', '>=', (int)$request->from_id);
+            $query->where('id', '>=', (int) $request->from_id);
         }
         if ($request->filled('to_id')) {
-            $query->where('id', '<=', (int)$request->to_id);
+            $query->where('id', '<=', (int) $request->to_id);
         }
 
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%")
-                  ->orWhere('student_code', 'like', "%{$s}%")
-                  ->orWhere('phone_whatsapp', 'like', "%{$s}%");
+                    ->orWhere('email', 'like', "%{$s}%")
+                    ->orWhere('student_code', 'like', "%{$s}%")
+                    ->orWhere('phone_whatsapp', 'like', "%{$s}%");
             });
         }
 
         if ($request->filled('limit')) {
-            $query->take((int)$request->limit);
+            $query->take((int) $request->limit);
         }
 
         $students = $query->orderBy('id', 'asc')->get();
@@ -746,9 +749,9 @@ class ReportController extends Controller
     public function studentTranscript($studentId)
     {
         $user = Auth::user();
-        $isChildOfParent = ($user && $user->isParent() && $user->hasPermission('parent.transcript_view') && \App\Models\StudentProfile::where('user_id', $studentId)->where('parent_id', $user->id)->exists());
+        $isChildOfParent = ($user && $user->isParent() && $user->hasPermission('parent.transcript_view') && StudentProfile::where('user_id', $studentId)->where('parent_id', $user->id)->exists());
 
-        if (!$user || (!$user->isAdmin() && !$user->hasPermission('view_reports') && !$user->hasPermission('print_statement') && !$user->hasPermission('reports.academic') && !$isChildOfParent)) {
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('view_reports') && ! $user->hasPermission('print_statement') && ! $user->hasPermission('reports.academic') && ! $isChildOfParent)) {
             return redirect()->route('home')->with('error', 'عذراً، ليس لديك صلاحية استعراض السجل الشامل للطلاب.');
         }
 
@@ -774,7 +777,7 @@ class ReportController extends Controller
         $totalDiscounts = $installments->sum('discount_amount');
         $netTuition = max(0, $totalTuition - $totalDiscounts);
         $totalPaid = $vouchers->where('voucher_type', 'receipt')->sum('amount');
-        $currentBalance = $account ? (float)$account->current_balance : ($netTuition - $totalPaid);
+        $currentBalance = $account ? (float) $account->current_balance : ($netTuition - $totalPaid);
 
         // الحركات المحاسبية المدمجة (تحليلي)
         $movements = [];
@@ -782,12 +785,12 @@ class ReportController extends Controller
         foreach ($installments as $inst) {
             $movements[] = [
                 'date' => $inst->created_at,
-                'doc_no' => 'INV-' . str_pad($inst->id, 5, '0', STR_PAD_LEFT),
+                'doc_no' => 'INV-'.str_pad($inst->id, 5, '0', STR_PAD_LEFT),
                 'type' => 'debit',
-                'title' => 'رسوم دراسية: ' . ($inst->level?->name ?? 'مستوى دراسي') . ' (القسط ' . $inst->installment_number . ')',
-                'debit' => (float)$inst->amount,
+                'title' => 'رسوم دراسية: '.($inst->level?->name ?? 'مستوى دراسي').' (القسط '.$inst->installment_number.')',
+                'debit' => (float) $inst->amount,
                 'credit' => 0.0,
-                'discount' => (float)$inst->discount_amount,
+                'discount' => (float) $inst->discount_amount,
                 'discount_reason' => $inst->discount_reason,
             ];
         }
@@ -796,11 +799,11 @@ class ReportController extends Controller
             if ($v->voucher_type === 'receipt') {
                 $movements[] = [
                     'date' => $v->created_at,
-                    'doc_no' => $v->voucher_no . ($v->manual_no ? ' (دفتري: ' . $v->manual_no . ')' : ''),
+                    'doc_no' => $v->voucher_no.($v->manual_no ? ' (دفتري: '.$v->manual_no.')' : ''),
                     'type' => 'credit',
-                    'title' => 'سند قبض مالي: ' . $v->statement . ' [' . ($v->payment_method_label ?? $v->payment_method) . ']',
+                    'title' => 'سند قبض مالي: '.$v->statement.' ['.($v->payment_method_label ?? $v->payment_method).']',
                     'debit' => 0.0,
-                    'credit' => (float)$v->amount,
+                    'credit' => (float) $v->amount,
                     'discount' => 0.0,
                     'discount_reason' => null,
                 ];
@@ -809,8 +812,8 @@ class ReportController extends Controller
                     'date' => $v->created_at,
                     'doc_no' => $v->voucher_no,
                     'type' => 'debit',
-                    'title' => 'سند صرف مالي: ' . $v->statement,
-                    'debit' => (float)$v->amount,
+                    'title' => 'سند صرف مالي: '.$v->statement,
+                    'debit' => (float) $v->amount,
                     'credit' => 0.0,
                     'discount' => 0.0,
                     'discount_reason' => null,
@@ -818,7 +821,7 @@ class ReportController extends Controller
             }
         }
 
-        usort($movements, fn($a, $b) => $a['date'] <=> $b['date']);
+        usort($movements, fn ($a, $b) => $a['date'] <=> $b['date']);
 
         // حساب الرصيد التراكمي
         $runningBalance = 0;
@@ -851,7 +854,7 @@ class ReportController extends Controller
     public function teacherStatement($teacherId)
     {
         $user = Auth::user();
-        if (!$user || (!$user->isAdmin() && !$user->hasPermission('view_reports') && !$user->hasPermission('print_statement'))) {
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('view_reports') && ! $user->hasPermission('print_statement'))) {
             return redirect()->route('home')->with('error', 'عذراً، ليس لديك صلاحية استعراض كشف حساب المعلم.');
         }
 
@@ -874,21 +877,21 @@ class ReportController extends Controller
 
         // 1. سندات الصرف والتحويلات المسلمة للمعلم (حركات مدينة - عليه)
         $vouchers = Voucher::where('account_id', $account?->id)->orderBy('created_at')->get();
-        $totalPaidVouchers = (float)$vouchers->where('voucher_type', 'payment')->sum('amount');
+        $totalPaidVouchers = (float) $vouchers->where('voucher_type', 'payment')->sum('amount');
 
         // 2. قيود إثبات المستحقات المعتمدة للمعلم (حركات دائنة - له)
-        $entitlements = \App\Models\TeacherEntitlement::where('teacher_id', $teacher->id)
+        $entitlements = TeacherEntitlement::where('teacher_id', $teacher->id)
             ->where('status', '!=', 'cancelled')
             ->with(['studyGroup.course', 'course', 'service'])
             ->orderBy('due_date')
             ->orderBy('created_at')
             ->get();
 
-        $totalEntitlements = (float)$entitlements->sum('amount');
+        $totalEntitlements = (float) $entitlements->sum('amount');
 
         // في حال عدم وجود قيود استحقاق حديثة مسجلة بعد، نقوم باحتساب المستحقات من الرصيد الدفتري الحالي لضمان التوافق مع البيانات القديمة
         if ($entitlements->isEmpty()) {
-            $currentBalance = $account ? (float)$account->current_balance : 0.0;
+            $currentBalance = $account ? (float) $account->current_balance : 0.0;
             $totalEntitlements = max($totalPaidVouchers + ($currentBalance > 0 ? $currentBalance : 0), 0);
         }
 
@@ -899,12 +902,12 @@ class ReportController extends Controller
             ? $teacher->assignedTeachingGroups
             : $teacher->teachingGroups;
 
-        $primaryGroupsCount = $teachingGroups->filter(function($g) use ($teacher) {
+        $primaryGroupsCount = $teachingGroups->filter(function ($g) use ($teacher) {
             return ($g->pivot && $g->pivot->is_primary) || ($g->teacher_id == $teacher->id);
         })->count();
         $asstGroupsCount = max(0, $teachingGroups->count() - $primaryGroupsCount);
 
-        $totalStudentsTaught = $teachingGroups->sum(fn($g) => $g->students->count());
+        $totalStudentsTaught = $teachingGroups->sum(fn ($g) => $g->students->count());
         $currency = $account?->currency_symbol ?: ($account?->currency ?? 'YER');
 
         // 3. بناء كشف الحساب التحليلي الزمني (Double-entry Chronological Ledger)
@@ -912,18 +915,18 @@ class ReportController extends Controller
 
         // إضافة قيود إثبات المستحقات
         foreach ($entitlements as $ent) {
-            $dateStr = $ent->due_date ? \Carbon\Carbon::parse($ent->due_date)->format('Y-m-d') : ($ent->created_at ? $ent->created_at->format('Y-m-d') : date('Y-m-d'));
+            $dateStr = $ent->due_date ? Carbon::parse($ent->due_date)->format('Y-m-d') : ($ent->created_at ? $ent->created_at->format('Y-m-d') : date('Y-m-d'));
             $desc = $ent->title;
             if ($ent->statement) {
-                $desc .= ' - ' . $ent->statement;
+                $desc .= ' - '.$ent->statement;
             }
             if ($ent->period) {
-                $desc .= ' [فترة: ' . $ent->period . ']';
+                $desc .= ' [فترة: '.$ent->period.']';
             }
 
-            $ref = $ent->entitlement_no ?: ('قيد #' . $ent->id);
+            $ref = $ent->entitlement_no ?: ('قيد #'.$ent->id);
             if ($ent->manual_no) {
-                $ref .= ' (دفتر: ' . $ent->manual_no . ')';
+                $ref .= ' (دفتر: '.$ent->manual_no.')';
             }
 
             $ledger[] = [
@@ -931,9 +934,9 @@ class ReportController extends Controller
                 'type' => 'entitlement',
                 'description' => $desc,
                 'reference' => $ref,
-                'credit' => (float)$ent->amount,
+                'credit' => (float) $ent->amount,
                 'debit' => 0.0,
-                'timestamp' => $ent->due_date ? \Carbon\Carbon::parse($ent->due_date)->timestamp : ($ent->created_at ? $ent->created_at->timestamp : time()),
+                'timestamp' => $ent->due_date ? Carbon::parse($ent->due_date)->timestamp : ($ent->created_at ? $ent->created_at->timestamp : time()),
             ];
         }
 
@@ -943,9 +946,9 @@ class ReportController extends Controller
                 'date' => $v->created_at ? $v->created_at->format('Y-m-d') : date('Y-m-d'),
                 'type' => $v->voucher_type === 'payment' ? 'voucher' : 'entitlement',
                 'description' => $v->statement ?: ($v->voucher_type === 'payment' ? 'سند صرف نقدي للمعلم' : 'قبض مالي'),
-                'reference' => 'سند #' . ($v->voucher_no ?: $v->id) . ($v->manual_no ? ' (دفتر: ' . $v->manual_no . ')' : ''),
-                'credit' => $v->voucher_type === 'receipt' ? (float)$v->amount : 0.0,
-                'debit' => $v->voucher_type === 'payment' ? (float)$v->amount : 0.0,
+                'reference' => 'سند #'.($v->voucher_no ?: $v->id).($v->manual_no ? ' (دفتر: '.$v->manual_no.')' : ''),
+                'credit' => $v->voucher_type === 'receipt' ? (float) $v->amount : 0.0,
+                'debit' => $v->voucher_type === 'payment' ? (float) $v->amount : 0.0,
                 'timestamp' => $v->created_at ? $v->created_at->timestamp : time(),
             ];
         }
@@ -956,22 +959,22 @@ class ReportController extends Controller
                 $ledger[] = [
                     'date' => $g->created_at ? $g->created_at->format('Y-m-d') : date('Y-m-d'),
                     'type' => 'entitlement',
-                    'description' => 'استحقاق تدريس ' . ($g->pivot?->is_primary ? 'رئيسي' : 'مساعد') . ' لمجموعة: ' . $g->name,
-                    'reference' => 'مجموعة #' . $g->id,
-                    'credit' => (float)($g->level?->course?->teacher_fee ?? 0),
+                    'description' => 'استحقاق تدريس '.($g->pivot?->is_primary ? 'رئيسي' : 'مساعد').' لمجموعة: '.$g->name,
+                    'reference' => 'مجموعة #'.$g->id,
+                    'credit' => (float) ($g->level?->course?->teacher_fee ?? 0),
                     'debit' => 0.0,
                     'timestamp' => $g->created_at ? $g->created_at->timestamp : time(),
                 ];
             }
         } else {
             // ترتيب الحركات زمنياً حسب تاريخ الإنشاء / الاستحقاق
-            usort($ledger, function($a, $b) {
+            usort($ledger, function ($a, $b) {
                 return $a['timestamp'] <=> $b['timestamp'];
             });
         }
 
         // تفقيط صافي الرصيد باللغة العربية
-        $netBalanceWords = \App\Helpers\ArabicCurrencyHelper::tafqeet(abs($netBalance), $account?->currency ?? 'YER');
+        $netBalanceWords = ArabicCurrencyHelper::tafqeet(abs($netBalance), $account?->currency ?? 'YER');
         $generatedAt = now();
 
         return view('admin.reports.teacher_statement', compact(
@@ -1000,12 +1003,12 @@ class ReportController extends Controller
     public function termRosterPrint(Request $request)
     {
         $user = Auth::user();
-        if (!$user || (!$user->isAdmin() && !$user->hasPermission('view_reports'))) {
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('view_reports'))) {
             return redirect()->route('home')->with('error', 'عذراً، ليس لديك صلاحية طباعة تقارير الأترام.');
         }
 
         $term = $request->get('term');
-        if (!$term) {
+        if (! $term) {
             $term = StudyGroup::whereNotNull('term')->latest('id')->value('term') ?? 'الترم الأول 2026';
         }
 

@@ -46,7 +46,7 @@ class CostCenter extends Model
     public function getTotalRevenuesAttribute(): float
     {
         return (float) $this->journalLines()
-            ->whereHas('account', fn($q) => $q->where('account_category', 'revenue'))
+            ->whereHas('account', fn ($q) => $q->where('account_category', 'revenue'))
             ->sum('credit');
     }
 
@@ -54,7 +54,7 @@ class CostCenter extends Model
     public function getTotalExpensesAttribute(): float
     {
         return (float) $this->journalLines()
-            ->whereHas('account', fn($q) => $q->where('account_category', 'expense'))
+            ->whereHas('account', fn ($q) => $q->where('account_category', 'expense'))
             ->sum('debit');
     }
 

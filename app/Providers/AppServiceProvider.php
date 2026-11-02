@@ -2,13 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Gate;
 use App\Models\SiteSetting;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
-if (!function_exists('site_setting')) {
-    function site_setting($key, $default = null) {
+if (! function_exists('site_setting')) {
+    function site_setting($key, $default = null)
+    {
         return SiteSetting::get($key, $default);
     }
 }
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
             if ($result === true) {
                 return true;
             }
+
             return $user->hasPermission($ability);
         });
     }

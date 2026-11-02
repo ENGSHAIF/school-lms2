@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\FinancialAccount;
-use App\Models\Voucher;
-use App\Models\User;
 use App\Models\SystemAuditLog;
+use App\Models\User;
+use App\Models\Voucher;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +18,7 @@ class CashBoxController extends Controller
     protected function checkAccess()
     {
         $user = Auth::user();
-        if (!$user || (!$user->isAdmin() && !$user->hasPermission('manage_cash_boxes') && !$user->hasPermission('manage_accounting') && $user->role !== 'accountant')) {
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('manage_cash_boxes') && ! $user->hasPermission('manage_accounting') && $user->role !== 'accountant')) {
             abort(403, 'عذراً، ليس لديك صلاحية الوصول إلى شاشة إدارة الصناديق والبنوك.');
         }
     }
@@ -39,9 +39,9 @@ class CashBoxController extends Controller
             $s = trim($request->search);
             $query->where(function ($q) use ($s) {
                 $q->where('account_name', 'like', "%{$s}%")
-                  ->orWhere('account_code', 'like', "%{$s}%")
-                  ->orWhere('bank_name', 'like', "%{$s}%")
-                  ->orWhere('account_number', 'like', "%{$s}%");
+                    ->orWhere('account_code', 'like', "%{$s}%")
+                    ->orWhere('bank_name', 'like', "%{$s}%")
+                    ->orWhere('account_number', 'like', "%{$s}%");
             });
         }
 
@@ -69,13 +69,13 @@ class CashBoxController extends Controller
 
         // جلب الحسابات المالية الخاصة بالصناديق والبنوك
         $query = FinancialAccount::where(function ($q) {
-                $q->whereIn('analytical_type', ['cash_box', 'bank'])
-                  ->orWhereIn('account_type', ['cash_box', 'bank']);
-            })
+            $q->whereIn('analytical_type', ['cash_box', 'bank'])
+                ->orWhereIn('account_type', ['cash_box', 'bank']);
+        })
             ->where(function ($q) {
                 // استبعاد الحسابات التجميعية العامة للأصول
                 $q->where('analytical_type', '!=', 'general')
-                  ->orWhere('level', 5);
+                    ->orWhere('level', 5);
             })
             ->with(['parent', 'children.custodian', 'custodian'])
             ->withCount('boxVouchers');
@@ -85,9 +85,9 @@ class CashBoxController extends Controller
             $s = trim($request->search);
             $query->where(function ($q) use ($s) {
                 $q->where('account_name', 'like', "%{$s}%")
-                  ->orWhere('account_code', 'like', "%{$s}%")
-                  ->orWhere('bank_name', 'like', "%{$s}%")
-                  ->orWhere('account_number', 'like', "%{$s}%");
+                    ->orWhere('account_code', 'like', "%{$s}%")
+                    ->orWhere('bank_name', 'like', "%{$s}%")
+                    ->orWhere('account_number', 'like', "%{$s}%");
             });
         }
 
@@ -96,7 +96,7 @@ class CashBoxController extends Controller
             $t = $request->account_type;
             $query->where(function ($q) use ($t) {
                 $q->where('account_type', $t)
-                  ->orWhere('analytical_type', $t);
+                    ->orWhere('analytical_type', $t);
             });
         }
 
@@ -138,7 +138,7 @@ class CashBoxController extends Controller
 
         // الحسابات البنكية الفعلية (الفرعية أو المسجلة)
         $banks = $allAccounts->filter(function ($a) {
-            return ($a->analytical_type === 'bank' || $a->account_type === 'bank') && !$a->is_parent;
+            return ($a->analytical_type === 'bank' || $a->account_type === 'bank') && ! $a->is_parent;
         });
         if ($banks->isEmpty()) {
             $banks = $allAccounts->filter(function ($a) {
@@ -150,8 +150,8 @@ class CashBoxController extends Controller
         $knownChildIds = $mainBoxes->flatMap->children->pluck('id');
         $orphanSubBoxes = $allAccounts->filter(function ($a) use ($knownChildIds) {
             return ($a->analytical_type === 'cash_box' || $a->account_type === 'cash_box')
-                && !$a->is_parent
-                && !$knownChildIds->contains($a->id);
+                && ! $a->is_parent
+                && ! $knownChildIds->contains($a->id);
         });
 
         // إحصاءات الأرصدة والمؤشرات
@@ -166,12 +166,12 @@ class CashBoxController extends Controller
             'sub_boxes_count' => $leafAccounts->where('analytical_type', 'cash_box')->count(),
             'pos_boxes_count' => $allAccounts->where('box_nature', 'pos')->count(),
             'banks_count' => $leafAccounts->where('analytical_type', 'bank')->count() ?: $parentBanks->count(),
-            
+
             // إجمالي الأرصدة حسب العملات
             'balance_yer' => $leafAccounts->where('currency', 'YER')->sum('current_balance'),
             'balance_sar' => $leafAccounts->where('currency', 'SAR')->sum('current_balance'),
             'balance_usd' => $leafAccounts->where('currency', 'USD')->sum('current_balance'),
-            
+
             // توزيع حسب طبيعة الحركة
             'receipt_boxes_count' => $allAccounts->whereIn('box_nature', ['receipt', 'pos', 'both'])->count(),
             'payment_boxes_count' => $allAccounts->whereIn('box_nature', ['payment', 'both'])->count(),
@@ -205,15 +205,15 @@ class CashBoxController extends Controller
             'account_name' => 'required|string|max:150',
             'account_code' => 'nullable|string|max:50|unique:financial_accounts,account_code',
             'account_type' => 'required|in:cash_box,bank',
-            'box_nature'   => 'required|in:both,receipt,payment,pos',
+            'box_nature' => 'required|in:both,receipt,payment,pos',
             'box_category' => 'required|in:main_box,sub_box,general_revenue,pos,bank,electronic_wallet',
-            'parent_id'    => 'nullable|exists:financial_accounts,id',
-            'currency'     => 'required|string|max:10',
+            'parent_id' => 'nullable|exists:financial_accounts,id',
+            'currency' => 'required|string|max:10',
             'opening_balance' => 'nullable|numeric|min:0',
             'custodian_id' => 'nullable|exists:users,id',
-            'bank_name'    => 'nullable|string|max:120',
+            'bank_name' => 'nullable|string|max:120',
             'account_number' => 'nullable|string|max:80',
-            'description'  => 'nullable|string|max:500',
+            'description' => 'nullable|string|max:500',
         ]);
 
         // تحديد الحساب الأب: إذا حدد المستخدم حساب رئيسي نستخدمه، وإلا نربطه بالحساب الرئيسي المناسب في الدليل المحاسبي
@@ -234,28 +234,28 @@ class CashBoxController extends Controller
             $code = $this->generateNextAccountCode($request->account_type, $parentId);
         }
 
-        $openingBal = (float)($request->opening_balance ?? 0.00);
+        $openingBal = (float) ($request->opening_balance ?? 0.00);
 
         $box = FinancialAccount::create([
-            'parent_id'       => $parentId,
-            'account_code'    => $code,
-            'account_name'    => $request->account_name,
-            'account_type'    => $request->account_type,
+            'parent_id' => $parentId,
+            'account_code' => $code,
+            'account_name' => $request->account_name,
+            'account_type' => $request->account_type,
             'analytical_type' => $request->account_type,
-            'account_category'=> 'asset',
-            'nature'          => 'debit',
-            'box_nature'      => $request->box_nature,
-            'box_category'    => $request->box_category,
-            'custodian_id'    => $request->custodian_id,
-            'currency'        => $request->currency,
-            'bank_name'       => $request->bank_name,
-            'account_number'  => $request->account_number,
+            'account_category' => 'asset',
+            'nature' => 'debit',
+            'box_nature' => $request->box_nature,
+            'box_category' => $request->box_category,
+            'custodian_id' => $request->custodian_id,
+            'currency' => $request->currency,
+            'bank_name' => $request->bank_name,
+            'account_number' => $request->account_number,
             'opening_balance' => $openingBal,
             'current_balance' => $openingBal,
-            'description'     => $request->description,
-            'is_active'       => true,
-            'level'           => 5,
-            'is_parent'       => false,
+            'description' => $request->description,
+            'is_active' => true,
+            'level' => 5,
+            'is_parent' => false,
         ]);
 
         SystemAuditLog::record(
@@ -281,38 +281,38 @@ class CashBoxController extends Controller
             'account_name' => 'required|string|max:150',
             'account_code' => ['required', 'string', 'max:50', Rule::unique('financial_accounts', 'account_code')->ignore($box->id)],
             'account_type' => 'required|in:cash_box,bank',
-            'box_nature'   => 'required|in:both,receipt,payment,pos',
+            'box_nature' => 'required|in:both,receipt,payment,pos',
             'box_category' => 'required|in:main_box,sub_box,general_revenue,pos,bank,electronic_wallet',
-            'parent_id'    => 'nullable|exists:financial_accounts,id',
-            'currency'     => 'required|string|max:10',
+            'parent_id' => 'nullable|exists:financial_accounts,id',
+            'currency' => 'required|string|max:10',
             'custodian_id' => 'nullable|exists:users,id',
-            'bank_name'    => 'nullable|string|max:120',
+            'bank_name' => 'nullable|string|max:120',
             'account_number' => 'nullable|string|max:80',
-            'description'  => 'nullable|string|max:500',
-            'is_active'    => 'required|boolean',
+            'description' => 'nullable|string|max:500',
+            'is_active' => 'required|boolean',
         ]);
 
         // منع ربط الصندوق بنفسه كأب
-        if ($request->parent_id && (int)$request->parent_id === (int)$box->id) {
+        if ($request->parent_id && (int) $request->parent_id === (int) $box->id) {
             return back()->with('error', 'لا يمكن تعيين الصندوق كأب لنفسه.');
         }
 
         $parentId = $request->parent_id ?: $box->parent_id;
 
         $box->update([
-            'parent_id'       => $parentId,
-            'account_code'    => $request->account_code,
-            'account_name'    => $request->account_name,
-            'account_type'    => $request->account_type,
+            'parent_id' => $parentId,
+            'account_code' => $request->account_code,
+            'account_name' => $request->account_name,
+            'account_type' => $request->account_type,
             'analytical_type' => $request->account_type,
-            'box_nature'      => $request->box_nature,
-            'box_category'    => $request->box_category,
-            'custodian_id'    => $request->custodian_id,
-            'currency'        => $request->currency,
-            'bank_name'       => $request->bank_name,
-            'account_number'  => $request->account_number,
-            'description'     => $request->description,
-            'is_active'       => (bool)$request->is_active,
+            'box_nature' => $request->box_nature,
+            'box_category' => $request->box_category,
+            'custodian_id' => $request->custodian_id,
+            'currency' => $request->currency,
+            'bank_name' => $request->bank_name,
+            'account_number' => $request->account_number,
+            'description' => $request->description,
+            'is_active' => (bool) $request->is_active,
         ]);
 
         SystemAuditLog::record(
@@ -338,7 +338,7 @@ class CashBoxController extends Controller
             return back()->with('error', '⛔ لا يمكن حذف هذا الصندوق لوجود صناديق فرعية تابعة له. قم بنقل أو حذف الصناديق الفرعية أولاً.');
         }
 
-        if ($box->box_vouchers_count > 0 || abs((float)$box->current_balance) > 0.001) {
+        if ($box->box_vouchers_count > 0 || abs((float) $box->current_balance) > 0.001) {
             return back()->with('error', "⛔ لا يمكن حذف هذا الصندوق لوجود {$box->box_vouchers_count} حركة مالية/سندات مسجلة عليه ورصيد غير صفري ({$box->formatted_balance}). يمكنك إيقاف تفعيله بدلاً من حذفه لضمان سلامة القيود.");
         }
 
@@ -383,11 +383,11 @@ class CashBoxController extends Controller
         $vouchers = $vouchersQuery->get();
 
         // حساب إجمالي القبض والصرف
-        $totalReceipts = (float)$vouchers->where('voucher_type', 'receipt')->sum('amount');
-        $totalPayments = (float)$vouchers->where('voucher_type', 'payment')->sum('amount');
+        $totalReceipts = (float) $vouchers->where('voucher_type', 'receipt')->sum('amount');
+        $totalPayments = (float) $vouchers->where('voucher_type', 'payment')->sum('amount');
         $netMovement = $totalReceipts - $totalPayments;
-        $calculatedBalance = (float)$box->opening_balance + $netMovement;
-        $discrepancy = (float)$box->current_balance - $calculatedBalance;
+        $calculatedBalance = (float) $box->opening_balance + $netMovement;
+        $discrepancy = (float) $box->current_balance - $calculatedBalance;
 
         // جلب سجلات التدقيق المتعلقة بالسندات المحذوفة أو التسويات لتوضيح أي فارق معلق
         $auditTrail = SystemAuditLog::where('action', 'like', '%voucher%')
@@ -435,10 +435,10 @@ class CashBoxController extends Controller
 
         $vouchers = $vouchersQuery->get();
 
-        $totalReceipts = (float)$vouchers->where('voucher_type', 'receipt')->sum('amount');
-        $totalPayments = (float)$vouchers->where('voucher_type', 'payment')->sum('amount');
+        $totalReceipts = (float) $vouchers->where('voucher_type', 'receipt')->sum('amount');
+        $totalPayments = (float) $vouchers->where('voucher_type', 'payment')->sum('amount');
         $netMovement = $totalReceipts - $totalPayments;
-        $calculatedBalance = (float)$box->opening_balance + $netMovement;
+        $calculatedBalance = (float) $box->opening_balance + $netMovement;
 
         return view('accounting.cash_boxes.print_statement', compact(
             'box',
@@ -461,13 +461,13 @@ class CashBoxController extends Controller
 
         $request->validate([
             'reconcile_type' => 'required|in:set_opening,match_vouchers,custom_balance',
-            'custom_amount'  => 'nullable|numeric|min:0',
-            'notes'          => 'nullable|string|max:255',
+            'custom_amount' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string|max:255',
         ]);
 
         $vouchers = Voucher::where('cash_or_bank_account_id', $box->id)->get();
-        $totalReceipts = (float)$vouchers->where('voucher_type', 'receipt')->sum('amount');
-        $totalPayments = (float)$vouchers->where('voucher_type', 'payment')->sum('amount');
+        $totalReceipts = (float) $vouchers->where('voucher_type', 'receipt')->sum('amount');
+        $totalPayments = (float) $vouchers->where('voucher_type', 'payment')->sum('amount');
         $netVouchers = $totalReceipts - $totalPayments;
 
         $oldOpening = $box->opening_balance;
@@ -475,24 +475,24 @@ class CashBoxController extends Controller
 
         if ($request->reconcile_type === 'set_opening') {
             // جعل الفارق كرصيد افتتاحي معتمد
-            $diff = (float)$box->current_balance - $netVouchers;
+            $diff = (float) $box->current_balance - $netVouchers;
             $box->update([
                 'opening_balance' => max(0, $diff),
             ]);
-            $msg = "تم اعتماد مبلغ (" . number_format($diff, 2) . " " . $box->currency . ") كرصيد افتتاحي معتمد للصندوق ليتطابق الرصيد الدفتري والكشف بنسبة 100%.";
+            $msg = 'تم اعتماد مبلغ ('.number_format($diff, 2).' '.$box->currency.') كرصيد افتتاحي معتمد للصندوق ليتطابق الرصيد الدفتري والكشف بنسبة 100%.';
         } elseif ($request->reconcile_type === 'match_vouchers') {
             // مطابقة رصيد الصندوق مع مجموع السندات الفعلية
-            $newBalance = (float)$box->opening_balance + $netVouchers;
+            $newBalance = (float) $box->opening_balance + $netVouchers;
             $box->update([
                 'current_balance' => $newBalance,
             ]);
-            $msg = "تمت التسوية الجردية وضبط رصيد الصندوق الفعلي إلى (" . number_format($newBalance, 2) . " " . $box->currency . ") مطابقاً لحركة السندات المسجلة تماماً.";
+            $msg = 'تمت التسوية الجردية وضبط رصيد الصندوق الفعلي إلى ('.number_format($newBalance, 2).' '.$box->currency.') مطابقاً لحركة السندات المسجلة تماماً.';
         } elseif ($request->reconcile_type === 'custom_balance') {
-            $customAmount = (float)($request->custom_amount ?? 0);
+            $customAmount = (float) ($request->custom_amount ?? 0);
             $box->update([
                 'current_balance' => $customAmount,
             ]);
-            $msg = "تم تعديل الرصيد الفعلي للصندوق بناءً على الجرد النقدي إلى (" . number_format($customAmount, 2) . " " . $box->currency . ").";
+            $msg = 'تم تعديل الرصيد الفعلي للصندوق بناءً على الجرد النقدي إلى ('.number_format($customAmount, 2).' '.$box->currency.').';
         }
 
         SystemAuditLog::record(
@@ -504,8 +504,8 @@ class CashBoxController extends Controller
                 'new_current' => $box->current_balance,
                 'old_opening' => $oldOpening,
                 'new_opening' => $box->opening_balance,
-                'notes'       => $request->notes,
-                'type'        => $request->reconcile_type,
+                'notes' => $request->notes,
+                'type' => $request->reconcile_type,
             ]
         );
 
@@ -521,11 +521,12 @@ class CashBoxController extends Controller
             $parent = FinancialAccount::find($parentId);
             if ($parent) {
                 $subCount = FinancialAccount::where('parent_id', $parentId)->count() + 1;
-                $candidate = $parent->account_code . str_pad($subCount, 2, '0', STR_PAD_LEFT);
+                $candidate = $parent->account_code.str_pad($subCount, 2, '0', STR_PAD_LEFT);
                 while (FinancialAccount::where('account_code', $candidate)->exists()) {
                     $subCount++;
-                    $candidate = $parent->account_code . str_pad($subCount, 2, '0', STR_PAD_LEFT);
+                    $candidate = $parent->account_code.str_pad($subCount, 2, '0', STR_PAD_LEFT);
                 }
+
                 return $candidate;
             }
         }
@@ -536,7 +537,8 @@ class CashBoxController extends Controller
                 return $this->generateNextAccountCode($type, $parentBank->id);
             }
             $count = FinancialAccount::where('account_type', 'bank')->count() + 1;
-            return '1112' . str_pad($count, 2, '0', STR_PAD_LEFT);
+
+            return '1112'.str_pad($count, 2, '0', STR_PAD_LEFT);
         }
 
         $parentBox = FinancialAccount::where('account_code', '1111')->first();
@@ -544,6 +546,7 @@ class CashBoxController extends Controller
             return $this->generateNextAccountCode($type, $parentBox->id);
         }
         $count = FinancialAccount::where('account_type', 'cash_box')->count() + 1;
-        return '1111' . str_pad($count, 2, '0', STR_PAD_LEFT);
+
+        return '1111'.str_pad($count, 2, '0', STR_PAD_LEFT);
     }
 }

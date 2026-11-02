@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\SiteSetting;
-use App\Models\WhatsAppLog;
-use App\Models\User;
-use App\Models\StudyGroup;
 use App\Models\Course;
+use App\Models\SiteSetting;
+use App\Models\StudyGroup;
 use App\Models\SystemAuditLog;
+use App\Models\User;
+use App\Models\WhatsAppLog;
 use App\Services\WhatsAppService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class WhatsAppManagementController extends Controller
@@ -20,7 +20,7 @@ class WhatsAppManagementController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && !$user->hasPermission('manage_whatsapp') && !$user->hasPermission('system.settings')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('manage_whatsapp') && ! $user->hasPermission('system.settings')) {
             return redirect()->route('admin.dashboard')->with('error', 'عذراً، ليس لديك صلاحية الوصول إلى مركز إدارة الواتساب.');
         }
 
@@ -52,8 +52,8 @@ class WhatsAppManagementController extends Controller
             $us = trim($request->user_search);
             $managedUsersQuery->where(function ($q) use ($us) {
                 $q->where('name', 'like', "%{$us}%")
-                  ->orWhere('phone_whatsapp', 'like', "%{$us}%")
-                  ->orWhere('email', 'like', "%{$us}%");
+                    ->orWhere('phone_whatsapp', 'like', "%{$us}%")
+                    ->orWhere('email', 'like', "%{$us}%");
             });
         }
 
@@ -94,8 +94,8 @@ class WhatsAppManagementController extends Controller
             $s = trim($request->search);
             $logsQuery->where(function ($q) use ($s) {
                 $q->where('phone_number', 'like', "%{$s}%")
-                  ->orWhere('message_body', 'like', "%{$s}%")
-                  ->orWhereHas('user', fn($uq) => $uq->where('name', 'like', "%{$s}%"));
+                    ->orWhere('message_body', 'like', "%{$s}%")
+                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$s}%"));
             });
         }
 
@@ -128,7 +128,7 @@ class WhatsAppManagementController extends Controller
      */
     public function updateSettings(Request $request)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('manage_whatsapp')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('manage_whatsapp')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل إعدادات الواتساب.');
         }
 
@@ -179,12 +179,12 @@ class WhatsAppManagementController extends Controller
      */
     public function toggleMasterSwitch(Request $request)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('manage_whatsapp')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('manage_whatsapp')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل حالة الواتساب العامة.');
         }
 
         $current = (bool) SiteSetting::get('whatsapp_master_switch', true);
-        $newStatus = !$current;
+        $newStatus = ! $current;
         SiteSetting::set('whatsapp_master_switch', $newStatus ? '1' : '0', 'whatsapp');
 
         $text = $newStatus ? 'تم تفعيل نظام الواتساب التلقائي بالكامل بنجاح 🟢' : 'تم إيقاف نظام الواتساب كلياً بنجاح (وضع الإيقاف الشامل) 🔴';
@@ -204,21 +204,22 @@ class WhatsAppManagementController extends Controller
      */
     public function toggleUser(Request $request, $id)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('manage_whatsapp')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('manage_whatsapp')) {
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'غير مصرح لك'], 403);
             }
+
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل استثناءات المستخدمين.');
         }
 
-        $newStatus = WhatsAppService::toggleUserNotifications((int)$id);
+        $newStatus = WhatsAppService::toggleUserNotifications((int) $id);
         $user = User::findOrFail($id);
 
         $statusText = $newStatus ? 'تم تفعيل استلام إشعارات الواتساب التلقائية بنجاح' : 'تم استبعاد وحظر استلام إشعارات الواتساب التلقائية';
 
         SystemAuditLog::record(
             'whatsapp.user_toggle',
-            "تغيير حالة إشعارات الواتساب للمستخدم ({$user->name}) إلى: " . ($newStatus ? 'مفعل للإشعارات' : 'مستثنى ومحظور'),
+            "تغيير حالة إشعارات الواتساب للمستخدم ({$user->name}) إلى: ".($newStatus ? 'مفعل للإشعارات' : 'مستثنى ومحظور'),
             $user->id,
             ['enabled' => $newStatus]
         );
@@ -227,7 +228,7 @@ class WhatsAppManagementController extends Controller
             return response()->json([
                 'success' => true,
                 'enabled' => $newStatus,
-                'message' => "{$statusText} للمستخدم ({$user->name})."
+                'message' => "{$statusText} للمستخدم ({$user->name}).",
             ]);
         }
 
@@ -239,7 +240,7 @@ class WhatsAppManagementController extends Controller
      */
     public function bulkToggleUsers(Request $request)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('manage_whatsapp')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('manage_whatsapp')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل استثناءات المستخدمين.');
         }
 
@@ -280,11 +281,11 @@ class WhatsAppManagementController extends Controller
             if ($res['status'] === 'sent') {
                 return back()->with('success', "تم إرسال الرسالة التجريبية بنجاح إلى الرقم ({$res['formatted_phone']}) عبر البوابة الآلية!");
             } else {
-                return back()->with('info', "تم تجهيز الرسالة التجريبية وتوثيقها. يمكنك إرسالها فوراً عبر واتساب ويب من خلال الرابط: " . $res['wa_url']);
+                return back()->with('info', 'تم تجهيز الرسالة التجريبية وتوثيقها. يمكنك إرسالها فوراً عبر واتساب ويب من خلال الرابط: '.$res['wa_url']);
             }
         }
 
-        return back()->with('error', "فشل اختبار الاتصال: " . ($res['message'] ?? 'تحقق من صحة مفاتيح الـ API ورقم الهاتف.'));
+        return back()->with('error', 'فشل اختبار الاتصال: '.($res['message'] ?? 'تحقق من صحة مفاتيح الـ API ورقم الهاتف.'));
     }
 
     /**
@@ -292,7 +293,7 @@ class WhatsAppManagementController extends Controller
      */
     public function updateTemplate(Request $request, $key)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('manage_whatsapp')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('manage_whatsapp')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية تعديل قوالب الرسائل.');
         }
 
@@ -304,7 +305,7 @@ class WhatsAppManagementController extends Controller
         SiteSetting::set("wa_template_{$key}_enabled", $request->has('is_enabled') ? '1' : '0', 'whatsapp_templates');
         SiteSetting::set("wa_template_{$key}_body", trim($request->body), 'whatsapp_templates');
 
-        return back()->with('success', "تم تحديث قالب الرسالة بنجاح.");
+        return back()->with('success', 'تم تحديث قالب الرسالة بنجاح.');
     }
 
     /**
@@ -312,7 +313,7 @@ class WhatsAppManagementController extends Controller
      */
     public function sendCampaign(Request $request)
     {
-        if (!Auth::user()->isAdmin() && !Auth::user()->hasPermission('manage_whatsapp')) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->hasPermission('manage_whatsapp')) {
             return back()->with('error', 'عذراً، ليس لديك صلاحية إرسال حملات الواتساب.');
         }
 
@@ -351,7 +352,7 @@ class WhatsAppManagementController extends Controller
      */
     public function destroyLog($id)
     {
-        if (!Auth::user()->isAdmin()) {
+        if (! Auth::user()->isAdmin()) {
             return back()->with('error', 'عذراً، حذف السجلات مخصص للإدارة العليا.');
         }
 
@@ -366,7 +367,7 @@ class WhatsAppManagementController extends Controller
      */
     public function clearLogs()
     {
-        if (!Auth::user()->isAdmin()) {
+        if (! Auth::user()->isAdmin()) {
             return back()->with('error', 'عذراً، تفريغ السجل مخصص للإدارة العليا فقط.');
         }
 

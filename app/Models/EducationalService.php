@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class EducationalService extends Model
@@ -76,11 +77,11 @@ class EducationalService extends Model
 
     public function getCurrencySymbolAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencySymbol($this->currency);
+        return ArabicCurrencyHelper::currencySymbol($this->currency);
     }
 
     public function getFormattedFeeAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->default_fee, $this->currency);
+        return ArabicCurrencyHelper::format($this->default_fee, $this->currency);
     }
 }

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. إضافة عمود الوصف للمستويات الأكاديمية (إن لم يكن موجوداً)
-        if (Schema::hasTable('levels') && !Schema::hasColumn('levels', 'description')) {
+        if (Schema::hasTable('levels') && ! Schema::hasColumn('levels', 'description')) {
             Schema::table('levels', function (Blueprint $table) {
                 $table->text('description')->nullable()->after('name');
             });
@@ -36,7 +36,7 @@ return new class extends Migration
         });
 
         // 3. ربط أنشطة المجموعات بمورد المستوى عند المشاركة
-        if (Schema::hasTable('group_activities') && !Schema::hasColumn('group_activities', 'level_resource_id')) {
+        if (Schema::hasTable('group_activities') && ! Schema::hasColumn('group_activities', 'level_resource_id')) {
             Schema::table('group_activities', function (Blueprint $table) {
                 $table->foreignId('level_resource_id')->nullable()->after('study_group_id')->constrained('level_resources')->nullOnDelete();
             });

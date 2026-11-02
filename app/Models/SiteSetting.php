@@ -29,6 +29,7 @@ class SiteSetting extends Model
     public static function get(string $key, $default = null)
     {
         $all = static::allCached();
+
         return $all[$key] ?? $default;
     }
 
@@ -50,6 +51,7 @@ class SiteSetting extends Model
     {
         $deleted = static::where('key', $key)->delete();
         Cache::forget('site_settings_all');
+
         return $deleted > 0;
     }
 

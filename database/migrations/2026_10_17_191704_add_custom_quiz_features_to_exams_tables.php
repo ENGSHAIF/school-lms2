@@ -54,7 +54,7 @@ return new class extends Migration
                 'random_questions_count',
                 'shuffle_questions',
                 'shuffle_options',
-                'show_result_immediately'
+                'show_result_immediately',
             ]);
         });
     }

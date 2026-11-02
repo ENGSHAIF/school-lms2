@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
@@ -14,7 +12,7 @@ return new class extends Migration
 
         // التأكد من وجود مجلد رفع الموارد
         $uploadsDir = public_path('uploads/level_resources');
-        if (!File::exists($uploadsDir)) {
+        if (! File::exists($uploadsDir)) {
             File::makeDirectory($uploadsDir, 0777, true, true);
         }
 
@@ -42,7 +40,7 @@ return new class extends Migration
 
         // جلب أول دورة (برنامج اللغة الإنجليزية العامة)
         $courseId = DB::table('courses')->value('id');
-        if (!$courseId) {
+        if (! $courseId) {
             $courseId = DB::table('courses')->insertGetId([
                 'name' => 'برنامج اللغة الإنجليزية العامة (General English)',
                 'description' => 'البرنامج المعتمد لتأسيس ومهارات المحادثة الإنجليزية والتدرج في مستويات CEFR العالمية.',
@@ -54,7 +52,7 @@ return new class extends Migration
 
         // جلب المستوى الأول
         $level1 = DB::table('levels')->where('level_order', 1)->first();
-        if (!$level1) {
+        if (! $level1) {
             $level1Id = DB::table('levels')->insertGetId([
                 'course_id' => $courseId,
                 'name' => 'المستوى الأول: التأسيسي (Level 1: Beginner A1)',
@@ -75,7 +73,7 @@ return new class extends Migration
 
         // جلب المستوى الثاني
         $level2 = DB::table('levels')->where('level_order', 2)->first();
-        if (!$level2) {
+        if (! $level2) {
             $level2Id = DB::table('levels')->insertGetId([
                 'course_id' => $courseId,
                 'name' => 'المستوى الثاني: المتوسط (Level 2: Elementary A2)',
@@ -96,7 +94,7 @@ return new class extends Migration
 
         // إنشاء كويز للمستوى الأول
         $quizLevel1Id = DB::table('exams')->where('level_id', $level1Id)->where('type', 'quiz')->value('id');
-        if (!$quizLevel1Id) {
+        if (! $quizLevel1Id) {
             $quizLevel1Id = DB::table('exams')->insertGetId([
                 'level_id' => $level1Id,
                 'title' => 'كويز الوحدة الأولى: القواعد والمحادثة (Quiz 1 - Fundamentals)',
@@ -138,7 +136,7 @@ return new class extends Migration
 
         // إنشاء كويز للمستوى الثاني
         $quizLevel2Id = DB::table('exams')->where('level_id', $level2Id)->where('type', 'quiz')->value('id');
-        if (!$quizLevel2Id) {
+        if (! $quizLevel2Id) {
             $quizLevel2Id = DB::table('exams')->insertGetId([
                 'level_id' => $level2Id,
                 'title' => 'كويز تقييم منتصف المستوى الثاني (Level 2 Progress Quiz)',
@@ -272,7 +270,7 @@ return new class extends Migration
                 ->where('level_id', $item['level_id'])
                 ->where('title', $item['title'])
                 ->exists();
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('level_resources')->insert($item);
             }
         }
@@ -371,7 +369,7 @@ return new class extends Migration
                 ->where('level_id', $item['level_id'])
                 ->where('title', $item['title'])
                 ->exists();
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('level_resources')->insert($item);
             }
         }

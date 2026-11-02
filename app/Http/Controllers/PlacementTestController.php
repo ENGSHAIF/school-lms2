@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Exam;
-use App\Models\ExamAttempt;
 use App\Models\ExamAnswer;
+use App\Models\ExamAttempt;
 use App\Models\Level;
+use App\Models\SiteSetting;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -17,7 +19,7 @@ class PlacementTestController extends Controller
     {
         $exam = Exam::with('questions')->where('type', 'placement_test')->first();
 
-        if (!$exam) {
+        if (! $exam) {
             return redirect()->route('student.status')->with('error', 'لا يوجد اختبار تحديد مستوى متاح حالياً.');
         }
 
@@ -44,7 +46,7 @@ class PlacementTestController extends Controller
         ]);
 
         foreach ($exam->questions as $question) {
-            $answerField = 'q_' . $question->id;
+            $answerField = 'q_'.$question->id;
 
             if ($question->type === 'mcq') {
                 $studentAnswer = $request->input($answerField);
@@ -61,7 +63,7 @@ class PlacementTestController extends Controller
                 ]);
             } elseif ($question->type === 'speaking_ai') {
                 // معالجة فحص الصوت والنطق
-                $audioFile = $request->file('speech_audio_' . $question->id);
+                $audioFile = $request->file('speech_audio_'.$question->id);
                 $expectedText = $question->expected_speech_text ?? 'Learning English opens great opportunities';
 
                 if ($audioFile) {
@@ -74,7 +76,7 @@ class PlacementTestController extends Controller
                             file_get_contents($audioFile->getRealPath()),
                             $audioFile->getClientOriginalName()
                         )->post('http://127.0.0.1:8001/assess-pronunciation', [
-                            'expected_text' => $expectedText
+                            'expected_text' => $expectedText,
                         ]);
 
                         if ($response->successful()) {
@@ -83,11 +85,11 @@ class PlacementTestController extends Controller
                             $speechScore = ($overall / 100.0) * $question->points;
                         }
                     } catch (\Exception $e) {
-                        Log::info('Python Speech API unreachable, using built-in evaluator: ' . $e->getMessage());
+                        Log::info('Python Speech API unreachable, using built-in evaluator: '.$e->getMessage());
                     }
 
                     // إذا لم تكن خدمة بايثون متصلة، تفعيل المصحح التلقائي الذكي المدمج
-                    if (!$speechFeedback) {
+                    if (! $speechFeedback) {
                         $fileSize = $audioFile->getSize();
                         // فحص وجود تسجيل حقيقي بناءً على الحجم
                         $hasVoice = $fileSize > 800;
@@ -137,14 +139,14 @@ class PlacementTestController extends Controller
 
         // تحديث حالة الطالب إلى بانتظار الاعتماد وتخصيص المستوى من الإدارة
         $user->update([
-            'status' => 'pending_approval'
+            'status' => 'pending_approval',
         ]);
 
         // إشعار واتساب تلقائي بنتيجة اختبار تحديد المستوى للطالب
-        if (!empty($user->phone_whatsapp)) {
+        if (! empty($user->phone_whatsapp)) {
             $levelName = $suggestedLevel ? $suggestedLevel->name : 'المستوى التأسيسي';
-            $examMessage = \App\Services\WhatsAppService::renderTemplate(
-                \App\Models\SiteSetting::get('wa_template_exam_result_body', "عزيزنا الطالب {name} 🎯\n\nتم رصد نتيجة اختبار تحديد المستوى الخاص بكم بنجاح:\n📊 النتيجة المحققة: {score}%\n🏷️ المستوى المقترح: {level}\n\nيرجى مراجعة منصتك لمتابعة اعتماد تسجيلك في {school_name}."),
+            $examMessage = WhatsAppService::renderTemplate(
+                SiteSetting::get('wa_template_exam_result_body', "عزيزنا الطالب {name} 🎯\n\nتم رصد نتيجة اختبار تحديد المستوى الخاص بكم بنجاح:\n📊 النتيجة المحققة: {score}%\n🏷️ المستوى المقترح: {level}\n\nيرجى مراجعة منصتك لمتابعة اعتماد تسجيلك في {school_name}."),
                 [
                     '{name}' => $user->name,
                     '{score}' => round($totalScore, 1),
@@ -153,7 +155,7 @@ class PlacementTestController extends Controller
                 ]
             );
 
-            \App\Services\WhatsAppService::send(
+            WhatsAppService::send(
                 $user->phone_whatsapp,
                 $examMessage,
                 null,
@@ -178,15 +180,15 @@ class PlacementTestController extends Controller
 
     private function buildSpeechDiagnosis(string $expectedText, float $accuracy, float $fluency, string $audioPath, bool $hasVoice): array
     {
-        if (!$hasVoice) {
+        if (! $hasVoice) {
             $words = explode(' ', $expectedText);
-            $wordsData = array_map(function($w) {
+            $wordsData = array_map(function ($w) {
                 return [
                     'word' => $w,
                     'score' => 0,
                     'status' => 'danger',
                     'phonetic' => '',
-                    'note' => 'لم يتم رصد صوت مسجل لهذه الكلمة'
+                    'note' => 'لم يتم رصد صوت مسجل لهذه الكلمة',
                 ];
             }, $words);
 
@@ -210,11 +212,11 @@ class PlacementTestController extends Controller
                 'diagnosis_summary' => 'لم يتم استلام مقطع صوتي أثناء الاختبار، أو أن الملف المرفوع صامت.',
                 'recommendation' => 'إعادة اختبار النطق والتأكد من تفعيل صلاحية الميكروفون.',
                 'tips' => [
-                    "لم يتم رصد تسجيل صوتي واضح أثناء الاختبار.",
-                    "تأكد من السماح بالوصول للميكروفون في متصفحك عند إعادة الاختبار."
+                    'لم يتم رصد تسجيل صوتي واضح أثناء الاختبار.',
+                    'تأكد من السماح بالوصول للميكروفون في متصفحك عند إعادة الاختبار.',
                 ],
                 'engine' => 'ASOTS AI Speech Evaluator',
-                'status' => 'missing'
+                'status' => 'missing',
             ];
         }
 
@@ -236,7 +238,7 @@ class PlacementTestController extends Controller
                     'word' => $clean,
                     'score' => $score,
                     'error_type' => 'نبرة المقاطع (Syllable Stress)',
-                    'description' => 'تعثر في لفظ المقاطع المتعددة للكلمة الطويلة، مع إسقاط التوازن الصوتي بين المقاطع.'
+                    'description' => 'تعثر في لفظ المقاطع المتعددة للكلمة الطويلة، مع إسقاط التوازن الصوتي بين المقاطع.',
                 ];
             } elseif ($len >= 5) {
                 $score = rand(79, 87);
@@ -247,7 +249,7 @@ class PlacementTestController extends Controller
                         'word' => $clean,
                         'score' => $score,
                         'error_type' => 'الربط الصوتي (Connected Speech)',
-                        'description' => 'ضعف في وضوح الصوت الأخير وعدم دمجه بسلاسة مع الكلمة التالية.'
+                        'description' => 'ضعف في وضوح الصوت الأخير وعدم دمجه بسلاسة مع الكلمة التالية.',
                     ];
                 }
             } else {
@@ -261,7 +263,7 @@ class PlacementTestController extends Controller
                 'score' => $score,
                 'status' => $status,
                 'phonetic' => '',
-                'note' => $note
+                'note' => $note,
             ];
         }
 
@@ -273,7 +275,7 @@ class PlacementTestController extends Controller
             'expected_text' => $expectedText,
             'recognized_text' => $expectedText,
             'audio_path' => $audioPath,
-            'audio_url' => asset('storage/' . $audioPath),
+            'audio_url' => asset('storage/'.$audioPath),
             'engine' => 'ASOTS AI Speech Evaluator (Acoustic Phoneme & Fluency Engine)',
             'status' => 'success',
             'words_breakdown' => $wordsData,
@@ -285,11 +287,11 @@ class PlacementTestController extends Controller
                 'speech_rate_wpm' => rand(105, 125),
             ],
             'diagnosis_summary' => "أداء صوتي جيد جداً بنسبة دقة {$accuracy}% وطلاقة {$fluency}%. مخارج الحروف ممتازة في الكلمات الشائعة، بينما تركزت الأخطاء في الكلمات الأكاديمية متعددة المقاطع والربط الصوتي.",
-            'recommendation' => "تسكين الطالب في المستوى الثاني (Level 2: Elementary) مع التركيز على تدريبات نبرات الكلمات (Word Stress) والربط الصوتي (Connected Speech).",
+            'recommendation' => 'تسكين الطالب في المستوى الثاني (Level 2: Elementary) مع التركيز على تدريبات نبرات الكلمات (Word Stress) والربط الصوتي (Connected Speech).',
             'tips' => [
-                "نطق صوتي سليم في معظم كلمات الجملة ومخارج حروف واضحة ومفهومة.",
-                "يُنصح بالتدريب على تقطيع الكلمات الطويلة إلى مقاطع صوتية قبل نطقها ككتلة واحدة.",
-                "مواصلة الاستماع للناطقين الأصليين والتدريب على سرعة الربط الصوتي (Connected Speech)."
+                'نطق صوتي سليم في معظم كلمات الجملة ومخارج حروف واضحة ومفهومة.',
+                'يُنصح بالتدريب على تقطيع الكلمات الطويلة إلى مقاطع صوتية قبل نطقها ككتلة واحدة.',
+                'مواصلة الاستماع للناطقين الأصليين والتدريب على سرعة الربط الصوتي (Connected Speech).',
             ],
         ];
     }

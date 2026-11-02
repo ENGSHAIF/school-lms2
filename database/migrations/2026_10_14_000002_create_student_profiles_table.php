@@ -20,7 +20,7 @@ return new class extends Migration
                 'university',     // جامعي
                 'adult',          // بالغ / موظف
                 'parent',         // ولي أمر يسجل لطفل
-                'other'           // غير ذلك
+                'other',           // غير ذلك
             ])->default('adult');
             $table->string('grade_substage')->nullable(); // الصف الدراسي أو المرحلة الفرعية
             $table->json('learning_goals')->nullable(); // الأهداف المحددة (توفل، محادثة، أعمال...)

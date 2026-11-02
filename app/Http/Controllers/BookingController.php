@@ -125,7 +125,7 @@ class BookingController extends Controller
                 ]);
             }
 
-            $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->orderBy('id')->get();
+            $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->where('type', '!=', 'system')->orderBy('id')->get();
 
             return view('classroom.live', compact('booking', 'isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId', 'chatMessages'));
         }
@@ -167,7 +167,7 @@ class BookingController extends Controller
                 ]);
             }
 
-            $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->orderBy('id')->get();
+            $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->where('type', '!=', 'system')->orderBy('id')->get();
 
             return view('classroom.live', compact('group', 'isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId', 'chatMessages'));
         }
@@ -178,7 +178,7 @@ class BookingController extends Controller
         $teacher = $isTeacher ? $user : User::where('role', 'teacher')->first();
         $students = User::where('role', 'student')->take(5)->get();
         $isGroup = true;
-        $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->orderBy('id')->get();
+        $chatMessages = ClassroomMessage::with('user')->where('room_id', $roomId)->where('type', '!=', 'system')->orderBy('id')->get();
 
         return view('classroom.live', compact('isTeacher', 'title', 'teacher', 'students', 'isGroup', 'roomId', 'chatMessages'));
     }

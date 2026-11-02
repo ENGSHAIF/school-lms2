@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. إضافة رصيد النجوم التراكمي للمستخدمين (إن لم يكن موجوداً)
-        if (Schema::hasTable('users') && !Schema::hasColumn('users', 'stars_balance')) {
+        if (Schema::hasTable('users') && ! Schema::hasColumn('users', 'stars_balance')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->unsignedInteger('stars_balance')->default(0)->after('status');
             });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Services\SmartBotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -62,6 +63,7 @@ class ChatbotController extends Controller
             if ($mode === 'subscribe' && $token === $expectedToken) {
                 return response($challenge, 200)->header('Content-Type', 'text/plain');
             }
+
             return response('Unauthorized', 403);
         }
 
@@ -71,8 +73,8 @@ class ChatbotController extends Controller
 
         // أ) تنسيق UltraMsg
         if ($request->has('data.body')) {
-            $incomingText = (string)$request->input('data.body');
-            $senderPhone = (string)$request->input('data.from');
+            $incomingText = (string) $request->input('data.body');
+            $senderPhone = (string) $request->input('data.from');
         }
         // ب) تنسيق Meta WhatsApp Cloud API
         elseif ($request->has('entry.0.changes.0.value.messages.0')) {
@@ -82,8 +84,8 @@ class ChatbotController extends Controller
         }
         // ج) تنسيق عام مبسط (Generic/Wasapi/Custom)
         else {
-            $incomingText = (string)($request->input('message') ?? $request->input('text') ?? $request->input('body') ?? '');
-            $senderPhone = (string)($request->input('phone') ?? $request->input('from') ?? $request->input('sender') ?? '');
+            $incomingText = (string) ($request->input('message') ?? $request->input('text') ?? $request->input('body') ?? '');
+            $senderPhone = (string) ($request->input('phone') ?? $request->input('from') ?? $request->input('sender') ?? '');
         }
 
         if (trim($incomingText) === '') {
@@ -94,7 +96,7 @@ class ChatbotController extends Controller
         $cleanPhone = preg_replace('/[^0-9]/', '', $senderPhone);
         $user = null;
         if ($cleanPhone !== '') {
-            $user = \App\Models\User::where('phone_whatsapp', 'like', "%{$cleanPhone}%")->first();
+            $user = User::where('phone_whatsapp', 'like', "%{$cleanPhone}%")->first();
         }
 
         // توليد الرد الذكي المعتمد على قاعدة البيانات

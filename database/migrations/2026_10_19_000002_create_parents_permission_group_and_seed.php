@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -29,7 +28,7 @@ return new class extends Migration
         // 1. إنشاء أو تحديث مجموعة الصلاحيات القياسية لأولياء الأمور
         $existingGroup = DB::table('permission_groups')->where('slug', 'parents')->first();
 
-        if (!$existingGroup) {
+        if (! $existingGroup) {
             $parentGroupId = DB::table('permission_groups')->insertGetId([
                 'name' => 'أولياء الأمور ومتابعة الطلاب',
                 'name_en' => 'Parents Portal & Follow-up',

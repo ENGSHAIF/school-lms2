@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Course;
-use App\Models\Level;
-use App\Models\LevelResource;
 use App\Models\Exam;
 use App\Models\ExamQuestion;
+use App\Models\Level;
+use App\Models\LevelResource;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 
 class CurriculumBankSeeder extends Seeder
@@ -20,7 +20,7 @@ class CurriculumBankSeeder extends Seeder
 
         // التأكد من وجود مجلد رفع الموارد
         $uploadsDir = public_path('uploads/level_resources');
-        if (!File::exists($uploadsDir)) {
+        if (! File::exists($uploadsDir)) {
             File::makeDirectory($uploadsDir, 0777, true, true);
         }
 

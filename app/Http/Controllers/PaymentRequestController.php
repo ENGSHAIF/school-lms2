@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PaymentRequest;
-use App\Models\FinancialAccount;
+use App\Helpers\ArabicCurrencyHelper;
 use App\Models\CostCenter;
+use App\Models\FinancialAccount;
+use App\Models\PaymentRequest;
+use App\Models\SystemAuditLog;
 use App\Models\Voucher;
 use App\Models\VoucherItem;
-use App\Models\SystemAuditLog;
 use App\Services\GeneralLedgerService;
-use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -71,20 +71,20 @@ class PaymentRequestController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'request_type'     => 'required|in:payment,receipt',
+            'request_type' => 'required|in:payment,receipt',
             'beneficiary_name' => 'required|string|max:255',
-            'amount'           => 'required|numeric|min:1',
-            'currency'         => 'required|string',
-            'purpose'          => 'required|string',
-            'account_id'       => 'nullable|exists:financial_accounts,id',
-            'cost_center_id'   => 'nullable|exists:cost_centers,id',
-            'attachment'       => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'amount' => 'required|numeric|min:1',
+            'currency' => 'required|string',
+            'purpose' => 'required|string',
+            'account_id' => 'nullable|exists:financial_accounts,id',
+            'cost_center_id' => 'nullable|exists:cost_centers,id',
+            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         $year = date('Y');
         $prefix = $request->request_type === 'payment' ? 'PR' : 'RR';
         $count = PaymentRequest::whereYear('created_at', $year)->count() + 1;
-        $requestNo = "{$prefix}-{$year}-" . str_pad($count, 5, '0', STR_PAD_LEFT);
+        $requestNo = "{$prefix}-{$year}-".str_pad($count, 5, '0', STR_PAD_LEFT);
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
@@ -92,22 +92,22 @@ class PaymentRequestController extends Controller
         }
 
         $paymentRequest = PaymentRequest::create([
-            'request_no'       => $requestNo,
-            'request_type'     => $request->request_type,
-            'requested_by'     => Auth::id() ?? 1,
+            'request_no' => $requestNo,
+            'request_type' => $request->request_type,
+            'requested_by' => Auth::id() ?? 1,
             'beneficiary_name' => $request->beneficiary_name,
-            'account_id'       => $request->account_id,
-            'cost_center_id'   => $request->cost_center_id,
-            'amount'           => $request->amount,
-            'currency'         => $request->currency,
-            'purpose'          => $request->purpose,
-            'attachment_path'  => $attachmentPath,
-            'status'           => 'pending_manager', // يدخل مسار الاعتماد الإداري مباشرة
+            'account_id' => $request->account_id,
+            'cost_center_id' => $request->cost_center_id,
+            'amount' => $request->amount,
+            'currency' => $request->currency,
+            'purpose' => $request->purpose,
+            'attachment_path' => $attachmentPath,
+            'status' => 'pending_manager', // يدخل مسار الاعتماد الإداري مباشرة
         ]);
 
         SystemAuditLog::record(
             'payment_request.create',
-            "إنشاء طلب " . ($request->request_type === 'payment' ? 'صرف' : 'توريد') . " رقم ({$requestNo}) بمبلغ {$request->amount} {$request->currency} للمستفيد: {$request->beneficiary_name}",
+            'إنشاء طلب '.($request->request_type === 'payment' ? 'صرف' : 'توريد')." رقم ({$requestNo}) بمبلغ {$request->amount} {$request->currency} للمستفيد: {$request->beneficiary_name}",
             $paymentRequest,
             ['amount' => $request->amount, 'currency' => $request->currency]
         );
@@ -122,12 +122,12 @@ class PaymentRequestController extends Controller
     {
         $item = PaymentRequest::findOrFail($id);
 
-        if (!in_array($item->status, ['draft', 'pending_financial', 'pending_manager'])) {
+        if (! in_array($item->status, ['draft', 'pending_financial', 'pending_manager'])) {
             return back()->with('error', 'لا يمكن اعتماد هذا الطلب في حالته الحالية.');
         }
 
         $item->update([
-            'status'      => 'approved',
+            'status' => 'approved',
             'approved_by' => Auth::id() ?? 1,
             'approved_at' => now(),
         ]);
@@ -152,7 +152,7 @@ class PaymentRequestController extends Controller
 
         $item = PaymentRequest::findOrFail($id);
         $item->update([
-            'status'           => 'rejected',
+            'status' => 'rejected',
             'rejection_reason' => $request->rejection_reason,
         ]);
 
@@ -179,8 +179,8 @@ class PaymentRequestController extends Controller
 
         $request->validate([
             'cash_or_bank_account_id' => 'required|exists:financial_accounts,id',
-            'payment_method'          => 'required|string',
-            'manual_no'               => 'nullable|string',
+            'payment_method' => 'required|string',
+            'manual_no' => 'nullable|string',
         ]);
 
         return DB::transaction(function () use ($item, $request) {
@@ -190,42 +190,42 @@ class PaymentRequestController extends Controller
 
             $prefix = $voucherType === 'payment' ? 'PAY' : 'REC';
             $count = Voucher::count() + 1;
-            $voucherNo = "{$prefix}-" . date('Y') . '-' . str_pad($count, 5, '0', STR_PAD_LEFT);
+            $voucherNo = "{$prefix}-".date('Y').'-'.str_pad($count, 5, '0', STR_PAD_LEFT);
             $amountInWords = ArabicCurrencyHelper::tafqeet($amount, $item->currency);
 
             // تحديد حساب الطرف الآخر
             $targetAccountId = $item->account_id;
-            if (!$targetAccountId) {
+            if (! $targetAccountId) {
                 // إذا لم يُحدد نربطه بحساب المصروفات العامة أو الإيرادات
-                $fallback = $voucherType === 'payment' 
-                    ? FinancialAccount::where('account_code', '5204')->first() 
+                $fallback = $voucherType === 'payment'
+                    ? FinancialAccount::where('account_code', '5204')->first()
                     : FinancialAccount::where('account_code', '4101')->first();
                 $targetAccountId = $fallback?->id ?? $cashBox->id;
             }
 
             // 1. إنشاء السند المالي
             $voucher = Voucher::create([
-                'voucher_no'              => $voucherNo,
-                'manual_no'               => $request->manual_no,
-                'voucher_type'            => $voucherType,
-                'is_compound'             => false,
-                'account_id'              => $targetAccountId,
+                'voucher_no' => $voucherNo,
+                'manual_no' => $request->manual_no,
+                'voucher_type' => $voucherType,
+                'is_compound' => false,
+                'account_id' => $targetAccountId,
                 'cash_or_bank_account_id' => $cashBox->id,
-                'amount'                  => $amount,
-                'currency'                => $item->currency,
-                'exchange_rate'           => 1.0000,
-                'amount_local'            => $amount,
-                'amount_in_words'         => $amountInWords,
-                'payment_method'          => $request->payment_method,
-                'statement'               => "تنفيذ طلب {$item->request_no}: {$item->purpose} (المستفيد: {$item->beneficiary_name})",
-                'created_by'              => Auth::id() ?? 1,
+                'amount' => $amount,
+                'currency' => $item->currency,
+                'exchange_rate' => 1.0000,
+                'amount_local' => $amount,
+                'amount_in_words' => $amountInWords,
+                'payment_method' => $request->payment_method,
+                'statement' => "تنفيذ طلب {$item->request_no}: {$item->purpose} (المستفيد: {$item->beneficiary_name})",
+                'created_by' => Auth::id() ?? 1,
             ]);
 
             VoucherItem::create([
                 'voucher_id' => $voucher->id,
                 'account_id' => $targetAccountId,
-                'amount'     => $amount,
-                'statement'  => $voucher->statement,
+                'amount' => $amount,
+                'statement' => $voucher->statement,
             ]);
 
             // 2. تحديث رصيد الصندوق
@@ -240,7 +240,7 @@ class PaymentRequestController extends Controller
 
             // 4. تحديث حالة الطلب إلى منفذ
             $item->update([
-                'status'     => 'executed',
+                'status' => 'executed',
                 'voucher_id' => $voucher->id,
             ]);
 

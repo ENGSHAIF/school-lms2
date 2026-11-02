@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\SiteSetting;
-use App\Models\WhatsAppLog;
-use App\Models\User;
-use App\Models\StudyGroup;
-use App\Models\Course;
 use App\Helpers\WhatsAppHelper;
+use App\Models\SiteSetting;
+use App\Models\StudyGroup;
+use App\Models\StudyGroupStudent;
+use App\Models\User;
+use App\Models\WhatsAppLog;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -59,7 +60,7 @@ class WhatsAppService
         $settings = self::getSettings();
 
         // 1. فحص المفتاح العام (Master Switch)
-        if (!$settings['master_switch']) {
+        if (! $settings['master_switch']) {
             return [
                 'allowed' => false,
                 'reason' => 'نظام الواتساب معطل بالكامل حالياً من إعدادات الإدارة (Master Switch is OFF).',
@@ -68,9 +69,9 @@ class WhatsAppService
 
         // 2. فحص مدة صلاحية العملية (تجاهل العمليات السابقة)
         if ($operationTimestamp) {
-            $timestamp = is_numeric($operationTimestamp) 
-                ? \Carbon\Carbon::createFromTimestamp($operationTimestamp) 
-                : \Carbon\Carbon::parse($operationTimestamp);
+            $timestamp = is_numeric($operationTimestamp)
+                ? Carbon::createFromTimestamp($operationTimestamp)
+                : Carbon::parse($operationTimestamp);
 
             $maxHours = $settings['max_age_hours'];
             if ($maxHours > 0 && $timestamp->lt(now()->subHours($maxHours))) {
@@ -106,7 +107,7 @@ class WhatsAppService
             if (is_numeric($user)) {
                 $user = User::find($user);
             }
-            if ($user && isset($user->whatsapp_notifications_enabled) && !$user->whatsapp_notifications_enabled) {
+            if ($user && isset($user->whatsapp_notifications_enabled) && ! $user->whatsapp_notifications_enabled) {
                 return [
                     'allowed' => false,
                     'reason' => "تم استثناء المستخدم ({$user->name}) من استلام الرسائل التلقائية بقرار الإدارة.",
@@ -126,7 +127,7 @@ class WhatsAppService
     public static function toggleUserNotifications(int $userId, ?bool $status = null): bool
     {
         $user = User::findOrFail($userId);
-        $user->whatsapp_notifications_enabled = $status !== null ? $status : !$user->whatsapp_notifications_enabled;
+        $user->whatsapp_notifications_enabled = $status !== null ? $status : ! $user->whatsapp_notifications_enabled;
         $user->save();
 
         return (bool) $user->whatsapp_notifications_enabled;
@@ -144,7 +145,7 @@ class WhatsAppService
                 'title' => '👋 رسالة الترحيب بالمسجلين الجدد',
                 'description' => 'تُرسل تلقائياً عند تسجيل أو إضافة طالب أو مستخدم جديد في المنصة',
                 'enabled' => (bool) SiteSetting::get('wa_template_welcome_enabled', true),
-                'body' => SiteSetting::get('wa_template_welcome_body', 
+                'body' => SiteSetting::get('wa_template_welcome_body',
                     "أهلاً وسهلاً بك عزيزنا {name} في {school_name}! 🎓✨\n\nيسرنا انضمامك إلينا لمواصلة رحلتك التعليمية المتميزة. يمكنك الآن تسجيل الدخول لمنصتك التعليمية ومتابعة دروسك واختباراتك بكل سهولة.\n\n🔗 رابط المنصة: {link}\n📱 هاتف الدعم والاستفسار: {platform_phone}\n\nنتمنى لك تجربة ممتعة وتفوقاً مستمراً!"
                 ),
             ],
@@ -259,12 +260,12 @@ class WhatsAppService
     ): array {
         $settings = self::getSettings();
         $formattedPhone = WhatsAppHelper::formatNumber($phone);
-        $userId = ($user instanceof User) ? $user->id : (is_numeric($user) ? (int)$user : null);
+        $userId = ($user instanceof User) ? $user->id : (is_numeric($user) ? (int) $user : null);
 
         // 1. إذا كانت الرسالة ناجمة عن عملية آلية، نتحقق من مصفوفة الإرسال وصلاحية العملية واستثناء المستخدم والمفتاح العام
         if ($isAutomated) {
             $check = self::canSendAutomatedOperation($messageType, $user, $operationTimestamp);
-            if (!$check['allowed']) {
+            if (! $check['allowed']) {
                 // توثيق الرسالة كمستبعدة (Suppressed) في سجل الواتس لإحاطة الإدارة علماً بسبب الاستبعاد
                 $log = WhatsAppLog::create([
                     'user_id' => $userId,
@@ -303,7 +304,7 @@ class WhatsAppService
         $apiResponse = null;
 
         // التحقق من تفعيل الإرسال الآلي ووجود بيانات الربط
-        if ($settings['auto_send_enabled'] && !empty($settings['api_token']) && $settings['provider'] !== 'web_only') {
+        if ($settings['auto_send_enabled'] && ! empty($settings['api_token']) && $settings['provider'] !== 'web_only') {
             try {
                 $dispatchResult = self::dispatchToGateway($settings, $formattedPhone, $message, $attachmentUrl);
                 if ($dispatchResult['success']) {
@@ -314,7 +315,7 @@ class WhatsAppService
                     $apiResponse = json_encode($dispatchResult['error'], JSON_UNESCAPED_UNICODE);
                 }
             } catch (\Exception $e) {
-                Log::error("WhatsApp Gateway Exception: " . $e->getMessage());
+                Log::error('WhatsApp Gateway Exception: '.$e->getMessage());
                 $status = 'failed';
                 $apiResponse = $e->getMessage();
             }
@@ -360,7 +361,7 @@ class WhatsAppService
                 'body' => $message,
             ]);
 
-            if ($response->successful() && !empty($response->json('sent'))) {
+            if ($response->successful() && ! empty($response->json('sent'))) {
                 return ['success' => true, 'response' => $response->json()];
             }
 
@@ -370,13 +371,13 @@ class WhatsAppService
         // 2. GreenAPI Gateway
         if ($provider === 'greenapi') {
             $url = $customUrl ?: "https://api.green-api.com/waInstance{$instanceId}/sendMessage/{$token}";
-            $chatId = $phone . '@c.us';
+            $chatId = $phone.'@c.us';
             $response = Http::timeout(12)->post($url, [
                 'chatId' => $chatId,
                 'message' => $message,
             ]);
 
-            if ($response->successful() && !empty($response->json('idMessage'))) {
+            if ($response->successful() && ! empty($response->json('idMessage'))) {
                 return ['success' => true, 'response' => $response->json()];
             }
 
@@ -385,7 +386,7 @@ class WhatsAppService
 
         // 3. Wasender / Generic Custom Gateway
         if ($provider === 'wasender' || $provider === 'custom') {
-            $url = $customUrl ?: "https://api.wasender.com/api/send-message";
+            $url = $customUrl ?: 'https://api.wasender.com/api/send-message';
             $response = Http::timeout(12)->withHeaders([
                 'Authorization' => "Bearer {$token}",
                 'Accept' => 'application/json',
@@ -404,7 +405,7 @@ class WhatsAppService
 
         // 4. Local Self-Hosted Gateway (Node.js Baileys / WPPConnect on localhost)
         if ($provider === 'local_gateway') {
-            $url = $customUrl ?: "http://127.0.0.1:3000/send-message";
+            $url = $customUrl ?: 'http://127.0.0.1:3000/send-message';
             $response = Http::timeout(10)->post($url, [
                 'phone' => $phone,
                 'message' => $message,
@@ -435,7 +436,7 @@ class WhatsAppService
             ];
         }
 
-        $testMessage = "🔔 تجربة ربط واتساب منصة ASOTS التعليمية بنجاح!\n\nهذه الرسالة تؤكد نجاح ربط الرقم الرسمي للمنصة ومزود الخدمة ({$settings['provider']}).\nالتاريخ: " . date('Y/m/d h:i A');
+        $testMessage = "🔔 تجربة ربط واتساب منصة ASOTS التعليمية بنجاح!\n\nهذه الرسالة تؤكد نجاح ربط الرقم الرسمي للمنصة ومزود الخدمة ({$settings['provider']}).\nالتاريخ: ".date('Y/m/d h:i A');
 
         return self::send($formattedPhone, $testMessage, null, null, 'announcement', false);
     }
@@ -496,7 +497,7 @@ class WhatsAppService
             case 'specific_course':
                 if ($courseId) {
                     // الطلاب المسجلين في مجموعات هذه الدورة
-                    $groupStudentIds = \App\Models\StudyGroupStudent::whereHas('studyGroup', fn($q) => $q->where('course_id', $courseId))
+                    $groupStudentIds = StudyGroupStudent::whereHas('studyGroup', fn ($q) => $q->where('course_id', $courseId))
                         ->pluck('student_id');
                     $recipients = User::whereIn('id', $groupStudentIds)->get();
                 }

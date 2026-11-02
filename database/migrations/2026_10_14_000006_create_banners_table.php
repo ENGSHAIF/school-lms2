@@ -20,7 +20,7 @@ return new class extends Migration
                 'top_announcement', // شريط الإعلانات العلوي
                 'hero_slider',      // سلايدر الصفحة الرئيسية
                 'popup_modal',      // نافذة منبثقة ترويجية
-                'sidebar'           // شريط جانبي للبوابات
+                'sidebar',           // شريط جانبي للبوابات
             ])->default('top_announcement');
             $table->string('theme_style')->default('amber'); // التدرج اللوني (amber, indigo, emerald, rose)
             $table->enum('device_target', ['all', 'desktop', 'mobile'])->default('all');

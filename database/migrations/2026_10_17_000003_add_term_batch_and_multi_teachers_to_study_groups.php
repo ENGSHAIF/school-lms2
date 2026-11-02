@@ -11,28 +11,28 @@ return new class extends Migration
     {
         // 1. إضافة حقول الترم والدفعة والدبلوم والمدة لجدول المجموعات الدراسية
         Schema::table('study_groups', function (Blueprint $table) {
-            if (!Schema::hasColumn('study_groups', 'term')) {
+            if (! Schema::hasColumn('study_groups', 'term')) {
                 $table->string('term')->nullable()->after('level_id')->comment('الترم الدراسي (مثال: الترم الأول 2026)');
             }
-            if (!Schema::hasColumn('study_groups', 'batch')) {
+            if (! Schema::hasColumn('study_groups', 'batch')) {
                 $table->string('batch')->nullable()->after('term')->comment('الدفعة (مثال: الدفعة الأولى A)');
             }
-            if (!Schema::hasColumn('study_groups', 'program_type')) {
+            if (! Schema::hasColumn('study_groups', 'program_type')) {
                 $table->string('program_type')->nullable()->after('batch')->comment('نوع البرنامج أو الدبلوم (مثال: دبلوم اللغة الإنجليزية العام)');
             }
-            if (!Schema::hasColumn('study_groups', 'duration_months')) {
+            if (! Schema::hasColumn('study_groups', 'duration_months')) {
                 $table->integer('duration_months')->nullable()->default(3)->after('program_type')->comment('مدة الدبلوم أو الدورة بالأشهر');
             }
-            if (!Schema::hasColumn('study_groups', 'start_date')) {
+            if (! Schema::hasColumn('study_groups', 'start_date')) {
                 $table->date('start_date')->nullable()->after('duration_months')->comment('تاريخ بدء المجموعة');
             }
-            if (!Schema::hasColumn('study_groups', 'end_date')) {
+            if (! Schema::hasColumn('study_groups', 'end_date')) {
                 $table->date('end_date')->nullable()->after('start_date')->comment('تاريخ نهاية المجموعة أو التخرج');
             }
         });
 
         // 2. إنشاء جدول المعلمين المتعددين للمجموعة الدراسية (المعلم الرئيسي والمعلمون المساعدون)
-        if (!Schema::hasTable('study_group_teachers')) {
+        if (! Schema::hasTable('study_group_teachers')) {
             Schema::create('study_group_teachers', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('study_group_id')->constrained('study_groups')->cascadeOnDelete();
@@ -46,7 +46,7 @@ return new class extends Migration
         }
 
         // 3. إنشاء جدول المشرفين المتعددين للمجموعة الدراسية
-        if (!Schema::hasTable('study_group_supervisors')) {
+        if (! Schema::hasTable('study_group_supervisors')) {
             Schema::create('study_group_supervisors', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('study_group_id')->constrained('study_groups')->cascadeOnDelete();
@@ -62,10 +62,10 @@ return new class extends Migration
         // 4. إضافة حقول الخصم لجدول الأقساط إذا لم تكن موجودة
         if (Schema::hasTable('student_installments')) {
             Schema::table('student_installments', function (Blueprint $table) {
-                if (!Schema::hasColumn('student_installments', 'discount_amount')) {
+                if (! Schema::hasColumn('student_installments', 'discount_amount')) {
                     $table->decimal('discount_amount', 12, 2)->default(0.00)->after('amount')->comment('قيمة الخصم الممنوح للطالب');
                 }
-                if (!Schema::hasColumn('student_installments', 'discount_reason')) {
+                if (! Schema::hasColumn('student_installments', 'discount_reason')) {
                     $table->string('discount_reason')->nullable()->after('discount_amount')->comment('سبب أو مبرر الخصم (منحة، تفوق، قرابة)');
                 }
             });

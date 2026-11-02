@@ -12,11 +12,11 @@ class EnsureStaffOrAdmin
     /**
      * حماية شاشات الإدارة والنظام: منع الطلاب وأولياء الأمور من فتح شاشات الإدارة
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, ?string $permission = null): Response
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->route('login')->with('warning', 'يرجى تسجيل الدخول للوصول إلى هذه الشاشة.');
         }
 
@@ -32,8 +32,8 @@ class EnsureStaffOrAdmin
         }
 
         // 2. إذا حُددت صلاحية معينة للشاشة، نتحقق منها (إلا إذا كان مديراً عاماً)
-        if ($permission && !$user->isAdmin() && !$user->hasPermission($permission)) {
-            abort(403, 'عذراً، ليس لديك الصلاحية الكافية لفتح هذه الشاشة (' . $permission . ').');
+        if ($permission && ! $user->isAdmin() && ! $user->hasPermission($permission)) {
+            abort(403, 'عذراً، ليس لديك الصلاحية الكافية لفتح هذه الشاشة ('.$permission.').');
         }
 
         return $next($request);

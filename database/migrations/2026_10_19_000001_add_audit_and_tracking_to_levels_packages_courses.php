@@ -11,10 +11,10 @@ return new class extends Migration
         // 1. إضافة أعمدة التتبع (المنشئ والمعدل) لجدول المستويات والرسوم الدراسية
         if (Schema::hasTable('levels')) {
             Schema::table('levels', function (Blueprint $table) {
-                if (!Schema::hasColumn('levels', 'created_by')) {
+                if (! Schema::hasColumn('levels', 'created_by')) {
                     $table->foreignId('created_by')->nullable()->after('is_active')->constrained('users')->nullOnDelete();
                 }
-                if (!Schema::hasColumn('levels', 'updated_by')) {
+                if (! Schema::hasColumn('levels', 'updated_by')) {
                     $table->foreignId('updated_by')->nullable()->after('created_by')->constrained('users')->nullOnDelete();
                 }
             });
@@ -23,10 +23,10 @@ return new class extends Migration
         // 2. إضافة أعمدة التتبع لجدول الدورات
         if (Schema::hasTable('courses')) {
             Schema::table('courses', function (Blueprint $table) {
-                if (!Schema::hasColumn('courses', 'created_by')) {
+                if (! Schema::hasColumn('courses', 'created_by')) {
                     $table->foreignId('created_by')->nullable()->after('is_active')->constrained('users')->nullOnDelete();
                 }
-                if (!Schema::hasColumn('courses', 'updated_by')) {
+                if (! Schema::hasColumn('courses', 'updated_by')) {
                     $table->foreignId('updated_by')->nullable()->after('created_by')->constrained('users')->nullOnDelete();
                 }
             });
@@ -35,17 +35,17 @@ return new class extends Migration
         // 3. إضافة أعمدة التتبع لجدول الباقات والتسعيرة
         if (Schema::hasTable('packages')) {
             Schema::table('packages', function (Blueprint $table) {
-                if (!Schema::hasColumn('packages', 'created_by')) {
+                if (! Schema::hasColumn('packages', 'created_by')) {
                     $table->foreignId('created_by')->nullable()->after('is_active')->constrained('users')->nullOnDelete();
                 }
-                if (!Schema::hasColumn('packages', 'updated_by')) {
+                if (! Schema::hasColumn('packages', 'updated_by')) {
                     $table->foreignId('updated_by')->nullable()->after('created_by')->constrained('users')->nullOnDelete();
                 }
             });
         }
 
         // 4. إنشاء جدول سجل تدقيق العمليات والأنشطة الإدارية والمالية (System Audit Logs)
-        if (!Schema::hasTable('system_audit_logs')) {
+        if (! Schema::hasTable('system_audit_logs')) {
             Schema::create('system_audit_logs', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();

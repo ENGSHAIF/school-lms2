@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. جدول سلّم وتوزيع درجات الدورة / المجموعة / الدبلوم (Course & Group Grade Scales)
-        if (!Schema::hasTable('course_grade_scales')) {
+        if (! Schema::hasTable('course_grade_scales')) {
             Schema::create('course_grade_scales', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('course_id')->nullable()->constrained('courses')->cascadeOnDelete();
@@ -31,7 +31,7 @@ return new class extends Migration
         }
 
         // 2. جدول رصد وتعديل درجات الطلاب بالدورة والمجموعة (Student Course Grades)
-        if (!Schema::hasTable('student_course_grades')) {
+        if (! Schema::hasTable('student_course_grades')) {
             Schema::create('student_course_grades', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('student_id')->constrained('users')->cascadeOnDelete();
@@ -58,7 +58,7 @@ return new class extends Migration
         }
 
         // 3. جدول الشهادات المعتمدة الصادرة (Certificates System)
-        if (!Schema::hasTable('certificates')) {
+        if (! Schema::hasTable('certificates')) {
             Schema::create('certificates', function (Blueprint $table) {
                 $table->id();
                 $table->string('certificate_number')->unique(); // مثال: ASOTS-2026-0001
@@ -87,16 +87,16 @@ return new class extends Migration
 
         // 4. تعزيز جدول الاختبارات exams لدعم الإسناد للمجموعات والطلاب والدورات
         Schema::table('exams', function (Blueprint $table) {
-            if (!Schema::hasColumn('exams', 'study_group_id')) {
+            if (! Schema::hasColumn('exams', 'study_group_id')) {
                 $table->foreignId('study_group_id')->nullable()->after('course_id')->constrained('study_groups')->nullOnDelete();
             }
-            if (!Schema::hasColumn('exams', 'target_type')) {
+            if (! Schema::hasColumn('exams', 'target_type')) {
                 $table->string('target_type', 30)->default('general')->after('study_group_id'); // general, level, course, group, students
             }
-            if (!Schema::hasColumn('exams', 'assigned_student_ids')) {
+            if (! Schema::hasColumn('exams', 'assigned_student_ids')) {
                 $table->json('assigned_student_ids')->nullable()->after('target_type');
             }
-            if (!Schema::hasColumn('exams', 'weight_category')) {
+            if (! Schema::hasColumn('exams', 'weight_category')) {
                 $table->string('weight_category', 30)->default('quiz')->after('assigned_student_ids'); // quiz, midterm, final, practical, activity
             }
         });

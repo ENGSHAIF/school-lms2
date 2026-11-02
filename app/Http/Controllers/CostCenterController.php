@@ -34,9 +34,9 @@ class CostCenterController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'code'        => 'nullable|string|unique:cost_centers,code',
-            'parent_id'   => 'nullable|exists:cost_centers,id',
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|unique:cost_centers,code',
+            'parent_id' => 'nullable|exists:cost_centers,id',
             'description' => 'nullable|string',
         ]);
 
@@ -47,25 +47,25 @@ class CostCenterController extends Controller
         if (empty($code)) {
             $prefix = $parent ? $parent->code : '1';
             $count = CostCenter::where('parent_id', $parentId)->count() + 1;
-            $code = $prefix . str_pad($count, 2, '0', STR_PAD_LEFT);
+            $code = $prefix.str_pad($count, 2, '0', STR_PAD_LEFT);
             while (CostCenter::where('code', $code)->exists()) {
                 $count++;
-                $code = $prefix . str_pad($count, 2, '0', STR_PAD_LEFT);
+                $code = $prefix.str_pad($count, 2, '0', STR_PAD_LEFT);
             }
         }
 
-        if ($parent && !$parent->is_parent) {
+        if ($parent && ! $parent->is_parent) {
             $parent->update(['is_parent' => true]);
         }
 
         $cc = CostCenter::create([
-            'parent_id'   => $parentId,
-            'code'        => $code,
-            'name'        => $request->name,
-            'level'       => $parent ? ($parent->level + 1) : 1,
-            'is_parent'   => false,
+            'parent_id' => $parentId,
+            'code' => $code,
+            'name' => $request->name,
+            'level' => $parent ? ($parent->level + 1) : 1,
+            'is_parent' => false,
             'description' => $request->description,
-            'is_active'   => true,
+            'is_active' => true,
         ]);
 
         SystemAuditLog::record(
@@ -86,15 +86,15 @@ class CostCenterController extends Controller
         $cc = CostCenter::findOrFail($id);
 
         $request->validate([
-            'name'        => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'is_active'   => 'boolean',
+            'is_active' => 'boolean',
         ]);
 
         $cc->update([
-            'name'        => $request->name,
+            'name' => $request->name,
             'description' => $request->description,
-            'is_active'   => $request->boolean('is_active'),
+            'is_active' => $request->boolean('is_active'),
         ]);
 
         return back()->with('success', "تم تحديث بيانات مركز التكلفة [{$cc->code}] بنجاح.");
@@ -108,15 +108,17 @@ class CostCenterController extends Controller
         $cc = CostCenter::findOrFail($id);
 
         if ($cc->children()->exists()) {
-            return back()->with('error', "لا يمكن حذف هذا المركز لأنه يضم مراكز تكلفة فرعية تحته.");
+            return back()->with('error', 'لا يمكن حذف هذا المركز لأنه يضم مراكز تكلفة فرعية تحته.');
         }
 
         if ($cc->journalLines()->exists() || $cc->paymentRequests()->exists()) {
             $cc->update(['is_active' => false]);
+
             return back()->with('success', "تم تعطيل مركز التكلفة [{$cc->code}] بنجاح لوجود قيود وحركات مرتبطة به.");
         }
 
         $cc->delete();
-        return back()->with('success', "تم حذف مركز التكلفة بنجاح.");
+
+        return back()->with('success', 'تم حذف مركز التكلفة بنجاح.');
     }
 }

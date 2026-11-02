@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\FinancialAccount;
 use App\Models\SystemAuditLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class ChartOfAccountsController extends Controller
 {
@@ -58,13 +57,13 @@ class ChartOfAccountsController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'account_name'      => 'required|string|max:255',
-            'parent_id'         => 'required|exists:financial_accounts,id',
-            'account_code'      => 'nullable|string|unique:financial_accounts,account_code',
-            'nature'            => 'required|in:debit,credit',
-            'analytical_type'   => 'nullable|string|in:general,student,teacher,employee,parent,cash_box,bank,customer,supplier,revenue,expense',
+            'account_name' => 'required|string|max:255',
+            'parent_id' => 'required|exists:financial_accounts,id',
+            'account_code' => 'nullable|string|unique:financial_accounts,account_code',
+            'nature' => 'required|in:debit,credit',
+            'analytical_type' => 'nullable|string|in:general,student,teacher,employee,parent,cash_box,bank,customer,supplier,revenue,expense',
             'allow_cost_center' => 'boolean',
-            'description'       => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
         $parent = FinancialAccount::findOrFail($request->parent_id);
@@ -80,7 +79,7 @@ class ChartOfAccountsController extends Controller
 
         // تحديد النوع التحليلي ونوع الحساب التوافقي
         $analyticalType = $request->input('analytical_type') ?: ($parent->analytical_type ?: 'general');
-        $accountType = match($analyticalType) {
+        $accountType = match ($analyticalType) {
             'cash_box' => 'cash_box',
             'bank' => 'bank',
             'student', 'parent', 'customer' => 'student',
@@ -95,33 +94,33 @@ class ChartOfAccountsController extends Controller
         if (empty($accountCode)) {
             $childrenCount = $parent->children()->count() + 1;
             $padLen = ($newLevel == 5) ? 4 : 2;
-            $accountCode = $parent->account_code . str_pad($childrenCount, $padLen, '0', STR_PAD_LEFT);
+            $accountCode = $parent->account_code.str_pad($childrenCount, $padLen, '0', STR_PAD_LEFT);
             // التأكد من عدم التكرار
             while (FinancialAccount::where('account_code', $accountCode)->exists()) {
                 $childrenCount++;
-                $accountCode = $parent->account_code . str_pad($childrenCount, $padLen, '0', STR_PAD_LEFT);
+                $accountCode = $parent->account_code.str_pad($childrenCount, $padLen, '0', STR_PAD_LEFT);
             }
         }
 
         $account = FinancialAccount::create([
-            'parent_id'         => $parent->id,
-            'level'             => $newLevel,
-            'is_parent'         => $isParent,
-            'account_code'      => $accountCode,
-            'account_name'      => $request->account_name,
-            'account_type'      => $accountType,
-            'analytical_type'   => $analyticalType,
-            'account_category'  => $parent->account_category,
-            'nature'            => $request->nature,
+            'parent_id' => $parent->id,
+            'level' => $newLevel,
+            'is_parent' => $isParent,
+            'account_code' => $accountCode,
+            'account_name' => $request->account_name,
+            'account_type' => $accountType,
+            'analytical_type' => $analyticalType,
+            'account_category' => $parent->account_category,
+            'nature' => $request->nature,
             'allow_cost_center' => $request->boolean('allow_cost_center', false),
-            'currency'          => 'YER',
-            'opening_balance'   => $request->input('opening_balance', 0.00),
-            'current_balance'   => $request->input('opening_balance', 0.00),
-            'description'       => $request->description,
-            'is_active'         => true,
+            'currency' => 'YER',
+            'opening_balance' => $request->input('opening_balance', 0.00),
+            'current_balance' => $request->input('opening_balance', 0.00),
+            'description' => $request->description,
+            'is_active' => true,
         ]);
 
-        $typeLabel = $isParent ? "رئيسي (تجميعي - رتبة {$newLevel})" : "فرعي (حركي - رتبة 5)";
+        $typeLabel = $isParent ? "رئيسي (تجميعي - رتبة {$newLevel})" : 'فرعي (حركي - رتبة 5)';
 
         SystemAuditLog::record(
             'chart_of_accounts.create',
@@ -141,25 +140,25 @@ class ChartOfAccountsController extends Controller
         $account = FinancialAccount::findOrFail($id);
 
         $request->validate([
-            'account_name'      => 'required|string|max:255',
-            'nature'            => 'required|in:debit,credit',
-            'analytical_type'   => 'nullable|string|in:general,student,teacher,employee,parent,cash_box,bank,customer,supplier,revenue,expense',
+            'account_name' => 'required|string|max:255',
+            'nature' => 'required|in:debit,credit',
+            'analytical_type' => 'nullable|string|in:general,student,teacher,employee,parent,cash_box,bank,customer,supplier,revenue,expense',
             'allow_cost_center' => 'boolean',
-            'is_active'         => 'boolean',
-            'description'       => 'nullable|string',
+            'is_active' => 'boolean',
+            'description' => 'nullable|string',
         ]);
 
         $updateData = [
-            'account_name'      => $request->account_name,
-            'nature'            => $request->nature,
+            'account_name' => $request->account_name,
+            'nature' => $request->nature,
             'allow_cost_center' => $request->boolean('allow_cost_center'),
-            'is_active'         => $request->boolean('is_active'),
-            'description'       => $request->description,
+            'is_active' => $request->boolean('is_active'),
+            'description' => $request->description,
         ];
 
         if ($request->filled('analytical_type')) {
             $updateData['analytical_type'] = $request->analytical_type;
-            $updateData['account_type'] = match($request->analytical_type) {
+            $updateData['account_type'] = match ($request->analytical_type) {
                 'cash_box' => 'cash_box',
                 'bank' => 'bank',
                 'student', 'parent', 'customer' => 'student',
@@ -191,16 +190,18 @@ class ChartOfAccountsController extends Controller
 
         // منع حذف الحساب إذا كان لديه أبناء أو عليه حركات سابقة
         if ($account->children()->exists()) {
-            return back()->with('error', "لا يمكن حذف هذا الحساب لأنه يحتوي على حسابات فرعية تحته. يرجى حذف أو نقل الحسابات الفرعية أولاً.");
+            return back()->with('error', 'لا يمكن حذف هذا الحساب لأنه يحتوي على حسابات فرعية تحته. يرجى حذف أو نقل الحسابات الفرعية أولاً.');
         }
 
         if ($account->vouchers()->exists() || $account->boxVouchers()->exists() || $account->journalLines()->exists()) {
             // تعطيل بدلاً من الحذف
             $account->update(['is_active' => false]);
+
             return back()->with('success', "تم تعطيل الحساب [{$account->account_code}] بنجاح نظراً لوجود قيود وحركات مالية مسجلة عليه.");
         }
 
         $account->delete();
-        return back()->with('success', "تم حذف الحساب بنجاح.");
+
+        return back()->with('success', 'تم حذف الحساب بنجاح.');
     }
 }

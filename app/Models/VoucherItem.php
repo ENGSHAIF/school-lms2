@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class VoucherItem extends Model
@@ -26,6 +27,7 @@ class VoucherItem extends Model
     public function getFormattedAmountAttribute(): string
     {
         $currency = $this->voucher?->currency ?? 'YER';
-        return \App\Helpers\ArabicCurrencyHelper::format($this->amount, $currency);
+
+        return ArabicCurrencyHelper::format($this->amount, $currency);
     }
 }

@@ -19,7 +19,7 @@ return new class extends Migration
         });
 
         // 2. إضافة حقول التحكم بالبث الحي للحجوزات الفردية إن لم تكن موجودة
-        if (Schema::hasTable('bookings') && !Schema::hasColumn('bookings', 'is_live')) {
+        if (Schema::hasTable('bookings') && ! Schema::hasColumn('bookings', 'is_live')) {
             Schema::table('bookings', function (Blueprint $table) {
                 $table->boolean('is_live')->default(false)->after('room_id');
                 $table->timestamp('live_started_at')->nullable()->after('is_live');

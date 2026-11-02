@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\Course;
+use App\Models\Level;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
-use App\Models\Level;
-use App\Models\Course;
 
 return new class extends Migration
 {
@@ -167,7 +167,9 @@ return new class extends Migration
 
         foreach ($coursesHierarchy as $lvlKey => $courses) {
             $level = $createdLevels[$lvlKey] ?? Level::where('name_en', $lvlKey)->first();
-            if (!$level) continue;
+            if (! $level) {
+                continue;
+            }
 
             $courseOrder = 1;
             foreach ($courses as $c) {
@@ -176,7 +178,7 @@ return new class extends Migration
                     ->orWhere('name', $c['name_en'])
                     ->first();
 
-                if (!$existingCourse && $firstCourse && $firstCourse->id === 1 && $orderCounter === 1) {
+                if (! $existingCourse && $firstCourse && $firstCourse->id === 1 && $orderCounter === 1) {
                     $existingCourse = $firstCourse;
                 }
 

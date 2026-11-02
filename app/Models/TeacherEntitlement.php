@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ArabicCurrencyHelper;
 use Illuminate\Database\Eloquent\Model;
 
 class TeacherEntitlement extends Model
@@ -78,22 +79,22 @@ class TeacherEntitlement extends Model
 
     public function getRemainingAmountAttribute(): float
     {
-        return max(0, (float)$this->amount - (float)$this->paid_amount);
+        return max(0, (float) $this->amount - (float) $this->paid_amount);
     }
 
     public function getCurrencySymbolAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencySymbol($this->currency);
+        return ArabicCurrencyHelper::currencySymbol($this->currency);
     }
 
     public function getCurrencyNameAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::currencyName($this->currency);
+        return ArabicCurrencyHelper::currencyName($this->currency);
     }
 
     public function getFormattedAmountAttribute(): string
     {
-        return \App\Helpers\ArabicCurrencyHelper::format($this->amount, $this->currency);
+        return ArabicCurrencyHelper::format($this->amount, $this->currency);
     }
 
     public function getStatusBadgeAttribute(): array

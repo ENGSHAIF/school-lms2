@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\JournalEntry;
-use App\Models\FinancialAccount;
 use App\Models\CostCenter;
-use App\Models\SystemAuditLog;
+use App\Models\FinancialAccount;
+use App\Models\JournalEntry;
 use App\Services\GeneralLedgerService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class JournalEntryController extends Controller
 {
@@ -29,7 +27,7 @@ class JournalEntryController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('entry_no', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
         if ($fromDate) {
@@ -108,25 +106,25 @@ class JournalEntryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'entry_date'  => 'required|date',
+            'entry_date' => 'required|date',
             'description' => 'required|string|max:1000',
-            'lines'       => 'required|array|min:2',
+            'lines' => 'required|array|min:2',
             'lines.*.account_id' => 'required|exists:financial_accounts,id',
-            'lines.*.debit'      => 'nullable|numeric|min:0',
-            'lines.*.credit'     => 'nullable|numeric|min:0',
+            'lines.*.debit' => 'nullable|numeric|min:0',
+            'lines.*.credit' => 'nullable|numeric|min:0',
         ]);
 
         try {
             $headerData = [
-                'entry_date'  => $request->entry_date,
+                'entry_date' => $request->entry_date,
                 'description' => $request->description,
-                'is_posted'   => $request->boolean('is_posted', true),
+                'is_posted' => $request->boolean('is_posted', true),
             ];
 
             $entry = GeneralLedgerService::createManualEntry($headerData, $request->lines);
 
             return redirect()->route('accounting.journal_entries.show', $entry->id)
-                ->with('success', "تم تسجيل قيد اليومية رقم ({$entry->entry_no}) بنجاح بمبلغ إجمالي (" . number_format($entry->total_debit, 2) . " ر.ي).");
+                ->with('success', "تم تسجيل قيد اليومية رقم ({$entry->entry_no}) بنجاح بمبلغ إجمالي (".number_format($entry->total_debit, 2).' ر.ي).');
         } catch (\Exception $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }

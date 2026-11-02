@@ -14,7 +14,7 @@ class AppearanceController extends Controller
         $defaultTheme = config('themes.default');
 
         $activeTheme = session('theme');
-        if (!$activeTheme && Auth::check()) {
+        if (! $activeTheme && Auth::check()) {
             $activeTheme = Auth::user()->theme_preference;
         }
         $activeTheme = $activeTheme ?? $defaultTheme;
@@ -33,10 +33,11 @@ class AppearanceController extends Controller
         $themeId = $request->input('theme');
         $themes = config('themes.profiles');
 
-        if (!array_key_exists($themeId, $themes)) {
+        if (! array_key_exists($themeId, $themes)) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'القالب غير صالح'], 400);
             }
+
             return back()->with('error', 'القالب المختار غير صالح');
         }
 
@@ -71,7 +72,7 @@ class AppearanceController extends Controller
         $validFonts = ['Cairo', 'Almarai', 'Tajawal', 'IBM Plex Sans Arabic'];
         $font = $request->input('font', 'Cairo');
 
-        if (!in_array($font, $validFonts)) {
+        if (! in_array($font, $validFonts)) {
             $font = 'Cairo';
         }
 
@@ -92,7 +93,8 @@ class AppearanceController extends Controller
                 Auth::user()->update([
                     'theme_preference' => $defaultTheme,
                 ]);
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+            }
         }
 
         return back()->with('success', 'تمت استعادة المظهر والخط الافتراضي للمنصة بنجاح.');

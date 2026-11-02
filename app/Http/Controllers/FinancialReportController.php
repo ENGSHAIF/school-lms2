@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\FinancialAccount;
-use App\Models\CostCenter;
 use App\Models\JournalEntryLine;
 use App\Services\GeneralLedgerService;
 use Illuminate\Http\Request;
@@ -78,8 +77,12 @@ class FinancialReportController extends Controller
                 ->where('account_id', $selectedAccount->id)
                 ->whereHas('entry', function ($q) use ($fromDate, $toDate) {
                     $q->where('is_posted', true);
-                    if ($fromDate) $q->whereDate('entry_date', '>=', $fromDate);
-                    if ($toDate) $q->whereDate('entry_date', '<=', $toDate);
+                    if ($fromDate) {
+                        $q->whereDate('entry_date', '>=', $fromDate);
+                    }
+                    if ($toDate) {
+                        $q->whereDate('entry_date', '<=', $toDate);
+                    }
                 })
                 ->join('journal_entries', 'journal_entry_lines.entry_id', '=', 'journal_entries.id')
                 ->orderBy('journal_entries.entry_date')
@@ -90,8 +93,8 @@ class FinancialReportController extends Controller
 
             $totalDebit = $lines->sum('debit');
             $totalCredit = $lines->sum('credit');
-            $runningBalance = $selectedAccount->nature === 'debit' 
-                ? ($totalDebit - $totalCredit) 
+            $runningBalance = $selectedAccount->nature === 'debit'
+                ? ($totalDebit - $totalCredit)
                 : ($totalCredit - $totalDebit);
         }
 

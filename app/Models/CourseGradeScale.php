@@ -59,12 +59,16 @@ class CourseGradeScale extends Model
     {
         if ($groupId) {
             $scale = self::where('study_group_id', $groupId)->first();
-            if ($scale) return $scale;
+            if ($scale) {
+                return $scale;
+            }
         }
 
         if ($courseId) {
             $scale = self::where('course_id', $courseId)->whereNull('study_group_id')->first();
-            if ($scale) return $scale;
+            if ($scale) {
+                return $scale;
+            }
         }
 
         // إرجاع سلم قياسي افتراضي

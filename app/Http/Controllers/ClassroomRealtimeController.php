@@ -141,6 +141,7 @@ class ClassroomRealtimeController extends Controller
         if ($participant->admission_status === 'admitted') {
             $messages = ClassroomMessage::with('user')
                 ->where('room_id', $roomId)
+                ->where('type', '!=', 'system')
                 ->where('id', '>', $lastMessageId)
                 ->orderBy('id')
                 ->get()
@@ -228,7 +229,7 @@ class ClassroomRealtimeController extends Controller
         }
 
         $validated = $request->validate([
-            'type' => 'required|in:text,audio,image,worksheet,system',
+            'type' => 'required|in:text,audio,image,worksheet',
             'content' => 'nullable|string',
             'attachment' => 'nullable|file|max:524288', // 512MB
         ]);
@@ -323,15 +324,6 @@ class ClassroomRealtimeController extends Controller
         $participant->last_seen_at = now();
         $participant->save();
 
-        if ($isRaised) {
-            ClassroomMessage::create([
-                'room_id' => $roomId,
-                'user_id' => $user->id,
-                'type' => 'system',
-                'content' => "✋ رفع الطالب [{$user->name}] يده طلباً للإذن بالتحدث.",
-            ]);
-        }
-
         return response()->json([
             'success' => true,
             'is_hand_raised' => $isRaised,
@@ -376,14 +368,6 @@ class ClassroomRealtimeController extends Controller
             $control->policy = $newPolicy;
             $control->save();
 
-            $policyName = $newPolicy === 'open' ? 'الكلام مسموح للجميع دون قيود 📢' : 'الكلام بإذن الأستاذ فقط (كتم الجميع) 🔒';
-            ClassroomMessage::create([
-                'room_id' => $roomId,
-                'user_id' => $user->id,
-                'type' => 'system',
-                'content' => "🔔 قام الأستاذ بتغيير سياسة الفصل إلى: {$policyName}",
-            ]);
-
             return response()->json(['success' => true, 'policy' => $newPolicy]);
         }
 
@@ -393,13 +377,6 @@ class ClassroomRealtimeController extends Controller
             if ($p) {
                 $p->is_muted_by_host = true;
                 $p->save();
-
-                ClassroomMessage::create([
-                    'room_id' => $roomId,
-                    'user_id' => $user->id,
-                    'type' => 'system',
-                    'content' => "🔇 قام المعلم بكتم ميكروفون الطالب [{$p->user?->name}].",
-                ]);
             }
 
             return response()->json(['success' => true, 'muted' => true]);
@@ -412,13 +389,6 @@ class ClassroomRealtimeController extends Controller
                 $p->is_muted_by_host = false;
                 $p->is_hand_raised = false;
                 $p->save();
-
-                ClassroomMessage::create([
-                    'room_id' => $roomId,
-                    'user_id' => $user->id,
-                    'type' => 'system',
-                    'content' => "🎙️ سمح المعلم للطالب [{$p->user?->name}] بالتحدث ومشاركة الصوت.",
-                ]);
             }
 
             return response()->json(['success' => true, 'allowed' => true]);
@@ -445,15 +415,7 @@ class ClassroomRealtimeController extends Controller
             }
 
             $p = ClassroomParticipant::where('room_id', $roomId)->where('user_id', $targetUserId)->first();
-            $targetName = $p?->user?->name ?? 'طالب';
             $p?->delete();
-
-            ClassroomMessage::create([
-                'room_id' => $roomId,
-                'user_id' => $user->id,
-                'type' => 'system',
-                'content' => "🚫 تم استبعاد [{$targetName}] من هذه الجلسة الحية.",
-            ]);
 
             return response()->json(['success' => true, 'kicked' => true]);
         }
@@ -464,13 +426,6 @@ class ClassroomRealtimeController extends Controller
             if ($p) {
                 $p->admission_status = 'admitted';
                 $p->save();
-
-                ClassroomMessage::create([
-                    'room_id' => $roomId,
-                    'user_id' => $user->id,
-                    'type' => 'system',
-                    'content' => "🔔 وافق المعلم على انضمام الطالب [{$p->user?->name}] إلى البث الحي.",
-                ]);
             }
 
             return response()->json(['success' => true, 'admitted' => true]);
@@ -485,13 +440,6 @@ class ClassroomRealtimeController extends Controller
                 ClassroomParticipant::where('room_id', $roomId)
                     ->where('admission_status', 'pending')
                     ->update(['admission_status' => 'admitted']);
-
-                ClassroomMessage::create([
-                    'room_id' => $roomId,
-                    'user_id' => $user->id,
-                    'type' => 'system',
-                    'content' => "🔔 وافق المعلم على دخول جميع الطلاب المنتظرين ({$pendingCount} طالب) إلى البث الحي.",
-                ]);
             }
 
             return response()->json(['success' => true, 'admitted_all' => true]);
@@ -508,20 +456,27 @@ class ClassroomRealtimeController extends Controller
             return response()->json(['success' => true, 'rejected' => true]);
         }
 
+        if ($action === 'clear_chat') {
+            ClassroomMessage::where('room_id', $roomId)->delete();
+
+            return response()->json(['success' => true, 'cleared' => true]);
+        }
+
+        if ($action === 'mute_all') {
+            ClassroomParticipant::where('room_id', $roomId)->update(['is_muted_by_host' => true]);
+            $control->policy = 'moderated';
+            $control->save();
+
+            return response()->json(['success' => true, 'muted_all' => true]);
+        }
+
+        if ($action === 'refresh_all') {
+            return response()->json(['success' => true, 'refreshed' => true]);
+        }
+
         if ($action === 'toggle_requires_admission') {
             $control->requires_admission = ! $control->requires_admission;
             $control->save();
-
-            $statusText = $control->requires_admission
-                ? 'تم تفعيل غرفة الانتظار (طلب موافقة المعلم على دخول الطلاب) 🔔'
-                : 'تم إلغاء غرفة الانتظار (دخول مباشر لجميع الطلاب) 🚪';
-
-            ClassroomMessage::create([
-                'room_id' => $roomId,
-                'user_id' => $user->id,
-                'type' => 'system',
-                'content' => "🔔 {$statusText}",
-            ]);
 
             return response()->json(['success' => true, 'requires_admission' => $control->requires_admission]);
         }
@@ -605,15 +560,6 @@ class ClassroomRealtimeController extends Controller
             $control->whiteboard_version = ($control->whiteboard_version ?? 0) + 1;
             $control->save();
 
-            if (! empty($existing['bg_title'])) {
-                ClassroomMessage::create([
-                    'room_id' => $roomId,
-                    'user_id' => $user->id,
-                    'type' => 'system',
-                    'content' => "📖 فتح المعلم في مساحة الشرح: {$existing['bg_title']}",
-                ]);
-            }
-
             return response()->json([
                 'success' => true,
                 'whiteboard_version' => $control->whiteboard_version,
@@ -624,17 +570,22 @@ class ClassroomRealtimeController extends Controller
             $file = $request->file('file');
             $ext = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'png');
             $originalName = $file->getClientOriginalName() ?: ('whiteboard_bg_'.time().'.'.$ext);
-            $cleanName = time().'_'.Str::slug(pathinfo($originalName, PATHINFO_FILENAME) ?: 'bg').'.'.$ext;
+            $rawBase = pathinfo($originalName, PATHINFO_FILENAME);
+            $slug = Str::slug($rawBase);
+            if (empty($slug)) {
+                $slug = 'file_'.substr(md5($originalName.time()), 0, 8);
+            }
+            $cleanName = time().'_'.$slug.'.'.$ext;
 
             $dest = public_path('uploads/classroom_whiteboard');
             if (! file_exists($dest)) {
                 @mkdir($dest, 0755, true);
             }
             $file->move($dest, $cleanName);
-            $url = asset('uploads/classroom_whiteboard/'.$cleanName);
+            $url = '/uploads/classroom_whiteboard/'.$cleanName;
 
             $isPdf = ($ext === 'pdf');
-            $isVideo = in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'm4v']);
+            $isVideo = in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'm4v', 'avi', 'mkv', 'flv']);
             $bgType = $isPdf ? 'pdf' : ($isVideo ? 'video' : 'image');
 
             $existing = json_decode($control->whiteboard_state, true) ?: [];
@@ -646,13 +597,6 @@ class ClassroomRealtimeController extends Controller
             $control->whiteboard_state = json_encode($existing);
             $control->whiteboard_version = ($control->whiteboard_version ?? 0) + 1;
             $control->save();
-
-            ClassroomMessage::create([
-                'room_id' => $roomId,
-                'user_id' => $user->id,
-                'type' => 'system',
-                'content' => "🖼️ قام المعلم برفع ملف لمساحة الشرح والسبورة: {$originalName}",
-            ]);
 
             return response()->json([
                 'success' => true,

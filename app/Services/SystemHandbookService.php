@@ -388,7 +388,7 @@ class SystemHandbookService
         $audiences = $guide['target_audience'] ?? [$guide['role'] ?? 'admin'];
 
         // 1. إذا كان زائراً غير مسجل: يسمح فقط بمقالات الزوار العامة (guest)
-        if (!$user) {
+        if (! $user) {
             return in_array('guest', $audiences, true);
         }
 
@@ -417,6 +417,7 @@ class SystemHandbookService
     public static function getGuidesForUser(?User $user): array
     {
         $all = self::getAllGuides();
+
         return array_values(array_filter($all, function ($g) use ($user) {
             return self::canUserAccessGuide($g, $user);
         }));
@@ -440,6 +441,7 @@ class SystemHandbookService
             '/\b(احذف|نحذف)\b/u' => 'حذف',
             '/\b(اسند|نسند)\b/u' => 'اسناد',
         ];
+
         return preg_replace(array_keys($replacements), array_values($replacements), $text);
     }
 
@@ -472,6 +474,7 @@ class SystemHandbookService
                 $kwNorm = SmartBotService::normalizeText($kw);
                 if (str_contains($normalized, $kwNorm) || str_contains($expanded, $kwNorm)) {
                     $score += 35;
+
                     continue;
                 }
 
@@ -524,15 +527,15 @@ class SystemHandbookService
     protected static function handleRestrictedGuideResponse(array $guide, ?User $user): array
     {
         // 1. للزوار غير المسجلين
-        if (!$user) {
+        if (! $user) {
             return [
                 'reply' => "🔒 **هذا الشرح مخصص لكادر الإدارة والمعلمين المصرح لهم.**\n\nللاطلاع على خطوات تشغيل النظام وإدارة الدورات والصلاحيات، يُرجى **[تسجيل الدخول](/login)** بحسابك الوظيفي المعتمد.\n\n💡 بصفتك زائراً، يسعدني إجابتك فوراً عن: `أسعار الدورات`، `المستويات الأكاديمية`، أو `اختبار تحديد المستوى المجاني`.",
                 'matched_intent' => 'handbook_auth_required',
                 'suggestions' => [
-                    "🔐 تسجيل الدخول بحسابي",
-                    "كم سعر دورة Access A؟",
-                    "💰 قائمة أسعار جميع الدورات",
-                    "🚀 اختبار تحديد المستوى المجاني",
+                    '🔐 تسجيل الدخول بحسابي',
+                    'كم سعر دورة Access A؟',
+                    '💰 قائمة أسعار جميع الدورات',
+                    '🚀 اختبار تحديد المستوى المجاني',
                 ],
             ];
         }
@@ -543,9 +546,9 @@ class SystemHandbookService
                 'reply' => "🔒 **عذراً، هذه الشاشة مخصصة لكادر إدارة المنصة والمعلمين.**\n\nبصفتك طالباً مسجلاً، لا تملك صلاحية الوصول لإدارة النظام أو الشاشات الإدارية. ولكن يسعدني إرشادك في كل ما تحتاجه كطالب:\n• `دليل بوابة الطالب والدروس`\n• `أداء الاختبارات والكويزات`\n• `الاستعلام عن الرصيد المالي`\n• `حضور حصص Air Class`.",
                 'matched_intent' => 'handbook_student_restricted',
                 'suggestions' => [
-                    "📖 دليل بوابة الطالب والدروس",
-                    "كيف أؤدي الكويزات والاختبارات؟",
-                    "📊 كم رصيدي المالي ومستحقاتي؟",
+                    '📖 دليل بوابة الطالب والدروس',
+                    'كيف أؤدي الكويزات والاختبارات؟',
+                    '📊 كم رصيدي المالي ومستحقاتي؟',
                 ],
             ];
         }
@@ -556,16 +559,16 @@ class SystemHandbookService
                 'reply' => "🔒 **هذه الشاشة مخصصة لكادر إدارة المنصة والمعلمين.**\n\nبصفتك ولي أمر، يمكنك الاستفسار عن كل ما يخص متابعة أبنائك:\n• `دليل متابعة الأبناء والتقارير`\n• `سجلات الحضور والغياب`\n• `السندات المالية المسددة`.",
                 'matched_intent' => 'handbook_parent_restricted',
                 'suggestions' => [
-                    "👨‍👧‍👦 دليل متابعة الأبناء والتقارير",
-                    "💬 التواصل مع إدارة المدرسة",
+                    '👨‍👧‍👦 دليل متابعة الأبناء والتقارير',
+                    '💬 التواصل مع إدارة المدرسة',
                 ],
             ];
         }
 
         return [
-            'reply' => "🔒 عذراً، لا تملك الصلاحية الكافية للاطلاع على هذا الإجراء.",
+            'reply' => '🔒 عذراً، لا تملك الصلاحية الكافية للاطلاع على هذا الإجراء.',
             'matched_intent' => 'handbook_access_denied',
-            'suggestions' => ["📖 دليل النظام المتاح لي"],
+            'suggestions' => ['📖 دليل النظام المتاح لي'],
         ];
     }
 
@@ -575,7 +578,7 @@ class SystemHandbookService
     public static function handleGeneralHelpOverview(?User $user = null): array
     {
         // أ) للزائر غير المسجل: إرشادات الزوار فقط
-        if (!$user) {
+        if (! $user) {
             $reply = "📖 **مركز مساعدة زوار وطلاب منصة ASOTS الجدد:**\n\n";
             $reply .= "أهلاً بك! يسعدني إرشادك وتسهيل انضمامك للمنصة:\n\n";
             $reply .= "• `أسعار وتفاصيل الدورات` (مثال: *كم سعر دورة Access A؟*)\n";
@@ -583,16 +586,16 @@ class SystemHandbookService
             $reply .= "• `اختبار تحديد المستوى المجاني` (25 دقيقة لتحديد مستواك)\n";
             $reply .= "• `باقات الحصص الفردية 1-on-1` عبر قاعة Air Class\n";
             $reply .= "• `التواصل مع خدمة العملاء والواتساب`\n\n";
-            $reply .= "🔐 **ملاحظة:** دليل تشغيل النظام وإدارة الدورات والصلاحيات مخصص لكادر الإدارة والمعلمين، ويلزم **[تسجيل الدخول](/login)** بحساب وظيفي للاطلاع عليه.";
+            $reply .= '🔐 **ملاحظة:** دليل تشغيل النظام وإدارة الدورات والصلاحيات مخصص لكادر الإدارة والمعلمين، ويلزم **[تسجيل الدخول](/login)** بحساب وظيفي للاطلاع عليه.';
 
             return [
                 'reply' => $reply,
                 'matched_intent' => 'guest_help_overview',
                 'suggestions' => [
-                    "كم سعر دورة Access A؟",
-                    "💰 قائمة أسعار جميع الدورات",
-                    "🚀 بدء اختبار تحديد المستوى",
-                    "🔐 تسجيل الدخول للنظام",
+                    'كم سعر دورة Access A؟',
+                    '💰 قائمة أسعار جميع الدورات',
+                    '🚀 بدء اختبار تحديد المستوى',
+                    '🔐 تسجيل الدخول للنظام',
                 ],
             ];
         }
@@ -610,17 +613,17 @@ class SystemHandbookService
             $reply .= "• `كيف أصدر الشهائد برمز QR؟`\n";
             $reply .= "• `كيف أربط ولي الأمر بالطلاب؟`\n";
             $reply .= "• `ما هي وظيفة الشاشات؟`\n\n";
-            $reply .= "🔗 يمكنك أيضاً تصفح [مركز المساعدة والتوثيق الشامل 📖](/help) للاطلاع على كافة الأدلة المتاحة لك.";
+            $reply .= '🔗 يمكنك أيضاً تصفح [مركز المساعدة والتوثيق الشامل 📖](/help) للاطلاع على كافة الأدلة المتاحة لك.';
 
             return [
                 'reply' => $reply,
                 'matched_intent' => 'staff_help_overview',
                 'suggestions' => [
-                    "كيف أضيف دورة أو مستوى؟",
-                    "كيف أصنع كويز أو اختبار؟",
-                    "كيف أقيم الطلاب وأرصد الحضور؟",
-                    "كيف أدخل الطلاب المجموعات؟",
-                    "كيف أتحكم بالصلاحيات؟",
+                    'كيف أضيف دورة أو مستوى؟',
+                    'كيف أصنع كويز أو اختبار؟',
+                    'كيف أقيم الطلاب وأرصد الحضور؟',
+                    'كيف أدخل الطلاب المجموعات؟',
+                    'كيف أتحكم بالصلاحيات؟',
                 ],
             ];
         }
@@ -634,15 +637,15 @@ class SystemHandbookService
             $reply .= "• `كيف أدخل قاعة Air Class التفاعلية؟`\n";
             $reply .= "• `كم رصيدي المالي ومستحقاتي؟`\n";
             $reply .= "• `التحقق من شهادتي المعتمدة`\n\n";
-            $reply .= "🔗 يمكنك تصفح [دليل الطالب في مركز المساعدة 📖](/help).";
+            $reply .= '🔗 يمكنك تصفح [دليل الطالب في مركز المساعدة 📖](/help).';
 
             return [
                 'reply' => $reply,
                 'matched_intent' => 'student_help_overview',
                 'suggestions' => [
-                    "📖 دليل بوابة الطالب والدروس",
-                    "كيف أؤدي الكويزات والاختبارات؟",
-                    "📊 كم رصيدي المالي ومستحقاتي؟",
+                    '📖 دليل بوابة الطالب والدروس',
+                    'كيف أؤدي الكويزات والاختبارات؟',
+                    '📊 كم رصيدي المالي ومستحقاتي؟',
                 ],
             ];
         }
@@ -652,8 +655,8 @@ class SystemHandbookService
             'reply' => "👨‍👧‍👦 **دليل ولي الأمر (منصة ASOTS):**\n\nأهلاً بك! يمكنك الاستفسار عن:\n• `دليل متابعة الأبناء والتقارير`\n• `متابعة حضور وغياب الأبناء`\n• `كشف الحساب والسندات المالية للأبناء`.",
             'matched_intent' => 'parent_help_overview',
             'suggestions' => [
-                "👨‍👧‍👦 دليل متابعة الأبناء والتقارير",
-                "💬 التواصل مع إدارة المدرسة",
+                '👨‍👧‍👦 دليل متابعة الأبناء والتقارير',
+                '💬 التواصل مع إدارة المدرسة',
             ],
         ];
     }
@@ -664,7 +667,7 @@ class SystemHandbookService
     public static function formatGuideForBot(array $guide, ?User $user = null): array
     {
         $reply = "📖 **دليل النظام: {$guide['title']}**\n\n";
-        
+
         // التحقق من إمكانية فتح الشاشة
         $canOpenScreen = false;
         if ($user) {
@@ -687,10 +690,10 @@ class SystemHandbookService
         $reply .= "📋 **الخطوات العملية:**\n";
 
         foreach ($guide['steps'] as $index => $step) {
-            $reply .= " " . ($index + 1) . ". {$step}\n";
+            $reply .= ' '.($index + 1).". {$step}\n";
         }
 
-        if (!empty($guide['tip'])) {
+        if (! empty($guide['tip'])) {
             $reply .= "\n💡 **تلميح مهم:** {$guide['tip']}\n";
         }
 
@@ -702,12 +705,12 @@ class SystemHandbookService
 
         return [
             'reply' => $reply,
-            'matched_intent' => 'system_guide_' . $guide['id'],
+            'matched_intent' => 'system_guide_'.$guide['id'],
             'suggestions' => [
-                "📖 فتح مركز المساعدة الكامل",
-                "كيف أصنع كويز أو اختبار؟",
-                "كيف أضيف دورة أو مستوى؟",
-                "كيف أقيم الطلاب وأرصد الحضور؟",
+                '📖 فتح مركز المساعدة الكامل',
+                'كيف أصنع كويز أو اختبار؟',
+                'كيف أضيف دورة أو مستوى؟',
+                'كيف أقيم الطلاب وأرصد الحضور؟',
             ],
         ];
     }

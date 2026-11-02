@@ -23,12 +23,12 @@ class WhatsAppHelper
 
         // إذا كان الرقم 10 أرقام ويبدأ بـ 07 (مثال: 0777823720) نحذف الصفر ونضيف مفتاح اليمن 967
         if (strlen($clean) === 10 && str_starts_with($clean, '07')) {
-            $clean = '967' . substr($clean, 1);
+            $clean = '967'.substr($clean, 1);
         }
 
         // إذا كان الرقم 9 أرقام ويبدأ بـ 7 (مثال يمني محلي: 777823720) نضيف المفتاح الدولي 967
         if (strlen($clean) === 9 && str_starts_with($clean, '7')) {
-            $clean = '967' . $clean;
+            $clean = '967'.$clean;
         }
 
         return $clean;
@@ -41,10 +41,10 @@ class WhatsAppHelper
     {
         $formatted = self::formatNumber($phone);
 
-        if (!empty($formatted)) {
-            return 'https://wa.me/' . $formatted . '?text=' . urlencode($message);
+        if (! empty($formatted)) {
+            return 'https://wa.me/'.$formatted.'?text='.urlencode($message);
         }
 
-        return 'https://wa.me/?text=' . urlencode($message);
+        return 'https://wa.me/?text='.urlencode($message);
     }
 }

@@ -64,7 +64,7 @@ class Certificate extends Model
 
     public function getVerificationUrlAttribute(): string
     {
-        return url('/verify/certificate/' . $this->certificate_number);
+        return url('/verify/certificate/'.$this->certificate_number);
     }
 
     public function getTypeLabelAttribute(): string

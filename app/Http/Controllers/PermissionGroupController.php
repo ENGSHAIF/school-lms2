@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\PermissionGroup;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class PermissionGroupController extends Controller
@@ -15,10 +15,10 @@ class PermissionGroupController extends Controller
     protected function authorizeAccess()
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             abort(401);
         }
-        if (!$user->isAdmin() && !$user->hasPermission('system.groups_manage')) {
+        if (! $user->isAdmin() && ! $user->hasPermission('system.groups_manage')) {
             abort(403, 'عذراً، ليس لديك صلاحية إدارة مجموعات الصلاحيات والأدوار.');
         }
     }
@@ -43,7 +43,7 @@ class PermissionGroupController extends Controller
         }
 
         // إذا لم يُحدد مجموعة، نحدد أول مجموعة تلقائياً
-        if (!$selectedGroup && $groups->isNotEmpty()) {
+        if (! $selectedGroup && $groups->isNotEmpty()) {
             $selectedGroup = $groups->first();
         }
 
@@ -52,9 +52,9 @@ class PermissionGroupController extends Controller
             if ($search) {
                 $usersQuery->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('phone_whatsapp', 'like', "%{$search}%")
-                      ->orWhere('user_code', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone_whatsapp', 'like', "%{$search}%")
+                        ->orWhere('user_code', 'like', "%{$search}%");
                 });
             }
             $groupUsers = $usersQuery->paginate(15)->withQueryString();
@@ -67,7 +67,7 @@ class PermissionGroupController extends Controller
         $availableUsers = User::where(function ($q) use ($selectedGroup) {
             if ($selectedGroup) {
                 $q->whereNull('permission_group_id')
-                  ->orWhere('permission_group_id', '!=', $selectedGroup->id);
+                    ->orWhere('permission_group_id', '!=', $selectedGroup->id);
             }
         })->whereIn('role', ['admin', 'supervisor', 'teacher', 'accountant'])->limit(100)->get();
 
@@ -105,7 +105,7 @@ class PermissionGroupController extends Controller
         $slug = $slugBase;
         $counter = 1;
         while (PermissionGroup::where('slug', $slug)->exists()) {
-            $slug = $slugBase . '-' . $counter++;
+            $slug = $slugBase.'-'.$counter++;
         }
 
         $group = PermissionGroup::create([

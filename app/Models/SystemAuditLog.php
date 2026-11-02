@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 class SystemAuditLog extends Model
 {
@@ -201,15 +201,15 @@ class SystemAuditLog extends Model
         $os = 'نظام غير معروف';
         if (preg_match('/iPhone/i', $userAgent)) {
             preg_match('/OS\s*([0-9_]+)/i', $userAgent, $m);
-            $ver = !empty($m[1]) ? str_replace('_', '.', $m[1]) : '';
+            $ver = ! empty($m[1]) ? str_replace('_', '.', $m[1]) : '';
             $os = $ver ? "iOS {$ver} (iPhone)" : 'iPhone (iOS)';
         } elseif (preg_match('/iPad/i', $userAgent)) {
             preg_match('/OS\s*([0-9_]+)/i', $userAgent, $m);
-            $ver = !empty($m[1]) ? str_replace('_', '.', $m[1]) : '';
+            $ver = ! empty($m[1]) ? str_replace('_', '.', $m[1]) : '';
             $os = $ver ? "iPadOS {$ver} (iPad)" : 'iPad (iPadOS)';
         } elseif (preg_match('/Android/i', $userAgent)) {
             preg_match('/Android\s*([0-9\.]+)/i', $userAgent, $m);
-            $os = !empty($m[1]) ? "Android {$m[1]}" : 'Android';
+            $os = ! empty($m[1]) ? "Android {$m[1]}" : 'Android';
         } elseif (preg_match('/Windows NT 10\.0/i', $userAgent)) {
             $os = 'Windows 10/11';
         } elseif (preg_match('/Windows NT 6\.3/i', $userAgent)) {
@@ -249,7 +249,7 @@ class SystemAuditLog extends Model
             $deviceIcon = '📱';
         }
 
-        $typeNameAr = match($deviceType) {
+        $typeNameAr = match ($deviceType) {
             'mobile' => 'هاتف محمول',
             'tablet' => 'جهاز لوحي',
             default => 'كمبيوتر مكتبي / محمول',
@@ -275,7 +275,7 @@ class SystemAuditLog extends Model
         ?int $userId = null
     ): ?self {
         // فحص هل المراقبة مفعلة للإجراء والوحدة
-        if (!static::isLoggingEnabledFor($action)) {
+        if (! static::isLoggingEnabledFor($action)) {
             return null;
         }
 
@@ -343,7 +343,7 @@ class SystemAuditLog extends Model
         if ($keepFinancial) {
             $query->whereNotIn('action', [
                 'voucher.create', 'voucher.receipt_batch_create', 'voucher.payment_create',
-                'voucher.update', 'voucher.delete', 'cash_box.reconcile'
+                'voucher.update', 'voucher.delete', 'cash_box.reconcile',
             ]);
         }
 
@@ -351,16 +351,17 @@ class SystemAuditLog extends Model
     }
 
     /* -------------------------------------------------------------------------- */
-    /* Accessors & Mutators للواجهات والتقارير                                   */
+    /* Accessors & Mutators للواجهات والتقارير */
     /* -------------------------------------------------------------------------- */
 
     public function getDeviceDisplayAttribute(): string
     {
-        if (!empty($this->details['device_info']['name'])) {
+        if (! empty($this->details['device_info']['name'])) {
             return $this->details['device_info']['name'];
         }
 
         $parsed = static::parseUserAgent($this->user_agent);
+
         return $parsed['device_name'];
     }
 
@@ -388,6 +389,7 @@ class SystemAuditLog extends Model
     {
         $modules = static::getModules();
         $moduleKey = $this->module;
+
         return $modules[$moduleKey] ?? [
             'key' => 'general',
             'name' => 'عام / غير مصنف',
@@ -458,14 +460,17 @@ class SystemAuditLog extends Model
 
     public function getFormattedDateTimeAttribute(): string
     {
-        if (!$this->created_at) return '';
+        if (! $this->created_at) {
+            return '';
+        }
         $amPm = $this->created_at->format('A') === 'AM' ? 'ص' : 'م';
-        return $this->created_at->format('Y/m/d - h:i:s ') . $amPm;
+
+        return $this->created_at->format('Y/m/d - h:i:s ').$amPm;
     }
 
     public function getHasDiffAttribute(): bool
     {
-        return !empty($this->details['old_values']) || !empty($this->details['old_amount']) || !empty($this->details['old_fee']) || !empty($this->details['diff']);
+        return ! empty($this->details['old_values']) || ! empty($this->details['old_amount']) || ! empty($this->details['old_fee']) || ! empty($this->details['diff']);
     }
 
     public function getOldValuesAttribute(): ?array
@@ -477,13 +482,13 @@ class SystemAuditLog extends Model
         // تحويل الحقول الفردية مثل old_amount, old_status, etc. إلى مصفوفة قابلة للعرض
         $auto = [];
         if (isset($this->details['old_amount'])) {
-            $auto['المبلغ السابق'] = number_format((float)$this->details['old_amount'], 2);
+            $auto['المبلغ السابق'] = number_format((float) $this->details['old_amount'], 2);
         }
         if (isset($this->details['old_fee'])) {
-            $auto['الرسم السابق'] = number_format((float)$this->details['old_fee'], 2);
+            $auto['الرسم السابق'] = number_format((float) $this->details['old_fee'], 2);
         }
         if (isset($this->details['old_hours'])) {
-            $auto['الساعات السابقة'] = $this->details['old_hours'] . ' ساعة';
+            $auto['الساعات السابقة'] = $this->details['old_hours'].' ساعة';
         }
         if (isset($this->details['old_status'])) {
             $auto['الحالة السابقة'] = $this->details['old_status'];
@@ -492,7 +497,7 @@ class SystemAuditLog extends Model
             $auto['الصندوق السابق'] = "صندوق رقم #{$this->details['old_box']}";
         }
 
-        return !empty($auto) ? $auto : null;
+        return ! empty($auto) ? $auto : null;
     }
 
     public function getNewValuesAttribute(): ?array
@@ -503,13 +508,13 @@ class SystemAuditLog extends Model
 
         $auto = [];
         if (isset($this->details['new_amount'])) {
-            $auto['المبلغ الجديد'] = number_format((float)$this->details['new_amount'], 2);
+            $auto['المبلغ الجديد'] = number_format((float) $this->details['new_amount'], 2);
         }
         if (isset($this->details['new_fee'])) {
-            $auto['الرسم الجديد'] = number_format((float)$this->details['new_fee'], 2);
+            $auto['الرسم الجديد'] = number_format((float) $this->details['new_fee'], 2);
         }
         if (isset($this->details['new_hours'])) {
-            $auto['الساعات الجديدة'] = $this->details['new_hours'] . ' ساعة';
+            $auto['الساعات الجديدة'] = $this->details['new_hours'].' ساعة';
         }
         if (isset($this->details['new_status'])) {
             $auto['الحالة الجديدة'] = $this->details['new_status'];
@@ -518,6 +523,6 @@ class SystemAuditLog extends Model
             $auto['الصندوق الجديد'] = "صندوق رقم #{$this->details['new_box']}";
         }
 
-        return !empty($auto) ? $auto : null;
+        return ! empty($auto) ? $auto : null;
     }
 }
