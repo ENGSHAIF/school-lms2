@@ -60,15 +60,26 @@
 </head>
 <body class="min-h-screen lg:h-screen flex flex-col overflow-y-auto lg:overflow-hidden select-none">
 
-    <!-- شريط تنبيه تشغيل الصوت إذا تم حظره تلقائياً من المتصفح -->
-    <div id="audioUnblockBanner" class="hidden bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 px-4 py-2 text-xs font-bold flex justify-between items-center z-50 shadow-md">
-        <span class="flex items-center gap-1.5">
-            <span>🔊</span>
-            <span>انقر هنا لتفعيل سماع أصوات ومشاركات الطلاب والمعلم في الفصل الحي تلقائياً.</span>
-        </span>
-        <button onclick="unblockAudio()" class="bg-slate-950 hover:bg-slate-900 text-white px-3.5 py-1 rounded-lg text-xs font-black shadow transition">
-            تفعيل سماع الصوت 🔊
-        </button>
+    <!-- نافذة طلب إذن الصوت والمايكروفون التفاعلية للبث الحي (User Gesture Trigger) -->
+    <div id="audioPermissionModal" class="hidden fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-indigo-500/70 rounded-3xl p-6 sm:p-7 max-w-sm w-full text-center shadow-2xl space-y-4">
+            <div class="w-16 h-16 mx-auto bg-gradient-to-tr from-emerald-600 to-indigo-600 rounded-full flex items-center justify-center text-3xl shadow-xl animate-pulse">
+                🎙️
+            </div>
+            <div class="space-y-1.5">
+                <h3 class="text-base font-black text-white">تفعيل الصوت والمايكروفون 🔊</h3>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    انقر على الزر أدناه لتفعيل سماع صوت المعلم تلقائياً وتمكين المايكروفون للمشاركة في البث الحي.
+                </p>
+            </div>
+            <button type="button" onclick="confirmAudioPermission()" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm rounded-2xl shadow-xl transition active:scale-95 flex items-center justify-center gap-2">
+                <span>🔊</span>
+                <span>تفعيل وسماع الصوت الآن</span>
+            </button>
+            <div id="micHelpNotice" class="hidden text-[11px] text-amber-300/90 bg-amber-950/40 p-2.5 rounded-xl border border-amber-800/40 text-right leading-relaxed">
+                💡 <strong>ملاحظة لجوال كروم:</strong> إذا لم يطلب المتصفح إذن المايك، يمكنك الاستماع للمعلم بشكل كامل، وللمشاركة بصوتك عبر الواي فاي فعل إذن الرابط في <code>chrome://flags</code>.
+            </div>
+        </div>
     </div>
 
     <!-- نافذة إشعار المعلم اللحظية بطلب انضمام طالب للبث الحي (Toast + Chime 🔔) -->
@@ -167,7 +178,7 @@
     @endphp
 
     <!-- بانر عائم عالي الوضوح لتفعيل صوت المعلم فوراً عند حظر التشغيل التلقائي بالهواتف -->
-    <div id="audioUnblockBanner" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs px-5 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2 border-2 border-emerald-300 animate-bounce cursor-pointer" onclick="unblockAllAudio()">
+    <div id="audioUnblockBanner" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-[9999] bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs px-5 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2 border-2 border-emerald-300 animate-bounce cursor-pointer" onclick="unblockAllAudio()">
         <span class="text-lg">🔊</span>
         <span>انقر هنا لتشغيل وسماع صوت المعلم فوراً!</span>
     </div>
@@ -783,10 +794,10 @@
                         <button type="button" onclick="resetWbZoom()" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-400 rounded" title="إعادة ضبط الحجم">⟲</button>
                     </div>
 
-                    <!-- زر تحديث ومزامنة الشاشة والسبورة للجميع -->
-                    <button type="button" onclick="refreshClassroom()" class="bg-cyan-950/80 hover:bg-cyan-900 text-cyan-200 hover:text-white border border-cyan-700/60 font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition shadow" title="تحديث ومزامنة الشاشة والسبورة والمحتوى فوراً (F5)">
+                    <!-- زر تحديث ومزامنة الصوت والشاشة والسبورة للجميع -->
+                    <button type="button" onclick="refreshClassroom()" class="bg-cyan-950/90 hover:bg-cyan-900 text-cyan-200 hover:text-white border border-cyan-700 font-black text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition shadow" title="تنشيط الصوت ومزامنة السبورة بدون إعادة تحميل الصفحة">
                         <span>🔄</span>
-                        <span class="hidden md:inline">تحديث ومزامنة</span>
+                        <span>تحديث الصوت والسبورة</span>
                     </button>
 
                     <!-- حفظ لقطة من الشرح والسبورة -->
@@ -1730,19 +1741,43 @@
             { urls: 'stun:stun1.l.google.com:19302' },
             { urls: 'stun:stun2.l.google.com:19302' },
             { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun.cloudflare.com:3478' },
-            { urls: 'stun:openrelay.metered.ca:80' },
-            {
-                urls: [
-                    'turn:openrelay.metered.ca:80',
-                    'turn:openrelay.metered.ca:443',
-                    'turn:openrelay.metered.ca:443?transport=tcp'
-                ],
-                username: 'openrelay',
-                credential: 'openrelay'
-            }
-        ]
+            { urls: 'stun:stun4.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' }
+        ],
+        iceCandidatePoolSize: 10
     };
+
+    function normalizeMediaUrl(url) {
+        if (!url || typeof url !== 'string') return url;
+        try {
+            const parsed = new URL(url, window.location.href);
+            if (parsed.pathname.startsWith('/resources/') || parsed.pathname.startsWith('/storage/') || parsed.pathname.startsWith('/classroom/')) {
+                return window.location.origin + parsed.pathname + parsed.search;
+            }
+        } catch(e) {
+            if (url.startsWith('/')) {
+                return window.location.origin + url;
+            }
+        }
+        return url;
+    }
+
+    function showLiveToast(msg, icon = '📢') {
+        let t = document.getElementById('liveClassToast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'liveClassToast';
+            t.className = "fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900/95 text-white border border-indigo-500 px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2 text-xs font-bold transition-all duration-300 opacity-0 pointer-events-none";
+            document.body.appendChild(t);
+        }
+        t.innerHTML = `<span class="text-base">${icon}</span><span>${msg}</span>`;
+        t.classList.remove('opacity-0', 'pointer-events-none');
+        t.classList.add('opacity-100');
+        setTimeout(() => {
+            t.classList.remove('opacity-100');
+            t.classList.add('opacity-0', 'pointer-events-none');
+        }, 4000);
+    }
 
     // إدارة قنوات البيانات الفورية بين الأقران (WebRTC DataChannel P2P Sub-50ms)
     function setupPeerDataChannel(remotePeerId, dc) {
@@ -1870,7 +1905,16 @@
                     break;
                 case 'allow_speak_user':
                     if (data.target_user_id === CURRENT_USER_ID) {
-                        alert('أذن لك المعلم بالتحدث الآن! يمكنك تشغيل المايك 🎙️');
+                        isHandRaised = false;
+                        isMicEnabled = true;
+                        if (!localStream) {
+                            initLocalMedia();
+                        } else {
+                            localStream.getAudioTracks().forEach(t => t.enabled = true);
+                            ensureTracksInPeerConnections();
+                            updateMediaButtonsUI();
+                        }
+                        showLiveToast('🎙️ أذن لك المعلم بالتحدث الآن! المايكروفون مفتوح وصوتك يصل للجميع.', '🎙️');
                     }
                     break;
                 case 'star_rewarded':
@@ -1882,6 +1926,50 @@
         } catch (e) {
             console.error('Error handling P2P realtime message:', e);
         }
+    }
+
+    // إدارة قفل وفك الصوت المتقدم (Web Audio API Unlocker)
+    async function unlockAudioSystem() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                if (!window.globalAudioCtx) {
+                    window.globalAudioCtx = new AudioContext();
+                }
+                if (window.globalAudioCtx.state === 'suspended') {
+                    await window.globalAudioCtx.resume();
+                }
+            }
+            unblockAllAudio();
+        } catch(e) {
+            console.warn('unlockAudioSystem error:', e);
+        }
+    }
+
+    async function confirmAudioPermission() {
+        await unlockAudioSystem();
+        try {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                    video: false
+                });
+                isCamEnabled = false;
+                isMicEnabled = IS_TEACHER ? true : (currentRoomPolicy !== 'permission');
+                if (!isMicEnabled) {
+                    localStream.getAudioTracks().forEach(t => t.enabled = false);
+                }
+                ensureTracksInPeerConnections();
+                updateMediaButtonsUI();
+            } else {
+                document.getElementById('micHelpNotice')?.classList.remove('hidden');
+            }
+        } catch (err) {
+            console.warn('Microphone permission in modal caught:', err);
+            document.getElementById('micHelpNotice')?.classList.remove('hidden');
+        }
+        document.getElementById('audioPermissionModal')?.classList.add('hidden');
+        document.getElementById('audioUnblockBanner')?.classList.add('hidden');
     }
 
     // مزامنة كافة مسارات الصوت والصورة المحلية إلى جميع اتصالات الأقران
@@ -1900,13 +1988,11 @@
                         }
                     } else {
                         pc.addTrack(track, localStream);
-                        // إعادة التفاوض (Renegotiation) إذا كان بادئ الاتصال
-                        if (MY_PEER_ID < peerId) {
-                            pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
-                                .then(offer => pc.setLocalDescription(offer))
-                                .then(() => postSignal(peerId, 'offer', pc.localDescription))
-                                .catch(e => console.log('Renegotiate offer err:', e));
-                        }
+                        // إعادة التفاوض (Renegotiation) فورياً لكلا الطرفين لضمان وصول الصوت
+                        pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+                            .then(offer => pc.setLocalDescription(offer))
+                            .then(() => postSignal(peerId, 'offer', pc.localDescription))
+                            .catch(e => console.log('Renegotiate offer err:', e));
                     }
                 });
             } catch (err) {
@@ -2117,21 +2203,40 @@
     }
 
     function attachRemoteMedia(remotePeerId, remoteUserId, remoteName, isRemoteStaff, stream) {
-        // تشغيل الصوت دائماً عبر عنصر Audio مخفي
+        // تشغيل الصوت دائماً عبر عنصر Audio
         if (!remoteAudios[remotePeerId]) {
             const audioEl = document.createElement('audio');
             audioEl.id = 'audio_' + remotePeerId;
             audioEl.autoplay = true;
             audioEl.playsInline = true;
+            audioEl.setAttribute('playsinline', '');
+            audioEl.setAttribute('autoplay', '');
+            audioEl.volume = 1.0;
             audioEl.srcObject = stream;
             document.body.appendChild(audioEl);
             remoteAudios[remotePeerId] = audioEl;
 
             audioEl.play().catch(e => {
+                console.log('Audio autoplay prevented, showing unblock banner:', e);
                 document.getElementById('audioUnblockBanner')?.classList.remove('hidden');
             });
         } else {
             remoteAudios[remotePeerId].srcObject = stream;
+            remoteAudios[remotePeerId].play().catch(() => {});
+        }
+
+        // توجيه الصوت أيضاً عبر Web Audio API لضمان وصوله بمكبر الصوت في الهواتف
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                if (!window.globalAudioCtx) window.globalAudioCtx = new AudioContext();
+                if (window.globalAudioCtx.state === 'running') {
+                    const src = window.globalAudioCtx.createMediaStreamSource(stream);
+                    src.connect(window.globalAudioCtx.destination);
+                }
+            }
+        } catch (e) {
+            console.log('Web Audio routing err:', e);
         }
 
         // إذا كان النظير معلماً والمستخدم الحالي طالباً: نعرض فيديو المعلم في بطاقة المعلم
@@ -2232,9 +2337,13 @@
     }
 
     function unblockAllAudio() {
+        if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
+            window.globalAudioCtx.resume().catch(() => {});
+        }
         Object.values(remoteAudios).forEach(a => {
             try {
-                if (a && a.paused) {
+                if (a) {
+                    a.volume = 1.0;
                     a.play().then(() => {
                         document.getElementById('audioUnblockBanner')?.classList.add('hidden');
                     }).catch(e => console.log('Audio autoplay resume waiting:', e));
@@ -2246,6 +2355,7 @@
     // فك حجب الصوت تلقائياً بمجرد لمس أو نقر شاشة الهاتف
     ['click', 'touchstart', 'touchend', 'pointerdown'].forEach(evt => {
         document.addEventListener(evt, () => {
+            if (typeof unlockAudioSystem === 'function') unlockAudioSystem();
             unblockAllAudio();
         }, { passive: true });
     });
@@ -2390,22 +2500,28 @@
                 }
 
                 if (!CAN_MANAGE_ROOM) {
+                    const myInfo = (data.participants || []).find(p => p.user_id === CURRENT_USER_ID);
                     if (data.room_control.is_muted_by_host) {
                         if (isMicEnabled) {
                             isMicEnabled = false;
                             localStream?.getAudioTracks().forEach(t => t.enabled = false);
                             updateMediaButtonsUI();
-                            alert('🔇 قام الأستاذ بكتم صوتك في هذه الجلسة.');
+                            showLiveToast('🔇 قام الأستاذ بكتم صوتك في هذه الجلسة.', '🔇');
                         }
                         wasMutedByHost = true;
-                    } else if (wasMutedByHost) {
-                        // الأستاذ سمح للطالب بالتحدث (Unmuted by host) -> تفعيل المايك تلقائياً
+                    } else if (wasMutedByHost || (isHandRaised && myInfo && !myInfo.is_hand_raised)) {
+                        // الأستاذ سمح للطالب بالتحدث (Unmuted or hand lowered with permission) -> تفعيل المايك تلقائياً
                         wasMutedByHost = false;
+                        isHandRaised = false;
                         isMicEnabled = true;
-                        localStream?.getAudioTracks().forEach(t => t.enabled = true);
-                        ensureTracksInPeerConnections();
-                        updateMediaButtonsUI();
-                        alert('🎙️ سمح لك المعلم بالتحدث الآن ومشاركة صوتك في الحصة! تم تفعيل المايكروفون.');
+                        if (!localStream) {
+                            initLocalMedia();
+                        } else {
+                            localStream.getAudioTracks().forEach(t => t.enabled = true);
+                            ensureTracksInPeerConnections();
+                            updateMediaButtonsUI();
+                        }
+                        showLiveToast('🎙️ سمح لك المعلم بالتحدث الآن ومشاركة صوتك في الحصة! تم تفعيل المايكروفون.', '🎙️');
                     }
                 }
 
@@ -2471,7 +2587,12 @@
         const type = sig.signal_type;
         const payload = sig.payload;
 
-        const pc = getOrCreatePeerConnection(fromPeer, 0, 'مشارك', false);
+        const pInfo = (window.cachedParticipants || []).find(p => p.peer_id === fromPeer);
+        const remoteUserId = pInfo ? pInfo.user_id : 0;
+        const remoteName = pInfo ? pInfo.name : 'مشارك';
+        const isRemoteStaff = pInfo ? pInfo.is_staff : false;
+
+        const pc = getOrCreatePeerConnection(fromPeer, remoteUserId, remoteName, isRemoteStaff);
 
         try {
             if (type === 'offer') {
@@ -2514,8 +2635,8 @@
         participants.forEach(p => {
             if (p.peer_id === MY_PEER_ID) return;
 
-            // نحدد بادئ الاتصال بشكل حتمي لتجنب تصادم الـ Offers
-            if (MY_PEER_ID < p.peer_id && !peerConnections[p.peer_id]) {
+            // نحدد بادئ الاتصال بشكل حتمي لتجنب تصادم الـ Offers ونعيد الاتصال إن كان منقطعاً
+            if (MY_PEER_ID < p.peer_id && (!peerConnections[p.peer_id] || peerConnections[p.peer_id].connectionState === 'failed' || peerConnections[p.peer_id].connectionState === 'disconnected')) {
                 const pc = getOrCreatePeerConnection(p.peer_id, p.user_id, p.name, p.is_staff);
                 pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
                     .then(offer => pc.setLocalDescription(offer))
@@ -2527,6 +2648,7 @@
 
     // 5. تحديث واجهة قائمة الحاضرين ورفع اليد
     function updateParticipantsUI(participants) {
+        window.cachedParticipants = participants || [];
         // تحديث العدادات
         const count = participants.length;
         document.getElementById('headerParticipantsCount').textContent = count;
@@ -2782,12 +2904,13 @@
     }
 
     // تحديث ومزامنة الفصل والشاشة تلقائياً (Universal Refresh & Sync F5)
+    // تحديث ومزامنة الفصل والشاشة والصوت تلقائياً (Universal Refresh & Sync)
     async function refreshClassroom() {
         if (CAN_MANAGE_ROOM) {
             const syncEveryone = confirm(
-                "تحديث ومزامنة بيانات الفصل والشاشة (F5):\n\n" +
-                "• اضغط [موافق / OK]: لتحديث ومزامنة شاشة وسبورة جميع الطلاب مع شاشتك فوراً وإعادة تحميل البيانات للكل.\n" +
-                "• اضغط [إلغاء / Cancel]: لتحديث ومزامنة شاشتك أنت فقط."
+                "تحديث ومزامنة بيانات الفصل والشاشة:\n\n" +
+                "• اضغط [موافق / OK]: لإعادة تحميل وتحديث شاشة وسبورة جميع الطلاب مع شاشتك إجبارياً.\n" +
+                "• اضغط [إلغاء / Cancel]: لتنشيط الصوت ومزامنة السبورة لجهازك حالياً دون إعادة تحميل الصفحة."
             );
             if (syncEveryone) {
                 broadcastP2P({ type: 'force_refresh' });
@@ -2801,17 +2924,24 @@
                 window.location.reload();
                 return;
             }
-            window.location.reload();
-            return;
         }
 
-        // للطالب: طلب مزامنة فورية وسريعة من الأستاذ والسيرفر وإعادة تحميل الصفحة
-        broadcastP2P({ type: 'request_wb_state' });
+        // تنشيط فوري للصوت والسبورة وإعادة تفاوض WebRTC دون الخروج من الصفحة
+        if (typeof unlockAudioSystem === 'function') await unlockAudioSystem();
         currentWbVersion = -1;
+        broadcastP2P({ type: 'request_wb_state' });
+
+        // إعادة تشغيل اتصالات الصوت بالأقران لضمان فك أي تعليق بشبكة الواي فاي
+        Object.entries(peerConnections).forEach(([pid, pc]) => {
+            try { pc.close(); } catch(e){}
+            delete peerConnections[pid];
+        });
+        for (let pid in peerDataChannels) delete peerDataChannels[pid];
+
         try {
             await syncClassroom();
         } catch(e) {}
-        window.location.reload();
+        showLiveToast('تم تنشيط الصوت ومزامنة السبورة بنجاح ✓', '🔄');
     }
 
     // مشاركة الشاشة (Screen Sharing)
@@ -3755,7 +3885,7 @@
     // ==========================================
     // محرك مساحة الشرح والسبورة التفاعلية (Zoom Live Engine)
     // ==========================================
-    let currentWbVersion = 0;
+    let currentWbVersion = -1;
     let wbCurrentTool = 'pen'; // 'select' | 'pen' | 'brush' | 'highlighter' | 'magic' | 'laser' | 'shapes' | 'stamp' | 'note' | 'text' | 'eraser'
     let wbActiveShape = 'rect'; // 'rect' | 'rounded_rect' | 'circle' | 'triangle' | 'line' | 'arrow' | 'double_arrow' | 'star' | 'checkmark' | 'cross' | 'bubble'
     let wbShapeFilled = false;
@@ -5266,7 +5396,7 @@
 
     // تحميل موثوق لملفات PDF مع دعم المعالجة الثنائية المباشرة (Binary ArrayBuffer) لتخطي أي حظر للشبكة أو CORS
     async function loadPdfDocumentWithFallback(url) {
-        let targetUrl = url;
+        let targetUrl = normalizeMediaUrl(url);
         try {
             if (window.location.protocol === 'https:' && targetUrl.startsWith('http://')) {
                 targetUrl = targetUrl.replace(/^http:\/\//, 'https://');
@@ -5758,7 +5888,7 @@
     }
 
     function syncWhiteboardFromServer(serverVersion, serverState) {
-        if (serverVersion > currentWbVersion) {
+        if (serverVersion > currentWbVersion || currentWbVersion === -1) {
             currentWbVersion = serverVersion;
             if (serverState) {
                 applyServerWhiteboardState(serverState);
@@ -5768,11 +5898,12 @@
 
     async function applyServerWhiteboardState(state) {
         if (!state) return;
-        const bgChanged = (state.bg_type !== wbCurrentBg.type || state.bg_url !== wbCurrentBg.url || state.page_num !== wbCurrentBg.page_num);
+        const normalizedUrl = normalizeMediaUrl(state.bg_url);
+        const bgChanged = (state.bg_type !== wbCurrentBg.type || normalizedUrl !== wbCurrentBg.url || state.page_num !== wbCurrentBg.page_num);
 
         wbCurrentBg = {
             type: state.bg_type || 'whiteboard',
-            url: state.bg_url || null,
+            url: normalizedUrl || null,
             title: state.bg_title || 'سبورة الشرح',
             page_num: state.page_num || 1
         };
@@ -5827,6 +5958,10 @@
         // على شاشات الجوال: التأكد من تفعيل عرض السبورة التفاعلية فورياً للطالب
         if (window.innerWidth < 1024) {
             switchMobileView('whiteboard');
+        }
+        // للطلاب: إظهار نافذة تفعيل الصوت والمايكروفون لمنع حظر الصوت التلقائي بالمتصفح
+        if (!IS_TEACHER) {
+            document.getElementById('audioPermissionModal')?.classList.remove('hidden');
         }
     });
     </script>

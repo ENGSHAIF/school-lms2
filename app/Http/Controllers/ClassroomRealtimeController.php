@@ -185,8 +185,17 @@ class ClassroomRealtimeController extends Controller
         $clientWhiteboardVersion = (int) $request->input('whiteboard_version', -1);
         $serverWhiteboardVersion = (int) ($control->whiteboard_version ?? 0);
         $whiteboardPayload = null;
-        if ($clientWhiteboardVersion < $serverWhiteboardVersion) {
+        if ($clientWhiteboardVersion < $serverWhiteboardVersion || $clientWhiteboardVersion === -1) {
             $whiteboardPayload = json_decode($control->whiteboard_state, true) ?: $control->whiteboard_state;
+            if (is_array($whiteboardPayload) && ! empty($whiteboardPayload['bg_url'])) {
+                $bgUrl = $whiteboardPayload['bg_url'];
+                $parsed = parse_url($bgUrl);
+                $isInternalPath = ! empty($parsed['path']) && (str_starts_with($parsed['path'], '/resources/') || str_starts_with($parsed['path'], '/storage/') || str_starts_with($parsed['path'], '/classroom/'));
+                $isLocalHost = empty($parsed['host']) || in_array($parsed['host'], ['localhost', '127.0.0.1']) || ! empty($parsed['port']);
+                if ($isInternalPath && $isLocalHost) {
+                    $whiteboardPayload['bg_url'] = url($parsed['path'].(! empty($parsed['query']) ? '?'.$parsed['query'] : ''));
+                }
+            }
         }
 
         $forceRefreshTime = Cache::get('classroom_force_refresh_'.$roomId);
@@ -560,6 +569,12 @@ class ClassroomRealtimeController extends Controller
 
         if ($action === 'save_state') {
             $state = $request->input('state');
+            if (is_array($state) && ! empty($state['bg_url'])) {
+                $parsed = parse_url($state['bg_url']);
+                if (! empty($parsed['path']) && (str_starts_with($parsed['path'], '/resources/') || str_starts_with($parsed['path'], '/storage/') || str_starts_with($parsed['path'], '/classroom/'))) {
+                    $state['bg_url'] = $parsed['path'].(! empty($parsed['query']) ? '?'.$parsed['query'] : '');
+                }
+            }
             $control->whiteboard_state = is_string($state) ? $state : json_encode($state);
             $control->whiteboard_version = ($control->whiteboard_version ?? 0) + 1;
             $control->save();
@@ -586,7 +601,14 @@ class ClassroomRealtimeController extends Controller
         if ($action === 'set_background') {
             $existing = json_decode($control->whiteboard_state, true) ?: [];
             $existing['bg_type'] = $request->input('bg_type', 'image'); // 'whiteboard' | 'blackboard' | 'grid' | 'image' | 'pdf'
-            $existing['bg_url'] = $request->input('bg_url');
+            $bgUrl = $request->input('bg_url');
+            if ($bgUrl) {
+                $parsed = parse_url($bgUrl);
+                if (! empty($parsed['path']) && (str_starts_with($parsed['path'], '/resources/') || str_starts_with($parsed['path'], '/storage/') || str_starts_with($parsed['path'], '/classroom/'))) {
+                    $bgUrl = $parsed['path'].(! empty($parsed['query']) ? '?'.$parsed['query'] : '');
+                }
+            }
+            $existing['bg_url'] = $bgUrl;
             $existing['bg_title'] = $request->input('bg_title', '');
             $existing['page_num'] = (int) $request->input('page_num', 1);
             $existing['strokes'] = [];
