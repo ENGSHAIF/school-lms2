@@ -32,7 +32,7 @@ class ClassroomRoomControl extends Model
             [
                 'policy' => 'open',
                 'is_live' => true,
-                'requires_admission' => true,
+                'requires_admission' => false,
                 'kicked_user_ids' => [],
                 'whiteboard_version' => 0,
             ]

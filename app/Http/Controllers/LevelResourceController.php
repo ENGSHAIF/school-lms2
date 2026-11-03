@@ -675,6 +675,9 @@ class LevelResourceController extends Controller
         return response()->file($foundPath, [
             'Content-Type' => $mimeType,
             'Accept-Ranges' => 'bytes',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
             'Content-Disposition' => 'inline; filename="'.($resource->file_name ?: basename($foundPath)).'"',
         ]);
     }

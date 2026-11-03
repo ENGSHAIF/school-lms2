@@ -8,7 +8,10 @@ use App\Models\ClassroomParticipant;
 use App\Models\ClassroomRoomControl;
 use App\Models\ClassroomSignal;
 use App\Models\GroupActivity;
+use App\Models\GroupSession;
+use App\Models\GroupStudentEvaluation;
 use App\Models\StudyGroup;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -37,13 +40,26 @@ class ClassroomRealtimeController extends Controller
         // تنظيف الإشارات القديمة التي مر عليها أكثر من 20 ثانية
         ClassroomSignal::where('created_at', '<', now()->subSeconds(20))->delete();
 
-        // فحص هل المستخدم كادر تعليمي / إداري
+        // فحص هل المستخدم كادر تعليمي / إداري أو عضو رسمي مسجل بالمجموعة/الحجز
         $isStaff = in_array($user->role, ['admin', 'teacher', 'supervisor']);
+        $isAuthorizedMember = false;
+        $group = StudyGroup::with('students')->where('room_id', $roomId)->first();
+        if ($group) {
+            $isAuthorizedMember = $group->students->contains('id', $user->id)
+                || $user->id === $group->teacher_id
+                || $user->id === $group->supervisor_id;
+        }
+        $booking = Booking::where('room_id', $roomId)->first();
+        if ($booking) {
+            $isAuthorizedMember = ($user->id === $booking->student_id || $user->id === $booking->teacher_id);
+        }
+
+        $canEnterDirectly = $isStaff || $isAuthorizedMember || ! $control->requires_admission;
 
         // جلب أو إنشاء سجل الحضور الفعلي في الغرفة مع تحديد حالة القبول (غرفة الانتظار)
         $participant = ClassroomParticipant::where('room_id', $roomId)->where('user_id', $user->id)->first();
         if (! $participant) {
-            $initialAdmission = $isStaff ? 'admitted' : ($control->requires_admission ? 'pending' : 'admitted');
+            $initialAdmission = $canEnterDirectly ? 'admitted' : 'pending';
             $participant = ClassroomParticipant::create([
                 'room_id' => $roomId,
                 'user_id' => $user->id,
@@ -56,8 +72,8 @@ class ClassroomRealtimeController extends Controller
                 'last_seen_at' => now(),
             ]);
         } else {
-            // إذا كان المستخدم كادراً، حالته مقبولة دائماً
-            $admStatus = $isStaff ? 'admitted' : ($participant->admission_status ?: 'admitted');
+            // إذا كان المستخدم كادراً أو عضواً مصرحاً، حالته مقبولة دائماً
+            $admStatus = $canEnterDirectly ? 'admitted' : ($participant->admission_status ?: 'admitted');
             // إذا أرسل المستخدم رغبة في إعادة طلب الانضمام
             if ($request->input('request_admission') === '1' && $admStatus === 'rejected') {
                 $admStatus = 'pending';
@@ -662,6 +678,13 @@ class ClassroomRealtimeController extends Controller
             return redirect()->away('https://wordwall.net/embed/'.$m[1]);
         }
 
+        // دعم Google Search والصفحة الرئيسية مباشرة في وضع التضمين الرسمي (&igu=1)
+        if (str_contains($host, 'google.') && ! str_contains($url, 'igu=1')) {
+            $sep = str_contains($url, '?') ? '&' : '?';
+
+            return redirect()->away($url.$sep.'igu=1');
+        }
+
         try {
             $response = Http::withoutVerifying()
                 ->timeout(12)
@@ -712,6 +735,8 @@ JS;
                 'Content-Type' => 'text/html; charset=UTF-8',
                 'X-Frame-Options' => 'ALLOWALL',
                 'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers' => '*',
             ]);
         } catch (\Throwable $e) {
             $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
@@ -722,22 +747,182 @@ JS;
 <head><meta charset="utf-8"><title>تصفح الموقع</title>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box;text-align:center;}
-.card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:32px;max-width:480px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);}
-a.btn{display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:bold;margin-top:20px;transition:0.2s;}
-a.btn:hover{background:#4338ca;}
+.card{background:#1e293b;border:1px solid #334155;border-radius:24px;padding:36px;max-width:500px;box-shadow:0 25px 30px -5px rgba(0,0,0,0.6);}
+.btn-group{display:flex;flex-direction:column;gap:10px;margin-top:24px;}
+a.btn, button.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 20px;border-radius:14px;font-weight:bold;font-size:13px;border:none;cursor:pointer;transition:0.2s;}
+a.btn:hover, button.btn:hover{background:#4338ca;}
+button.btn-rose{background:#e11d48;}
+button.btn-rose:hover{background:#be123c;}
+button.btn-slate{background:#334155;}
+button.btn-slate:hover{background:#475569;}
 </style>
 </head>
 <body>
 <div class="card">
-    <div style="font-size:44px;margin-bottom:12px;">🌐</div>
-    <h3 style="margin:0 0 10px 0;font-size:18px;">الموقع يتطلب فتحاً مباشراً في تبويب خارجي</h3>
-    <p style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:16px;">الموقع المستهدف يفرض حماية تمنع التضمين، يمكنك فتحه بكبسة زر في متصفح كروم والاستمرار في الشرح.</p>
-    <a href="{$safeUrl}" target="_blank" rel="noopener" class="btn">فتح الموقع في تبويب كروم جديد ↗️</a>
+    <div style="font-size:48px;margin-bottom:12px;">🌐</div>
+    <h3 style="margin:0 0 10px 0;font-size:18px;font-weight:900;">الموقع يتطلب فتحه في تبويب مستقل</h3>
+    <p style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:8px;">هذا الموقع يفرض حماية من قِبل إدارته تمنع تضمينه داخل الصفحات، يمكنك فتحه فوراً في متصفح كروم أو الرجوع للسبورة.</p>
+    <div class="btn-group">
+        <a href="{$safeUrl}" target="_blank" rel="noopener" class="btn">فتح الموقع في تبويب كروم جديد ↗️</a>
+        <button type="button" onclick="if(window.parent&&window.parent.closeWbMediaLayer){window.parent.closeWbMediaLayer();}else{window.history.back();}" class="btn btn-rose">🔙 إنهاء التصفح والرجوع للسبورة</button>
+        <button type="button" onclick="if(window.parent&&window.parent.navigateBrowserToGoogleHome){window.parent.navigateBrowserToGoogleHome();}" class="btn btn-slate">🔍 فتح محرك بحث جوجل</button>
+    </div>
 </div>
 </body>
 </html>
 HTML
-                , 200, ['Content-Type' => 'text/html; charset=UTF-8', 'X-Frame-Options' => 'ALLOWALL']);
+                , 200, ['Content-Type' => 'text/html; charset=UTF-8', 'X-Frame-Options' => 'ALLOWALL', 'Access-Control-Allow-Origin' => '*']);
         }
+    }
+
+    /**
+     * منح مكافأة بنجمة لطالب محدد أو لجميع الحاضرين في الحصة وإضافتها لرصيد تقييمات الطالب
+     */
+    public function rewardStar(Request $request, string $roomId)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $isStaff = in_array($user->role, ['admin', 'teacher', 'supervisor']);
+        $group = StudyGroup::with(['students', 'teachers', 'supervisors'])->where('room_id', $roomId)->first();
+        $booking = Booking::with('student')->where('room_id', $roomId)->first();
+
+        $isAuthorized = $isStaff;
+        if (! $isAuthorized && $group) {
+            $isAuthorized = ($user->id === $group->teacher_id
+                || $user->id === $group->supervisor_id
+                || $group->teachers->contains('id', $user->id)
+                || $group->supervisors->contains('id', $user->id));
+        }
+        if (! $isAuthorized && $booking) {
+            $isAuthorized = ($user->id === $booking->teacher_id);
+        }
+
+        if (! $isAuthorized) {
+            return response()->json(['error' => 'عذراً، فقط المعلم ومسؤول الجلسة يمكنهم منح مكافآت النجوم.'], 403);
+        }
+
+        $studentId = $request->input('student_id');
+        $amount = max(1, min(10, (int) $request->input('amount', 1)));
+        $note = $request->input('note', 'مشاركة وتفاعل متميز في الحصة ⭐');
+
+        if ($studentId === 'all') {
+            // منح مكافأة لجميع الطلاب الحاضرين في الغرفة
+            $attendeeIds = ClassroomParticipant::where('room_id', $roomId)
+                ->where('role', 'student')
+                ->where('admission_status', 'admitted')
+                ->pluck('user_id');
+
+            if ($attendeeIds->isEmpty() && $group) {
+                $attendeeIds = $group->students->pluck('id');
+            }
+
+            $students = User::whereIn('id', $attendeeIds)->where('role', 'student')->get();
+            $rewarded = [];
+
+            foreach ($students as $st) {
+                $st->increment('stars_balance', $amount);
+                $rewarded[] = [
+                    'id' => $st->id,
+                    'name' => $st->name,
+                    'new_balance' => $st->fresh()->stars_balance,
+                ];
+
+                if ($group) {
+                    $activeSession = GroupSession::where('study_group_id', $group->id)
+                        ->whereDate('session_date', now()->toDateString())
+                        ->latest()
+                        ->first();
+                    if ($activeSession) {
+                        $eval = GroupStudentEvaluation::firstOrCreate(
+                            [
+                                'group_session_id' => $activeSession->id,
+                                'study_group_id' => $group->id,
+                                'student_id' => $st->id,
+                            ],
+                            [
+                                'evaluator_id' => $user->id,
+                                'evaluator_name' => $user->name,
+                                'evaluator_role' => $user->role,
+                                'attendance_status' => 'present',
+                            ]
+                        );
+                        $eval->increment('system_total_score', $amount * 2);
+                        $eval->increment('participation_score', $amount);
+                    }
+                }
+            }
+
+            ClassroomMessage::create([
+                'room_id' => $roomId,
+                'user_id' => $user->id,
+                'type' => 'announcement',
+                'content' => "🌟 قام المعلم ({$user->name}) بمنح مكافأة ({$amount} ⭐) لجميع الطلاب الحاضرين تقديراً لتفاعلهم وإبداعهم! 👏",
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'is_all' => true,
+                'amount' => $amount,
+                'students' => $rewarded,
+                'message' => "تم منح {$amount} ⭐ لجميع الطلاب الحاضرين بنجاح!",
+            ]);
+        }
+
+        // طالب محدد
+        $targetStudentId = (int) $studentId;
+        if (! $targetStudentId && $booking && $booking->student_id) {
+            $targetStudentId = $booking->student_id;
+        }
+
+        $student = User::where('id', $targetStudentId)->where('role', 'student')->first();
+        if (! $student) {
+            return response()->json(['error' => 'الطالب المحدد غير موجود.'], 404);
+        }
+
+        $student->increment('stars_balance', $amount);
+        $newBalance = $student->fresh()->stars_balance;
+
+        if ($group) {
+            $activeSession = GroupSession::where('study_group_id', $group->id)
+                ->whereDate('session_date', now()->toDateString())
+                ->latest()
+                ->first();
+            if ($activeSession) {
+                $eval = GroupStudentEvaluation::firstOrCreate(
+                    [
+                        'group_session_id' => $activeSession->id,
+                        'study_group_id' => $group->id,
+                        'student_id' => $student->id,
+                    ],
+                    [
+                        'evaluator_id' => $user->id,
+                        'evaluator_name' => $user->name,
+                        'evaluator_role' => $user->role,
+                        'attendance_status' => 'present',
+                    ]
+                );
+                $eval->increment('system_total_score', $amount * 2);
+                $eval->increment('participation_score', $amount);
+            }
+        }
+
+        ClassroomMessage::create([
+            'room_id' => $roomId,
+            'user_id' => $user->id,
+            'type' => 'announcement',
+            'content' => "🌟 قام المعلم ({$user->name}) بمنح الطالب [{$student->name}] ({$amount} ⭐) - {$note} 👏",
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'student_id' => $student->id,
+            'student_name' => $student->name,
+            'amount' => $amount,
+            'new_balance' => $newBalance,
+            'message' => "تم منح {$amount} ⭐ للطالب ({$student->name}) بنجاح! رصيده الحالي: {$newBalance} ⭐",
+        ]);
     }
 }

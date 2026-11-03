@@ -166,11 +166,32 @@
         $groupWallPdfs = $groupActivities->filter(fn($a) => !empty($a->file_path) && (str_ends_with(strtolower($a->file_path), '.pdf') || in_array($a->type, ['worksheet', 'assignment'])));
     @endphp
 
+    <!-- بانر عائم عالي الوضوح لتفعيل صوت المعلم فوراً عند حظر التشغيل التلقائي بالهواتف -->
+    <div id="audioUnblockBanner" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs px-5 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2 border-2 border-emerald-300 animate-bounce cursor-pointer" onclick="unblockAllAudio()">
+        <span class="text-lg">🔊</span>
+        <span>انقر هنا لتشغيل وسماع صوت المعلم فوراً!</span>
+    </div>
+
+    <!-- شريط التبديل السريع للهواتف والشاشات الصغيرة (السبورة والشرح / المحادثة والأعضاء) -->
+    <div class="lg:hidden flex items-center justify-between bg-slate-950 px-2 py-1.5 border-b border-slate-800 shrink-0 z-30">
+        <div class="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold w-full">
+            <button type="button" onclick="switchMobileView('whiteboard')" id="btnMobileWhiteboard" class="flex-1 py-2 rounded-lg bg-indigo-600 text-white transition flex items-center justify-center gap-1.5 shadow font-bold">
+                <span>📋</span>
+                <span>السبورة والشرح</span>
+            </button>
+            <button type="button" onclick="switchMobileView('panel')" id="btnMobilePanel" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 font-bold relative">
+                <span>💬</span>
+                <span>المحادثة والمنهج</span>
+                <span id="mobileUnreadMessagesDot" class="hidden w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            </button>
+        </div>
+    </div>
+
     <!-- مساحة العمل الكلية: الجانب الأيمن (محادثة وحضور ومنهج وتحكم) + الجزء الوسط الكبير (شاشة الشرح والسبورة نفس الزوم) -->
     <main class="flex-1 flex flex-col lg:flex-row overflow-hidden p-1 sm:p-1.5 lg:p-2 gap-1.5 sm:gap-2 relative">
 
         <!-- 1. العمود الأيمن المخصص: أدوات التحكم بالجلسة والحضور + المحادثة + المنهج -->
-        <aside id="liveInteractivePanel" class="w-full lg:w-[320px] xl:w-[350px] shrink-0 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl z-20 transition-all duration-300 ease-in-out relative">
+        <aside id="liveInteractivePanel" class="w-full lg:w-[320px] xl:w-[350px] shrink-0 bg-slate-900 border border-slate-800 rounded-2xl hidden lg:flex flex-col overflow-hidden shadow-xl z-20 transition-all duration-300 ease-in-out relative">
             
             <!-- زر طي/توسيع الشريط الجانبي لتكبير السبورة ملء الشاشة -->
             <button type="button" onclick="toggleSidebarCollapse()" id="btnToggleSidebar" class="hidden lg:flex items-center justify-center absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 w-7 h-12 bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-slate-300 hover:text-white rounded-r-none rounded-l-xl shadow-xl transition group" title="طي/توسيع الشريط الجانبي لتكبير مساحة السبورة ملء الشاشة">
@@ -572,13 +593,13 @@
                                     <span class="text-[10px] text-slate-500 font-mono">PDF • كتاب معتمد</span>
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
-                                    @if($isTeacher)
-                                        <button type="button" onclick="openResourceInWorkspace('{{ asset($bk->file_path) }}', '{{ addslashes($bk->title) }}', 'pdf')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                        <button type="button" onclick="openResourceInWorkspace('{{ route('resources.stream', $bk->id) }}', '{{ addslashes($bk->title) }}', 'pdf')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
                                             <span>🚀</span>
                                             <span>عرض بالشرح</span>
                                         </button>
                                     @endif
-                                    <a href="{{ asset($bk->file_path) }}" target="_blank" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] rounded-lg transition" title="تحميل">
+                                    <a href="{{ route('resources.download', $bk->id) }}" target="_blank" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] rounded-lg transition" title="تحميل">
                                         ⬇️
                                     </a>
                                 </div>
@@ -645,9 +666,9 @@
             </div>
 
             <!-- الشريط السفلي البسيط بالجانب الأيمن -->
-            @if($isTeacher)
+            @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
                 <div class="p-2 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
-                    <button type="button" onclick="rewardStar()" class="flex-1 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold rounded-xl border border-amber-500/30 flex items-center justify-center gap-1.5 transition" title="مكافأة بنجمة للطلاب">
+                    <button type="button" onclick="openRewardStarModal()" class="flex-1 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold rounded-xl border border-amber-500/30 flex items-center justify-center gap-1.5 transition" title="مكافأة بنجمة للطلاب">
                         <span>⭐ مكافأة بنجمة</span>
                         <span id="starsCount" class="font-mono bg-amber-500/30 px-1.5 py-0.2 rounded-full text-amber-200">0</span>
                     </button>
@@ -665,7 +686,7 @@
         </button>
 
         <!-- 2. الجزء الوسط واليسار الكبير: مساحة الشرح والمشاركة المباشرة (Zoom Live Presentation & Whiteboard) -->
-        <section class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative min-h-[500px] lg:min-h-0">
+        <section id="whiteboardSection" class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative min-h-[400px] lg:min-h-0">
             
             <!-- الشريط العلوي لمساحة الشرح والسبورة -->
             <div class="p-2 sm:p-2.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0 z-10 text-xs">
@@ -816,46 +837,71 @@
                 <!-- طبقة مستعرض جوجل ومسابقات الأطفال التفاعلية داخل السبورة (Whiteboard Mini-Chrome Browser) -->
                 <div id="whiteboardBrowserWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col bg-slate-900 z-[5]">
                     <!-- شريط أدوات وتصفح كروم المصغر -->
-                    <div class="p-1 sm:p-1.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-1.5 shrink-0 z-20 text-xs">
-                        <div class="flex items-center gap-1 flex-1 min-w-[280px]">
-                            <!-- أزرار التنقل الأساسية للخلف وللأمام والتحديث -->
-                            <div class="flex items-center gap-0.5 bg-slate-900 border border-slate-800 rounded-lg p-0.5 shrink-0">
-                                <button type="button" onclick="navigateBrowserBack()" class="px-1.5 py-1 rounded hover:bg-slate-800 text-slate-300 text-xs transition" title="للخلف">⬅️</button>
-                                <button type="button" onclick="navigateBrowserForward()" class="px-1.5 py-1 rounded hover:bg-slate-800 text-slate-300 text-xs transition" title="للأمام">➡️</button>
-                                <button type="button" onclick="reloadBrowserIframe()" class="px-1.5 py-1 rounded hover:bg-slate-800 text-cyan-300 text-xs transition" title="إعادة تحميل الصفحة">🔄</button>
-                                <button type="button" onclick="openBrowserModal()" class="px-1.5 py-1 rounded hover:bg-slate-800 text-amber-300 text-xs transition" title="الرئيسية والمواقع المفضلة">🏠</button>
+                    <!-- شريط أدوات وتصفح كروم المصغر -->
+                    <div class="p-1.5 sm:p-2 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0 z-20 text-xs">
+                        <div class="flex items-center flex-wrap gap-1.5 flex-1 min-w-[280px]">
+                            @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                <!-- زر العودة المباشر والأبرز لشاشة السبورة الرئيسية والشرح -->
+                                <button type="button" onclick="closeWbMediaLayer()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs shadow-md transition flex items-center gap-1.5 shrink-0 cursor-pointer border border-rose-400/40" title="إنهاء وضع التصفح والرجوع للسبورة البيضاء">
+                                    <span class="text-sm">🔙</span>
+                                    <span>الرجوع للسبورة الرئيسية</span>
+                                </button>
+
+                                <!-- زر قائمة المسابقات والألعاب والبحث -->
+                                <button type="button" onclick="openBrowserModal()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow transition flex items-center gap-1.5 shrink-0 cursor-pointer" title="فتح قائمة الألعاب والمسابقات والبحث السريع">
+                                    <span>🎮</span>
+                                    <span>المسابقات والبحث</span>
+                                </button>
+                            @endif
+
+                            <!-- أزرار التنقل الأساسية للخلف وللأمام والتحديث وجوجل -->
+                            <div class="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1 shrink-0">
+                                <button type="button" onclick="navigateBrowserBack()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1" title="للخلف">⬅️</button>
+                                <button type="button" onclick="navigateBrowserForward()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1" title="للأمام">➡️</button>
+                                <button type="button" onclick="reloadBrowserIframe()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 text-xs font-bold transition flex items-center gap-1" title="إعادة تحميل الصفحة">🔄</button>
+                                <button type="button" onclick="navigateBrowserToGoogleHome()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-amber-300 hover:text-amber-200 text-xs font-bold transition flex items-center gap-1" title="الرجوع لصفحة جوجل الرئيسية">
+                                    <span>🔍</span>
+                                    <span class="hidden sm:inline">جوجل</span>
+                                </button>
                             </div>
 
                             <!-- شريط كتابة العنوان والبحث مثل كروم -->
-                            <div class="flex-1 relative flex items-center min-w-0">
+                            <div class="flex-1 relative flex items-center min-w-[200px]">
                                 <span class="absolute right-2.5 text-slate-400 text-xs pointer-events-none">🌐</span>
-                                <input type="text" id="wbBrowserCurrentUrl" class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-lg pr-7 pl-16 py-1 text-xs text-white placeholder-slate-500 font-mono focus:outline-none transition" placeholder="اكتب عنوان الموقع أو ابحث في جوجل..." onkeydown="if(event.key==='Enter') navigateBrowserToUrl()">
-                                <button type="button" onclick="navigateBrowserToUrl()" class="absolute left-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded transition shadow-sm" title="الانتقال للموقع">
+                                <input type="text" id="wbBrowserCurrentUrl" class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl pr-7 pl-16 py-1.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none transition" placeholder="اكتب عنوان الموقع أو ابحث في جوجل..." onkeydown="if(event.key==='Enter') navigateBrowserToUrl()">
+                                <button type="button" onclick="navigateBrowserToUrl()" class="absolute left-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-sm" title="الانتقال للموقع">
                                     ذهاب ⏎
                                 </button>
                             </div>
 
-                            <!-- زر الفتح في تبويب خارجي مستقل -->
-                            <button type="button" onclick="openBrowserExternalTab()" class="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs shrink-0 transition" title="فتح الموقع في تبويب جوجل كروم جديد">
-                                ↗️
+                            <!-- زر الفتح في تبويب خارجي مستقل (كروم) -->
+                            <button type="button" onclick="openBrowserExternalTab()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-700 text-xs font-bold shrink-0 transition flex items-center gap-1 shadow-sm cursor-pointer" title="إذا كان الموقع يفرض حماية تمنع التضمين، افتحه هنا في نافذة كروم مباشرة">
+                                <span>↗️</span>
+                                <span class="hidden md:inline">فتح بتبويب مستقل</span>
                             </button>
                         </div>
 
-                        <div class="flex items-center gap-1 shrink-0">
-                            <span class="text-[10px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 hidden lg:inline font-bold">
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="text-[10px] text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-xl border border-amber-500/30 hidden xl:inline font-bold">
                                 💡 اختر الماوس 🖱️ للتفاعل مع الموقع أو القلم ✏️ للشرح فوقه
                             </span>
-                            @if($isTeacher)
-                                <button type="button" onclick="openBrowserModal()" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] shadow transition flex items-center gap-1">
-                                    <span>🔍</span>
-                                    <span>مسابقات ومواقع</span>
-                                </button>
-                                <button type="button" onclick="closeWbMediaLayer()" class="px-2 py-1 rounded-lg bg-rose-600/30 hover:bg-rose-600 text-rose-200 hover:text-white font-bold text-[11px] border border-rose-500/40 transition" title="إنهاء التصفح والرجوع للسبورة">
-                                    ✕ إنهاء
+                            @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                <button type="button" onclick="closeWbMediaLayer()" class="px-2.5 py-1 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-white text-xs font-bold border border-rose-800 transition" title="إنهاء التصفح">
+                                    ✕ إغلاق
                                 </button>
                             @endif
                         </div>
                     </div>
+
+                    <!-- شريط إرشادي خفيف لمعالجة المواقع المحمية -->
+                    <div id="wbBrowserHelpTip" class="bg-indigo-950/80 border-b border-indigo-900/60 px-3 py-1 flex items-center justify-between text-[11px] text-indigo-200">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-amber-400">💡</span>
+                            <span>إذا صادفت موقعاً يمنع التضمين أو العرض الداخلي، يمكنك النقر على <strong>[فتح بتبويب مستقل ↗️]</strong> لفتحه فوراً ومشاركته عبر ميزة [مشاركة الشاشة 🖥️].</span>
+                        </div>
+                        <button type="button" onclick="document.getElementById('wbBrowserHelpTip').classList.add('hidden')" class="text-indigo-400 hover:text-white text-xs px-1">✕</button>
+                    </div>
+
                     <div class="flex-1 relative w-full h-full bg-white overflow-hidden">
                         <iframe id="whiteboardBrowserIframe" src="about:blank" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
@@ -865,9 +911,10 @@
                 <div id="whiteboardVideoWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-black z-[5]">
                     <div class="absolute top-2 right-2 z-20 flex items-center gap-2">
                         <span id="wbVideoTitleBadge" class="bg-black/80 backdrop-blur text-white text-xs px-2.5 py-1 rounded-lg border border-white/20 truncate max-w-xs font-bold"></span>
-                        @if($isTeacher)
-                            <button type="button" onclick="closeWbMediaLayer()" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow transition" title="إغلاق الفيديو والرجوع للسبورة">
-                                ✕ إنهاء الفيديو
+                        @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                            <button type="button" onclick="closeWbMediaLayer()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow flex items-center gap-1.5 transition cursor-pointer" title="إغلاق الفيديو والرجوع للسبورة">
+                                <span>🔙</span>
+                                <span>إنهاء الفيديو والرجوع للسبورة</span>
                             </button>
                         @endif
                     </div>
@@ -1195,6 +1242,91 @@
         </div>
     </div>
 
+    <!-- نافذة مكافأة الطالب بنجمة (Reward Star Modal) -->
+    <div id="rewardStarModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4" onclick="closeRewardStarModal()">
+        <div class="max-w-md w-full bg-slate-900 border border-amber-500/50 rounded-3xl shadow-2xl p-5 sm:p-6 space-y-4" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-3xl animate-bounce">⭐</span>
+                    <div>
+                        <h3 class="text-base font-black text-amber-300">منح مكافأة نجمة لطالب</h3>
+                        <p class="text-[11px] text-slate-400">تُضاف النجمة مباشرة إلى رصيد تقييمات الطالب الدائم</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeRewardStarModal()" class="text-slate-400 hover:text-white text-xl font-bold">✕</button>
+            </div>
+
+            <!-- اختيار الطالب -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-300">اختر الطالب المستحق للمكافأة:</label>
+                <select id="rewardStudentSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                    @if(isset($students) && $students->isNotEmpty())
+                        @foreach($students as $st)
+                            <option value="{{ $st->id }}">{{ $st->name }} (رصيده: {{ $st->stars_balance ?? 0 }} ⭐)</option>
+                        @endforeach
+                        @if($students->count() > 1)
+                            <option value="all">🌟 جميع الطلاب الحاضرين في الحصة (مكافأة جماعية للكل)</option>
+                        @endif
+                    @elseif(isset($booking) && $booking && $booking->student)
+                        <option value="{{ $booking->student->id }}">{{ $booking->student->name }} (رصيده: {{ $booking->student->stars_balance ?? 0 }} ⭐)</option>
+                    @endif
+                </select>
+            </div>
+
+            <!-- عدد النجوم والسبب -->
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-300">عدد النجوم:</label>
+                    <select id="rewardStarsAmount" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-amber-300 font-bold focus:border-amber-500 focus:outline-none font-mono">
+                        <option value="1">⭐ نجمة واحدة (1)</option>
+                        <option value="2">⭐⭐ نجمتان (2)</option>
+                        <option value="3">⭐⭐⭐ 3 نجوم (3)</option>
+                        <option value="5">⭐⭐⭐⭐⭐ 5 نجوم (إبداع خارق)</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-300">سبب المكافأة:</label>
+                    <select id="rewardStarsReason" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        <option value="مشاركة وإجابة ممتازة">مشاركة وإجابة ممتازة 👏</option>
+                        <option value="إتقان نطق الكلمات">إتقان نطق الكلمات 🗣️</option>
+                        <option value="سرعة البديهة والحل">سرعة البديهة والحل ⚡</option>
+                        <option value="التزام وهدوء رائع">التزام وهدوء رائع 🌟</option>
+                        <option value="إنجاز الواجب والنشاط">إنجاز الواجب والنشاط 📝</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- زر اعتماد المكافأة -->
+            <div class="pt-2 flex gap-2">
+                <button type="button" onclick="submitStudentStarReward()" id="btnSubmitRewardStar" class="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span>⭐ اعتماد وإضافة لرصيد الطالب</span>
+                </button>
+                <button type="button" onclick="closeRewardStarModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- شاشة الاحتفال بنجمة التميز للطلاب (Star Celebration Overlay) -->
+    <div id="starCelebrationOverlay" class="hidden fixed inset-0 z-50 pointer-events-none flex items-center justify-center bg-black/40 backdrop-blur-2xs transition-all duration-500">
+        <div id="starCelebrationCard" class="bg-gradient-to-br from-amber-950/95 via-slate-900/95 to-slate-950/95 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 max-w-sm w-full mx-4 text-center shadow-2xl space-y-3 transform scale-90 transition-transform duration-300 pointer-events-auto">
+            <div class="text-6xl animate-bounce">⭐</div>
+            <h3 class="text-lg font-black text-amber-300" id="starCelebrationTitle">أحسنت يا بطل!</h3>
+            <p class="text-xs text-slate-200" id="starCelebrationDesc">منحك المعلم نجمة تميز تشجيعية تقديراً لمشاركتك الرائعة!</p>
+            <div class="inline-flex items-center gap-2 bg-amber-500/20 text-amber-200 border border-amber-500/40 px-3.5 py-1.5 rounded-full text-xs font-black font-mono">
+                <span>رصيدك الإجمالي الآن:</span>
+                <span id="starCelebrationBalance" class="text-sm text-amber-300">0</span>
+                <span>⭐</span>
+            </div>
+            <div class="pt-2">
+                <button type="button" onclick="closeStarCelebration()" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow transition cursor-pointer">
+                    شكراً يا أستاذ! 🎉
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- نافذة مستعرض وبحث جوجل والألعاب التفاعلية (Google Browser & Educational Games Modal) -->
     <div id="wbBrowserModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4" onclick="closeWbMediaModals()">
         <div class="max-w-2xl w-full bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl p-5 sm:p-6 space-y-4" onclick="event.stopPropagation()">
@@ -1233,49 +1365,60 @@
                 </div>
             </div>
 
-            <!-- اختصارات سريعة لأشهر منصات مسابقات وألعاب الأطفال -->
+            <!-- اختصارات سريعة لأشهر منصات مسابقات وألعاب الأطفال المضمونة -->
             <div class="space-y-2 pt-2 border-t border-slate-800">
-                <span class="block text-xs font-bold text-amber-400">⚡ منصات مسابقات وألعاب تعليمية سريعة:</span>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <button type="button" onclick="openPresetGame('https://wordwall.net/ar-sa/community', 'مسابقات Wordwall التفاعلية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
-                        <span class="text-base block mb-1">🎮</span>
-                        <strong class="text-xs text-white block">Wordwall</strong>
-                        <span class="text-[10px] text-slate-400 block truncate">ألعاب ومسابقات مجتمعية</span>
+                <div class="flex items-center justify-between">
+                    <span class="block text-xs font-bold text-amber-400">⚡ منصات مسابقات وألعاب تعليمية سريعة:</span>
+                    <button type="button" onclick="navigateBrowserToGoogleHome(); closeWbMediaModals();" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1">
+                        <span>🔍 فتح جوجل المباشر</span>
                     </button>
-                    <button type="button" onclick="openPresetGame('https://quizizz.com/join', 'منصة Quizizz التنافسية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
-                        <span class="text-base block mb-1">⚡</span>
-                        <strong class="text-xs text-white block">Quizizz</strong>
-                        <span class="text-[10px] text-slate-400 block truncate">منافسات وأسئلة تفاعلية</span>
+                </div>
+
+                <div class="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-200 flex items-start gap-2 leading-relaxed">
+                    <span class="text-base shrink-0">💡</span>
+                    <span><strong>تلميح مهم:</strong> لفتح ألعاب <strong>Wordwall</strong>، انسخ رابط اللعبة وضعه في خانة الرابط أعلاه. وإذا صادفت أي موقع يمنع التضمين، افتحه عبر زر <strong>[فتح بتبويب مستقل ↗️]</strong> واستخدم ميزة <strong>[مشاركة الشاشة 🖥️]</strong> في البث ليشاهده الطلاب فوراً.</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button type="button" onclick="openPresetGame('https://www.google.com/webhp?igu=1', 'محرك بحث جوجل الشامل')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">🔍</span>
+                        <strong class="text-xs text-white block">Google</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">بحث جوجل الشامل</span>
+                    </button>
+                    <button type="button" onclick="openPresetGame('https://wheelofnames.com/ar', 'عجلة الحظ التفاعلية للطلاب')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">🎲</span>
+                        <strong class="text-xs text-white block">عجلة الأسماء</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">سحب عشوائي للطلاب</span>
                     </button>
                     <button type="button" onclick="openPresetGame('https://kahoot.it/', 'لعبة كاهوت Kahoot')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
                         <span class="text-base block mb-1">🏆</span>
                         <strong class="text-xs text-white block">Kahoot!</strong>
-                        <span class="text-[10px] text-slate-400 block truncate">إدخال كود المنافسة للفرق</span>
-                    </button>
-                    <button type="button" onclick="openPresetGame('https://www.educaplay.com/', 'ألعاب Educaplay التعليمية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
-                        <span class="text-base block mb-1">🧩</span>
-                        <strong class="text-xs text-white block">Educaplay</strong>
-                        <span class="text-[10px] text-slate-400 block truncate">كلمات متقاطعة وتوصيل</span>
-                    </button>
-                    <button type="button" onclick="openPresetGame('https://ar.wikipedia.org', 'موسوعة ويكيبيديا العربية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
-                        <span class="text-base block mb-1">📚</span>
-                        <strong class="text-xs text-white block">Wikipedia</strong>
-                        <span class="text-[10px] text-slate-400 block truncate">الموسوعة الحرة</span>
+                        <span class="text-[10px] text-slate-400 block truncate">إدخال كود المسابقة</span>
                     </button>
                     <button type="button" onclick="openPresetGame('https://www.geogebra.org/calculator', 'حاسبة GeoGebra التفاعلية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
                         <span class="text-base block mb-1">🧮</span>
                         <strong class="text-xs text-white block">GeoGebra</strong>
                         <span class="text-[10px] text-slate-400 block truncate">رياضيات ورسوم بيانية</span>
                     </button>
-                    <button type="button" onclick="openPresetGame('https://phet.colorado.edu/ar_SA/simulations/filter?type=html', 'محاكاة العلوم PhET')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                    <button type="button" onclick="openPresetGame('https://phet.colorado.edu/sims/html/forces-and-motion-basics/latest/forces-and-motion-basics_all.html', 'محاكاة العلوم PhET')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
                         <span class="text-base block mb-1">🔬</span>
                         <strong class="text-xs text-white block">PhET Science</strong>
-                        <span class="text-[10px] text-slate-400 block truncate">تجارب فيزياء وكيمياء</span>
+                        <span class="text-[10px] text-slate-400 block truncate">تجارب فيزياء وعلوم</span>
                     </button>
-                    <button type="button" onclick="openPresetGame('https://wheelofnames.com/ar', 'عجلة الحظ التفاعلية للطلاب')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
-                        <span class="text-base block mb-1">🎲</span>
-                        <strong class="text-xs text-white block">عجلة الأسماء</strong>
-                        <span class="text-[10px] text-slate-400 block truncate">سحب عشوائي للطلاب</span>
+                    <button type="button" onclick="openPresetGame('https://quizizz.com/join', 'منصة Quizizz التنافسية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">⚡</span>
+                        <strong class="text-xs text-white block">Quizizz</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">منافسات وأسئلة تفاعلية</span>
+                    </button>
+                    <button type="button" onclick="openPresetGame('https://ar.wikipedia.org', 'موسوعة ويكيبيديا العربية')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">📚</span>
+                        <strong class="text-xs text-white block">Wikipedia</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">الموسوعة الحرة</span>
+                    </button>
+                    <button type="button" onclick="openPresetGame('https://html.duckduckgo.com/html/', 'محرك بحث DuckDuckGo السريع')" class="p-2.5 rounded-xl bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/50 text-right transition group">
+                        <span class="text-base block mb-1">🦆</span>
+                        <strong class="text-xs text-white block">DuckDuckGo</strong>
+                        <span class="text-[10px] text-slate-400 block truncate">بحث ويب سريع</span>
                     </button>
                 </div>
             </div>
@@ -1399,13 +1542,13 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
-                                    @if($isTeacher)
-                                        <button type="button" onclick="openResourceInWorkspace('{{ asset($bk->file_path) }}', '{{ addslashes($bk->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                        <button type="button" onclick="openResourceInWorkspace('{{ route('resources.stream', $bk->id) }}', '{{ addslashes($bk->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
                                             <span>🚀</span>
                                             <span>فتح للشرح الآن</span>
                                         </button>
                                     @endif
-                                    <a href="{{ asset($bk->file_path) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة أو تنزيل">
+                                    <a href="{{ route('resources.download', $bk->id) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة أو تنزيل">
                                         <span>⬇️</span>
                                     </a>
                                 </div>
@@ -1438,13 +1581,13 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
-                                    @if($isTeacher)
-                                        <button type="button" onclick="openResourceInWorkspace('{{ asset($act->file_path) }}', '{{ addslashes($act->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                        <button type="button" onclick="openResourceInWorkspace('{{ route('groups.activities.stream', $act->id) }}', '{{ addslashes($act->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
                                             <span>🚀</span>
                                             <span>فتح للشرح الآن</span>
                                         </button>
                                     @endif
-                                    <a href="{{ asset($act->file_path) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة">
+                                    <a href="{{ route('groups.activities.download', $act->id) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة">
                                         <span>⬇️</span>
                                     </a>
                                 </div>
@@ -1579,12 +1722,25 @@
     const peerStreams = {}; // key: peerId => MediaStream
     const remoteAudios = {}; // key: peerId => HTMLAudioElement
 
+    const peerCandidateQueue = {}; // key: peerId => Array of queued RTCIceCandidateInit
+
     const ICE_SERVERS = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
             { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' }
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
+            { urls: 'stun:openrelay.metered.ca:80' },
+            {
+                urls: [
+                    'turn:openrelay.metered.ca:80',
+                    'turn:openrelay.metered.ca:443',
+                    'turn:openrelay.metered.ca:443?transport=tcp'
+                ],
+                username: 'openrelay',
+                credential: 'openrelay'
+            }
         ]
     };
 
@@ -1717,6 +1873,11 @@
                         alert('أذن لك المعلم بالتحدث الآن! يمكنك تشغيل المايك 🎙️');
                     }
                     break;
+                case 'star_rewarded':
+                    if (data.user_id === 'all' || String(data.user_id) === String(CURRENT_USER_ID)) {
+                        showStarCelebration(data.student_name || CURRENT_USER_NAME, data.stars_count || 1, data.new_balance, data.reason || 'مشاركة ممتازة');
+                    }
+                    break;
             }
         } catch (e) {
             console.error('Error handling P2P realtime message:', e);
@@ -1788,8 +1949,8 @@
             return;
         }
 
-        // إذا كانت السياسة "بإذن" والمستخدم طالب ولم يُمنح الإذن بعد
-        if (!IS_TEACHER && currentRoomPolicy === 'permission' && !isHandRaised) {
+        // إذا كانت السياسة "بإذن" والمستخدم ليس معلماً أو مديراً ولم يُمنح الإذن بعد
+        if (!CAN_MANAGE_ROOM && currentRoomPolicy === 'permission' && !isHandRaised) {
             alert('⚠️ التحدث في هذا الفصل مقيد بإذن الأستاذ. يرجى الضغط على زر "طلب الكلمة ✋" أولاً.');
             return;
         }
@@ -2019,10 +2180,15 @@
                 </div>
                 <div class="z-10 flex justify-between items-center text-[10px]">
                     <span id="peerMicBadge_${remoteUserId}" class="bg-black/60 text-slate-300 px-2 py-0.5 rounded">🎙️ المايك شغال</span>
-                    ${IS_TEACHER ? `
-                        <button type="button" onclick="muteStudent(${remoteUserId})" class="bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 px-2 py-0.5 rounded font-bold">
-                            كتم 🔇
-                        </button>
+                    ${CAN_MANAGE_ROOM ? `
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="openRewardStarModal(${remoteUserId}, '${addslashes(remoteName)}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded font-bold" title="مكافأة بنجمة">
+                                ⭐ كافئ
+                            </button>
+                            <button type="button" onclick="muteStudent(${remoteUserId})" class="bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 px-2 py-0.5 rounded font-bold">
+                                كتم 🔇
+                            </button>
+                        </div>
                     ` : ''}
                 </div>
             `;
@@ -2061,11 +2227,28 @@
     }
 
     function unblockAudio() {
-        Object.values(remoteAudios).forEach(a => {
-            try { a.play(); } catch(e){}
-        });
+        unblockAllAudio();
         document.getElementById('audioUnblockBanner')?.classList.add('hidden');
     }
+
+    function unblockAllAudio() {
+        Object.values(remoteAudios).forEach(a => {
+            try {
+                if (a && a.paused) {
+                    a.play().then(() => {
+                        document.getElementById('audioUnblockBanner')?.classList.add('hidden');
+                    }).catch(e => console.log('Audio autoplay resume waiting:', e));
+                }
+            } catch(e){}
+        });
+    }
+
+    // فك حجب الصوت تلقائياً بمجرد لمس أو نقر شاشة الهاتف
+    ['click', 'touchstart', 'touchend', 'pointerdown'].forEach(evt => {
+        document.addEventListener(evt, () => {
+            unblockAllAudio();
+        }, { passive: true });
+    });
 
     async function postSignal(toPeerId, signalType, payload) {
         try {
@@ -2206,7 +2389,7 @@
                     return;
                 }
 
-                if (!IS_TEACHER) {
+                if (!CAN_MANAGE_ROOM) {
                     if (data.room_control.is_muted_by_host) {
                         if (isMicEnabled) {
                             isMicEnabled = false;
@@ -2223,14 +2406,6 @@
                         ensureTracksInPeerConnections();
                         updateMediaButtonsUI();
                         alert('🎙️ سمح لك المعلم بالتحدث الآن ومشاركة صوتك في الحصة! تم تفعيل المايكروفون.');
-                    }
-                } else {
-                    // المعلم يظل صوته مفتوحاً دائماً ولا ينقطع
-                    if (localStream && !isMicEnabled && !data.room_control.is_muted_by_host) {
-                        isMicEnabled = true;
-                        localStream.getAudioTracks().forEach(t => t.enabled = true);
-                        ensureTracksInPeerConnections();
-                        updateMediaButtonsUI();
                     }
                 }
 
@@ -2290,7 +2465,7 @@
     setInterval(syncClassroom, 1000);
     setTimeout(syncClassroom, 500);
 
-    // 4. معالجة إشارات WebRTC
+    // 4. معالجة إشارات WebRTC مع دعم طابور المرشحين (ICE Candidate Queue) لتفادي فشل الاتصال عبر الإنترنت
     async function handleIncomingSignal(sig) {
         const fromPeer = sig.from_peer_id;
         const type = sig.signal_type;
@@ -2301,13 +2476,33 @@
         try {
             if (type === 'offer') {
                 await pc.setRemoteDescription(new RTCSessionDescription(payload));
+                // تفريغ المرشحين المؤجلين لهذا النظير إن وجدوا
+                if (peerCandidateQueue[fromPeer] && peerCandidateQueue[fromPeer].length > 0) {
+                    for (const cand of peerCandidateQueue[fromPeer]) {
+                        try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (ce) { console.warn('Queued ICE error:', ce); }
+                    }
+                    peerCandidateQueue[fromPeer] = [];
+                }
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
                 postSignal(fromPeer, 'answer', answer);
             } else if (type === 'answer') {
                 await pc.setRemoteDescription(new RTCSessionDescription(payload));
+                // تفريغ المرشحين المؤجلين لهذا النظير
+                if (peerCandidateQueue[fromPeer] && peerCandidateQueue[fromPeer].length > 0) {
+                    for (const cand of peerCandidateQueue[fromPeer]) {
+                        try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (ce) { console.warn('Queued ICE error:', ce); }
+                    }
+                    peerCandidateQueue[fromPeer] = [];
+                }
             } else if (type === 'candidate' && payload) {
-                await pc.addIceCandidate(new RTCIceCandidate(payload));
+                // إذا لم يتم تهيئة remoteDescription بعد، يتم تأجيل المرشح حتى لا يرفضه المتصفح
+                if (!pc.remoteDescription || !pc.remoteDescription.type) {
+                    if (!peerCandidateQueue[fromPeer]) peerCandidateQueue[fromPeer] = [];
+                    peerCandidateQueue[fromPeer].push(payload);
+                } else {
+                    await pc.addIceCandidate(new RTCIceCandidate(payload));
+                }
             }
         } catch (e) {
             console.error('Signaling processing error:', e);
@@ -2409,8 +2604,13 @@
                         </div>
                     </div>
 
-                    ${IS_TEACHER && !isMe ? `
-                        <div class="flex items-center gap-1 pt-1 border-t border-slate-900 text-[10px]">
+                    ${CAN_MANAGE_ROOM && !isMe ? `
+                        <div class="flex items-center flex-wrap gap-1 pt-1.5 border-t border-slate-900 text-[10px]">
+                            ${!p.is_staff ? `
+                                <button type="button" onclick="openRewardStarModal(${p.user_id}, '${addslashes(p.name)}')" class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg font-bold flex items-center gap-1 shadow-xs" title="مكافأة بنجمة">
+                                    ⭐ كافئ
+                                </button>
+                            ` : ''}
                             ${p.is_muted_by_host ? `
                                 <button type="button" onclick="allowStudentToSpeak(${p.user_id})" class="px-2 py-1 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">
                                     فك الكتم 🎙️
@@ -2918,12 +3118,22 @@
     }
 
     function appendLiveChatMessage(msg) {
-        if (!msg || msg.type === 'system') return;
+        if (!msg) return;
         const container = document.getElementById('liveChatMessagesContainer');
         if (!container) return;
 
         // التحقق من عدم التكرار
         if (document.getElementById('chatMsg_' + msg.id)) return;
+
+        if (msg.type === 'system') {
+            const div = document.createElement('div');
+            div.id = 'chatMsg_' + msg.id;
+            div.className = "p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs text-center font-bold my-1 flex items-center justify-center gap-2 shadow-xs";
+            div.innerHTML = `<span>📢</span> <span>${msg.content}</span> <span class="text-[10px] text-amber-400/60 font-mono">(${msg.time || ''})</span>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return;
+        }
 
         const isMine = msg.user_id === CURRENT_USER_ID;
         const div = document.createElement('div');
@@ -2953,10 +3163,11 @@
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
 
-        // إشعار ضوئي إذا كانت اللوحة الجانبية مغلقة
+        // إشعار ضوئي إذا كانت اللوحة الجانبية مغلقة (للكمبيوتر وللهاتف)
         const panel = document.getElementById('liveInteractivePanel');
-        if (panel && panel.classList.contains('hidden')) {
+        if (panel && (panel.classList.contains('hidden') || panel.classList.contains('lg:hidden'))) {
             document.getElementById('unreadMessagesDot')?.classList.remove('hidden');
+            document.getElementById('mobileUnreadMessagesDot')?.classList.remove('hidden');
         }
     }
 
@@ -3100,7 +3311,42 @@
         input.value = '';
     }
 
-    // 11. التبديل والتحكم باللوحة الجانبية
+    // 11. التبديل والتحكم باللوحة الجانبية والتنقل في شاشات الجوال
+    function switchMobileView(mode) {
+        const wbSec = document.getElementById('whiteboardSection');
+        const panel = document.getElementById('liveInteractivePanel');
+        const btnWb = document.getElementById('btnMobileWhiteboard');
+        const btnPan = document.getElementById('btnMobilePanel');
+
+        if (mode === 'whiteboard') {
+            wbSec?.classList.remove('hidden');
+            wbSec?.classList.add('flex');
+            panel?.classList.add('hidden');
+            panel?.classList.remove('flex');
+
+            btnWb?.classList.add('bg-indigo-600', 'text-white', 'shadow');
+            btnWb?.classList.remove('text-slate-400');
+            btnPan?.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+            btnPan?.classList.add('text-slate-400');
+
+            setTimeout(() => {
+                ensureCanvasLayerDimensions();
+            }, 80);
+        } else {
+            wbSec?.classList.add('hidden');
+            wbSec?.classList.remove('flex');
+            panel?.classList.remove('hidden');
+            panel?.classList.add('flex');
+
+            btnPan?.classList.add('bg-indigo-600', 'text-white', 'shadow');
+            btnPan?.classList.remove('text-slate-400');
+            btnWb?.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+            btnWb?.classList.add('text-slate-400');
+
+            document.getElementById('mobileUnreadMessagesDot')?.classList.add('hidden');
+        }
+    }
+
     function toggleSidePanel(tab) {
         const panel = document.getElementById('liveInteractivePanel');
         if (panel.classList.contains('hidden')) {
@@ -3148,7 +3394,7 @@
         }
     }
 
-    // 12. العداد التنازلي ونظام النجوم والشرائح
+    // 12. العداد التنازلي ونظام النجوم التقييمية والشرائح
     let sessionSeconds = 25 * 60;
     const timerEl = document.getElementById('sessionTimer');
     setInterval(() => {
@@ -3160,18 +3406,154 @@
     }, 1000);
 
     let stars = 0;
-    function rewardStar() {
-        stars++;
-        const counter = document.getElementById('starsCount');
-        counter.textContent = stars;
-        counter.classList.add('star-pop');
-        setTimeout(() => counter.classList.remove('star-pop'), 400);
 
-        if (document.getElementById('modalStarsInput')) {
-            document.getElementById('modalStarsInput').value = stars;
+    // دوال مكافأة النجمة المخصصة للطالب مع الترحيل لرصيده
+    function openRewardStarModal(targetStudentId = null, targetStudentName = null) {
+        const select = document.getElementById('rewardStudentSelect');
+        if (select && targetStudentId) {
+            let found = false;
+            for (let i = 0; i < select.options.length; i++) {
+                if (String(select.options[i].value) === String(targetStudentId)) {
+                    select.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                const opt = document.createElement('option');
+                opt.value = targetStudentId;
+                opt.textContent = (targetStudentName || 'الطالب') + ' (حاضر الآن ⭐)';
+                select.insertBefore(opt, select.firstChild);
+                select.selectedIndex = 0;
+            }
+        }
+        document.getElementById('rewardStarModal')?.classList.remove('hidden');
+    }
+
+    function closeRewardStarModal() {
+        document.getElementById('rewardStarModal')?.classList.add('hidden');
+    }
+
+    async function submitStudentStarReward() {
+        const select = document.getElementById('rewardStudentSelect');
+        const amountSelect = document.getElementById('rewardStarsAmount');
+        const reasonSelect = document.getElementById('rewardStarsReason');
+        const btn = document.getElementById('btnSubmitRewardStar');
+
+        if (!select) return;
+        const targetUserId = select.value;
+        const starsCount = amountSelect ? parseInt(amountSelect.value, 10) : 1;
+        const reason = reasonSelect ? reasonSelect.value : 'مشاركة ممتازة في الحصة';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>جاري قيد النجمة... ⏳</span>';
         }
 
-        alert('🌟 أحسنت! تم منح نجمة تشجيعية.');
+        try {
+            const res = await fetch(`/classroom/${ROOM_ID}/reward-star`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    user_id: targetUserId,
+                    stars_count: starsCount,
+                    reason: reason
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                closeRewardStarModal();
+                playStarSound();
+
+                stars = (stars || 0) + starsCount;
+                const counter = document.getElementById('starsCount');
+                if (counter) {
+                    counter.textContent = stars;
+                    counter.classList.add('star-pop');
+                    setTimeout(() => counter.classList.remove('star-pop'), 400);
+                }
+
+                if (document.getElementById('modalStarsInput')) {
+                    document.getElementById('modalStarsInput').value = stars;
+                }
+
+                // البث الفوري عبر P2P
+                broadcastP2P({
+                    type: 'star_rewarded',
+                    user_id: targetUserId,
+                    student_name: data.student_name || 'الطالب',
+                    stars_count: starsCount,
+                    new_balance: data.new_balance,
+                    reason: reason
+                });
+
+                // مزامنة فورية لتحديث رسائل المحادثة
+                syncClassroom();
+
+                alert(`⭐ تم منح ${starsCount} نجمة بنجاح وإضافتها لرصيد تقييمات الطالب!`);
+            } else {
+                alert('عذراً: ' + (data.message || 'تعذر إضافة النجمة'));
+            }
+        } catch (e) {
+            console.error('Star reward error:', e);
+            alert('حدث خطأ في الاتصال أثناء اعتماد النجمة.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>⭐ اعتماد وإضافة لرصيد الطالب</span>';
+            }
+        }
+    }
+
+    function showStarCelebration(studentName, starsCount, newBalance, reason) {
+        playStarSound();
+        const overlay = document.getElementById('starCelebrationOverlay');
+        const title = document.getElementById('starCelebrationTitle');
+        const desc = document.getElementById('starCelebrationDesc');
+        const balance = document.getElementById('starCelebrationBalance');
+
+        if (title) title.textContent = `أحسنت يا ${studentName}! ⭐`;
+        if (desc) desc.textContent = `منحك المعلم ${starsCount} نجمة تميز تقديراً لـ (${reason})!`;
+        if (balance && newBalance !== undefined) balance.textContent = newBalance;
+
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                closeStarCelebration();
+            }, 6000);
+        }
+    }
+
+    function closeStarCelebration() {
+        document.getElementById('starCelebrationOverlay')?.classList.add('hidden');
+    }
+
+    // نغمة احتفالية لحصول الطالب على النجمة (Web Audio API Synthesizer)
+    function playStarSound() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const startTime = ctx.currentTime + (idx * 0.1);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.3, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + 0.4);
+            });
+        } catch(e){}
     }
 
     let currentSlide = 3;
@@ -4417,27 +4799,42 @@
     function resolveClassroomBrowserUrl(rawUrl) {
         if (!rawUrl) return '';
         let url = rawUrl.trim();
+
+        // 1. إذا كان استعلام بحث نصي (يحتوي مسافات أو لا يحتوي على نقطة)
+        if (url.includes(' ') || (!url.includes('.') && !url.startsWith('http'))) {
+            return `https://www.google.com/search?igu=1&q=${encodeURIComponent(url)}`;
+        }
+
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            // إذا كان النص لا يحتوي على نقطة أو يحتوي على مسافات، فهو استعلام بحث!
-            if (url.includes(' ') || !url.includes('.')) {
-                const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(url)}`;
-                return `/classroom/proxy-browse?url=${encodeURIComponent(searchUrl)}`;
-            }
             url = 'https://' + url;
         }
 
-        // تحويل ألعاب ومسابقات Wordwall إلى صيغة التضمين الرسمية الخفيفة
-        const wordwallMatch = url.match(/wordwall\.net\/(?:[a-z]{2}-[a-z]{2}\/)?(?:resource|play)\/([0-9]+)/i);
+        // 2. معالجة موقع جوجل لتمكين العرض داخل الإطار عبر معامل igu=1 الرسمي
+        try {
+            const parsed = new URL(url);
+            if (parsed.hostname.includes('google.') && !parsed.hostname.includes('docs.google.')) {
+                if (parsed.pathname === '/' || parsed.pathname === '' || parsed.pathname.includes('/webhp')) {
+                    return 'https://www.google.com/webhp?igu=1';
+                }
+                if (parsed.pathname.includes('/search')) {
+                    parsed.searchParams.set('igu', '1');
+                    return parsed.toString();
+                }
+            }
+        } catch(e){}
+
+        // 3. تحويل ألعاب ومسابقات Wordwall إلى صيغة التضمين الرسمية الخفيفة
+        const wordwallMatch = url.match(/wordwall\.net\/(?:[a-z]{2}-[a-z]{2}\/)?(?:resource|play|embed)\/([0-9]+)/i);
         if (wordwallMatch) {
             return `https://wordwall.net/embed/${wordwallMatch[1]}`;
         }
 
-        // روابط التضمين المباشرة المدعومة
-        if (url.includes('wordwall.net/embed/') || url.includes('youtube.com/embed/') || url.includes('geogebra.org/calculator')) {
+        // 4. روابط التضمين المباشرة المدعومة للألعاب والمواقع التعليمية
+        if (url.includes('wordwall.net/embed/') || url.includes('youtube.com/embed/') || url.includes('geogebra.org/calculator') || url.includes('quizizz.com/join') || url.includes('kahoot.it')) {
             return url;
         }
 
-        // توجيه المواقع الخارجية عبر البروكسي الداخلي لإزالة X-Frame-Options و CSP
+        // 5. توجيه المواقع الخارجية عبر البروكسي الداخلي لإزالة قيود X-Frame-Options
         return `/classroom/proxy-browse?url=${encodeURIComponent(url)}`;
     }
 
@@ -4489,13 +4886,17 @@
         }
     }
 
+    function navigateBrowserToGoogleHome() {
+        const googleHome = 'https://www.google.com/webhp?igu=1';
+        openBrowserInWorkspace(googleHome, 'محرك بحث جوجل');
+    }
+
     function executeBrowserSearch() {
         const input = document.getElementById('wbGoogleSearchInput');
         const query = input ? input.value.trim() : '';
         if (!query) return;
-        const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-        const proxied = `/classroom/proxy-browse?url=${encodeURIComponent(searchUrl)}`;
-        openBrowserInWorkspace(proxied, `بحث: ${query}`);
+        const googleUrl = `https://www.google.com/search?igu=1&q=${encodeURIComponent(query)}`;
+        openBrowserInWorkspace(googleUrl, `بحث جوجل: ${query}`);
         closeWbMediaModals();
     }
 
@@ -4633,7 +5034,7 @@
     }
 
     function openBrowserInWorkspace(url, title) {
-        if (!IS_TEACHER) return;
+        if (!CAN_MANAGE_ROOM) return;
         closeAllWbFlyouts();
         const modeIcon = document.getElementById('wbModeIcon');
         const modeText = document.getElementById('wbModeText');
@@ -4656,7 +5057,7 @@
     }
 
     function openVideoInWorkspace(url, title, isYouTube = false) {
-        if (!IS_TEACHER) return;
+        if (!CAN_MANAGE_ROOM) return;
         closeAllWbFlyouts();
         const modeIcon = document.getElementById('wbModeIcon');
         const modeText = document.getElementById('wbModeText');
@@ -4681,6 +5082,11 @@
     function closeWbMediaLayer() {
         hideMediaLayers();
         setWhiteboardBg('whiteboard');
+        selectWbTool('pen');
+        const drawCanvas = document.getElementById('whiteboardDrawCanvas');
+        if (drawCanvas) {
+            drawCanvas.style.pointerEvents = 'auto';
+        }
     }
 
     async function openResourceInWorkspace(url, title, type, pageNum = 1) {
@@ -4858,6 +5264,40 @@
         return Math.min(Math.max(1, v), wbTotalPages);
     }
 
+    // تحميل موثوق لملفات PDF مع دعم المعالجة الثنائية المباشرة (Binary ArrayBuffer) لتخطي أي حظر للشبكة أو CORS
+    async function loadPdfDocumentWithFallback(url) {
+        let targetUrl = url;
+        try {
+            if (window.location.protocol === 'https:' && targetUrl.startsWith('http://')) {
+                targetUrl = targetUrl.replace(/^http:\/\//, 'https://');
+            }
+        } catch(e){}
+
+        const pdfOptions = {
+            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+            cMapPacked: true,
+            standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+            enableXfa: true,
+            disableFontFace: false
+        };
+
+        try {
+            const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, url: targetUrl });
+            const doc = await loadingTask.promise;
+            doc._url = url;
+            return doc;
+        } catch (directErr) {
+            console.warn('Direct PDF load failed, attempting ArrayBuffer fallback fetch:', directErr);
+            const res = await fetch(targetUrl, { credentials: 'same-origin' });
+            if (!res.ok) throw new Error('HTTP ' + res.status + ' loading PDF');
+            const arrayBuffer = await res.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, data: arrayBuffer });
+            const doc = await loadingTask.promise;
+            doc._url = url;
+            return doc;
+        }
+    }
+
     // رندرة وتصفح صفحات ملفات الـ PDF مع دعم كامل ودقيق للخطوط العربية وملء العرض
     async function renderPdfPage(url, pageNum, customScale = null) {
         if (!window.pdfjsLib) {
@@ -4866,16 +5306,7 @@
         }
         try {
             if (!wbPdfDoc || wbPdfDoc._url !== url) {
-                const loadingTask = pdfjsLib.getDocument({
-                    url: url,
-                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-                    cMapPacked: true,
-                    standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
-                    enableXfa: true,
-                    disableFontFace: false
-                });
-                wbPdfDoc = await loadingTask.promise;
-                wbPdfDoc._url = url;
+                wbPdfDoc = await loadPdfDocumentWithFallback(url);
                 wbTotalPages = wbPdfDoc.numPages;
                 const totalText = document.getElementById('wbTotalPagesText');
                 if (totalText) totalText.textContent = wbTotalPages;
@@ -5393,6 +5824,10 @@
     window.addEventListener('DOMContentLoaded', () => {
         initLocalMedia();
         initWhiteboard();
+        // على شاشات الجوال: التأكد من تفعيل عرض السبورة التفاعلية فورياً للطالب
+        if (window.innerWidth < 1024) {
+            switchMobileView('whiteboard');
+        }
     });
     </script>
 
