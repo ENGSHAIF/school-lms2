@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class ClassroomRoomControl extends Model
 {
@@ -25,17 +26,50 @@ class ClassroomRoomControl extends Model
         'laser_state' => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (self $model) {
+            Cache::forget("room_control_id_{$model->room_id}");
+        });
+
+        static::deleted(function (self $model) {
+            Cache::forget("room_control_id_{$model->room_id}");
+        });
+    }
+
     public static function getControlForRoom(string $roomId): self
     {
-        return self::firstOrCreate(
-            ['room_id' => $roomId],
-            [
-                'policy' => 'open',
-                'is_live' => true,
-                'requires_admission' => false,
-                'kicked_user_ids' => [],
-                'whiteboard_version' => 0,
-            ]
-        );
+        $cachedId = Cache::remember("room_control_id_{$roomId}", 60, function () use ($roomId) {
+            $ctrl = self::firstOrCreate(
+                ['room_id' => $roomId],
+                [
+                    'policy' => 'open',
+                    'is_live' => true,
+                    'requires_admission' => false,
+                    'kicked_user_ids' => [],
+                    'whiteboard_version' => 0,
+                ]
+            );
+
+            return $ctrl->id;
+        });
+
+        $model = self::find($cachedId);
+        if (! $model) {
+            Cache::forget("room_control_id_{$roomId}");
+
+            return self::firstOrCreate(
+                ['room_id' => $roomId],
+                [
+                    'policy' => 'open',
+                    'is_live' => true,
+                    'requires_admission' => false,
+                    'kicked_user_ids' => [],
+                    'whiteboard_version' => 0,
+                ]
+            );
+        }
+
+        return $model;
     }
 }
