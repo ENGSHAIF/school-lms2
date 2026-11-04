@@ -305,6 +305,7 @@ class ClassroomRealtimeController extends Controller
                 'requires_admission' => (bool) $control->requires_admission,
                 'is_muted_by_host' => (bool) $participant->is_muted_by_host,
                 'is_kicked' => $isKicked,
+                'screen_share_active' => (bool) Cache::get("classroom_screen_share_{$roomId}", false),
             ],
         ]);
     }
@@ -565,6 +566,24 @@ class ClassroomRealtimeController extends Controller
             return response()->json(['success' => true, 'muted' => true]);
         }
 
+        if ($action === 'mute_cam_user') {
+            $targetUserId = (int) $request->input('user_id');
+            $p = ClassroomParticipant::where('room_id', $roomId)->where('user_id', $targetUserId)->first();
+            if ($p) {
+                $p->has_camera = false;
+                $p->save();
+            }
+
+            return response()->json(['success' => true, 'cam_muted' => true]);
+        }
+
+        if ($action === 'screen_share_status') {
+            $active = (bool) $request->input('active', false);
+            Cache::put("classroom_screen_share_{$roomId}", $active, 3600);
+
+            return response()->json(['success' => true, 'screen_share_active' => $active]);
+        }
+
         if ($action === 'allow_speak') {
             $targetUserId = (int) $request->input('user_id');
             $p = ClassroomParticipant::where('room_id', $roomId)->where('user_id', $targetUserId)->first();
@@ -761,10 +780,31 @@ class ClassroomRealtimeController extends Controller
             ]);
         }
 
+        if ($action === 'reset_board') {
+            $control->whiteboard_state = json_encode([
+                'bg_type' => 'whiteboard',
+                'bg_url' => null,
+                'bg_title' => 'سبورة بيضاء',
+                'page_num' => 1,
+                'scale' => 1.0,
+                'strokes' => [],
+            ]);
+            $control->whiteboard_version = ($control->whiteboard_version ?? 0) + 1;
+            $control->save();
+
+            return response()->json([
+                'success' => true,
+                'whiteboard_version' => $control->whiteboard_version,
+            ]);
+        }
+
         if ($action === 'set_background') {
             $existing = json_decode($control->whiteboard_state, true) ?: [];
             $existing['bg_type'] = $request->input('bg_type', 'image'); // 'whiteboard' | 'blackboard' | 'grid' | 'image' | 'pdf'
             $bgUrl = $request->input('bg_url');
+            if ($bgUrl && str_starts_with($bgUrl, 'blob:')) {
+                $bgUrl = null;
+            }
             if ($bgUrl) {
                 $parsed = parse_url($bgUrl);
                 if (! empty($parsed['path']) && (str_starts_with($parsed['path'], '/resources/') || str_starts_with($parsed['path'], '/storage/') || str_starts_with($parsed['path'], '/classroom/'))) {

@@ -798,12 +798,16 @@ class StudyGroupController extends Controller
             $mimeType = 'application/pdf';
         }
 
+        $origin = request()->header('Origin') ?: url('/');
+
         return response()->file($foundPath, [
             'Content-Type' => $mimeType,
             'Accept-Ranges' => 'bytes',
-            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Origin' => $origin,
+            'Access-Control-Allow-Credentials' => 'true',
             'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
-            'Access-Control-Allow-Headers' => '*',
+            'Access-Control-Allow-Headers' => 'Range, Authorization, Content-Type, X-Requested-With, Accept, Origin',
+            'Access-Control-Expose-Headers' => 'Content-Range, Content-Length, Accept-Ranges',
             'Content-Disposition' => 'inline; filename="'.($activity->file_name ?: basename($foundPath)).'"',
         ]);
     }
@@ -847,9 +851,21 @@ class StudyGroupController extends Controller
             return back()->with('error', "عذراً، الملف المطلوب غير متوفر على الخادم (المسار: {$activity->file_path}).");
         }
 
-        $downloadName = $activity->file_name ?: ($activity->title.'.'.pathinfo($foundPath, PATHINFO_EXTENSION));
+        $ext = pathinfo($foundPath, PATHINFO_EXTENSION);
+        $baseName = $activity->file_name ?: $activity->title;
+        if (! str_ends_with(strtolower($baseName), '.'.$ext)) {
+            $baseName .= '.'.$ext;
+        }
+        $safeAscii = preg_replace('/[^\x20-\x7E]/', '', pathinfo($baseName, PATHINFO_FILENAME)) ?: 'activity';
+        $safeAscii .= '.'.$ext;
 
-        return response()->download($foundPath, $downloadName);
+        $origin = request()->header('Origin') ?: url('/');
+
+        return response()->download($foundPath, $baseName, [
+            'Access-Control-Allow-Origin' => $origin,
+            'Access-Control-Allow-Credentials' => 'true',
+            'Content-Disposition' => 'attachment; filename="'.$safeAscii.'"; filename*=UTF-8\'\''.rawurlencode($baseName),
+        ]);
     }
 
     /**

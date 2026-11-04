@@ -131,7 +131,18 @@ class BookingController extends Controller
         }
 
         // 2. فحص هل الغرفة خاصة بمجموعة دراسية جماعية (Study Group)
-        $group = StudyGroup::with(['course', 'level.resources.exam', 'teacher', 'teachers', 'supervisor', 'supervisors', 'students', 'requester', 'activities.publisher'])
+        $group = StudyGroup::with([
+            'course.resources',
+            'course.sections.resources',
+            'level.resources.exam',
+            'teacher',
+            'teachers',
+            'supervisor',
+            'supervisors',
+            'students',
+            'requester',
+            'activities.publisher',
+        ])
             ->where('room_id', $roomId)
             ->first();
 

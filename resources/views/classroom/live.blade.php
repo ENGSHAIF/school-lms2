@@ -20,6 +20,15 @@
     </script>
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #0b1120; color: #f8fafc; }
+        #liveChatMessagesContainer {
+            scrollbar-width: thin;
+            scrollbar-color: #6366f1 rgba(15, 23, 42, 0.8);
+            -webkit-overflow-scrolling: touch;
+        }
+        #liveChatMessagesContainer::-webkit-scrollbar { width: 6px; }
+        #liveChatMessagesContainer::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.8); border-radius: 8px; }
+        #liveChatMessagesContainer::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 8px; }
+        #liveChatMessagesContainer::-webkit-scrollbar-thumb:hover { background: #818cf8; }
         .star-pop { animation: pop 0.4s ease-out; }
         @keyframes pop {
             0% { transform: scale(0.5); opacity: 0; }
@@ -181,18 +190,41 @@
 
     @php
         $levelResources = collect();
-        if (isset($group) && $group && $group->level) {
-            $levelResources = $group->level->resources ?? collect();
-            if ($group->course && $group->course->resources) {
-                $levelResources = $levelResources->merge($group->course->resources);
+        if (isset($group) && $group) {
+            if ($group->level && $group->level->resources) {
+                $levelResources = $levelResources->merge($group->level->resources);
+            }
+            if ($group->course) {
+                if ($group->course->resources) {
+                    $levelResources = $levelResources->merge($group->course->resources);
+                }
+                if ($group->course->sections) {
+                    foreach ($group->course->sections as $sec) {
+                        if ($sec->resources) {
+                            $levelResources = $levelResources->merge($sec->resources);
+                        }
+                    }
+                }
+            }
+            if ($levelResources->isEmpty() && $group->level_id) {
+                $levelResources = $levelResources->merge(\App\Models\LevelResource::where('level_id', $group->level_id)->get());
+            }
+            if ($group->course_id) {
+                $levelResources = $levelResources->merge(\App\Models\LevelResource::where('course_id', $group->course_id)->get());
             }
         } elseif (isset($booking) && $booking && $booking->student) {
             $enrollment = $booking->student->enrollments()->where('status', 'active')->first();
-            $levelResources = $enrollment?->level?->resources ?? collect();
-            if ($enrollment?->course && $enrollment->course->resources) {
-                $levelResources = $levelResources->merge($enrollment->course->resources);
+            if ($enrollment) {
+                if ($enrollment->level && $enrollment->level->resources) {
+                    $levelResources = $levelResources->merge($enrollment->level->resources);
+                }
+                if ($enrollment->course && $enrollment->course->resources) {
+                    $levelResources = $levelResources->merge($enrollment->course->resources);
+                }
             }
         }
+        $levelResources = $levelResources->unique('id');
+
         $isTeacherOrStaff = auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor() || auth()->user()->isTeacher());
         if (! $isTeacherOrStaff) {
             $levelResources = $levelResources->filter(fn($r) => $r->isForStudent());
@@ -205,7 +237,11 @@
             })->get();
         }
         $groupVideos = $levelResources->filter(fn($r) => $r->type === 'video' || in_array(strtolower(pathinfo($r->file_path ?? '', PATHINFO_EXTENSION)), ['mp4', 'webm', 'mov']));
+        $groupAudios = $levelResources->filter(fn($r) => $r->type === 'audio' || in_array(strtolower(pathinfo($r->file_path ?? '', PATHINFO_EXTENSION)), ['mp3', 'wav', 'ogg', 'm4a']));
+        $groupWorksheets = $levelResources->filter(fn($r) => $r->type === 'worksheet');
+        $groupImages = $levelResources->filter(fn($r) => $r->type === 'image' || in_array(strtolower(pathinfo($r->file_path ?? '', PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'webp', 'gif']));
         $groupWallPdfs = $groupActivities->filter(fn($a) => !empty($a->file_path) && (str_ends_with(strtolower($a->file_path), '.pdf') || in_array($a->type, ['worksheet', 'assignment'])));
+        $groupWallAll = $groupActivities->filter(fn($a) => !empty($a->file_path) || !empty($a->external_url));
     @endphp
 
     <!-- بانر عائم عالي الوضوح لتفعيل صوت المعلم فوراً عند حظر التشغيل التلقائي بالهواتف -->
@@ -233,7 +269,7 @@
     <main class="flex-1 flex flex-col lg:flex-row overflow-hidden p-1 sm:p-1.5 lg:p-2 gap-1.5 sm:gap-2 relative">
 
         <!-- 1. العمود الأيمن المخصص: أدوات التحكم بالجلسة والحضور + المحادثة + المنهج -->
-        <aside id="liveInteractivePanel" class="w-full lg:w-[320px] xl:w-[350px] shrink-0 bg-slate-900 border border-slate-800 rounded-2xl hidden lg:flex flex-col overflow-hidden shadow-xl z-20 transition-all duration-300 ease-in-out relative">
+        <aside id="liveInteractivePanel" class="w-full lg:w-[320px] xl:w-[350px] shrink-0 bg-slate-900 border border-slate-800 rounded-2xl hidden lg:flex flex-col h-full min-h-0 flex-1 lg:flex-initial overflow-hidden shadow-xl z-20 transition-all duration-300 ease-in-out relative">
             
             <!-- زر طي/توسيع الشريط الجانبي لتكبير السبورة ملء الشاشة -->
             <button type="button" onclick="toggleSidebarCollapse()" id="btnToggleSidebar" class="hidden lg:flex items-center justify-center absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 w-7 h-12 bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-slate-300 hover:text-white rounded-r-none rounded-l-xl shadow-xl transition group" title="طي/توسيع الشريط الجانبي لتكبير مساحة السبورة ملء الشاشة">
@@ -378,11 +414,11 @@
             </div>
 
             <!-- المحتوى الداخلي المتغير للتبويب (قابل للتمرير السلس) -->
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
                 
                 <!-- 1. تبويب المحادثة المباشرة وتسليم أوراق الإجابات والتسجيلات -->
-                <div id="liveTabChat" class="h-full flex flex-col justify-between">
-                    <div id="liveChatMessagesContainer" class="flex-1 p-3 space-y-2.5 overflow-y-auto text-xs">
+                <div id="liveTabChat" class="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden">
+                    <div id="liveChatMessagesContainer" class="flex-1 min-h-0 p-3 space-y-2.5 overflow-y-auto text-xs scrollbar-thin">
                         <div class="bg-indigo-950/60 border border-indigo-800/60 rounded-2xl p-3 text-indigo-200 space-y-1">
                             <div class="flex justify-between items-center">
                                 <div class="font-bold flex items-center gap-1.5 text-indigo-300 text-xs">
@@ -405,7 +441,7 @@
                             @foreach($chatMessages as $msg)
                                 @if($msg->type !== 'system')
                                     @php $isMine = ($msg->user_id === auth()->id()); @endphp
-                                    <div id="chatMsg_{{ $msg->id }}" class="p-2.5 rounded-xl border {{ $msg->user?->isStudent() ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-indigo-800/40 bg-indigo-950/20' }} space-y-1">
+                                    <div id="chatMsg_{{ $msg->id }}" class="p-2.5 rounded-xl border {{ $msg->user?->isStudent() ? 'border-emerald-800/40 bg-emerald-950/20' : 'border-indigo-800/40 bg-indigo-950/20' }} space-y-1.5">
                                         <div class="flex justify-between items-center text-[10px]">
                                             <span class="font-bold flex items-center gap-1 text-slate-300">
                                                 <span>{{ $msg->user?->isStudent() ? '🎒' : '👨‍🏫' }}</span>
@@ -417,21 +453,41 @@
                                             <div class="text-xs text-slate-200 leading-relaxed">{{ $msg->content }}</div>
                                         @endif
                                         @if(($msg->type === 'image' || $msg->type === 'worksheet') && $msg->file_path)
-                                            <div class="relative group mt-1">
+                                            <div class="relative group mt-1 space-y-1">
                                                 <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-32 flex items-center justify-center" onclick="openLiveImageModal('{{ asset($msg->file_path) }}', '{{ addslashes($msg->content ?? '') }}')">
                                                     <img src="{{ asset($msg->file_path) }}" class="w-full h-full object-cover">
                                                 </div>
-                                                @if($isTeacher)
-                                                    <button type="button" onclick="openResourceInWorkspace('{{ asset($msg->file_path) }}', 'ورقة إجابة: {{ addslashes($msg->user?->name ?? '') }}', 'image')" class="mt-1 w-full bg-emerald-600/90 hover:bg-emerald-600 text-white text-[10px] font-bold py-1 px-2 rounded-lg transition flex items-center justify-center gap-1 shadow">
-                                                        <span>🎨</span>
-                                                        <span>فتح للشرح والتصحيح بالسبورة</span>
-                                                    </button>
-                                                @endif
+                                                <div class="flex items-center gap-1.5">
+                                                    <a href="{{ asset($msg->file_path) }}" download target="_blank" class="flex-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-[10px] font-bold py-1 px-2 rounded-lg transition flex items-center justify-center gap-1 shadow border border-slate-700" title="تنزيل الملف لهاتفك">
+                                                        <span>⬇️</span>
+                                                        <span>تنزيل للهاتف</span>
+                                                    </a>
+                                                    @if($isTeacher)
+                                                        <button type="button" onclick="openResourceInWorkspace('{{ asset($msg->file_path) }}', 'ورقة إجابة: {{ addslashes($msg->user?->name ?? '') }}', 'image')" class="flex-1 bg-emerald-600/90 hover:bg-emerald-600 text-white text-[10px] font-bold py-1 px-2 rounded-lg transition flex items-center justify-center gap-1 shadow">
+                                                            <span>🎨</span>
+                                                            <span>فتح بالشرح</span>
+                                                        </button>
+                                                    @endif
+                                                </div>
                                             </div>
                                         @endif
                                         @if($msg->type === 'audio' && $msg->file_path)
-                                            <div class="bg-purple-950/40 p-1.5 rounded-xl border border-purple-800/40 mt-1">
+                                            <div class="bg-purple-950/40 p-2 rounded-xl border border-purple-800/40 mt-1 space-y-1">
                                                 <audio controls src="{{ asset($msg->file_path) }}" class="w-full h-7"></audio>
+                                                <div class="flex justify-end">
+                                                    <a href="{{ asset($msg->file_path) }}" download target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-purple-300 hover:text-white rounded text-[10px] font-bold border border-slate-700 transition" title="تنزيل التسجيل الصوتي">
+                                                        <span>⬇️</span>
+                                                        <span>تنزيل التسجيل</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @if($msg->type !== 'image' && $msg->type !== 'worksheet' && $msg->type !== 'audio' && $msg->file_path)
+                                            <div class="mt-1">
+                                                <a href="{{ asset($msg->file_path) }}" download target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700">
+                                                    <span>⬇️</span>
+                                                    <span>تنزيل الملف المرفق</span>
+                                                </a>
                                             </div>
                                         @endif
                                     </div>
@@ -490,7 +546,7 @@
                 </div>
 
                 <!-- 2. تبويب الحضور والفيديو وإدارة الجلسة -->
-                <div id="liveTabParticipants" class="hidden p-3 space-y-3 text-xs">
+                <div id="liveTabParticipants" class="hidden p-3 space-y-3 text-xs overflow-y-auto flex-1 min-h-0">
                     
                     <!-- أدوات المعلم والمشرف لإدارة الفصل -->
                     @if($isTeacher)
@@ -616,19 +672,28 @@
                 </div>
 
                 <!-- 3. تبويب بنك المناهج والموارد (مع زر الفتح بالشرح) -->
-                <div id="liveTabResources" class="hidden p-3 space-y-3 text-xs">
+                <div id="liveTabResources" class="hidden p-3 space-y-3 text-xs overflow-y-auto flex-1 min-h-0">
                     <div class="bg-indigo-950/40 border border-indigo-900/50 p-2.5 rounded-xl text-[11px] text-indigo-300 space-y-1">
                         <span class="font-bold block text-white flex items-center gap-1">
                             <span>📌</span>
                             <span>بنك المناهج والكتب للمستوى</span>
                         </span>
                         <p>اضغط على زر <strong class="text-emerald-300">"عرض بالشرح 🚀"</strong> لفتح أي كتاب أو مورد فوراً في مساحة الشرح المركزية ليشاهده جميع طلاب المجموعة في نفس الوقت!</p>
+                        @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                            <button type="button" onclick="openBooksLibraryModal()" class="w-full mt-1.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] rounded-xl flex items-center justify-center gap-1.5 shadow transition">
+                                <span>📚</span>
+                                <span>فتح بنك المناهج والموارد الكامل (نافذة كبرى)</span>
+                            </button>
+                        @endif
                     </div>
 
                     <!-- قائمة كتب المنهج الرقمية (PDF) -->
                     <div class="space-y-2">
                         <span class="font-bold text-slate-300 text-xs block">📖 المقررات والكتب الرقمية:</span>
                         @forelse($groupBooks as $bk)
+                            @php
+                                $bkStreamUrl = $bk->file_path ? route('resources.stream', $bk->id) : $bk->external_url;
+                            @endphp
                             <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center gap-2">
                                 <div class="truncate min-w-0">
                                     <span class="font-bold text-slate-200 block truncate text-xs">{{ $bk->title }}</span>
@@ -636,13 +701,14 @@
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
                                     @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
-                                        <button type="button" onclick="openResourceInWorkspace('{{ route('resources.stream', $bk->id) }}', '{{ addslashes($bk->title) }}', 'pdf')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                        <button type="button" onclick="openResourceInWorkspace('{{ $bkStreamUrl }}', '{{ addslashes($bk->title) }}', 'pdf', 1)" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
                                             <span>🚀</span>
                                             <span>عرض بالشرح</span>
                                         </button>
                                     @endif
-                                    <a href="{{ route('resources.download', $bk->id) }}" target="_blank" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] rounded-lg transition" title="تحميل">
-                                        ⬇️
+                                    <a href="{{ route('resources.download', $bk->id) }}" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700 flex items-center gap-1 shadow-sm" title="تحميل الكتاب إلى هاتفك">
+                                        <span>⬇️</span>
+                                        <span>تنزيل</span>
                                     </a>
                                 </div>
                             </div>
@@ -658,13 +724,20 @@
                         <span class="font-bold text-slate-300 text-xs block">🎧 تسجيلات الاستماع (Listening):</span>
                         @php $audios = $levelResources->where('type', 'audio'); @endphp
                         @forelse($audios as $aud)
+                            @php
+                                $audStreamUrl = $aud->file_path ? route('resources.stream', $aud->id) : $aud->external_url;
+                            @endphp
                             <div class="p-2 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
                                 <div class="flex justify-between items-center text-[10px] text-purple-300 font-bold">
                                     <span class="truncate">{{ $aud->title }}</span>
+                                    <a href="{{ route('resources.download', $aud->id) }}" target="_blank" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-purple-300 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700 flex items-center gap-1" title="تحميل المقطع الصوتي">
+                                        <span>⬇️</span>
+                                        <span>تنزيل</span>
+                                    </a>
                                 </div>
-                                @if($aud->file_path)
+                                @if($audStreamUrl)
                                     <audio controls class="w-full h-6">
-                                        <source src="{{ asset($aud->file_path) }}">
+                                        <source src="{{ $audStreamUrl }}">
                                     </audio>
                                 @endif
                             </div>
@@ -679,6 +752,10 @@
                     <div class="space-y-2">
                         <span class="font-bold text-slate-300 text-xs block">🎥 الفيديوهات التعليمية (Educational Videos):</span>
                         @forelse($groupVideos as $vid)
+                            @php
+                                $vidStreamUrl = $vid->file_path ? route('resources.stream', $vid->id) : $vid->external_url;
+                                $isYt = str_contains($vidStreamUrl, 'youtube.com') || str_contains($vidStreamUrl, 'youtu.be');
+                            @endphp
                             <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center gap-2">
                                 <div class="truncate min-w-0">
                                     <span class="font-bold text-slate-200 block truncate text-xs">{{ $vid->title }}</span>
@@ -686,13 +763,14 @@
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
                                     @if($isTeacher)
-                                        <button type="button" onclick="openVideoInWorkspace('{{ asset($vid->file_path) }}', '{{ addslashes($vid->title) }}', false)" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                        <button type="button" onclick="openVideoInWorkspace('{{ $vidStreamUrl }}', '{{ addslashes($vid->title) }}', {{ $isYt ? 'true' : 'false' }})" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
                                             <span>▶️</span>
                                             <span>عرض بالشرح</span>
                                         </button>
                                     @endif
-                                    <a href="{{ asset($vid->file_path) }}" target="_blank" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] rounded-lg transition" title="فتح">
-                                        ↗️
+                                    <a href="{{ route('resources.download', $vid->id) }}" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700 flex items-center gap-1 shadow-sm" title="تحميل الفيديو لهاتفك">
+                                        <span>⬇️</span>
+                                        <span>تنزيل</span>
                                     </a>
                                 </div>
                             </div>
@@ -702,6 +780,60 @@
                             </div>
                         @endforelse
                     </div>
+
+                    <!-- أنشطة ومرفقات حائط المجموعة -->
+                    @if(isset($groupWallAll) && $groupWallAll->isNotEmpty())
+                        <div class="space-y-2">
+                            <span class="font-bold text-slate-300 text-xs block">📂 أنشطة ومرفقات حائط المجموعة:</span>
+                            @foreach($groupWallAll as $act)
+                                @php
+                                    $actExt = strtolower(pathinfo($act->file_path ?? '', PATHINFO_EXTENSION));
+                                    $actStreamUrl = $act->file_path ? route('groups.activities.stream', $act->id) : $act->external_url;
+                                    $isActPdf = ($actExt === 'pdf' || str_ends_with(strtolower($act->file_path ?? ''), '.pdf'));
+                                    $isActVid = in_array($actExt, ['mp4', 'webm', 'mov']);
+                                    $isActImg = in_array($actExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                                    $isActAud = in_array($actExt, ['mp3', 'wav', 'ogg', 'm4a']);
+                                @endphp
+                                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center gap-2">
+                                    <div class="truncate min-w-0">
+                                        <span class="font-bold text-slate-200 block truncate text-xs">{{ $act->title ?: ($act->file_name ?: 'ملف نشاط') }}</span>
+                                        <span class="text-[10px] text-slate-500 font-mono">حائط المجموعة • {{ strtoupper($actExt ?: 'LINK') }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        @if($isTeacher)
+                                            @if($isActVid)
+                                                <button type="button" onclick="openVideoInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', false)" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                                    <span>▶️</span>
+                                                    <span>عرض</span>
+                                                </button>
+                                            @elseif($isActPdf)
+                                                <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'pdf', 1)" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                                    <span>🚀</span>
+                                                    <span>عرض</span>
+                                                </button>
+                                            @elseif($isActImg)
+                                                <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'image', 1)" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                                    <span>🚀</span>
+                                                    <span>عرض</span>
+                                                </button>
+                                            @endif
+                                        @endif
+                                        @if($act->file_path)
+                                            <a href="{{ route('groups.activities.download', $act->id) }}" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700 flex items-center gap-1 shadow-sm" title="تحميل النشاط لهاتفك">
+                                                <span>⬇️</span>
+                                                <span>تنزيل</span>
+                                            </a>
+                                        @elseif($act->external_url)
+                                            <a href="{{ $act->external_url }}" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700 flex items-center gap-1 shadow-sm" title="فتح الرابط">
+                                                <span>🔗</span>
+                                                <span>فتح</span>
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
 
                 </div>
 
@@ -862,6 +994,14 @@
                         <span>💾</span>
                         <span class="hidden md:inline">حفظ الشرح</span>
                     </button>
+
+                    @if($isTeacher)
+                        <!-- مسح الشرح والسبورة -->
+                        <button type="button" onclick="openClearWhiteboardModal()" class="bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-white border border-rose-800/80 font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition shadow cursor-pointer" title="مسح شروحات وملاحظات الصفحة أو تفريغ السبورة بالكامل">
+                            <span>🗑️</span>
+                            <span class="hidden md:inline">مسح الشرح</span>
+                        </button>
+                    @endif
                 </div>
             </div>
 
@@ -929,14 +1069,13 @@
                 </div>
 
                 <!-- طبقة مستعرض جوجل ومسابقات الأطفال التفاعلية داخل السبورة (Whiteboard Mini-Chrome Browser) -->
-                <div id="whiteboardBrowserWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col bg-slate-900 z-[5]">
+                <div id="whiteboardBrowserWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col bg-slate-900 z-[25]">
                     <!-- شريط أدوات وتصفح كروم المصغر -->
-                    <!-- شريط أدوات وتصفح كروم المصغر -->
-                    <div class="p-1.5 sm:p-2 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0 z-20 text-xs">
+                    <div class="p-1.5 sm:p-2 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0 z-50 text-xs pointer-events-auto">
                         <div class="flex items-center flex-wrap gap-1.5 flex-1 min-w-[280px]">
                             @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
                                 <!-- زر العودة المباشر والأبرز لشاشة السبورة الرئيسية والشرح -->
-                                <button type="button" onclick="closeWbMediaLayer()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs shadow-md transition flex items-center gap-1.5 shrink-0 cursor-pointer border border-rose-400/40" title="إنهاء وضع التصفح والرجوع للسبورة البيضاء">
+                                <button type="button" onclick="closeWbMediaLayer()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs shadow-md transition flex items-center gap-1.5 shrink-0 cursor-pointer border border-rose-400/40 pointer-events-auto" title="إنهاء وضع التصفح والرجوع للسبورة البيضاء">
                                     <span class="text-sm">🔙</span>
                                     <span>الرجوع للسبورة الرئيسية</span>
                                 </button>
@@ -1011,22 +1150,42 @@
                 </div>
 
                 <!-- طبقة مشغل الفيديو التعليمي داخل السبورة -->
-                <div id="whiteboardVideoWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-black z-[5]">
-                    <div class="absolute top-2 right-2 z-20 flex items-center gap-2">
-                        <span id="wbVideoTitleBadge" class="bg-black/80 backdrop-blur text-white text-xs px-2.5 py-1 rounded-lg border border-white/20 truncate max-w-xs font-bold"></span>
+                <div id="whiteboardVideoWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-black z-[25]">
+                    <div class="absolute top-2 right-2 z-50 flex items-center gap-2 pointer-events-auto">
+                        <span id="wbVideoTitleBadge" class="bg-black/80 backdrop-blur text-white text-xs px-2.5 py-1 rounded-lg border border-white/20 truncate max-w-xs font-bold shadow"></span>
                         @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
-                            <button type="button" onclick="closeWbMediaLayer()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow flex items-center gap-1.5 transition cursor-pointer" title="إغلاق الفيديو والرجوع للسبورة">
+                            <button type="button" onclick="closeWbMediaLayer()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-xs shadow-xl flex items-center gap-1.5 transition cursor-pointer pointer-events-auto border border-rose-400/50" title="إغلاق الفيديو والرجوع للسبورة">
                                 <span>🔙</span>
                                 <span>إنهاء الفيديو والرجوع للسبورة</span>
                             </button>
+                            <button type="button" onclick="setWhiteboardBg('whiteboard')" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs shadow flex items-center gap-1 transition cursor-pointer pointer-events-auto border border-slate-600" title="تفريغ وإلغاء فوري إلى سبورة بيضاء نظيفة">
+                                <span>📋</span>
+                                <span>سبورة بيضاء</span>
+                            </button>
                         @endif
                     </div>
+
+                    <!-- صندوق التنبيه في حال تعذر تحميل الفيديو أو انتهاء الرابط -->
+                    <div id="wbVideoErrorBox" class="hidden absolute inset-0 z-40 bg-slate-950/95 flex flex-col items-center justify-center gap-3 p-6 text-center">
+                        <span class="text-4xl animate-bounce">⚠️</span>
+                        <div class="space-y-1">
+                            <h4 class="text-sm font-black text-amber-300">تعذر تحميل أو تشغيل الفيديو المطلوب</h4>
+                            <p class="text-xs text-slate-400 max-w-md">قد يكون رابط الفيديو منتهي الصلاحية أو غير مدعوم بالمتصفح. يمكنك إغلاق الفيديو والعودة للسبورة البيضاء فوراً.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="closeWbMediaLayer()" class="px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 transition cursor-pointer">
+                                <span>🔙</span>
+                                <span>الرجوع للسبورة البيضاء</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <video id="whiteboardHtml5Video" playsinline webkit-playsinline preload="auto" class="hidden w-full h-full max-h-full object-contain {{ ! $isTeacher ? 'pointer-events-none' : '' }}"></video>
                     <iframe id="whiteboardYoutubeFrame" class="hidden w-full h-full max-w-full max-h-full border-0 {{ ! $isTeacher ? 'pointer-events-none' : '' }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
                     @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
-                        <!-- شريط التحكم العائم بالفيديو فوق الكانفاس (z-30) للتحكم والشرح في نفس الوقت -->
-                        <div id="wbVideoCustomControls" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-11/12 max-w-2xl bg-slate-900/95 backdrop-blur-md border border-slate-700/90 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-2 transition">
+                        <!-- شريط التحكم العائم بالفيديو فوق الكانفاس (z-50) للتحكم والشرح في نفس الوقت -->
+                        <div id="wbVideoCustomControls" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-2xl bg-slate-900/95 backdrop-blur-md border border-slate-700/90 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-2 transition pointer-events-auto">
                             <div class="flex items-center gap-2">
                                 <input type="range" id="wbVideoSeekSlider" min="0" max="100" value="0" step="0.1" oninput="onVideoSeekInput(this.value)" class="w-full accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                                 <span id="wbVideoTimeLabel" class="text-[10px] font-mono text-slate-300 shrink-0">00:00 / 00:00</span>
@@ -1047,6 +1206,28 @@
                             </div>
                         </div>
                     @endif
+                </div>
+
+                <!-- طبقة مشاركة الشاشة الحية للمعلم داخل مساحة الشرح المركزية (Whiteboard Screen Share Presentation Stage) -->
+                <div id="whiteboardScreenShareWrapper" class="hidden absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-black z-[25]">
+                    <div class="absolute top-2 right-2 z-50 flex items-center gap-2 pointer-events-auto">
+                        <span class="bg-black/80 backdrop-blur text-white text-xs px-2.5 py-1 rounded-lg border border-white/20 flex items-center gap-1.5 font-bold shadow-lg">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                            <span>🖥️ شاشة المعلم المشتركة (عرض مباشر)</span>
+                        </span>
+                        <!-- زر قلب / تعديل اتجاه الشاشة أفقياً لمنع الانعكاس -->
+                        <button type="button" onclick="toggleScreenShareMirror()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition cursor-pointer border border-slate-700 pointer-events-auto" title="إذا ظهرت الشاشة معكوسة من اليسار، انقر هنا لعكسها أفقياً وضبط الاتجاه فوراً">
+                            <span>🔄</span>
+                            <span id="txtScreenShareMirror">تعديل الاتجاه (عكس الشاشة)</span>
+                        </button>
+                        @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                            <button type="button" onclick="stopScreenShare()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition cursor-pointer border border-rose-400 pointer-events-auto" title="إنهاء مشاركة الشاشة والرجوع للسبورة">
+                                <span>⏹️</span>
+                                <span>إيقاف المشاركة والرجوع للسبورة</span>
+                            </button>
+                        @endif
+                    </div>
+                    <video id="whiteboardScreenShareVideo" autoplay playsinline style="direction: ltr !important; transform: scaleX(1); -webkit-transform: scaleX(1);" class="w-full h-full max-h-full object-contain"></video>
                 </div>
             </div>
 
@@ -1588,40 +1769,109 @@
         </div>
     </div>
 
-    <!-- نافذة مكتبة كتب ومذكرات الدورة المتكاملة (PDF Books & Documents Library Modal) -->
-    <div id="wbBooksLibraryModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5" onclick="closeBooksLibraryModal()">
-        <div class="max-w-3xl w-full bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden" onclick="event.stopPropagation()">
-            
-            <!-- ترويسة النافذة المنبثقة -->
-            <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-10 h-10 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-xl shadow-inner">
-                        <span>📖</span>
-                    </div>
+    <!-- نافذة مسح محتوى وشروحات السبورة والكتاب (Clear Whiteboard Modal) -->
+    <div id="clearWhiteboardModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeClearWhiteboardModal()">
+        <div class="max-w-md w-full bg-slate-900 border-2 border-rose-500/50 rounded-3xl shadow-2xl overflow-hidden p-5 space-y-4" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span class="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl shadow-inner">🗑️</span>
                     <div>
-                        <h3 class="text-base sm:text-lg font-black text-white">مكتبة كتب ومذكرات الدورة التدريبية</h3>
-                        <p class="text-xs text-slate-400">استعرض كتب المنهج ومذكرات المجموعة واشرح للطلاب عليها كقارئ PDF متكامل</p>
+                        <h3 class="text-sm font-black text-white">مسح الشرح ومحتوى السبورة</h3>
+                        <p class="text-[11px] text-slate-400">اختر طريقة المسح والتنظيف المناسبة للجلسة:</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeBooksLibraryModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-400 flex items-center justify-center transition font-bold text-sm">✕</button>
+                <button type="button" onclick="closeClearWhiteboardModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-rose-600 text-slate-400 hover:text-white flex items-center justify-center transition font-bold text-sm">✕</button>
             </div>
 
-            <!-- أزرار التبويبات الثلاثة -->
-            <div class="p-2.5 bg-slate-950/50 border-b border-slate-800 shrink-0">
-                <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-2xl border border-slate-800 text-xs font-bold">
-                    <button type="button" onclick="switchBookLibTab('curriculum')" id="btnBookLibTab_curriculum" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white transition flex items-center justify-center gap-1.5 shadow">
+            <div class="space-y-2.5">
+                <!-- خيار 1: مسح شروحات وملاحظات الصفحة الحالية فقط -->
+                <button type="button" onclick="executeClearWhiteboard('current_page')" class="w-full text-right p-3 rounded-2xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/60 transition group flex items-start gap-3 cursor-pointer">
+                    <span class="text-2xl mt-0.5">📄</span>
+                    <div class="flex-1">
+                        <strong class="text-xs font-bold text-white group-hover:text-indigo-300 block">مسح شروحات هذه الصفحة فقط</strong>
+                        <span class="text-[11px] text-slate-400 block mt-0.5 leading-relaxed">يمسح الكتابات والرسومات المدونة على الصفحة الحالية، مع الاحتفاظ بملف الكتاب وبقية الصفحات.</span>
+                    </div>
+                </button>
+
+                <!-- خيار 2: مسح جميع شروحات كافة صفحات الكتاب الحالي -->
+                <button type="button" onclick="executeClearWhiteboard('all_pages')" class="w-full text-right p-3 rounded-2xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/60 transition group flex items-start gap-3 cursor-pointer">
+                    <span class="text-2xl mt-0.5">📚</span>
+                    <div class="flex-1">
+                        <strong class="text-xs font-bold text-amber-300 block">مسح شروحات جميع صفحات الكتاب/المستند</strong>
+                        <span class="text-[11px] text-slate-400 block mt-0.5 leading-relaxed">يمسح كل الرسومات والملاحظات التي تم تدوينها على كافة صفحات الكتاب من البداية للنهاية.</span>
+                    </div>
+                </button>
+
+                <!-- خيار 3: مسح وإعادة ضبط السبورة بالكامل للسبورة البيضاء -->
+                <button type="button" onclick="executeClearWhiteboard('reset_board')" class="w-full text-right p-3 rounded-2xl bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/60 hover:border-rose-500 transition group flex items-start gap-3 cursor-pointer">
+                    <span class="text-2xl mt-0.5">📋</span>
+                    <div class="flex-1">
+                        <strong class="text-xs font-bold text-rose-300 block">تفريغ السبورة بالكامل (إعادة ضبط لسبورة بيضاء نظيفة)</strong>
+                        <span class="text-[11px] text-slate-400 block mt-0.5 leading-relaxed">يمسح الشروحات ويغلق أي كتاب أو صورة معروضة ويعيد فتح لوحة بيضاء نظيفة تماماً.</span>
+                    </div>
+                </button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 flex justify-end">
+                <button type="button" onclick="closeClearWhiteboardModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة بنك المناهج والموارد المتكاملة للمجموعة (Curriculum & Resource Hub Modal) -->
+    <div id="wbBooksLibraryModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5" onclick="closeBooksLibraryModal()">
+        <div class="max-w-4xl w-full bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden" onclick="event.stopPropagation()">
+            
+            <!-- ترويسة النافذة المنبثقة والبحث -->
+            <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-xl shadow-inner shrink-0">
                         <span>📚</span>
-                        <span>كتب المنهج المعتمدة</span>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-white">بنك المناهج وموارد المجموعة المتكاملة</h3>
+                        <p class="text-xs text-slate-400">استعرض واشرح أي كتاب، فيديو، صوت، أو ورقة عمل للطلاب فورياً في السبورة</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="text" oninput="filterResourceItems(this.value)" placeholder="🔍 ابحث في الموارد بالاسم..." class="flex-1 sm:w-56 bg-slate-900 border border-slate-700 text-white text-xs px-3 py-1.5 rounded-xl focus:border-indigo-500 focus:outline-none">
+                    <button type="button" onclick="closeBooksLibraryModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-400 flex items-center justify-center transition font-bold text-sm shrink-0">✕</button>
+                </div>
+            </div>
+
+            <!-- أزرار التبويبات الستة -->
+            <div class="p-2.5 bg-slate-950/50 border-b border-slate-800 shrink-0 overflow-x-auto">
+                <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-2xl border border-slate-800 text-xs font-bold min-w-max">
+                    <button type="button" onclick="switchBookLibTab('curriculum')" id="btnBookLibTab_curriculum" class="py-2 px-3 rounded-xl bg-indigo-600 text-white transition flex items-center gap-1.5 shadow">
+                        <span>📚</span>
+                        <span>الكتب والمقررات</span>
                         <span class="bg-indigo-950 text-indigo-200 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupBooks->count() }}</span>
                     </button>
-                    <button type="button" onclick="switchBookLibTab('wall')" id="btnBookLibTab_wall" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
-                        <span>📝</span>
-                        <span>حائط وأنشطة المجموعة</span>
-                        <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupWallPdfs->count() }}</span>
+                    <button type="button" onclick="switchBookLibTab('videos')" id="btnBookLibTab_videos" class="py-2 px-3 rounded-xl text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <span>🎬</span>
+                        <span>فيديوهات المنهج</span>
+                        <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupVideos->count() }}</span>
                     </button>
-                    <button type="button" onclick="switchBookLibTab('upload')" id="btnBookLibTab_upload" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
+                    <button type="button" onclick="switchBookLibTab('audios')" id="btnBookLibTab_audios" class="py-2 px-3 rounded-xl text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <span>🎧</span>
+                        <span>الصوتيات والاستماع</span>
+                        <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupAudios->count() }}</span>
+                    </button>
+                    <button type="button" onclick="switchBookLibTab('worksheets')" id="btnBookLibTab_worksheets" class="py-2 px-3 rounded-xl text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <span>🖼️</span>
+                        <span>أوراق العمل والصور</span>
+                        <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupWorksheets->count() + $groupImages->count() }}</span>
+                    </button>
+                    <button type="button" onclick="switchBookLibTab('wall')" id="btnBookLibTab_wall" class="py-2 px-3 rounded-xl text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <span>📝</span>
+                        <span>أنشطة وحائط المجموعة</span>
+                        <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupWallAll->count() }}</span>
+                    </button>
+                    <button type="button" onclick="switchBookLibTab('upload')" id="btnBookLibTab_upload" class="py-2 px-3 rounded-xl text-slate-400 hover:text-white transition flex items-center gap-1.5">
                         <span>📤</span>
-                        <span>رفع كتاب من جهازي</span>
+                        <span>رفع من جهازي</span>
                     </button>
                 </div>
             </div>
@@ -1633,24 +1883,27 @@
                 <div id="bookLibTab_curriculum" class="space-y-3">
                     <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-2xl text-xs text-indigo-200 flex items-start gap-2">
                         <span class="text-base shrink-0">💡</span>
-                        <span>كتب المنهج المعتمدة تفتح داخل السبورة كقارئ PDF كامل، مع إمكانية التنقل بين جميع الصفحات بالأسهم والرسم والشرح فوقها للطلاب.</span>
+                        <span>كتب المنهج تفتح فوراً داخل مساحة الشرح كقارئ PDF كامل، مع التنقل بين جميع الصفحات والرسم والكتابة للطلاب.</span>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @forelse($groupBooks as $bk)
-                            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 flex flex-col justify-between gap-3 transition group">
+                            @php
+                                $bkStreamUrl = $bk->file_path ? route('resources.stream', $bk->id) : $bk->external_url;
+                            @endphp
+                            <div class="resource-library-item p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 flex flex-col justify-between gap-3 transition group" data-title="{{ strtolower($bk->title) }}">
                                 <div class="flex items-start gap-2.5">
                                     <div class="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-800/60 flex items-center justify-center text-lg shrink-0">
                                         <span>📕</span>
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <h4 class="font-bold text-white text-xs truncate group-hover:text-indigo-300 transition" title="{{ $bk->title }}">{{ $bk->title }}</h4>
-                                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5">PDF • كتاب الدورة المعتمد</span>
+                                        <span class="text-[10px] text-slate-400 font-mono block mt-0.5">PDF • كتاب معتمد</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
                                     @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
-                                        <button type="button" onclick="openResourceInWorkspace('{{ route('resources.stream', $bk->id) }}', '{{ addslashes($bk->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                        <button type="button" onclick="openResourceInWorkspace('{{ $bkStreamUrl }}', '{{ addslashes($bk->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
                                             <span>🚀</span>
                                             <span>فتح للشرح الآن</span>
                                         </button>
@@ -1662,13 +1915,135 @@
                             </div>
                         @empty
                             <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
-                                <span>لا توجد كتب PDF مسجلة لهذا المستوى حالياً. يمكنك استخدام تبويب "رفع كتاب من جهازي" لمشاركة أي كتاب فوراً.</span>
+                                <span>لا توجد كتب PDF مسجلة لهذا المستوى حالياً. يمكنك استخدام تبويب "رفع من جهازي" لمشاركة أي كتاب فوراً.</span>
                             </div>
                         @endforelse
                     </div>
                 </div>
 
-                <!-- 2. تبويب ملفات وأوراق عمل حائط المجموعة -->
+                <!-- 2. تبويب فيديوهات المنهج والشروحات -->
+                <div id="bookLibTab_videos" class="hidden space-y-3">
+                    <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-2xl text-xs text-indigo-200 flex items-start gap-2">
+                        <span class="text-base shrink-0">🎬</span>
+                        <span>فيديوهات الدورة تفتح داخل مشغل الفيديو المدمج بالسبورة المركزية مع تزامن فوري للصوت والتشغيل مع الطلاب.</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        @forelse($groupVideos as $vid)
+                            @php
+                                $vidStreamUrl = $vid->file_path ? route('resources.stream', $vid->id) : $vid->external_url;
+                                $isYt = str_contains($vidStreamUrl, 'youtube.com') || str_contains($vidStreamUrl, 'youtu.be');
+                            @endphp
+                            <div class="resource-library-item p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-rose-500/50 flex flex-col justify-between gap-3 transition" data-title="{{ strtolower($vid->title) }}">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-lg shrink-0">
+                                        <span>🎬</span>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-bold text-white text-xs truncate" title="{{ $vid->title }}">{{ $vid->title }}</h4>
+                                        <span class="text-[10px] text-rose-300 font-mono block mt-0.5">فيديو تعليمي</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
+                                    @if($isTeacher)
+                                        <button type="button" onclick="openVideoInWorkspace('{{ $vidStreamUrl }}', '{{ addslashes($vid->title) }}', {{ $isYt ? 'true' : 'false' }}); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                            <span>▶️</span>
+                                            <span>عرض بالشرح الآن</span>
+                                        </button>
+                                    @endif
+                                    <a href="{{ route('resources.download', $vid->id) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="تنزيل الفيديو">
+                                        <span>⬇️</span>
+                                    </a>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
+                                <span>لا توجد فيديوهات مسجلة لهذه الدورة حالياً.</span>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- 3. تبويب الصوتيات والاستماع -->
+                <div id="bookLibTab_audios" class="hidden space-y-3">
+                    <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-2xl text-xs text-indigo-200 flex items-start gap-2">
+                        <span class="text-base shrink-0">🎧</span>
+                        <span>تسجيلات ومقاطع الاستماع (Listening Tracks) المنهجية المعتمدة للمستوى.</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        @forelse($groupAudios as $aud)
+                            @php
+                                $audStreamUrl = $aud->file_path ? route('resources.stream', $aud->id) : $aud->external_url;
+                            @endphp
+                            <div class="resource-library-item p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-2" data-title="{{ strtolower($aud->title) }}">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-bold text-purple-300 truncate">{{ $aud->title }}</span>
+                                    <a href="{{ route('resources.download', $aud->id) }}" target="_blank" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold border border-slate-700 transition" title="تحميل">
+                                        ⬇️ تنزيل
+                                    </a>
+                                </div>
+                                @if($audStreamUrl)
+                                    <audio controls class="w-full h-7">
+                                        <source src="{{ $audStreamUrl }}">
+                                    </audio>
+                                @endif
+                            </div>
+                        @empty
+                            <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
+                                <span>لا توجد تسجيلات صوتية مسجلة لهذا المستوى حالياً.</span>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- 4. تبويب أوراق العمل والبطاقات والصور -->
+                <div id="bookLibTab_worksheets" class="hidden space-y-3">
+                    <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-2xl text-xs text-indigo-200 flex items-start gap-2">
+                        <span class="text-base shrink-0">🖼️</span>
+                        <span>أوراق العمل والبطاقات التعليمية والصور تفتح مباشرة على كانفاس السبورة للرسم والشرح التفاعلي فوقها.</span>
+                    </div>
+
+                    @php
+                        $wsAndImages = $groupWorksheets->merge($groupImages);
+                    @endphp
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        @forelse($wsAndImages as $res)
+                            @php
+                                $rStreamUrl = $res->file_path ? route('resources.stream', $res->id) : $res->external_url;
+                                $isPdf = str_ends_with(strtolower($res->file_path ?? ''), '.pdf');
+                            @endphp
+                            <div class="resource-library-item p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 flex flex-col justify-between gap-3 transition" data-title="{{ strtolower($res->title) }}">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-800/60 flex items-center justify-center text-lg shrink-0">
+                                        <span>{{ $isPdf ? '📄' : '🖼️' }}</span>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-bold text-white text-xs truncate" title="{{ $res->title }}">{{ $res->title }}</h4>
+                                        <span class="text-[10px] text-emerald-300 font-mono block mt-0.5">{{ $isPdf ? 'ورقة عمل PDF' : 'صورة / بطاقة' }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
+                                    @if($isTeacher)
+                                        <button type="button" onclick="openResourceInWorkspace('{{ $rStreamUrl }}', '{{ addslashes($res->title) }}', '{{ $isPdf ? 'pdf' : 'image' }}', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                            <span>🚀</span>
+                                            <span>فتح للشرح الآن</span>
+                                        </button>
+                                    @endif
+                                    <a href="{{ route('resources.download', $res->id) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة أو تنزيل">
+                                        <span>⬇️</span>
+                                    </a>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
+                                <span>لا توجد أوراق عمل أو صور مرفوعة لهذا المستوى حالياً.</span>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- 5. تبويب ملفات وأوراق عمل حائط المجموعة -->
                 <div id="bookLibTab_wall" class="hidden space-y-3">
                     <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-2xl text-xs text-indigo-200 flex items-start gap-2">
                         <span class="text-base shrink-0">📌</span>
@@ -1676,46 +2051,67 @@
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        @forelse($groupWallPdfs as $act)
-                            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 flex flex-col justify-between gap-3 transition">
+                        @forelse($groupWallAll as $act)
+                            @php
+                                $actExt = strtolower(pathinfo($act->file_path ?? '', PATHINFO_EXTENSION));
+                                $actStreamUrl = $act->file_path ? route('groups.activities.stream', $act->id) : $act->external_url;
+                                $isActPdf = ($actExt === 'pdf' || str_ends_with(strtolower($act->file_path ?? ''), '.pdf'));
+                                $isActVid = in_array($actExt, ['mp4', 'webm', 'mov']);
+                                $isActImg = in_array($actExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                            @endphp
+                            <div class="resource-library-item p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 flex flex-col justify-between gap-3 transition" data-title="{{ strtolower($act->title ?: $act->file_name) }}">
                                 <div class="flex items-start gap-2.5">
                                     <div class="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-800/60 flex items-center justify-center text-lg shrink-0">
-                                        <span>📄</span>
+                                        <span>{{ $isActVid ? '🎬' : ($isActImg ? '🖼️' : '📄') }}</span>
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <h4 class="font-bold text-white text-xs truncate" title="{{ $act->title }}">{{ $act->title }}</h4>
-                                        <span class="text-[10px] text-purple-300 font-mono block mt-0.5">مذكرة / ورقة عمل</span>
+                                        <h4 class="font-bold text-white text-xs truncate" title="{{ $act->title }}">{{ $act->title ?: ($act->file_name ?: 'نشاط') }}</h4>
+                                        <span class="text-[10px] text-purple-300 font-mono block mt-0.5">حائط المجموعة • {{ strtoupper($actExt ?: 'FILE') }}</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
-                                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
-                                        <button type="button" onclick="openResourceInWorkspace('{{ route('groups.activities.stream', $act->id) }}', '{{ addslashes($act->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
-                                            <span>🚀</span>
-                                            <span>فتح للشرح الآن</span>
-                                        </button>
+                                    @if($isTeacher)
+                                        @if($isActVid)
+                                            <button type="button" onclick="openVideoInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', false); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                                <span>▶️</span>
+                                                <span>عرض بالشرح الآن</span>
+                                            </button>
+                                        @elseif($isActPdf)
+                                            <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                                <span>🚀</span>
+                                                <span>فتح للشرح الآن</span>
+                                            </button>
+                                        @elseif($isActImg)
+                                            <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'image', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                                <span>🚀</span>
+                                                <span>فتح للشرح الآن</span>
+                                            </button>
+                                        @endif
                                     @endif
-                                    <a href="{{ route('groups.activities.download', $act->id) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة">
-                                        <span>⬇️</span>
-                                    </a>
+                                    @if($act->file_path)
+                                        <a href="{{ route('groups.activities.download', $act->id) }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="معاينة أو تنزيل">
+                                            <span>⬇️</span>
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                         @empty
                             <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
-                                <span>لا توجد مذكرات أو ملفات PDF منشورة بحائط المجموعة بعد.</span>
+                                <span>لا توجد مذكرات أو ملفات منشورة بحائط المجموعة بعد.</span>
                             </div>
                         @endforelse
                     </div>
                 </div>
 
-                <!-- 3. تبويب رفع كتاب PDF من الجهاز فوراً -->
+                <!-- 6. تبويب رفع ملف من جهازي فوراً -->
                 <div id="bookLibTab_upload" class="hidden space-y-4">
                     <div class="border-2 border-dashed border-indigo-500/40 hover:border-indigo-400 bg-indigo-950/20 hover:bg-indigo-950/30 rounded-3xl p-6 sm:p-8 text-center transition cursor-pointer" onclick="document.getElementById('wbLocalFileInput').click(); closeBooksLibraryModal();">
                         <div class="w-16 h-16 mx-auto rounded-3xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-3xl mb-3 shadow-inner">
-                            <span>📕</span>
+                            <span>📂</span>
                         </div>
-                        <h4 class="text-sm font-black text-white mb-1">انقر هنا لاختيار كتاب أو مذكرة PDF من جهازك</h4>
+                        <h4 class="text-sm font-black text-white mb-1">انقر هنا لاختيار كتاب PDF، صورة، أو فيديو من جهازك</h4>
                         <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                            سيتم فتح الكتاب فوراً داخل مساحة الشرح بجميع صفحاته، لتبدأ التصفح والشرح للطلاب دون أي تأخير، مع رفعه ومزامنته تلقائياً.
+                            سيتم فتح الملف فوراً داخل مساحة الشرح بجميع صفحاته، لتبدأ التصفح والشرح للطلاب دون أي تأخير، مع رفعه ومزامنته تلقائياً.
                         </p>
                         <button type="button" class="mt-4 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition inline-flex items-center gap-2">
                             <span>📂</span>
@@ -1976,7 +2372,16 @@
                     break;
                 case 'wb_clear':
                     wbStrokes = [];
+                    wbUndoStack = [];
+                    wbRedoStack = [];
+                    if (data.mode === 'all_pages' || data.mode === 'reset_board') {
+                        Object.keys(wbPdfPageStrokesCache).forEach(k => delete wbPdfPageStrokesCache[k]);
+                    } else if (wbCurrentBg && wbCurrentBg.url) {
+                        const cacheKey = getPdfCacheKey(wbCurrentBg.url, wbCurrentPage);
+                        wbPdfPageStrokesCache[cacheKey] = [];
+                    }
                     redrawWhiteboard();
+                    showLiveToast('🧹 قام المعلم بمسح الشروحات.', '🧹');
                     break;
                 case 'wb_bg':
                     if (data.state) {
@@ -2003,6 +2408,11 @@
                         } else if (data.action === 'pause') {
                             vSyncEl.pause();
                         }
+                    }
+                    break;
+                case 'teacher_audio_resume':
+                    if (!IS_TEACHER) {
+                        unblockAllAudio();
                     }
                     break;
                 case 'wb_scale':
@@ -2044,6 +2454,58 @@
                         isSpeakPermitted = false;
                         if (isMicEnabled) toggleLocalMic();
                         showLiveToast('🔇 قام المعلم بكتم صوتك.', '🔇');
+                    }
+                    break;
+                case 'force_mute_cam_user':
+                    if (data.target_user_id === CURRENT_USER_ID) {
+                        if (isCamEnabled) {
+                            toggleLocalCam();
+                        }
+                        showLiveToast('📷 قام المعلم بإيقاف كاميرتك.', '📷');
+                    }
+                    break;
+                case 'teacher_screen_share':
+                    window.teacherScreenShareActive = !!data.active;
+                    const ssWrapper = document.getElementById('whiteboardScreenShareWrapper');
+                    const ssVideo = document.getElementById('whiteboardScreenShareVideo');
+                    if (data.active) {
+                        if (ssWrapper && ssVideo) {
+                            const tVideo = document.getElementById('teacherVideo');
+                            if (tVideo && tVideo.srcObject) {
+                                ssVideo.srcObject = tVideo.srcObject;
+                                ssVideo.style.direction = 'ltr';
+                                ssVideo.style.transform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                                ssVideo.style.webkitTransform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                                ssVideo.play().catch(() => {});
+                            }
+                            ssWrapper.classList.remove('hidden');
+                        }
+                        const wbModeIcon = document.getElementById('wbModeIcon');
+                        const wbModeText = document.getElementById('wbModeText');
+                        if (wbModeIcon) wbModeIcon.textContent = '🖥️';
+                        if (wbModeText) wbModeText.textContent = 'شاشة المعلم المشتركة';
+                        showLiveToast('🖥️ بدأ المعلم مشاركة شاشته معكم الآن.', '🖥️');
+                    } else {
+                        if (ssWrapper) ssWrapper.classList.add('hidden');
+                        if (ssVideo) ssVideo.srcObject = null;
+                        const wbModeIcon = document.getElementById('wbModeIcon');
+                        const wbModeText = document.getElementById('wbModeText');
+                        if (wbModeIcon) wbModeIcon.textContent = '📋';
+                        if (wbModeText) wbModeText.textContent = 'السبورة والشرح';
+                        showLiveToast('⏹️ أنهى المعلم مشاركة الشاشة.', '⏹️');
+                    }
+                    break;
+                case 'teacher_screen_mirror':
+                    window.isScreenShareMirrored = !!data.mirrored;
+                    const ssMirrorVideo = document.getElementById('whiteboardScreenShareVideo');
+                    if (ssMirrorVideo) {
+                        ssMirrorVideo.style.direction = 'ltr';
+                        ssMirrorVideo.style.transform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                        ssMirrorVideo.style.webkitTransform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                    }
+                    const mirrorTxt = document.getElementById('txtScreenShareMirror');
+                    if (mirrorTxt) {
+                        mirrorTxt.textContent = window.isScreenShareMirrored ? 'إلغاء العكس (افتراضي) 🔄' : 'تعديل الاتجاه (عكس الشاشة) 🔄';
                     }
                     break;
                 case 'allow_speak_user':
@@ -2273,6 +2735,98 @@
             startTeacherAudioBroadcast();
         }
     }
+
+    // استعادة وتأمين مايكروفون المعلم في حال انقطع أو توقف بسبب الوسائط أو المتصفح
+    async function reacquireTeacherMic() {
+        if (!IS_TEACHER || !isMicEnabled) return;
+        try {
+            console.log('🔄 Reacquiring teacher microphone stream...');
+            const newStream = await navigator.mediaDevices.getUserMedia({
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                video: false
+            });
+            const newAudioTrack = newStream.getAudioTracks()[0];
+            if (!newAudioTrack) return;
+
+            newAudioTrack.enabled = true;
+
+            if (localStream) {
+                // إزالة المسارات المنتهية
+                localStream.getAudioTracks().forEach(t => {
+                    try { t.stop(); } catch(e){}
+                    try { localStream.removeTrack(t); } catch(e){}
+                });
+                localStream.addTrack(newAudioTrack);
+            } else {
+                localStream = newStream;
+            }
+
+            ensureTracksInPeerConnections();
+            updateMediaButtonsUI();
+
+            // إعادة ربط البث الصوتي المستمر بالمسار الجديد
+            if (isBroadcastingAudio) {
+                try {
+                    if (window.broadcastAudioCtx && window.broadcastAudioCtx.state !== 'closed') {
+                        window.broadcastAudioCtx.close().catch(() => {});
+                    }
+                } catch(e){}
+                isBroadcastingAudio = false;
+            }
+            startTeacherAudioBroadcast();
+            console.log('✅ Teacher microphone reacquired and active.');
+        } catch (err) {
+            console.warn('reacquireTeacherMic error:', err);
+        }
+    }
+
+    // دالة حراسة وتأكيد استمرار صوت المعلم شغالاً دائماً دون انقطاع
+    async function ensureTeacherAudioAlive() {
+        if (!IS_TEACHER) return;
+        if (!isMicEnabled) return; // إذا اختار المعلم كتم صوته صراحة، نتركه مكتوماً
+
+        try {
+            // 1. فحص مسار الصوت هل لا يزال حياً
+            const audioTrack = (localStream && localStream.getAudioTracks().length > 0) ? localStream.getAudioTracks()[0] : null;
+            if (!audioTrack || audioTrack.readyState === 'ended' || !localStream) {
+                await reacquireTeacherMic();
+                return;
+            }
+
+            // 2. التأكد من أن المسار مفعل
+            if (!audioTrack.enabled) {
+                audioTrack.enabled = true;
+            }
+
+            // 3. مزامنة المسارات مع جميع اتصالات الأقران PeerConnections
+            ensureTracksInPeerConnections();
+
+            // 4. استئناف AudioContext إذا كان معلقاً بسبب تشغيل فيديو أو فتح نافذة أخرى
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                if (window.broadcastAudioCtx && window.broadcastAudioCtx.state === 'suspended') {
+                    window.broadcastAudioCtx.resume().catch(() => {});
+                }
+                if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
+                    window.globalAudioCtx.resume().catch(() => {});
+                }
+            }
+
+            // 5. إذا كان البث الصوتي المستمر متوقفاً، تشغيله فوراً
+            if (!isBroadcastingAudio && audioTrack && audioTrack.readyState === 'live') {
+                startTeacherAudioBroadcast();
+            }
+        } catch (e) {
+            console.warn('ensureTeacherAudioAlive check warning:', e);
+        }
+    }
+
+    // تشغيل مراقب دوري دائم لصوت المعلم (كل 2.5 ثانية) لضمان عدم انقطاع الصوت إطلاقاً
+    setInterval(() => {
+        if (typeof IS_TEACHER !== 'undefined' && IS_TEACHER && typeof isMicEnabled !== 'undefined' && isMicEnabled) {
+            ensureTeacherAudioAlive();
+        }
+    }, 2500);
 
     // تشغيل وإيقاف الكاميرا عند الطلب فقط (فيديو عند النقر)
     async function toggleLocalCam() {
@@ -2528,6 +3082,20 @@
                     }
                 }
                 tAvatar?.classList.add('hidden');
+
+                // إذا كانت مشاركة الشاشة نشطة، ربط تيار المعلم فورياً بشاشة الشرح المركزية
+                if (window.teacherScreenShareActive) {
+                    const ssWrapper = document.getElementById('whiteboardScreenShareWrapper');
+                    const ssVideo = document.getElementById('whiteboardScreenShareVideo');
+                    if (ssWrapper && ssVideo) {
+                        ssVideo.srcObject = stream;
+                        ssVideo.style.direction = 'ltr';
+                        ssVideo.style.transform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                        ssVideo.style.webkitTransform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                        ssWrapper.classList.remove('hidden');
+                        ssVideo.play().catch(() => {});
+                    }
+                }
             }
             return;
         }
@@ -2592,8 +3160,11 @@
                             <button type="button" onclick="openRewardStarModal(${remoteUserId}, '${addslashes(remoteName)}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded font-bold" title="مكافأة بنجمة">
                                 ⭐ كافئ
                             </button>
-                            <button type="button" onclick="muteStudent(${remoteUserId})" class="bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 px-2 py-0.5 rounded font-bold">
+                            <button type="button" onclick="muteStudent(${remoteUserId})" class="bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 px-2 py-0.5 rounded font-bold" title="كتم الصوت">
                                 كتم 🔇
+                            </button>
+                            <button type="button" onclick="muteStudentCam(${remoteUserId})" class="bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-800 px-2 py-0.5 rounded font-bold" title="كتم الكاميرا">
+                                📷❌
                             </button>
                         </div>
                     ` : ''}
@@ -2882,6 +3453,40 @@
                         ? 'غرفة الانتظار: مفعلة (بموافقة المعلم) 🔔'
                         : 'غرفة الانتظار: ملغاة (دخول مباشر للكل) 🚪';
                 }
+
+                // مزامنة حالة مشاركة الشاشة للطلاب من الخادم
+                if (data.room_control.screen_share_active !== undefined) {
+                    const isScreenActive = !!data.room_control.screen_share_active;
+                    if (!IS_TEACHER && window.teacherScreenShareActive !== isScreenActive) {
+                        window.teacherScreenShareActive = isScreenActive;
+                        const ssWrapper = document.getElementById('whiteboardScreenShareWrapper');
+                        const ssVideo = document.getElementById('whiteboardScreenShareVideo');
+                        if (isScreenActive) {
+                            if (ssWrapper && ssVideo) {
+                                const tVideo = document.getElementById('teacherVideo');
+                                if (tVideo && tVideo.srcObject) {
+                                    ssVideo.srcObject = tVideo.srcObject;
+                                    ssVideo.style.direction = 'ltr';
+                                    ssVideo.style.transform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                                    ssVideo.style.webkitTransform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                                    ssVideo.play().catch(() => {});
+                                }
+                                ssWrapper.classList.remove('hidden');
+                            }
+                            const wbModeIcon = document.getElementById('wbModeIcon');
+                            const wbModeText = document.getElementById('wbModeText');
+                            if (wbModeIcon) wbModeIcon.textContent = '🖥️';
+                            if (wbModeText) wbModeText.textContent = 'شاشة المعلم المشتركة';
+                        } else {
+                            if (ssWrapper) ssWrapper.classList.add('hidden');
+                            if (ssVideo) ssVideo.srcObject = null;
+                            const wbModeIcon = document.getElementById('wbModeIcon');
+                            const wbModeText = document.getElementById('wbModeText');
+                            if (wbModeIcon) wbModeIcon.textContent = '📋';
+                            if (wbModeText) wbModeText.textContent = 'السبورة والشرح';
+                        }
+                    }
+                }
             }
 
             // ج) معالجة طلبات انضمام الطلاب المعلقة للمعلم (Pending Requests + Bell Chime 🔔)
@@ -2901,11 +3506,16 @@
 
             // و) معالجة الرسائل والتسجيلات الجديدة في المحادثة
             if (data.messages && data.messages.length > 0) {
+                let hasNewMsgs = false;
                 for (const msg of data.messages) {
                     if (msg.id > lastMessageId) {
                         lastMessageId = msg.id;
                         appendLiveChatMessage(msg);
+                        hasNewMsgs = true;
                     }
+                }
+                if (hasNewMsgs) {
+                    scrollChatToBottom(true);
                 }
             }
 
@@ -3442,6 +4052,11 @@
                                     كتم الصوت 🔇
                                 </button>
                             `}
+                            ${p.has_camera ? `
+                                <button type="button" onclick="muteStudentCam(${p.user_id})" class="px-2 py-1 bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-800/60 rounded-lg font-bold" title="كتم كاميرا الطالب">
+                                    كتم الكاميرا 📷❌
+                                </button>
+                            ` : ''}
                             <button type="button" onclick="mentionUser('${addslashes(p.name)}')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg">
                                 محادثة 💬
                             </button>
@@ -3501,6 +4116,19 @@
             });
             broadcastP2P({ type: 'force_mute_user', target_user_id: userId });
         } catch (e) { console.error(e); }
+    }
+
+    async function muteStudentCam(userId) {
+        if (!IS_TEACHER) return;
+        try {
+            await fetch(`/classroom/${ROOM_ID}/controls`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'mute_cam_user', user_id: userId })
+            });
+            broadcastP2P({ type: 'force_mute_cam_user', target_user_id: userId });
+            showLiveToast('📷 تم إرسال أمر كتم الكاميرا للطالب.', '📷');
+        } catch (e) { console.error('Mute student camera error:', e); }
     }
 
     async function allowStudentToSpeak(userId) {
@@ -3666,32 +4294,71 @@
 
             const screenTrack = screenStream.getVideoTracks()[0];
             
-            // استبدال مسار الفيديو في جميع اتصالات الأقران
+            // استبدال أو إضافة مسار الفيديو في جميع اتصالات الأقران
             Object.values(peerConnections).forEach(pc => {
-                const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-                if (sender) {
-                    sender.replaceTrack(screenTrack).catch(console.error);
+                let videoSender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                if (!videoSender) {
+                    const transceivers = pc.getTransceivers ? pc.getTransceivers() : [];
+                    const vt = transceivers.find(t => (t.receiver && t.receiver.track && t.receiver.track.kind === 'video') || (t.sender && t.sender.track && t.sender.track.kind === 'video'));
+                    if (vt && vt.sender) videoSender = vt.sender;
+                }
+                if (videoSender) {
+                    videoSender.replaceTrack(screenTrack).catch(e => console.warn('replaceTrack screen error:', e));
+                } else {
+                    try { pc.addTrack(screenTrack, screenStream); } catch(e) { console.warn('addTrack screen error:', e); }
                 }
             });
+
+            // إظهار الشاشة في مساحة الشرح المركزية للمعلم
+            const ssWrapper = document.getElementById('whiteboardScreenShareWrapper');
+            const ssVideo = document.getElementById('whiteboardScreenShareVideo');
+            if (ssWrapper && ssVideo) {
+                ssVideo.srcObject = screenStream;
+                ssVideo.muted = true;
+                ssVideo.style.direction = 'ltr';
+                ssVideo.style.transform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                ssVideo.style.webkitTransform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+                ssWrapper.classList.remove('hidden');
+                ssVideo.play().catch(() => {});
+            }
 
             // إظهار الشاشة محلياً في بطاقة المعلم
             const myVideo = document.getElementById('mySelfVideo');
             if (myVideo) {
                 myVideo.srcObject = screenStream;
                 myVideo.classList.remove('hidden');
+                myVideo.style.direction = 'ltr';
+                myVideo.style.transform = 'scaleX(1)';
+                myVideo.style.webkitTransform = 'scaleX(1)';
                 document.getElementById('mySelfAvatar')?.classList.add('hidden');
             }
 
             isSharingScreen = true;
+            window.teacherScreenShareActive = true;
             const btn = document.getElementById('btnScreenShare');
             if (btn) {
                 btn.classList.add('bg-rose-600', 'text-white');
                 btn.classList.remove('bg-indigo-950/80', 'text-indigo-200');
             }
 
+            const wbModeIcon = document.getElementById('wbModeIcon');
+            const wbModeText = document.getElementById('wbModeText');
+            if (wbModeIcon) wbModeIcon.textContent = '🖥️';
+            if (wbModeText) wbModeText.textContent = 'مشاركة الشاشة الحية';
+
+            broadcastP2P({ type: 'teacher_screen_share', active: true });
+            try {
+                fetch(`/classroom/${ROOM_ID}/controls`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ action: 'screen_share_status', active: true })
+                });
+            } catch(e){}
+
             screenTrack.onended = () => {
                 stopScreenShare();
             };
+            showLiveToast('🖥️ بدأت مشاركة الشاشة! تظهر الآن لجميع الطلاب على السبورة الرئيسية.', '🖥️');
         } catch (err) {
             console.error('Screen share error:', err);
             if (err.name !== 'NotAllowedError') {
@@ -3706,18 +4373,33 @@
             screenStream = null;
         }
         isSharingScreen = false;
+        window.teacherScreenShareActive = false;
+
+        // إخفاء طبقة مشاركة الشاشة من السبورة المركزية
+        const ssWrapper = document.getElementById('whiteboardScreenShareWrapper');
+        const ssVideo = document.getElementById('whiteboardScreenShareVideo');
+        if (ssWrapper) ssWrapper.classList.add('hidden');
+        if (ssVideo) ssVideo.srcObject = null;
 
         // استعادة مسار الكاميرا الأصلية
-        const camTrack = localStream ? localStream.getVideoTracks()[0] : null;
+        const camTrack = (localStream && isCamEnabled) ? localStream.getVideoTracks()[0] : null;
         Object.values(peerConnections).forEach(pc => {
-            const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-            if (sender && camTrack) {
-                sender.replaceTrack(camTrack).catch(console.error);
+            let videoSender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+            if (!videoSender) {
+                const transceivers = pc.getTransceivers ? pc.getTransceivers() : [];
+                const vt = transceivers.find(t => (t.receiver && t.receiver.track && t.receiver.track.kind === 'video') || (t.sender && t.sender.track && t.sender.track.kind === 'video'));
+                if (vt && vt.sender) videoSender = vt.sender;
+            }
+            if (videoSender) {
+                videoSender.replaceTrack(camTrack).catch(() => {});
             }
         });
 
         const myVideo = document.getElementById('mySelfVideo');
         if (myVideo) {
+            myVideo.style.direction = '';
+            myVideo.style.transform = '';
+            myVideo.style.webkitTransform = '';
             if (localStream && isCamEnabled) {
                 myVideo.srcObject = localStream;
             } else {
@@ -3730,6 +4412,40 @@
         if (btn) {
             btn.classList.remove('bg-rose-600', 'text-white');
             btn.classList.add('bg-indigo-950/80', 'text-indigo-200');
+        }
+
+        const wbModeIcon = document.getElementById('wbModeIcon');
+        const wbModeText = document.getElementById('wbModeText');
+        if (wbModeIcon) wbModeIcon.textContent = '📋';
+        if (wbModeText) wbModeText.textContent = 'السبورة والشرح';
+
+        broadcastP2P({ type: 'teacher_screen_share', active: false });
+        try {
+            fetch(`/classroom/${ROOM_ID}/controls`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'screen_share_status', active: false })
+            });
+        } catch(e){}
+        showLiveToast('⏹️ تم إيقاف مشاركة الشاشة والرجوع للسبورة.', '⏹️');
+    }
+
+    window.isScreenShareMirrored = false;
+    function toggleScreenShareMirror() {
+        window.isScreenShareMirrored = !window.isScreenShareMirrored;
+        const ssVideo = document.getElementById('whiteboardScreenShareVideo');
+        const txt = document.getElementById('txtScreenShareMirror');
+        if (ssVideo) {
+            ssVideo.style.direction = 'ltr';
+            ssVideo.style.transform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+            ssVideo.style.webkitTransform = window.isScreenShareMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+        }
+        if (txt) {
+            txt.textContent = window.isScreenShareMirrored ? 'إلغاء العكس (افتراضي) 🔄' : 'تعديل الاتجاه (عكس الشاشة) 🔄';
+        }
+        showLiveToast(window.isScreenShareMirrored ? '🔄 تم عكس اتجاه الشاشة أفقياً بنجاح.' : '🔄 تم استعادة اتجاه الشاشة الطبيعي الافتراضي.', '🖥️');
+        if (IS_TEACHER && typeof broadcastP2P === 'function') {
+            broadcastP2P({ type: 'teacher_screen_mirror', mirrored: window.isScreenShareMirrored });
         }
     }
 
@@ -3947,6 +4663,17 @@
         } catch (err) { console.error(err); }
     }
 
+    function scrollChatToBottom(smooth = false) {
+        const container = document.getElementById('liveChatMessagesContainer');
+        if (!container) return;
+        requestAnimationFrame(() => {
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: smooth ? 'smooth' : 'instant'
+            });
+        });
+    }
+
     function appendLiveChatMessage(msg) {
         if (!msg) return;
         const container = document.getElementById('liveChatMessagesContainer');
@@ -3961,7 +4688,7 @@
             div.className = "p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs text-center font-bold my-1 flex items-center justify-center gap-2 shadow-xs";
             div.innerHTML = `<span>📢</span> <span>${msg.content}</span> <span class="text-[10px] text-amber-400/60 font-mono">(${msg.time || ''})</span>`;
             container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
+            scrollChatToBottom(true);
             return;
         }
 
@@ -3979,19 +4706,47 @@
             </div>
             ${msg.content ? `<div class="text-xs text-slate-200 leading-relaxed">${msg.content}</div>` : ''}
             ${msg.type === 'image' || msg.type === 'worksheet' ? `
-                <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-36 flex items-center justify-center mt-1" onclick="openLiveImageModal('${msg.file_path}', '${addslashes(msg.content || '')}')">
-                    <img src="${msg.file_path}" class="w-full h-full object-cover">
+                <div class="mt-1 space-y-1">
+                    <div class="cursor-pointer overflow-hidden rounded-xl border border-slate-700 bg-black aspect-video max-h-36 flex items-center justify-center" onclick="openLiveImageModal('${msg.file_path}', '${addslashes(msg.content || '')}')">
+                        <img src="${msg.file_path}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <a href="${msg.file_path}" download target="_blank" class="flex-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-[10px] font-bold py-1 px-2 rounded-lg transition flex items-center justify-center gap-1 shadow border border-slate-700" title="تنزيل الملف لهاتفك">
+                            <span>⬇️</span>
+                            <span>تنزيل للهاتف</span>
+                        </a>
+                        ${IS_TEACHER ? `
+                            <button type="button" onclick="openResourceInWorkspace('${msg.file_path}', 'ورقة إجابة: ${addslashes(msg.user_name || '')}', 'image')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold py-1 px-2 rounded-lg transition flex items-center justify-center gap-1 shadow">
+                                <span>🎨</span>
+                                <span>فتح بالشرح</span>
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
             ` : ''}
             ${msg.type === 'audio' ? `
-                <div class="bg-purple-950/40 p-2 rounded-xl border border-purple-800/40 mt-1">
+                <div class="bg-purple-950/40 p-2 rounded-xl border border-purple-800/40 mt-1 space-y-1">
                     <audio controls src="${msg.file_path}" class="w-full h-8"></audio>
+                    <div class="flex justify-end">
+                        <a href="${msg.file_path}" download target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-purple-300 hover:text-white rounded text-[10px] font-bold border border-slate-700 transition" title="تنزيل التسجيل الصوتي">
+                            <span>⬇️</span>
+                            <span>تنزيل التسجيل</span>
+                        </a>
+                    </div>
+                </div>
+            ` : ''}
+            ${msg.type !== 'image' && msg.type !== 'worksheet' && msg.type !== 'audio' && msg.file_path ? `
+                <div class="mt-1">
+                    <a href="${msg.file_path}" download target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700">
+                        <span>⬇️</span>
+                        <span>تنزيل الملف المرفق</span>
+                    </a>
                 </div>
             ` : ''}
         `;
 
         container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
+        scrollChatToBottom(true);
 
         // إشعار ضوئي إذا كانت اللوحة الجانبية مغلقة (للكمبيوتر وللهاتف)
         const panel = document.getElementById('liveInteractivePanel');
@@ -4184,6 +4939,7 @@
 
             // إخفاء النافذة العائمة لأن فيديو المعلم ظاهر باللوحة
             document.getElementById('floatingTeacherVideoContainer')?.classList.add('hidden');
+            scrollChatToBottom(false);
         }
     }
 
@@ -4197,6 +4953,7 @@
         }
         if (tab === 'chat') {
             document.getElementById('unreadMessagesDot')?.classList.add('hidden');
+            scrollChatToBottom(false);
         }
     }
 
@@ -4225,6 +4982,7 @@
         if (tab === 'chat') {
             tabChat.classList.remove('hidden');
             btnChat.className = "px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white transition flex items-center gap-1 shadow-sm";
+            scrollChatToBottom(false);
         } else if (tab === 'participants') {
             tabParticipants.classList.remove('hidden');
             btnParticipants.className = "px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white transition flex items-center gap-1 shadow-sm";
@@ -4468,7 +5226,7 @@
         document.getElementById('wbBooksLibraryModal')?.classList.add('hidden');
     }
     function switchBookLibTab(tab) {
-        const tabs = ['curriculum', 'wall', 'upload'];
+        const tabs = ['curriculum', 'videos', 'audios', 'worksheets', 'wall', 'upload'];
         tabs.forEach(t => {
             const pane = document.getElementById('bookLibTab_' + t);
             const btn = document.getElementById('btnBookLibTab_' + t);
@@ -4480,6 +5238,19 @@
                 pane?.classList.add('hidden');
                 btn?.classList.remove('bg-indigo-600', 'text-white', 'shadow');
                 btn?.classList.add('text-slate-400');
+            }
+        });
+    }
+
+    function filterResourceItems(searchVal) {
+        const query = (searchVal || '').trim().toLowerCase();
+        const items = document.querySelectorAll('.resource-library-item');
+        items.forEach(el => {
+            const title = (el.getAttribute('data-title') || '').toLowerCase();
+            if (!query || title.includes(query)) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
             }
         });
     }
@@ -5803,19 +6574,61 @@
     }
     function clearWhiteboard() {
         if (!IS_TEACHER) return;
-        if (confirm('هل ترغب بمسح جميع الشروحات والملاحظات المكتوبة على السبورة؟')) {
+        openClearWhiteboardModal();
+    }
+
+    function openClearWhiteboardModal() {
+        const modal = document.getElementById('clearWhiteboardModal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeClearWhiteboardModal() {
+        const modal = document.getElementById('clearWhiteboardModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    async function executeClearWhiteboard(mode) {
+        closeClearWhiteboardModal();
+        if (!IS_TEACHER) return;
+
+        if (mode === 'current_page') {
             wbStrokes = [];
             wbUndoStack = [];
             wbRedoStack = [];
+            if (wbCurrentBg && wbCurrentBg.url) {
+                const cacheKey = getPdfCacheKey(wbCurrentBg.url, wbCurrentPage);
+                wbPdfPageStrokesCache[cacheKey] = [];
+            }
             redrawWhiteboard();
-            broadcastP2P({ type: 'wb_clear' });
-            fetch(`/classroom/${ROOM_ID}/whiteboard`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
-                body: JSON.stringify({ action: 'clear' })
-            }).then(r => r.json()).then(data => {
+            broadcastP2P({ type: 'wb_clear', mode: 'current_page' });
+            commitWhiteboardChange();
+            showLiveToast('🗑️ تم مسح شروحات وملاحظات الصفحة الحالية.', '🗑️');
+        } else if (mode === 'all_pages') {
+            wbStrokes = [];
+            wbUndoStack = [];
+            wbRedoStack = [];
+            Object.keys(wbPdfPageStrokesCache).forEach(k => delete wbPdfPageStrokesCache[k]);
+            redrawWhiteboard();
+            broadcastP2P({ type: 'wb_clear', mode: 'all_pages' });
+            commitWhiteboardChange();
+            showLiveToast('🗑️ تم مسح جميع شروحات وملاحظات كافة الصفحات.', '🗑️');
+        } else if (mode === 'reset_board') {
+            wbStrokes = [];
+            wbUndoStack = [];
+            wbRedoStack = [];
+            Object.keys(wbPdfPageStrokesCache).forEach(k => delete wbPdfPageStrokesCache[k]);
+            setWhiteboardBg('whiteboard');
+            try {
+                const res = await fetch(`/classroom/${ROOM_ID}/whiteboard`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ action: 'reset_board' })
+                });
+                const data = await res.json();
                 if (data && data.whiteboard_version) currentWbVersion = data.whiteboard_version;
-            }).catch(console.error);
+            } catch(e) { console.error(e); }
+            broadcastP2P({ type: 'wb_clear', mode: 'reset_board' });
+            showLiveToast('📋 تم تفريغ السبورة بالكامل وإعادتها لسبورة بيضاء نظيفة.', '📋');
         }
     }
 
@@ -6033,11 +6846,18 @@
         const videoEl = document.getElementById('whiteboardHtml5Video');
         const ytFrame = document.getElementById('whiteboardYoutubeFrame');
         const browserIframe = document.getElementById('whiteboardBrowserIframe');
+        const errorBox = document.getElementById('wbVideoErrorBox');
 
         if (browserWrapper) browserWrapper.classList.add('hidden');
         if (videoWrapper) videoWrapper.classList.add('hidden');
-        if (videoEl) { videoEl.pause(); videoEl.src = ''; videoEl.classList.add('hidden'); }
-        if (ytFrame) { ytFrame.src = ''; ytFrame.classList.add('hidden'); }
+        if (errorBox) errorBox.classList.add('hidden');
+        if (videoEl) {
+            try { videoEl.pause(); } catch(e){}
+            videoEl.removeAttribute('src');
+            try { videoEl.load(); } catch(e){}
+            videoEl.classList.add('hidden');
+        }
+        if (ytFrame) { ytFrame.src = 'about:blank'; ytFrame.classList.add('hidden'); }
         if (browserIframe) { browserIframe.src = 'about:blank'; }
     }
 
@@ -6094,15 +6914,21 @@
 
     function renderVideoBackground(url, title) {
         hideMediaLayers();
-        if (!url || typeof url !== 'string' || !url.trim()) {
+        if (!url || typeof url !== 'string' || !url.trim() || url.startsWith('blob:')) {
+            console.warn('Invalid or expired video URL, resetting to clean whiteboard:', url);
             renderBlankBackground('whiteboard');
+            if (CAN_MANAGE_ROOM) {
+                setWhiteboardBg('whiteboard');
+            }
             return;
         }
         const videoWrapper = document.getElementById('whiteboardVideoWrapper');
         const videoEl = document.getElementById('whiteboardHtml5Video');
         const ytFrame = document.getElementById('whiteboardYoutubeFrame');
         const titleBadge = document.getElementById('wbVideoTitleBadge');
+        const errorBox = document.getElementById('wbVideoErrorBox');
         if (titleBadge) titleBadge.textContent = title || 'فيديو تعليمي';
+        if (errorBox) errorBox.classList.add('hidden');
 
         if (videoWrapper) {
             videoWrapper.classList.remove('hidden');
@@ -6114,6 +6940,10 @@
                 ytFrame.src = embedUrl;
                 ytFrame.classList.remove('hidden');
             } else if (videoEl) {
+                videoEl.onerror = () => {
+                    console.warn('Video failed to load in whiteboard:', targetUrl);
+                    if (errorBox) errorBox.classList.remove('hidden');
+                };
                 if (videoEl.src !== targetUrl) {
                     videoEl.src = targetUrl;
                     videoEl.load();
@@ -6121,6 +6951,11 @@
                 videoEl.classList.remove('hidden');
                 try { videoEl.pause(); } catch(e) {}
             }
+        }
+        selectWbTool('select');
+        const drawCanvas = document.getElementById('whiteboardDrawCanvas');
+        if (drawCanvas) {
+            drawCanvas.style.pointerEvents = 'none';
         }
         ensureCanvasLayerDimensions();
     }
@@ -6149,6 +6984,10 @@
         renderBrowserBackground(normalizedUrl, title);
         selectWbTool('select');
         broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
+
+        if (typeof ensureTeacherAudioAlive === 'function') {
+            ensureTeacherAudioAlive();
+        }
 
         fetch(`/classroom/${ROOM_ID}/whiteboard`, {
             method: 'POST',
@@ -6182,6 +7021,10 @@
         selectWbTool('select');
         broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
 
+        if (typeof ensureTeacherAudioAlive === 'function') {
+            ensureTeacherAudioAlive();
+        }
+
         fetch(`/classroom/${ROOM_ID}/whiteboard`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
@@ -6196,6 +7039,14 @@
         const drawCanvas = document.getElementById('whiteboardDrawCanvas');
         if (drawCanvas) {
             drawCanvas.style.pointerEvents = 'auto';
+        }
+        // استعادة وصيانة استمرار صوت المعلم فوراً عند إغلاق الفيديو أو المتصفح والرجوع للشرح
+        if (typeof ensureTeacherAudioAlive === 'function') {
+            ensureTeacherAudioAlive();
+        }
+        // إشعار جميع الطلاب بإعادة تشغيل وتفعيل مسار صوت الأستاذ فوراً
+        if (typeof broadcastP2P === 'function') {
+            broadcastP2P({ type: 'teacher_audio_resume' });
         }
     }
 
@@ -6283,13 +7134,20 @@
         const titles = { whiteboard: 'سبورة بيضاء تفاعلية', blackboard: 'سبورة سوداء', grid: 'شبكة مربعات الشرح' };
         const icons = { whiteboard: '📋', blackboard: '⬛', grid: '📐' };
 
-        document.getElementById('wbModeIcon').textContent = icons[type] || '📋';
-        document.getElementById('wbModeText').textContent = titles[type] || 'سبورة تفاعلية';
+        const modeIcon = document.getElementById('wbModeIcon');
+        const modeText = document.getElementById('wbModeText');
+        if (modeIcon) modeIcon.textContent = icons[type] || '📋';
+        if (modeText) modeText.textContent = titles[type] || 'سبورة تفاعلية';
         document.getElementById('wbPageNavControls')?.classList.add('hidden');
         document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
 
         wbCurrentBg = { type: type, url: null, title: titles[type], page_num: 1 };
         renderBlankBackground(type);
+        selectWbTool('pen');
+        const drawCanvas = document.getElementById('whiteboardDrawCanvas');
+        if (drawCanvas) {
+            drawCanvas.style.pointerEvents = 'auto';
+        }
         broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
 
         fetch(`/classroom/${ROOM_ID}/whiteboard`, {
@@ -6433,7 +7291,6 @@
         }
 
         const pdfOptions = {
-            withCredentials: true,
             cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
             cMapPacked: true,
             standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
@@ -6441,6 +7298,7 @@
             disableFontFace: false
         };
 
+        // 1. المحاولة المباشرة بـ PDF.js
         try {
             const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, url: targetUrl });
             const doc = await loadingTask.promise;
@@ -6448,9 +7306,24 @@
             return doc;
         } catch (directErr) {
             console.warn('Direct PDF load failed, attempting ArrayBuffer fallback fetch:', directErr);
-            const res = await fetch(targetUrl, { credentials: 'include' });
-            if (!res.ok) throw new Error('HTTP ' + res.status + ' loading PDF');
-            const arrayBuffer = await res.arrayBuffer();
+            // 2. المحاولة عبر ArrayBuffer من نفس النطاق (same-origin)
+            try {
+                const res = await fetch(targetUrl, { credentials: 'same-origin' });
+                if (res.ok) {
+                    const arrayBuffer = await res.arrayBuffer();
+                    const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, data: arrayBuffer });
+                    const doc = await loadingTask.promise;
+                    doc._url = url;
+                    return doc;
+                }
+            } catch (sameOriginErr) {
+                console.warn('same-origin fetch failed, trying generic fetch:', sameOriginErr);
+            }
+
+            // 3. المحاولة بدون credentials لتخطي أي قيود CORS للمجالات الخارجية أو الاستضافة
+            const resGeneric = await fetch(targetUrl);
+            if (!resGeneric.ok) throw new Error('HTTP ' + resGeneric.status + ' loading PDF');
+            const arrayBuffer = await resGeneric.arrayBuffer();
             const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, data: arrayBuffer });
             const doc = await loadingTask.promise;
             doc._url = url;
@@ -6580,6 +7453,7 @@
             redrawWhiteboard();
         } catch (e) {
             console.error('PDF rendering error:', e);
+            showLiveToast('تعذر عرض ملف PDF، يرجى التحقق من اتصالك أو أعد المحاولة.', '⚠️');
         }
     }
 
@@ -6807,13 +7681,23 @@
 
     function renderImageBackground(url) {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            try {
+                const u = new URL(url);
+                if (u.origin !== window.location.origin) {
+                    img.crossOrigin = 'anonymous';
+                }
+            } catch(e) {}
+        }
         img.onload = () => {
             const bgCanvas = document.getElementById('whiteboardBgCanvas');
             const drawCanvas = document.getElementById('whiteboardDrawCanvas');
             const stage = document.getElementById('wbCanvasStage');
             const container = document.getElementById('whiteboardContainer');
             if (!bgCanvas || !drawCanvas) return;
+
+            const w = img.naturalWidth || img.width || 1200;
+            const h = img.naturalHeight || img.height || 800;
 
             const isPortrait = (h > w * 1.05);
             if (isPortrait) {
@@ -6868,10 +7752,19 @@
                 drawCanvas.style.objectFit = 'contain';
             }
 
+            bgCanvas.width = w;
+            bgCanvas.height = h;
+            drawCanvas.width = w;
+            drawCanvas.height = h;
+
             const ctx = bgCanvas.getContext('2d');
             ctx.clearRect(0, 0, w, h);
             ctx.drawImage(img, 0, 0, w, h);
             redrawWhiteboard();
+        };
+        img.onerror = (e) => {
+            console.error('Failed to load image for whiteboard:', url, e);
+            showLiveToast('تعذر تحميل الصورة في السبورة.', '⚠️');
         };
         img.src = url;
     }
@@ -7060,9 +7953,17 @@
                 document.getElementById('wbPageNavControls')?.classList.add('hidden');
                 document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
             } else if (wbCurrentBg.type === 'video' && wbCurrentBg.url) {
-                renderVideoBackground(wbCurrentBg.url, wbCurrentBg.title);
-                document.getElementById('wbPageNavControls')?.classList.add('hidden');
-                document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
+                if (!wbCurrentBg.url || wbCurrentBg.url.startsWith('blob:')) {
+                    hideMediaLayers();
+                    renderBlankBackground('whiteboard');
+                    if (CAN_MANAGE_ROOM) {
+                        setWhiteboardBg('whiteboard');
+                    }
+                } else {
+                    renderVideoBackground(wbCurrentBg.url, wbCurrentBg.title);
+                    document.getElementById('wbPageNavControls')?.classList.add('hidden');
+                    document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
+                }
             } else if (wbCurrentBg.type === 'pdf' && wbCurrentBg.url) {
                 hideMediaLayers();
                 await renderPdfPage(wbCurrentBg.url, wbCurrentBg.page_num, wbCurrentBg.scale);
@@ -7090,6 +7991,8 @@
     window.addEventListener('DOMContentLoaded', () => {
         initLocalMedia();
         initWhiteboard();
+        // تمرير سجل الدردشة لآخر الرسائل تلقائياً فور تحميل الصفحة
+        scrollChatToBottom(false);
         // على شاشات الجوال: التأكد من تفعيل عرض السبورة التفاعلية فورياً للطالب
         if (window.innerWidth < 1024) {
             switchMobileView('whiteboard');

@@ -616,11 +616,31 @@ class LevelResourceController extends Controller
     {
         $resource = LevelResource::findOrFail($id);
 
-        // حماية الموارد الخاصة بالأستاذ فقط (منع وصول الطلاب إليها)
+        // حماية الموارد الخاصة بالأستاذ فقط: السماح للكادر أو للطلاب المسجلين بالمجموعة/الفصل التفاعلي
         $user = auth()->user();
         if ($resource->target_audience === 'teacher') {
-            if (! $user || (! $user->isAdmin() && ! $user->isSupervisor() && ! $user->isTeacher())) {
-                abort(403, 'عذراً، هذا المورد مخصص للكادر التعليمي والمعلمين فقط.');
+            $isStaff = $user && ($user->isAdmin() || $user->isSupervisor() || $user->isTeacher());
+            if (! $isStaff) {
+                $isAllowed = false;
+                if ($user && $user->isStudent()) {
+                    if ($resource->course_id) {
+                        $isAllowed = $user->studyGroups()->where('course_id', $resource->course_id)->exists()
+                            || $user->enrollments()->where('course_id', $resource->course_id)->exists();
+                    }
+                    if (! $isAllowed && $resource->level_id) {
+                        $isAllowed = $user->studyGroups()->where('level_id', $resource->level_id)->exists()
+                            || $user->enrollments()->where('level_id', $resource->level_id)->exists();
+                    }
+                }
+                if (! $isAllowed) {
+                    $roomId = request()->query('room_id') ?: request()->header('X-Room-Id');
+                    if ($roomId) {
+                        $isAllowed = ClassroomParticipant::where('room_id', $roomId)->where('user_id', $user?->id)->exists();
+                    }
+                }
+                if (! $isAllowed) {
+                    abort(403, 'عذراً، هذا المورد مخصص للكادر التعليمي والمعلمين أو طلاب المجموعة المسجلين.');
+                }
             }
         }
 
@@ -672,12 +692,16 @@ class LevelResourceController extends Controller
             $mimeType = 'application/pdf';
         }
 
+        $origin = request()->header('Origin') ?: url('/');
+
         return response()->file($foundPath, [
             'Content-Type' => $mimeType,
             'Accept-Ranges' => 'bytes',
-            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Origin' => $origin,
+            'Access-Control-Allow-Credentials' => 'true',
             'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
-            'Access-Control-Allow-Headers' => '*',
+            'Access-Control-Allow-Headers' => 'Range, Authorization, Content-Type, X-Requested-With, Accept, Origin',
+            'Access-Control-Expose-Headers' => 'Content-Range, Content-Length, Accept-Ranges',
             'Content-Disposition' => 'inline; filename="'.($resource->file_name ?: basename($foundPath)).'"',
         ]);
     }
@@ -687,11 +711,25 @@ class LevelResourceController extends Controller
     {
         $resource = LevelResource::findOrFail($id);
 
-        // حماية الموارد الخاصة بالأستاذ فقط (منع وصول الطلاب إليها)
+        // حماية الموارد الخاصة بالأستاذ فقط: السماح للكادر أو للطلاب المسجلين بالمجموعة
         $user = auth()->user();
         if ($resource->target_audience === 'teacher') {
-            if (! $user || (! $user->isAdmin() && ! $user->isSupervisor() && ! $user->isTeacher())) {
-                abort(403, 'عذراً، هذا المورد مخصص للكادر التعليمي والمعلمين فقط.');
+            $isStaff = $user && ($user->isAdmin() || $user->isSupervisor() || $user->isTeacher());
+            if (! $isStaff) {
+                $isAllowed = false;
+                if ($user && $user->isStudent()) {
+                    if ($resource->course_id) {
+                        $isAllowed = $user->studyGroups()->where('course_id', $resource->course_id)->exists()
+                            || $user->enrollments()->where('course_id', $resource->course_id)->exists();
+                    }
+                    if (! $isAllowed && $resource->level_id) {
+                        $isAllowed = $user->studyGroups()->where('level_id', $resource->level_id)->exists()
+                            || $user->enrollments()->where('level_id', $resource->level_id)->exists();
+                    }
+                }
+                if (! $isAllowed) {
+                    abort(403, 'عذراً، هذا المورد مخصص للكادر التعليمي والمعلمين أو طلاب المجموعة المسجلين.');
+                }
             }
         }
 
@@ -725,8 +763,20 @@ class LevelResourceController extends Controller
             return back()->with('error', "عذراً، الملف المطلوب غير متوفر على الخادم (المسار: {$resource->file_path}).");
         }
 
-        $downloadName = $resource->file_name ?: ($resource->title.'.'.pathinfo($foundPath, PATHINFO_EXTENSION));
+        $ext = pathinfo($foundPath, PATHINFO_EXTENSION);
+        $baseName = $resource->file_name ?: $resource->title;
+        if (! str_ends_with(strtolower($baseName), '.'.$ext)) {
+            $baseName .= '.'.$ext;
+        }
+        $safeAscii = preg_replace('/[^\x20-\x7E]/', '', pathinfo($baseName, PATHINFO_FILENAME)) ?: 'resource';
+        $safeAscii .= '.'.$ext;
 
-        return response()->download($foundPath, $downloadName);
+        $origin = request()->header('Origin') ?: url('/');
+
+        return response()->download($foundPath, $baseName, [
+            'Access-Control-Allow-Origin' => $origin,
+            'Access-Control-Allow-Credentials' => 'true',
+            'Content-Disposition' => 'attachment; filename="'.$safeAscii.'"; filename*=UTF-8\'\''.rawurlencode($baseName),
+        ]);
     }
 }
