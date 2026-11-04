@@ -995,9 +995,9 @@ HTML
             return response()->json(['error' => 'عذراً، فقط المعلم ومسؤول الجلسة يمكنهم منح مكافآت النجوم.'], 403);
         }
 
-        $studentId = $request->input('student_id');
-        $amount = max(1, min(10, (int) $request->input('amount', 1)));
-        $note = $request->input('note', 'مشاركة وتفاعل متميز في الحصة ⭐');
+        $studentId = $request->input('student_id') ?? $request->input('user_id');
+        $amount = max(1, min(10, (int) ($request->input('amount') ?? $request->input('stars_count') ?? 1)));
+        $note = $request->input('note') ?? $request->input('reason') ?? 'مشاركة وتفاعل متميز في الحصة ⭐';
 
         if ($studentId === 'all') {
             // منح مكافأة لجميع الطلاب الحاضرين في الغرفة
@@ -1026,6 +1026,18 @@ HTML
                         ->whereDate('session_date', now()->toDateString())
                         ->latest()
                         ->first();
+                    if (! $activeSession) {
+                        $sessionNum = (GroupSession::where('study_group_id', $group->id)->max('session_number') ?? 0) + 1;
+                        $activeSession = GroupSession::create([
+                            'study_group_id' => $group->id,
+                            'teacher_id' => $user->id,
+                            'session_date' => now()->toDateString(),
+                            'session_number' => $sessionNum,
+                            'lesson_topic' => 'حصة تدريبية تفاعلية حية',
+                            'evaluator_name' => $user->name,
+                            'evaluator_role' => $user->role,
+                        ]);
+                    }
                     if ($activeSession) {
                         $eval = GroupStudentEvaluation::firstOrCreate(
                             [
@@ -1040,6 +1052,7 @@ HTML
                                 'attendance_status' => 'present',
                             ]
                         );
+                        $eval->increment('stars_awarded', $amount);
                         $eval->increment('system_total_score', $amount * 2);
                         $eval->increment('participation_score', $amount);
                     }
@@ -1057,6 +1070,7 @@ HTML
                 'success' => true,
                 'is_all' => true,
                 'amount' => $amount,
+                'stars_count' => $amount,
                 'students' => $rewarded,
                 'message' => "تم منح {$amount} ⭐ لجميع الطلاب الحاضرين بنجاح!",
             ]);
@@ -1081,6 +1095,18 @@ HTML
                 ->whereDate('session_date', now()->toDateString())
                 ->latest()
                 ->first();
+            if (! $activeSession) {
+                $sessionNum = (GroupSession::where('study_group_id', $group->id)->max('session_number') ?? 0) + 1;
+                $activeSession = GroupSession::create([
+                    'study_group_id' => $group->id,
+                    'teacher_id' => $user->id,
+                    'session_date' => now()->toDateString(),
+                    'session_number' => $sessionNum,
+                    'lesson_topic' => 'حصة تدريبية تفاعلية حية',
+                    'evaluator_name' => $user->name,
+                    'evaluator_role' => $user->role,
+                ]);
+            }
             if ($activeSession) {
                 $eval = GroupStudentEvaluation::firstOrCreate(
                     [
@@ -1095,6 +1121,7 @@ HTML
                         'attendance_status' => 'present',
                     ]
                 );
+                $eval->increment('stars_awarded', $amount);
                 $eval->increment('system_total_score', $amount * 2);
                 $eval->increment('participation_score', $amount);
             }
@@ -1112,6 +1139,7 @@ HTML
             'student_id' => $student->id,
             'student_name' => $student->name,
             'amount' => $amount,
+            'stars_count' => $amount,
             'new_balance' => $newBalance,
             'message' => "تم منح {$amount} ⭐ للطالب ({$student->name}) بنجاح! رصيده الحالي: {$newBalance} ⭐",
         ]);

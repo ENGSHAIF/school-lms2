@@ -7,10 +7,15 @@
     <title>الفصل التفاعلي المباشر (Air Class Live) - {{ $title ?? ($booking->topic ?? 'محادثة حية') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
+    <script>
+        if (!window.pdfjsLib) {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
+        }
+    </script>
     <script>
         if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = window.location.origin + '/vendor/pdfjs/pdf.worker.min.js';
         }
     </script>
     <style>
@@ -1016,7 +1021,7 @@
                             </button>
                         @endif
                     </div>
-                    <video id="whiteboardHtml5Video" playsinline class="hidden w-full h-full max-h-full object-contain {{ ! $isTeacher ? 'pointer-events-none' : '' }}"></video>
+                    <video id="whiteboardHtml5Video" playsinline webkit-playsinline preload="auto" class="hidden w-full h-full max-h-full object-contain {{ ! $isTeacher ? 'pointer-events-none' : '' }}"></video>
                     <iframe id="whiteboardYoutubeFrame" class="hidden w-full h-full max-w-full max-h-full border-0 {{ ! $isTeacher ? 'pointer-events-none' : '' }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
                     @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
@@ -1857,10 +1862,18 @@
     };
 
     function normalizeMediaUrl(url) {
-        if (!url || typeof url !== 'string') return url;
+        if (!url || typeof url !== 'string' || !url.trim()) return url;
         try {
             const parsed = new URL(url, window.location.href);
-            if (parsed.pathname.startsWith('/resources/') || parsed.pathname.startsWith('/storage/') || parsed.pathname.startsWith('/classroom/')) {
+            const isLocalHost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === window.location.hostname;
+            const isInternalPath = parsed.pathname.startsWith('/resources/')
+                || parsed.pathname.startsWith('/uploads/')
+                || parsed.pathname.startsWith('/storage/')
+                || parsed.pathname.startsWith('/classroom/')
+                || parsed.pathname.startsWith('/activities/')
+                || parsed.pathname.startsWith('/vendor/');
+            const isThirdParty = parsed.hostname.includes('youtube') || parsed.hostname.includes('youtu.be') || parsed.hostname.includes('google');
+            if (!isThirdParty && (isLocalHost || isInternalPath || url.startsWith('/'))) {
                 return window.location.origin + parsed.pathname + parsed.search;
             }
         } catch(e) {
@@ -1983,7 +1996,10 @@
                             vSyncEl.currentTime = data.time;
                         }
                         if (data.action === 'play') {
-                            vSyncEl.play().catch(() => {});
+                            vSyncEl.play().catch(() => {
+                                vSyncEl.muted = true;
+                                vSyncEl.play().catch(console.error);
+                            });
                         } else if (data.action === 'pause') {
                             vSyncEl.pause();
                         }
@@ -4283,8 +4299,11 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
+                    student_id: targetUserId,
                     user_id: targetUserId,
+                    amount: starsCount,
                     stars_count: starsCount,
+                    note: reason,
                     reason: reason
                 })
             });
@@ -4321,7 +4340,7 @@
 
                 alert(`⭐ تم منح ${starsCount} نجمة بنجاح وإضافتها لرصيد تقييمات الطالب!`);
             } else {
-                alert('عذراً: ' + (data.message || 'تعذر إضافة النجمة'));
+                alert('عذراً: ' + (data.error || data.message || 'تعذر إضافة النجمة'));
             }
         } catch (e) {
             console.error('Star reward error:', e);
@@ -6087,14 +6106,18 @@
 
         if (videoWrapper) {
             videoWrapper.classList.remove('hidden');
-            const isYoutube = url.includes('youtube.com') || url.includes('youtu.be') || url.includes('/embed/');
+            const targetUrl = normalizeMediaUrl(url);
+            const isYoutube = targetUrl.includes('youtube.com') || targetUrl.includes('youtu.be') || targetUrl.includes('/embed/');
             if (isYoutube && ytFrame) {
-                const ytId = parseYoutubeId(url);
-                const embedUrl = ytId ? `https://www.youtube.com/embed/${ytId}?rel=0` : url;
+                const ytId = parseYoutubeId(targetUrl);
+                const embedUrl = ytId ? `https://www.youtube.com/embed/${ytId}?rel=0` : targetUrl;
                 ytFrame.src = embedUrl;
                 ytFrame.classList.remove('hidden');
             } else if (videoEl) {
-                videoEl.src = url;
+                if (videoEl.src !== targetUrl) {
+                    videoEl.src = targetUrl;
+                    videoEl.load();
+                }
                 videoEl.classList.remove('hidden');
                 try { videoEl.pause(); } catch(e) {}
             }
@@ -6112,16 +6135,25 @@
         document.getElementById('wbPageNavControls')?.classList.add('hidden');
         document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
 
-        wbCurrentBg = { type: 'browser', url: url, title: title, page_num: 1 };
+        const normalizedUrl = normalizeMediaUrl(url);
+        wbCurrentBg = {
+            type: 'browser',
+            bg_type: 'browser',
+            url: normalizedUrl,
+            bg_url: normalizedUrl,
+            title: title,
+            bg_title: title,
+            page_num: 1
+        };
         wbStrokes = [];
-        renderBrowserBackground(url, title);
+        renderBrowserBackground(normalizedUrl, title);
         selectWbTool('select');
         broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
 
         fetch(`/classroom/${ROOM_ID}/whiteboard`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
-            body: JSON.stringify({ action: 'set_background', bg_type: 'browser', bg_url: url, bg_title: title, page_num: 1 })
+            body: JSON.stringify({ action: 'set_background', bg_type: 'browser', bg_url: normalizedUrl, bg_title: title, page_num: 1 })
         }).catch(console.error);
     }
 
@@ -6135,16 +6167,25 @@
         document.getElementById('wbPageNavControls')?.classList.add('hidden');
         document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
 
-        wbCurrentBg = { type: 'video', url: url, title: title, page_num: 1 };
+        const normalizedUrl = normalizeMediaUrl(url);
+        wbCurrentBg = {
+            type: 'video',
+            bg_type: 'video',
+            url: normalizedUrl,
+            bg_url: normalizedUrl,
+            title: title,
+            bg_title: title,
+            page_num: 1
+        };
         wbStrokes = [];
-        renderVideoBackground(url, title);
+        renderVideoBackground(normalizedUrl, title);
         selectWbTool('select');
         broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
 
         fetch(`/classroom/${ROOM_ID}/whiteboard`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
-            body: JSON.stringify({ action: 'set_background', bg_type: 'video', bg_url: url, bg_title: title, page_num: 1 })
+            body: JSON.stringify({ action: 'set_background', bg_type: 'video', bg_url: normalizedUrl, bg_title: title, page_num: 1 })
         }).catch(console.error);
     }
 
@@ -6163,6 +6204,8 @@
         closeAllWbFlyouts();
         hideMediaLayers();
 
+        const normalizedUrl = normalizeMediaUrl(url);
+
         // 1. حفظ شروحات وملاحظات الصفحة الحالية في الكاش إن وجد كتاب PDF مفتوح
         if (wbCurrentBg && wbCurrentBg.type === 'pdf' && wbCurrentBg.url && wbCurrentPage) {
             wbPdfPageStrokesCache[getPdfCacheKey(wbCurrentBg.url, wbCurrentPage)] = JSON.parse(JSON.stringify(wbStrokes));
@@ -6173,11 +6216,19 @@
         if (modeIcon) modeIcon.textContent = (type === 'pdf') ? '📖' : '🖼️';
         if (modeText) modeText.textContent = title;
 
-        wbCurrentBg = { type: type, url: url, title: title, page_num: pageNum };
+        wbCurrentBg = {
+            type: type,
+            bg_type: type,
+            url: normalizedUrl,
+            bg_url: normalizedUrl,
+            title: title,
+            bg_title: title,
+            page_num: pageNum
+        };
 
         // 2. تحميل شروحات وملاحظات الصفحة الجديدة إذا وُجدت
         if (type === 'pdf') {
-            const cacheKey = getPdfCacheKey(url, pageNum);
+            const cacheKey = getPdfCacheKey(normalizedUrl, pageNum);
             wbStrokes = wbPdfPageStrokesCache[cacheKey] ? JSON.parse(JSON.stringify(wbPdfPageStrokesCache[cacheKey])) : [];
         } else {
             wbStrokes = [];
@@ -6187,12 +6238,12 @@
         redrawWhiteboard();
 
         if (type === 'pdf') {
-            await renderPdfPage(url, pageNum, wbPdfScale);
+            await renderPdfPage(normalizedUrl, pageNum, wbPdfScale);
             if (IS_TEACHER) {
                 document.getElementById('wbPageNavControls')?.classList.remove('hidden');
             }
         } else {
-            renderImageBackground(url);
+            renderImageBackground(normalizedUrl);
             document.getElementById('wbPageNavControls')?.classList.add('hidden');
             document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
         }
@@ -6212,7 +6263,7 @@
                 body: JSON.stringify({
                     action: 'set_background',
                     bg_type: type,
-                    bg_url: url,
+                    bg_url: normalizedUrl,
                     bg_title: title,
                     page_num: pageNum,
                     scale: wbCurrentBg.scale,
@@ -6259,14 +6310,23 @@
         const isPdf = file.type === 'application/pdf' || fileExt === 'pdf';
         const isImage = file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExt);
 
-        // 1. فتح فوري محلياً عبر Blob URL ليبدأ المعلم الشرح أو المشاهدة فوراً بدون أي تأخير
+        // 1. فتح فوري محلياً عبر Blob URL ليبدأ المعلم الشرح أو المشاهدة فوراً بدون بث الرابط المؤقت للطلاب
         const localBlobUrl = URL.createObjectURL(file);
+        closeAllWbFlyouts();
+        hideMediaLayers();
+        const modeIcon = document.getElementById('wbModeIcon');
+        const modeText = document.getElementById('wbModeText');
+        if (modeIcon) modeIcon.textContent = isVideo ? '🎬' : (isPdf ? '📖' : '🖼️');
+        if (modeText) modeText.textContent = file.name;
+
         if (isVideo) {
-            openVideoInWorkspace(localBlobUrl, file.name, false);
+            renderVideoBackground(localBlobUrl, file.name);
+            selectWbTool('select');
         } else if (isPdf) {
-            openResourceInWorkspace(localBlobUrl, file.name, 'pdf', 1);
+            renderPdfPage(localBlobUrl, 1, wbPdfScale);
+            document.getElementById('wbPageNavControls')?.classList.remove('hidden');
         } else if (isImage) {
-            openResourceInWorkspace(localBlobUrl, file.name, 'image', 1);
+            renderImageBackground(localBlobUrl);
         }
 
         // 2. إظهار شريط تقدم الرفع
@@ -6308,11 +6368,15 @@
                         if (pFill) pFill.style.width = '100%';
                         if (pPct) pPct.textContent = '100%';
 
-                        // استبدال الرابط المؤقت بالرابط السيرفري المعتمد وبثه للطلاب
-                        wbCurrentBg.url = data.url;
-                        wbCurrentBg.title = data.title || file.name;
-                        broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
-                        commitWhiteboardChange();
+                        // فتح وبث الرابط السيرفري المعتمد للطلاب
+                        const normalizedUrl = normalizeMediaUrl(data.url);
+                        if (isVideo) {
+                            openVideoInWorkspace(normalizedUrl, data.title || file.name, false);
+                        } else if (isPdf) {
+                            openResourceInWorkspace(normalizedUrl, data.title || file.name, 'pdf', 1);
+                        } else if (isImage) {
+                            openResourceInWorkspace(normalizedUrl, data.title || file.name, 'image', 1);
+                        }
 
                         setTimeout(() => {
                             pBar?.classList.add('hidden');
@@ -6360,7 +6424,16 @@
             }
         } catch(e){}
 
+        if (!window.pdfjsLib) {
+            throw new Error('مكتبة PDF.js غير متوفرة حالياً.');
+        }
+
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = window.location.origin + '/vendor/pdfjs/pdf.worker.min.js';
+        }
+
         const pdfOptions = {
+            withCredentials: true,
             cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
             cMapPacked: true,
             standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
@@ -6375,7 +6448,7 @@
             return doc;
         } catch (directErr) {
             console.warn('Direct PDF load failed, attempting ArrayBuffer fallback fetch:', directErr);
-            const res = await fetch(targetUrl, { credentials: 'same-origin' });
+            const res = await fetch(targetUrl, { credentials: 'include' });
             if (!res.ok) throw new Error('HTTP ' + res.status + ' loading PDF');
             const arrayBuffer = await res.arrayBuffer();
             const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, data: arrayBuffer });
@@ -6946,16 +7019,26 @@
 
     async function applyServerWhiteboardState(state) {
         if (!state) return;
-        const normalizedUrl = normalizeMediaUrl(state.bg_url);
-        const bgChanged = (state.bg_type !== wbCurrentBg.type || normalizedUrl !== wbCurrentBg.url || state.page_num !== wbCurrentBg.page_num);
+        const rawUrl = state.bg_url || state.url;
+        const normalizedUrl = normalizeMediaUrl(rawUrl);
+        const bgType = state.bg_type || state.type || 'whiteboard';
+        const bgTitle = state.bg_title || state.title || 'سبورة الشرح';
+        const pageNum = state.page_num || state.pageNum || 1;
+        const scale = state.scale || null;
+        const teacherWidth = state.teacher_cont_width || state.teacherContWidth || 1200;
+
+        const bgChanged = (bgType !== wbCurrentBg.type || normalizedUrl !== wbCurrentBg.url || pageNum !== wbCurrentBg.page_num);
 
         wbCurrentBg = {
-            type: state.bg_type || 'whiteboard',
+            type: bgType,
+            bg_type: bgType,
             url: normalizedUrl || null,
-            title: state.bg_title || 'سبورة الشرح',
-            page_num: state.page_num || 1,
-            scale: state.scale || null,
-            teacherContWidth: state.teacher_cont_width || state.teacherContWidth || 1200
+            bg_url: normalizedUrl || null,
+            title: bgTitle,
+            bg_title: bgTitle,
+            page_num: pageNum,
+            scale: scale,
+            teacherContWidth: teacherWidth
         };
 
         const modeText = document.getElementById('wbModeText');
