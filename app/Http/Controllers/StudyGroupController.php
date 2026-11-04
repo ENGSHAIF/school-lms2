@@ -744,6 +744,20 @@ class StudyGroupController extends Controller
     // بث وتشغيل ملف نشاط المجموعة (فيديو، تسجيل صوتي، مستند، صورة)
     public function streamActivity($id)
     {
+        // 1. التعامل الفوري مع طلبات الاستطلاع المسبق لـ CORS (OPTIONS Preflight)
+        if (request()->isMethod('OPTIONS')) {
+            $origin = request()->header('Origin') ?: '*';
+
+            return response('', 204, [
+                'Access-Control-Allow-Origin' => $origin,
+                'Access-Control-Allow-Credentials' => 'true',
+                'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Range, Authorization, Content-Type, X-Requested-With, Accept, Origin, X-Room-Id',
+                'Access-Control-Expose-Headers' => 'Content-Range, Content-Length, Accept-Ranges',
+                'Access-Control-Max-Age' => '86400',
+            ]);
+        }
+
         $activity = GroupActivity::findOrFail($id);
 
         if ($activity->external_url && ! $activity->file_path) {
@@ -751,14 +765,21 @@ class StudyGroupController extends Controller
         }
 
         $cleanPath = ltrim(str_replace('\\', '/', $activity->file_path ?? ''), '/');
+        $baseName = basename($cleanPath);
 
         $candidatePaths = [
             public_path($cleanPath),
             base_path('public/'.$cleanPath),
+            base_path('public_html/'.$cleanPath),
             base_path($cleanPath),
-            public_path('uploads/group_activities/'.basename($cleanPath)),
-            public_path('uploads/level_resources/'.basename($cleanPath)),
+            public_path('uploads/group_activities/'.$baseName),
+            base_path('public/uploads/group_activities/'.$baseName),
+            base_path('public_html/uploads/group_activities/'.$baseName),
+            public_path('uploads/level_resources/'.$baseName),
+            base_path('public/uploads/level_resources/'.$baseName),
+            base_path('public_html/uploads/level_resources/'.$baseName),
             storage_path('app/public/'.$cleanPath),
+            storage_path('app/'.$cleanPath),
         ];
 
         $foundPath = null;
@@ -766,6 +787,30 @@ class StudyGroupController extends Controller
             if (! empty($p) && file_exists($p) && ! is_dir($p)) {
                 $foundPath = $p;
                 break;
+            }
+        }
+
+        // فحص غير حساس لحالة الأحرف
+        if (! $foundPath && ! empty($baseName)) {
+            $uploadDirs = [
+                public_path('uploads/group_activities'),
+                public_path('uploads/level_resources'),
+                base_path('public_html/uploads/group_activities'),
+                base_path('public_html/uploads/level_resources'),
+            ];
+            $targetLower = strtolower($baseName);
+            foreach ($uploadDirs as $dir) {
+                if (is_dir($dir)) {
+                    $files = @scandir($dir);
+                    if ($files) {
+                        foreach ($files as $f) {
+                            if (strtolower($f) === $targetLower && is_file($dir.'/'.$f)) {
+                                $foundPath = $dir.'/'.$f;
+                                break 2;
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -798,18 +843,23 @@ class StudyGroupController extends Controller
             $mimeType = 'application/pdf';
         }
 
-        $origin = request()->header('Origin') ?: url('/');
-
-        return response()->file($foundPath, [
+        $originHeader = request()->header('Origin');
+        $headers = [
             'Content-Type' => $mimeType,
             'Accept-Ranges' => 'bytes',
-            'Access-Control-Allow-Origin' => $origin,
-            'Access-Control-Allow-Credentials' => 'true',
             'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
             'Access-Control-Allow-Headers' => 'Range, Authorization, Content-Type, X-Requested-With, Accept, Origin',
             'Access-Control-Expose-Headers' => 'Content-Range, Content-Length, Accept-Ranges',
             'Content-Disposition' => 'inline; filename="'.($activity->file_name ?: basename($foundPath)).'"',
-        ]);
+            'Cache-Control' => 'public, max-age=86400',
+        ];
+
+        if ($originHeader) {
+            $headers['Access-Control-Allow-Origin'] = $originHeader;
+            $headers['Access-Control-Allow-Credentials'] = 'true';
+        }
+
+        return response()->file($foundPath, $headers);
     }
 
     // تحميل ملف النشاط مباشرة للهاتف أو الكمبيوتر

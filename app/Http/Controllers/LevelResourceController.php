@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\Booking;
+use App\Models\ClassroomParticipant;
 use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\Exam;
@@ -614,34 +616,58 @@ class LevelResourceController extends Controller
     // بث وتشغيل ملف المورد (فيديو، صوت، مستند، صورة) مع دعم Range Requests لتشغيل وسلاسة الفيديو
     public function streamResource($id)
     {
+        // 1. التعامل الفوري مع طلبات الاستطلاع المسبق لـ CORS (OPTIONS Preflight)
+        if (request()->isMethod('OPTIONS')) {
+            $origin = request()->header('Origin') ?: '*';
+
+            return response('', 204, [
+                'Access-Control-Allow-Origin' => $origin,
+                'Access-Control-Allow-Credentials' => 'true',
+                'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Range, Authorization, Content-Type, X-Requested-With, Accept, Origin, X-Room-Id',
+                'Access-Control-Expose-Headers' => 'Content-Range, Content-Length, Accept-Ranges',
+                'Access-Control-Max-Age' => '86400',
+            ]);
+        }
+
         $resource = LevelResource::findOrFail($id);
 
-        // حماية الموارد الخاصة بالأستاذ فقط: السماح للكادر أو للطلاب المسجلين بالمجموعة/الفصل التفاعلي
+        // 2. التحقق من صلاحيات استعراض المورد (كادر، طلاب مسجلين، أو طلاب في الفصل الحي التفاعلي)
         $user = auth()->user();
-        if ($resource->target_audience === 'teacher') {
-            $isStaff = $user && ($user->isAdmin() || $user->isSupervisor() || $user->isTeacher());
-            if (! $isStaff) {
-                $isAllowed = false;
-                if ($user && $user->isStudent()) {
-                    if ($resource->course_id) {
-                        $isAllowed = $user->studyGroups()->where('course_id', $resource->course_id)->exists()
-                            || $user->enrollments()->where('course_id', $resource->course_id)->exists();
-                    }
-                    if (! $isAllowed && $resource->level_id) {
-                        $isAllowed = $user->studyGroups()->where('level_id', $resource->level_id)->exists()
-                            || $user->enrollments()->where('level_id', $resource->level_id)->exists();
-                    }
+        $roomId = request()->query('room_id') ?: request()->header('X-Room-Id');
+        $isStaff = $user && ($user->isAdmin() || $user->isSupervisor() || $user->isTeacher());
+
+        $isAllowed = false;
+        if ($isStaff) {
+            $isAllowed = true;
+        } elseif ($resource->target_audience !== 'teacher') {
+            // الموارد العامة أو المخصصة للطلاب متاحة دائماً للجميع
+            $isAllowed = true;
+        } else {
+            // مورد مخصص للكادر التعليمي لكن يُسمح للطلاب المسجلين أو الحاضرين بالفصل بمشاهدته
+            if ($user && $user->isStudent()) {
+                if ($resource->course_id) {
+                    $isAllowed = $user->studyGroups()->where('course_id', $resource->course_id)->exists()
+                        || $user->enrollments()->where('course_id', $resource->course_id)->exists();
                 }
-                if (! $isAllowed) {
-                    $roomId = request()->query('room_id') ?: request()->header('X-Room-Id');
-                    if ($roomId) {
-                        $isAllowed = ClassroomParticipant::where('room_id', $roomId)->where('user_id', $user?->id)->exists();
-                    }
-                }
-                if (! $isAllowed) {
-                    abort(403, 'عذراً، هذا المورد مخصص للكادر التعليمي والمعلمين أو طلاب المجموعة المسجلين.');
+                if (! $isAllowed && $resource->level_id) {
+                    $isAllowed = $user->studyGroups()->where('level_id', $resource->level_id)->exists()
+                        || $user->enrollments()->where('level_id', $resource->level_id)->exists();
                 }
             }
+
+            // إذا كان المورد معروضاً بالبث المباشر داخل الغرفة التفاعلية
+            if (! $isAllowed && $roomId) {
+                $isAllowed = ClassroomParticipant::where('room_id', $roomId)
+                    ->when($user, fn ($q) => $q->where('user_id', $user->id))
+                    ->exists()
+                    || StudyGroup::where('room_id', $roomId)->exists()
+                    || Booking::where('room_id', $roomId)->exists();
+            }
+        }
+
+        if (! $isAllowed) {
+            abort(403, 'عذراً، هذا المورد مخصص للكادر التعليمي والمعلمين أو طلاب المجموعة المسجلين.');
         }
 
         if ($resource->external_url && ! $resource->file_path) {
@@ -649,13 +675,20 @@ class LevelResourceController extends Controller
         }
 
         $cleanPath = ltrim(str_replace('\\', '/', $resource->file_path ?? ''), '/');
+        $baseName = basename($cleanPath);
 
+        // 3. البحث في جميع المسارات الممكنة للخادم (Windows / Linux / cPanel / public_html / Storage)
         $candidatePaths = [
             public_path($cleanPath),
             base_path('public/'.$cleanPath),
+            base_path('public_html/'.$cleanPath),
             base_path($cleanPath),
-            public_path('uploads/level_resources/'.basename($cleanPath)),
+            public_path('uploads/level_resources/'.$baseName),
+            base_path('public/uploads/level_resources/'.$baseName),
+            base_path('public_html/uploads/level_resources/'.$baseName),
             storage_path('app/public/'.$cleanPath),
+            storage_path('app/'.$cleanPath),
+            storage_path('app/public/uploads/level_resources/'.$baseName),
         ];
 
         $foundPath = null;
@@ -663,6 +696,30 @@ class LevelResourceController extends Controller
             if (! empty($p) && file_exists($p) && ! is_dir($p)) {
                 $foundPath = $p;
                 break;
+            }
+        }
+
+        // 4. فحص غير حساس لحالة الأحرف (Case-Insensitive Fallback) لخوادم لينكس والإنترنت
+        if (! $foundPath && ! empty($baseName)) {
+            $uploadDirs = [
+                public_path('uploads/level_resources'),
+                base_path('public/uploads/level_resources'),
+                base_path('public_html/uploads/level_resources'),
+                storage_path('app/public/uploads/level_resources'),
+            ];
+            $targetLower = strtolower($baseName);
+            foreach ($uploadDirs as $dir) {
+                if (is_dir($dir)) {
+                    $files = @scandir($dir);
+                    if ($files) {
+                        foreach ($files as $f) {
+                            if (strtolower($f) === $targetLower && is_file($dir.'/'.$f)) {
+                                $foundPath = $dir.'/'.$f;
+                                break 2;
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -692,18 +749,23 @@ class LevelResourceController extends Controller
             $mimeType = 'application/pdf';
         }
 
-        $origin = request()->header('Origin') ?: url('/');
-
-        return response()->file($foundPath, [
+        $originHeader = request()->header('Origin');
+        $headers = [
             'Content-Type' => $mimeType,
             'Accept-Ranges' => 'bytes',
-            'Access-Control-Allow-Origin' => $origin,
-            'Access-Control-Allow-Credentials' => 'true',
             'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
-            'Access-Control-Allow-Headers' => 'Range, Authorization, Content-Type, X-Requested-With, Accept, Origin',
+            'Access-Control-Allow-Headers' => 'Range, Authorization, Content-Type, X-Requested-With, Accept, Origin, X-Room-Id',
             'Access-Control-Expose-Headers' => 'Content-Range, Content-Length, Accept-Ranges',
             'Content-Disposition' => 'inline; filename="'.($resource->file_name ?: basename($foundPath)).'"',
-        ]);
+            'Cache-Control' => 'public, max-age=86400',
+        ];
+
+        if ($originHeader) {
+            $headers['Access-Control-Allow-Origin'] = $originHeader;
+            $headers['Access-Control-Allow-Credentials'] = 'true';
+        }
+
+        return response()->file($foundPath, $headers);
     }
 
     // تحميل ملف المورد مباشرة إلى الهاتف أو الكمبيوتر

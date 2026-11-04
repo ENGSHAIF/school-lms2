@@ -8,14 +8,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
+    <script src="{{ asset('vendor/pdfjs/pdf.worker.min.js') }}"></script>
     <script>
         if (!window.pdfjsLib) {
             document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
         }
+        if (!window.pdfjsWorker) {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"><\/script>');
+        }
     </script>
     <script>
         if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = window.location.origin + '/vendor/pdfjs/pdf.worker.min.js';
+            try {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('vendor/pdfjs/pdf.worker.min.js') }}";
+            } catch(e) {}
         }
     </script>
     <style>
@@ -242,6 +248,24 @@
         $groupImages = $levelResources->filter(fn($r) => $r->type === 'image' || in_array(strtolower(pathinfo($r->file_path ?? '', PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'webp', 'gif']));
         $groupWallPdfs = $groupActivities->filter(fn($a) => !empty($a->file_path) && (str_ends_with(strtolower($a->file_path), '.pdf') || in_array($a->type, ['worksheet', 'assignment'])));
         $groupWallAll = $groupActivities->filter(fn($a) => !empty($a->file_path) || !empty($a->external_url));
+
+        $groupExams = collect();
+        if (isset($group) && $group) {
+            if ($group->relationLoaded('exams') && $group->exams) {
+                $groupExams = $groupExams->merge($group->exams);
+            } elseif (method_exists($group, 'exams')) {
+                $groupExams = $groupExams->merge($group->exams()->get());
+            }
+            if ($group->level_id) {
+                $groupExams = $groupExams->merge(\App\Models\Exam::where('level_id', $group->level_id)->where('is_active', true)->get());
+            }
+            if ($group->course_id) {
+                $groupExams = $groupExams->merge(\App\Models\Exam::where('course_id', $group->course_id)->where('is_active', true)->get());
+            }
+        } elseif (isset($booking) && $booking && $booking->course_id) {
+            $groupExams = $groupExams->merge(\App\Models\Exam::where('course_id', $booking->course_id)->where('is_active', true)->get());
+        }
+        $groupExams = $groupExams->unique('id');
     @endphp
 
     <!-- بانر عائم عالي الوضوح لتفعيل صوت المعلم فوراً عند حظر التشغيل التلقائي بالهواتف -->
@@ -692,7 +716,8 @@
                         <span class="font-bold text-slate-300 text-xs block">📖 المقررات والكتب الرقمية:</span>
                         @forelse($groupBooks as $bk)
                             @php
-                                $bkStreamUrl = $bk->file_path ? route('resources.stream', $bk->id) : $bk->external_url;
+                                $bkStreamUrl = $bk->file_path ? route('resources.stream', ['id' => $bk->id, 'room_id' => $roomId ?? '']) : $bk->external_url;
+                                $bkDirectUrl = $bk->file_path ? asset($bk->file_path) : '';
                             @endphp
                             <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center gap-2">
                                 <div class="truncate min-w-0">
@@ -701,7 +726,7 @@
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
                                     @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
-                                        <button type="button" onclick="openResourceInWorkspace('{{ $bkStreamUrl }}', '{{ addslashes($bk->title) }}', 'pdf', 1)" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                        <button type="button" onclick="openResourceInWorkspace('{{ $bkStreamUrl }}', '{{ addslashes($bk->title) }}', 'pdf', 1, '{{ $bkDirectUrl }}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
                                             <span>🚀</span>
                                             <span>عرض بالشرح</span>
                                         </button>
@@ -725,7 +750,7 @@
                         @php $audios = $levelResources->where('type', 'audio'); @endphp
                         @forelse($audios as $aud)
                             @php
-                                $audStreamUrl = $aud->file_path ? route('resources.stream', $aud->id) : $aud->external_url;
+                                $audStreamUrl = $aud->file_path ? route('resources.stream', ['id' => $aud->id, 'room_id' => $roomId ?? '']) : $aud->external_url;
                             @endphp
                             <div class="p-2 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
                                 <div class="flex justify-between items-center text-[10px] text-purple-300 font-bold">
@@ -753,7 +778,7 @@
                         <span class="font-bold text-slate-300 text-xs block">🎥 الفيديوهات التعليمية (Educational Videos):</span>
                         @forelse($groupVideos as $vid)
                             @php
-                                $vidStreamUrl = $vid->file_path ? route('resources.stream', $vid->id) : $vid->external_url;
+                                $vidStreamUrl = $vid->file_path ? route('resources.stream', ['id' => $vid->id, 'room_id' => $roomId ?? '']) : $vid->external_url;
                                 $isYt = str_contains($vidStreamUrl, 'youtube.com') || str_contains($vidStreamUrl, 'youtu.be');
                             @endphp
                             <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center gap-2">
@@ -762,7 +787,7 @@
                                     <span class="text-[10px] text-slate-500 font-mono">فيديو تعليمي</span>
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
-                                    @if($isTeacher)
+                                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
                                         <button type="button" onclick="openVideoInWorkspace('{{ $vidStreamUrl }}', '{{ addslashes($vid->title) }}', {{ $isYt ? 'true' : 'false' }})" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
                                             <span>▶️</span>
                                             <span>عرض بالشرح</span>
@@ -781,6 +806,73 @@
                         @endforelse
                     </div>
 
+                    <!-- أوراق العمل والبطاقات التعليمية والصور -->
+                    @php
+                        $sidebarWsAndImages = $groupWorksheets->merge($groupImages);
+                    @endphp
+                    @if($sidebarWsAndImages->isNotEmpty())
+                        <div class="space-y-2">
+                            <span class="font-bold text-slate-300 text-xs block">🖼️ أوراق العمل والبطاقات التعليمية:</span>
+                            @foreach($sidebarWsAndImages as $res)
+                                @php
+                                    $resStreamUrl = $res->file_path ? route('resources.stream', ['id' => $res->id, 'room_id' => $roomId ?? '']) : $res->external_url;
+                                    $resDirectUrl = $res->file_path ? asset($res->file_path) : '';
+                                    $isPdf = str_ends_with(strtolower($res->file_path ?? ''), '.pdf');
+                                @endphp
+                                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center gap-2">
+                                    <div class="truncate min-w-0">
+                                        <span class="font-bold text-slate-200 block truncate text-xs">{{ $res->title }}</span>
+                                        <span class="text-[10px] text-emerald-400 font-mono">{{ $isPdf ? 'ورقة عمل PDF' : 'صورة / بطاقة' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                            <button type="button" onclick="openResourceInWorkspace('{{ $resStreamUrl }}', '{{ addslashes($res->title) }}', '{{ $isPdf ? 'pdf' : 'image' }}', 1, '{{ $resDirectUrl }}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                                <span>🚀</span>
+                                                <span>عرض</span>
+                                            </button>
+                                        @endif
+                                        <a href="{{ route('resources.download', $res->id) }}" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700 flex items-center gap-1 shadow-sm" title="تحميل الملف">
+                                            <span>⬇️</span>
+                                            <span>تنزيل</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <!-- الكويزات والاختبارات التفاعلية (Quizzes & Exams) -->
+                    @if($groupExams->isNotEmpty())
+                        <div class="space-y-2">
+                            <span class="font-bold text-slate-300 text-xs block">📝 كويزات واختبارات تفاعلية:</span>
+                            @foreach($groupExams as $exam)
+                                @php
+                                    $examTakeUrl = route('student.exam.take', ['id' => $exam->id, 'groupId' => $group->id ?? null]);
+                                @endphp
+                                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center gap-2">
+                                    <div class="truncate min-w-0">
+                                        <span class="font-bold text-slate-200 block truncate text-xs">{{ $exam->title }}</span>
+                                        <span class="text-[10px] text-amber-400 font-mono">اختبار تفاعلي • {{ $exam->duration_minutes ? $exam->duration_minutes . ' دقيقة' : 'مفتوح' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                            <button type="button" onclick="openBrowserInWorkspace('{{ $examTakeUrl }}', '{{ addslashes($exam->title) }}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow" title="فتح الاختبار في السبورة المركزية">
+                                                <span>🌐</span>
+                                                <span>بالسبورة</span>
+                                            </button>
+                                            <button type="button" onclick="sendChatMessageDirect('📝 رابط اختبار تفاعلي للطلاب: {{ addslashes($exam->title) }}\n{{ $examTakeUrl }}')" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow" title="إرسال الرابط فوراً لدردشة الطلاب">
+                                                <span>💬</span>
+                                            </button>
+                                        @endif
+                                        <a href="{{ $examTakeUrl }}" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-white text-[10px] font-bold rounded-lg transition border border-slate-700 flex items-center gap-1 shadow-sm" title="فتح الاختبار بصفحة مستقلة">
+                                            <span>↗️</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
                     <!-- أنشطة ومرفقات حائط المجموعة -->
                     @if(isset($groupWallAll) && $groupWallAll->isNotEmpty())
                         <div class="space-y-2">
@@ -788,7 +880,8 @@
                             @foreach($groupWallAll as $act)
                                 @php
                                     $actExt = strtolower(pathinfo($act->file_path ?? '', PATHINFO_EXTENSION));
-                                    $actStreamUrl = $act->file_path ? route('groups.activities.stream', $act->id) : $act->external_url;
+                                    $actStreamUrl = $act->file_path ? route('groups.activities.stream', ['id' => $act->id, 'room_id' => $roomId ?? '']) : $act->external_url;
+                                    $actDirectUrl = $act->file_path ? asset($act->file_path) : '';
                                     $isActPdf = ($actExt === 'pdf' || str_ends_with(strtolower($act->file_path ?? ''), '.pdf'));
                                     $isActVid = in_array($actExt, ['mp4', 'webm', 'mov']);
                                     $isActImg = in_array($actExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
@@ -807,12 +900,12 @@
                                                     <span>عرض</span>
                                                 </button>
                                             @elseif($isActPdf)
-                                                <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'pdf', 1)" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                                <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'pdf', 1, '{{ $actDirectUrl }}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
                                                     <span>🚀</span>
                                                     <span>عرض</span>
                                                 </button>
                                             @elseif($isActImg)
-                                                <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'image', 1)" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
+                                                <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'image', 1, '{{ $actDirectUrl }}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg transition flex items-center gap-1 shadow">
                                                     <span>🚀</span>
                                                     <span>عرض</span>
                                                 </button>
@@ -1869,6 +1962,11 @@
                         <span>أنشطة وحائط المجموعة</span>
                         <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupWallAll->count() }}</span>
                     </button>
+                    <button type="button" onclick="switchBookLibTab('exams')" id="btnBookLibTab_exams" class="py-2 px-3 rounded-xl text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                        <span>📝</span>
+                        <span>الكويزات والاختبارات</span>
+                        <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono">{{ $groupExams->count() }}</span>
+                    </button>
                     <button type="button" onclick="switchBookLibTab('upload')" id="btnBookLibTab_upload" class="py-2 px-3 rounded-xl text-slate-400 hover:text-white transition flex items-center gap-1.5">
                         <span>📤</span>
                         <span>رفع من جهازي</span>
@@ -1889,7 +1987,8 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @forelse($groupBooks as $bk)
                             @php
-                                $bkStreamUrl = $bk->file_path ? route('resources.stream', $bk->id) : $bk->external_url;
+                                $bkStreamUrl = $bk->file_path ? route('resources.stream', ['id' => $bk->id, 'room_id' => $roomId ?? '']) : $bk->external_url;
+                                $bkDirectUrl = $bk->file_path ? asset($bk->file_path) : '';
                             @endphp
                             <div class="resource-library-item p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 flex flex-col justify-between gap-3 transition group" data-title="{{ strtolower($bk->title) }}">
                                 <div class="flex items-start gap-2.5">
@@ -1903,7 +2002,7 @@
                                 </div>
                                 <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
                                     @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
-                                        <button type="button" onclick="openResourceInWorkspace('{{ $bkStreamUrl }}', '{{ addslashes($bk->title) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                        <button type="button" onclick="openResourceInWorkspace('{{ $bkStreamUrl }}', '{{ addslashes($bk->title) }}', 'pdf', 1, '{{ $bkDirectUrl }}'); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
                                             <span>🚀</span>
                                             <span>فتح للشرح الآن</span>
                                         </button>
@@ -1931,7 +2030,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @forelse($groupVideos as $vid)
                             @php
-                                $vidStreamUrl = $vid->file_path ? route('resources.stream', $vid->id) : $vid->external_url;
+                                $vidStreamUrl = $vid->file_path ? route('resources.stream', ['id' => $vid->id, 'room_id' => $roomId ?? '']) : $vid->external_url;
                                 $isYt = str_contains($vidStreamUrl, 'youtube.com') || str_contains($vidStreamUrl, 'youtu.be');
                             @endphp
                             <div class="resource-library-item p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-rose-500/50 flex flex-col justify-between gap-3 transition" data-title="{{ strtolower($vid->title) }}">
@@ -1974,7 +2073,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @forelse($groupAudios as $aud)
                             @php
-                                $audStreamUrl = $aud->file_path ? route('resources.stream', $aud->id) : $aud->external_url;
+                                $audStreamUrl = $aud->file_path ? route('resources.stream', ['id' => $aud->id, 'room_id' => $roomId ?? '']) : $aud->external_url;
                             @endphp
                             <div class="resource-library-item p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-2" data-title="{{ strtolower($aud->title) }}">
                                 <div class="flex justify-between items-center text-xs">
@@ -2010,7 +2109,8 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @forelse($wsAndImages as $res)
                             @php
-                                $rStreamUrl = $res->file_path ? route('resources.stream', $res->id) : $res->external_url;
+                                $rStreamUrl = $res->file_path ? route('resources.stream', ['id' => $res->id, 'room_id' => $roomId ?? '']) : $res->external_url;
+                                $rDirectUrl = $res->file_path ? asset($res->file_path) : '';
                                 $isPdf = str_ends_with(strtolower($res->file_path ?? ''), '.pdf');
                             @endphp
                             <div class="resource-library-item p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 flex flex-col justify-between gap-3 transition" data-title="{{ strtolower($res->title) }}">
@@ -2024,8 +2124,8 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
-                                    @if($isTeacher)
-                                        <button type="button" onclick="openResourceInWorkspace('{{ $rStreamUrl }}', '{{ addslashes($res->title) }}', '{{ $isPdf ? 'pdf' : 'image' }}', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                        <button type="button" onclick="openResourceInWorkspace('{{ $rStreamUrl }}', '{{ addslashes($res->title) }}', '{{ $isPdf ? 'pdf' : 'image' }}', 1, '{{ $rDirectUrl }}'); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
                                             <span>🚀</span>
                                             <span>فتح للشرح الآن</span>
                                         </button>
@@ -2054,7 +2154,8 @@
                         @forelse($groupWallAll as $act)
                             @php
                                 $actExt = strtolower(pathinfo($act->file_path ?? '', PATHINFO_EXTENSION));
-                                $actStreamUrl = $act->file_path ? route('groups.activities.stream', $act->id) : $act->external_url;
+                                $actStreamUrl = $act->file_path ? route('groups.activities.stream', ['id' => $act->id, 'room_id' => $roomId ?? '']) : $act->external_url;
+                                $actDirectUrl = $act->file_path ? asset($act->file_path) : '';
                                 $isActPdf = ($actExt === 'pdf' || str_ends_with(strtolower($act->file_path ?? ''), '.pdf'));
                                 $isActVid = in_array($actExt, ['mp4', 'webm', 'mov']);
                                 $isActImg = in_array($actExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
@@ -2070,19 +2171,19 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
-                                    @if($isTeacher)
+                                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
                                         @if($isActVid)
                                             <button type="button" onclick="openVideoInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', false); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
                                                 <span>▶️</span>
                                                 <span>عرض بالشرح الآن</span>
                                             </button>
                                         @elseif($isActPdf)
-                                            <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'pdf', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                            <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'pdf', 1, '{{ $actDirectUrl }}'); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
                                                 <span>🚀</span>
                                                 <span>فتح للشرح الآن</span>
                                             </button>
                                         @elseif($isActImg)
-                                            <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'image', 1); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                            <button type="button" onclick="openResourceInWorkspace('{{ $actStreamUrl }}', '{{ addslashes($act->title ?: $act->file_name) }}', 'image', 1, '{{ $actDirectUrl }}'); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
                                                 <span>🚀</span>
                                                 <span>فتح للشرح الآن</span>
                                             </button>
@@ -2098,6 +2199,51 @@
                         @empty
                             <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
                                 <span>لا توجد مذكرات أو ملفات منشورة بحائط المجموعة بعد.</span>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- 6. تبويب الكويزات والاختبارات التفاعلية -->
+                <div id="bookLibTab_exams" class="hidden space-y-3">
+                    <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-2xl text-xs text-indigo-200 flex items-start gap-2">
+                        <span class="text-base shrink-0">📝</span>
+                        <span>الكويزات والاختبارات التفاعلية المعتمدة للمستوى والمجموعة يمكنك فتحها في السبورة أو إرسالها برابط فوري لدردشة الطلاب.</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        @forelse($groupExams as $exam)
+                            @php
+                                $examTakeUrl = route('student.exam.take', ['id' => $exam->id, 'groupId' => $group->id ?? null]);
+                            @endphp
+                            <div class="resource-library-item p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 flex flex-col justify-between gap-3 transition" data-title="{{ strtolower($exam->title) }}">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-950/80 border border-amber-800/60 flex items-center justify-center text-lg shrink-0">
+                                        <span>📝</span>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-bold text-white text-xs truncate" title="{{ $exam->title }}">{{ $exam->title }}</h4>
+                                        <span class="text-[10px] text-amber-300 font-mono block mt-0.5">اختبار تفاعلي • {{ $exam->duration_minutes ? $exam->duration_minutes . ' دقيقة' : 'مفتوح' }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
+                                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                        <button type="button" onclick="openBrowserInWorkspace('{{ $examTakeUrl }}', '{{ addslashes($exam->title) }}'); closeBooksLibraryModal();" class="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                                            <span>🌐</span>
+                                            <span>فتح بالشرح</span>
+                                        </button>
+                                        <button type="button" onclick="sendChatMessageDirect('📝 اختبار تفاعلي جديد للطلاب: {{ addslashes($exam->title) }}\n{{ $examTakeUrl }}'); closeBooksLibraryModal();" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl transition flex items-center gap-1 shadow" title="إرسال للدردشة">
+                                            <span>💬 إرسال</span>
+                                        </button>
+                                    @endif
+                                    <a href="{{ $examTakeUrl }}" target="_blank" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition flex items-center gap-1" title="فتح بنافذة جديدة">
+                                        <span>↗️</span>
+                                    </a>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-span-2 p-6 text-center text-slate-500 bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 text-xs">
+                                <span>لا توجد اختبارات أو كويزات مسجلة لهذا المستوى حالياً.</span>
                             </div>
                         @endforelse
                     </div>
@@ -2653,7 +2799,7 @@
                 tracks.forEach(track => {
                     const existingSender = senders.find(s => s.track && s.track.kind === track.kind);
                     if (existingSender) {
-                        if (existingSender.track !== track) {
+                        if (existingSender.track !== track || (track.kind === 'audio' && IS_TEACHER)) {
                             existingSender.replaceTrack(track).catch(e => console.log('replaceTrack err:', e));
                         }
                     } else {
@@ -2678,6 +2824,25 @@
                 });
             } catch (err) {
                 console.log('ensureTracks error for peer', peerId, err);
+            }
+        });
+    }
+
+    function forceRenegotiateAllPeers() {
+        if (!IS_TEACHER) return;
+        Object.entries(peerConnections).forEach(([peerId, pc]) => {
+            try {
+                if (pc.signalingState === 'stable') {
+                    pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+                        .then(offer => {
+                            const cleanOffer = new RTCSessionDescription({ type: offer.type, sdp: sanitizeSdp(offer.sdp) });
+                            return pc.setLocalDescription(cleanOffer);
+                        })
+                        .then(() => postSignal(peerId, 'offer', pc.localDescription))
+                        .catch(e => console.log('forceRenegotiate offer err:', e));
+                }
+            } catch (e) {
+                console.warn('forceRenegotiate peer error:', peerId, e);
             }
         });
     }
@@ -2827,6 +2992,26 @@
             ensureTeacherAudioAlive();
         }
     }, 2500);
+
+    // مراقب استمرارية صوت المعلم لدى الطلاب: استئناف تشغيل الصوت فوراً إن أوقفه المتصفح
+    setInterval(() => {
+        if (typeof IS_TEACHER !== 'undefined' && !IS_TEACHER) {
+            const masterAudio = document.getElementById('liveClassroomMasterAudio');
+            if (masterAudio && masterAudio.srcObject) {
+                if (masterAudio.paused) {
+                    masterAudio.play().then(() => {
+                        window.isTeacherWebRtcAudioActive = true;
+                    }).catch(() => {
+                        window.isTeacherWebRtcAudioActive = false;
+                    });
+                } else {
+                    window.isTeacherWebRtcAudioActive = true;
+                }
+            } else {
+                window.isTeacherWebRtcAudioActive = false;
+            }
+        }
+    }, 1500);
 
     // تشغيل وإيقاف الكاميرا عند الطلب فقط (فيديو عند النقر)
     async function toggleLocalCam() {
@@ -4663,6 +4848,27 @@
         } catch (err) { console.error(err); }
     }
 
+    async function sendChatMessageDirect(text) {
+        if (!text) return;
+        try {
+            const res = await fetch(`/classroom/${ROOM_ID}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ type: 'text', content: text })
+            });
+            const data = await res.json();
+            if (data.success && data.message) {
+                if (data.message.id > lastMessageId) {
+                    lastMessageId = data.message.id;
+                    appendLiveChatMessage(data.message);
+                }
+                broadcastP2P({ type: 'chat_message', message: data.message });
+                syncClassroom();
+                showLiveToast('تم إرسال الرابط في دردشة الطلاب بنجاح 💬', '✅');
+            }
+        } catch (err) { console.error('sendChatMessageDirect error:', err); }
+    }
+
     function scrollChatToBottom(smooth = false) {
         const container = document.getElementById('liveChatMessagesContainer');
         if (!container) return;
@@ -5226,7 +5432,7 @@
         document.getElementById('wbBooksLibraryModal')?.classList.add('hidden');
     }
     function switchBookLibTab(tab) {
-        const tabs = ['curriculum', 'videos', 'audios', 'worksheets', 'wall', 'upload'];
+        const tabs = ['curriculum', 'videos', 'audios', 'worksheets', 'wall', 'exams', 'upload'];
         tabs.forEach(t => {
             const pane = document.getElementById('bookLibTab_' + t);
             const btn = document.getElementById('btnBookLibTab_' + t);
@@ -7040,9 +7246,25 @@
         if (drawCanvas) {
             drawCanvas.style.pointerEvents = 'auto';
         }
+
+        // تفريغ وإعادة تعيين شامل للسبورة في الخادم لمنع أي تعليق لحالة الفيديو
+        if (typeof CAN_MANAGE_ROOM !== 'undefined' && CAN_MANAGE_ROOM) {
+            fetch(`/classroom/${ROOM_ID}/whiteboard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'reset_board' })
+            }).then(r => r.json()).then(data => {
+                if (data && data.whiteboard_version) currentWbVersion = data.whiteboard_version;
+            }).catch(console.error);
+        }
+
         // استعادة وصيانة استمرار صوت المعلم فوراً عند إغلاق الفيديو أو المتصفح والرجوع للشرح
         if (typeof ensureTeacherAudioAlive === 'function') {
             ensureTeacherAudioAlive();
+        }
+        // إعادة تفاوض مسارات الصوت والمرئيات مع جميع الأقران
+        if (typeof forceRenegotiateAllPeers === 'function') {
+            forceRenegotiateAllPeers();
         }
         // إشعار جميع الطلاب بإعادة تشغيل وتفعيل مسار صوت الأستاذ فوراً
         if (typeof broadcastP2P === 'function') {
@@ -7050,7 +7272,7 @@
         }
     }
 
-    async function openResourceInWorkspace(url, title, type, pageNum = 1) {
+    async function openResourceInWorkspace(url, title, type, pageNum = 1, fallbackDirectUrl = null) {
         const canManage = (typeof CAN_MANAGE_ROOM !== 'undefined' && CAN_MANAGE_ROOM) || (typeof IS_TEACHER !== 'undefined' && IS_TEACHER);
         closeAllWbFlyouts();
         hideMediaLayers();
@@ -7072,6 +7294,8 @@
             bg_type: type,
             url: normalizedUrl,
             bg_url: normalizedUrl,
+            direct_url: fallbackDirectUrl || null,
+            bg_direct_url: fallbackDirectUrl || null,
             title: title,
             bg_title: title,
             page_num: pageNum
@@ -7089,7 +7313,7 @@
         redrawWhiteboard();
 
         if (type === 'pdf') {
-            await renderPdfPage(normalizedUrl, pageNum, wbPdfScale);
+            await renderPdfPage(normalizedUrl, pageNum, wbPdfScale, fallbackDirectUrl);
             if (IS_TEACHER) {
                 document.getElementById('wbPageNavControls')?.classList.remove('hidden');
             }
@@ -7115,6 +7339,7 @@
                     action: 'set_background',
                     bg_type: type,
                     bg_url: normalizedUrl,
+                    bg_direct_url: fallbackDirectUrl || null,
                     bg_title: title,
                     page_num: pageNum,
                     scale: wbCurrentBg.scale,
@@ -7273,21 +7498,21 @@
         return Math.min(Math.max(1, v), wbTotalPages);
     }
 
-    // تحميل موثوق لملفات PDF مع دعم المعالجة الثنائية المباشرة (Binary ArrayBuffer) لتخطي أي حظر للشبكة أو CORS
-    async function loadPdfDocumentWithFallback(url) {
-        let targetUrl = normalizeMediaUrl(url);
-        try {
-            if (window.location.protocol === 'https:' && targetUrl.startsWith('http://')) {
-                targetUrl = targetUrl.replace(/^http:\/\//, 'https://');
-            }
-        } catch(e){}
+    // فحص ما إذا كانت البايتات المستلمة هي ملف PDF حقيقي (Magic Bytes: %PDF-)
+    function isPdfBinaryBuffer(buf) {
+        if (!buf || buf.byteLength < 5) return false;
+        const bytes = new Uint8Array(buf.slice(0, 5));
+        return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46 && bytes[4] === 0x2D;
+    }
 
+    // تحميل موثوق وشامل لملفات PDF مع دعم المعالجة الثنائية المباشرة (Binary ArrayBuffer) وFallback للروابط المباشرة
+    async function loadPdfDocumentWithFallback(url, fallbackDirectUrl = null) {
         if (!window.pdfjsLib) {
             throw new Error('مكتبة PDF.js غير متوفرة حالياً.');
         }
 
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = window.location.origin + '/vendor/pdfjs/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('vendor/pdfjs/pdf.worker.min.js') }}";
         }
 
         const pdfOptions = {
@@ -7298,48 +7523,77 @@
             disableFontFace: false
         };
 
-        // 1. المحاولة المباشرة بـ PDF.js
-        try {
-            const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, url: targetUrl });
-            const doc = await loadingTask.promise;
-            doc._url = url;
-            return doc;
-        } catch (directErr) {
-            console.warn('Direct PDF load failed, attempting ArrayBuffer fallback fetch:', directErr);
-            // 2. المحاولة عبر ArrayBuffer من نفس النطاق (same-origin)
+        const candidateUrls = [];
+        function appendCandidate(u) {
+            if (!u || typeof u !== 'string' || !u.trim()) return;
+            let norm = normalizeMediaUrl(u.trim());
+            if (window.location.protocol === 'https:' && norm.startsWith('http://')) {
+                norm = norm.replace(/^http:\/\//, 'https://');
+            }
+            if (typeof ROOM_ID !== 'undefined' && ROOM_ID && norm.includes('/resources/') && !norm.includes('room_id=')) {
+                norm += (norm.includes('?') ? '&' : '?') + 'room_id=' + encodeURIComponent(ROOM_ID);
+            }
+            if (!candidateUrls.includes(norm)) {
+                candidateUrls.push(norm);
+            }
+        }
+
+        appendCandidate(url);
+        if (fallbackDirectUrl) {
+            appendCandidate(fallbackDirectUrl);
+        }
+
+        let lastError = null;
+
+        // 1. المحاولة الأولى: جلب البيانات كـ ArrayBuffer ثنائي وفحص %PDF- لتخطي CORS والـ Range Requests
+        for (const targetUrl of candidateUrls) {
             try {
-                const res = await fetch(targetUrl, { credentials: 'same-origin' });
+                let res = await fetch(targetUrl, { credentials: 'include' });
+                if (!res.ok) {
+                    res = await fetch(targetUrl);
+                }
                 if (res.ok) {
                     const arrayBuffer = await res.arrayBuffer();
-                    const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, data: arrayBuffer });
-                    const doc = await loadingTask.promise;
-                    doc._url = url;
-                    return doc;
+                    if (isPdfBinaryBuffer(arrayBuffer)) {
+                        const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, data: arrayBuffer });
+                        const doc = await loadingTask.promise;
+                        doc._url = url;
+                        return doc;
+                    } else {
+                        console.warn('URL returned OK status but content is not a valid PDF (%PDF- header missing):', targetUrl);
+                    }
                 }
-            } catch (sameOriginErr) {
-                console.warn('same-origin fetch failed, trying generic fetch:', sameOriginErr);
+            } catch (fetchErr) {
+                console.warn('Fetch ArrayBuffer failed for candidate:', targetUrl, fetchErr);
+                lastError = fetchErr;
             }
-
-            // 3. المحاولة بدون credentials لتخطي أي قيود CORS للمجالات الخارجية أو الاستضافة
-            const resGeneric = await fetch(targetUrl);
-            if (!resGeneric.ok) throw new Error('HTTP ' + resGeneric.status + ' loading PDF');
-            const arrayBuffer = await resGeneric.arrayBuffer();
-            const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, data: arrayBuffer });
-            const doc = await loadingTask.promise;
-            doc._url = url;
-            return doc;
         }
+
+        // 2. المحاولة الثانية: التحميل عبر دالة PDF.js الأصلية getDocument({ url })
+        for (const targetUrl of candidateUrls) {
+            try {
+                const loadingTask = pdfjsLib.getDocument({ ...pdfOptions, url: targetUrl, withCredentials: true });
+                const doc = await loadingTask.promise;
+                doc._url = url;
+                return doc;
+            } catch (directDocErr) {
+                console.warn('pdfjsLib.getDocument({ url }) failed for:', targetUrl, directDocErr);
+                lastError = directDocErr;
+            }
+        }
+
+        throw lastError || new Error('تعذر تحميل ملف الـ PDF من جميع الروابط المتاحة.');
     }
 
     // رندرة وتصفح صفحات ملفات الـ PDF مع دعم كامل ودقيق للخطوط العربية وملء العرض
-    async function renderPdfPage(url, pageNum, customScale = null) {
+    async function renderPdfPage(url, pageNum, customScale = null, fallbackDirectUrl = null) {
         if (!window.pdfjsLib) {
             console.warn('pdfjsLib is not loaded');
             return;
         }
         try {
             if (!wbPdfDoc || wbPdfDoc._url !== url) {
-                wbPdfDoc = await loadPdfDocumentWithFallback(url);
+                wbPdfDoc = await loadPdfDocumentWithFallback(url, fallbackDirectUrl);
                 wbTotalPages = wbPdfDoc.numPages;
                 const totalText = document.getElementById('wbTotalPagesText');
                 if (totalText) totalText.textContent = wbTotalPages;
@@ -7471,8 +7725,8 @@
         targetPage = Math.min(Math.max(1, targetPage), wbTotalPages);
         if (targetPage !== wbCurrentPage || (wbCurrentBg && wbCurrentBg.page_num !== targetPage)) {
             const currentUrl = (wbCurrentBg && wbCurrentBg.url) ? wbCurrentBg.url : (wbPdfDoc ? wbPdfDoc._url : null);
-            const currentTitle = (wbCurrentBg && wbCurrentBg.title) ? wbCurrentBg.title : 'كتاب PDF';
-            await openResourceInWorkspace(currentUrl, currentTitle, 'pdf', targetPage);
+            const directUrl = (wbCurrentBg && wbCurrentBg.direct_url) ? wbCurrentBg.direct_url : null;
+            await openResourceInWorkspace(currentUrl, currentTitle, 'pdf', targetPage, directUrl);
             const container = document.getElementById('whiteboardContainer');
             if (container) {
                 if (initialScroll === 'bottom') {
@@ -7927,6 +8181,8 @@
             bg_type: bgType,
             url: normalizedUrl || null,
             bg_url: normalizedUrl || null,
+            direct_url: state.bg_direct_url || state.direct_url || null,
+            bg_direct_url: state.bg_direct_url || state.direct_url || null,
             title: bgTitle,
             bg_title: bgTitle,
             page_num: pageNum,
@@ -7952,8 +8208,8 @@
                 renderBrowserBackground(wbCurrentBg.url, wbCurrentBg.title);
                 document.getElementById('wbPageNavControls')?.classList.add('hidden');
                 document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
-            } else if (wbCurrentBg.type === 'video' && wbCurrentBg.url) {
-                if (!wbCurrentBg.url || wbCurrentBg.url.startsWith('blob:')) {
+            } else if (wbCurrentBg.type === 'video') {
+                if (!wbCurrentBg.url || wbCurrentBg.url.startsWith('blob:') || !wbCurrentBg.url.trim()) {
                     hideMediaLayers();
                     renderBlankBackground('whiteboard');
                     if (CAN_MANAGE_ROOM) {
@@ -7966,7 +8222,7 @@
                 }
             } else if (wbCurrentBg.type === 'pdf' && wbCurrentBg.url) {
                 hideMediaLayers();
-                await renderPdfPage(wbCurrentBg.url, wbCurrentBg.page_num, wbCurrentBg.scale);
+                await renderPdfPage(wbCurrentBg.url, wbCurrentBg.page_num, wbCurrentBg.scale, wbCurrentBg.direct_url);
                 if (IS_TEACHER) {
                     document.getElementById('wbPageNavControls')?.classList.remove('hidden');
                 }

@@ -703,7 +703,23 @@ class ClassroomRealtimeController extends Controller
         }
 
         $action = $request->input('action');
-        $isStaff = in_array($user->role, ['admin', 'teacher', 'supervisor']);
+        $isStaff = in_array($user->role, ['admin', 'teacher', 'supervisor'])
+            || (method_exists($user, 'isAdmin') && $user->isAdmin())
+            || (method_exists($user, 'isSupervisor') && $user->isSupervisor())
+            || (method_exists($user, 'isTeacher') && $user->isTeacher());
+
+        if (! $isStaff) {
+            $grp = StudyGroup::where('room_id', $roomId)->first();
+            if ($grp && ($grp->teacher_id === $user->id || $grp->supervisor_id === $user->id)) {
+                $isStaff = true;
+            } else {
+                $bk = Booking::where('room_id', $roomId)->first();
+                if ($bk && $bk->teacher_id === $user->id) {
+                    $isStaff = true;
+                }
+            }
+        }
+
         $control = ClassroomRoomControl::getControlForRoom($roomId);
 
         // إذا كان الإجراء تحريك أو إخفاء الليزر، يسمح للمعلم وللطالب الممنوح له إذن التأشير بالليزر

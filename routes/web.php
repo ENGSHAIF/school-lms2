@@ -133,9 +133,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/groups/{groupId}/live/reject', [StudyGroupController::class, 'rejectLive'])->name('groups.live.reject');
 
     // 2.2.1 مسارات بث وتحميل ملفات المناهج وموارد المجموعات (فيديوهات، صوتيات، كتب وأنشطة)
-    Route::get('/resources/{id}/stream', [LevelResourceController::class, 'streamResource'])->name('resources.stream');
+    Route::match(['get', 'options'], '/resources/{id}/stream', [LevelResourceController::class, 'streamResource'])->name('resources.stream');
     Route::get('/resources/{id}/download', [LevelResourceController::class, 'downloadResource'])->name('resources.download');
-    Route::get('/activities/{id}/stream', [StudyGroupController::class, 'streamActivity'])->name('groups.activities.stream');
+    Route::match(['get', 'options'], '/activities/{id}/stream', [StudyGroupController::class, 'streamActivity'])->name('groups.activities.stream');
     Route::get('/activities/{id}/download', [StudyGroupController::class, 'downloadActivity'])->name('groups.activities.download');
     Route::get('/groups/sessions/{sessionId}/download/{type}', [GroupEvaluationController::class, 'downloadSessionFile'])->name('groups.sessions.download');
 

@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل شاشة البث الدراسي التفاعلي المباشر (Air Class Live) - المعلم والطالب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 12mm 10mm 15mm 10mm;
+            @bottom-right {
+                content: counter(page);
+                font-family: 'Cairo', sans-serif;
+                font-size: 9pt;
+                color: #64748b;
+            }
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            color: #0f172a;
+            line-height: 1.6;
+            font-size: 10.5pt;
+        }
+        .page {
+            page-break-after: always;
+            position: relative;
+            padding: 10px 15px;
+        }
+        .page:last-child {
+            page-break-after: avoid;
+        }
+        /* Cover Page Styling */
+        .cover-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: radial-gradient(circle at 80% 20%, #1e1b4b 0%, #0f172a 50%, #020617 100%);
+            color: #ffffff;
+            border-radius: 24px;
+            padding: 45px 35px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            page-break-after: always;
+        }
+        .cover-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(129, 140, 248, 0.4);
+            color: #a5b4fc;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 9pt;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .cover-title {
+            font-size: 26pt;
+            font-weight: 900;
+            line-height: 1.25;
+            margin: 20px 0 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .cover-subtitle {
+            font-size: 13pt;
+            color: #cbd5e1;
+            font-weight: 600;
+            line-height: 1.6;
+            max-width: 650px;
+        }
+        .cover-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 35px;
+        }
+        .cover-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+        }
+        .cover-card-icon {
+            font-size: 22pt;
+            margin-bottom: 8px;
+        }
+        .cover-card-title {
+            font-size: 11pt;
+            font-weight: 800;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+        .cover-card-desc {
+            font-size: 8.5pt;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+        .cover-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 9pt;
+            color: #94a3b8;
+        }
+
+        /* Document Headers & Sections */
+        .doc-header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .doc-header-title {
+            font-size: 10pt;
+            font-weight: 800;
+            color: #4f46e5;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .doc-header-tag {
+            font-size: 8.5pt;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 16pt;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-right: 4px solid #4f46e5;
+            padding-right: 10px;
+        }
+        h3 {
+            font-size: 12pt;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 16px 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        p {
+            margin: 0 0 10px 0;
+            color: #334155;
+            font-size: 10pt;
+            text-align: justify;
+        }
+
+        /* Features Cards Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .feature-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: all 0.2s;
+        }
+        .feature-box-highlight {
+            background: #f5f3ff;
+            border-color: #c7d2fe;
+        }
+        .feature-box-emerald {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+        .feature-box-amber {
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+        .feature-box-rose {
+            background: #fff1f2;
+            border-color: #fecdd3;
+        }
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .feature-icon {
+            font-size: 16pt;
+            line-height: 1;
+        }
+        .feature-name {
+            font-size: 10.5pt;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .feature-desc {
+            font-size: 8.5pt;
+            color: #475569;
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        /* Steps & Numbered Lists */
+        .step-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4f46e5;
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 9pt;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: 800;
+            font-size: 10pt;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+        .step-text {
+            font-size: 8.5pt;
+            color: #475569;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 9pt;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 10px;
+            text-align: right;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Diagram / Mockup Visual Box */
+        .mockup-container {
+            background: #0b1120;
+            border: 2px solid #334155;
+            border-radius: 16px;
+            padding: 14px;
+            color: #f8fafc;
+            margin: 15px 0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        .mockup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+        .mockup-screen-grid {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 10px;
+            min-height: 220px;
+        }
+        .mockup-whiteboard-area {
+            background: #020617;
+            border: 1px dashed #475569;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        .mockup-sidebar-area {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .mockup-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.25);
+            color: #a5b4fc;
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            font-size: 7.5pt;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Callout Notes */
+        .callout {
+            border-right: 4px solid #4f46e5;
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+            font-size: 9pt;
+        }
+        .callout-title {
+            font-weight: 800;
+            color: #4f46e5;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .callout-amber {
+            border-right-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .callout-amber .callout-title {
+            color: #b45309;
+        }
+        .callout-emerald {
+            border-right-color: #10b981;
+            background: #f0fdf4;
+        }
+        .callout-emerald .callout-title {
+            color: #047857;
+        }
+
+        /* Tool Palette Badges */
+        .tool-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 8pt;
+            font-weight: bold;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== صفحة 1: الغلاف التنفيذي ==================== -->
+    <div class="page cover-page">
+        <div>
+            <div class="cover-badge">
+                <span>🚀 منصة الفصول الافتراضية الذكية المتكاملة</span>
+                <span>•</span>
+                <span>Air Class Live System 2026</span>
+            </div>
+            <h1 class="cover-title">
+                دليل منظومة شاشة البث المباشر والسبورة التفاعلية<br>
+                (دليل شامل للمعلم والطالب)
+            </h1>
+            <p class="cover-subtitle">
+                مرجع متكامل يوضح كافة الميزات التقنية والفنية لشاشة الفصول الحية، وكيفية استخدامها باحترافية وسلاسة، صُمم خصيصاً لإطلاع الكادر التعليمي وأصحاب المنصة على التطورات والحلول الفائقة المطبقة.
+            </p>
+        </div>
+
+        <div class="cover-grid">
+            <div class="cover-card">
+                <div class="cover-card-icon">⚡</div>
+                <div class="cover-card-title">بث WebRTC مباشر ومستقر</div>
+                <div class="cover-card-desc">اتصال صوتي ومرئي فائق السرعة بزمن وصول شبه معدوم (Ultra Low Latency) مع نظام حراسة تلقائي يمنع انقطاع صوت المعلم نهائياً.</div>
+            </div>
+            <div class="cover-card">
+                <div class="cover-card-icon">📋</div>
+                <div class="cover-card-title">سبورة تفاعلية متعددة الطبقات</div>
+                <div class="cover-card-desc">أقلام متطورة، 42 لوناً، رسم هندسي، ملصقات تصحيح، ملاحظات لاصقة، وعرض وتظليل كتب الـ PDF بجودة فائقة ونظام الليزر التفاعلي.</div>
+            </div>
+            <div class="cover-card">
+                <div class="cover-card-icon">📚</div>
+                <div class="cover-card-title">مركز مناهج وموارد متكامل</div>
+                <div class="cover-card-desc">استدعاء فوري لكافة موارد المجموعة (كتب، فيديوهات، صوتيات استماع، أوراق عمل، مسابقات جوجل، حائط الأنشطة) بلمسة زر واحدة.</div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div>
+                <strong>الجهة:</strong> إدارة نظام التعليم الإلكتروني والمجموعات الدراسية
+            </div>
+            <div>
+                <strong>التاريخ:</strong> نوفمبر 2026
+            </div>
+            <div>
+                <strong>النسخة:</strong> Release 4.2 Pro
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== صفحة 2: المخطط العام وتصميم الشاشة ==================== -->
+    <div class="page">
+        <div class="doc-header">
+            <div class="doc-header-title">
+                <span>🖥️ المخطط العام والهيكل الهندسي للشاشة</span>
+            </div>
+            <div class="doc-header-tag">نظرة عامة على تجربة المستخدم</div>
+        </div>
+
+        <h2>الهيكل البصري والمعماري لشاشة البث التفاعلي</h2>
+        <p>
+            تم تصميم شاشة الفصل الحي <strong>(Air Class Live)</strong> بأسلوب هندسي مستوحى من كبرى منصات التعليم العالمية (مثل Zoom و Microsoft Teams)، حيث تمنح المعلم السيطرة الكاملة على قاعة الدرس دون تشتيت، وفي نفس الوقت توفر للطالب بيئة بصرية غامرة ومتجاوبة مع الهواتف الذكية وأجهزة الكمبيوتر والألواح اللوحية (Tablets).
+        </p>
+
+        <!-- مخطط واجهة الشاشة -->
+        <div class="mockup-container">
+            <div class="mockup-header">
+                <span class="text-indigo-400">📊 مخطط شاشة البث المباشر (المعلم والطالب)</span>
+                <span class="text-slate-400">دقة متجاوبة فائقة الوضوح (Full Responsive Grid)</span>
+            </div>
+            <div class="mockup-screen-grid">
+                <!-- مساحة السبورة المركزية -->
+                <div class="mockup-whiteboard-area">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 6px;">
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <span class="mockup-badge" style="background: rgba(225,29,72,0.25); color: #fda4af;">🔴 فصل حي مباشر</span>
+                            <span class="mockup-badge">📋 سبورة الشرح والكتب</span>
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <span style="font-size: 7.5pt; color: #38bdf8;">[📖 مكتبة الكتب]</span>
+                            <span style="font-size: 7.5pt; color: #fbbf24;">[🌐 جوجل ومسابقات]</span>
+                            <span style="font-size: 7.5pt; color: #f43f5e;">[🗑️ مسح الشرح]</span>
+                        </div>
+                    </div>
+
+                    <!-- قلب مساحة الشرح -->
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin: 15px 0;">
+                        <div style="font-size: 28pt; margin-bottom: 6px;">📖 ✏️ 🎬</div>
+                        <strong style="font-size: 10pt; color: #e2e8f0;">مساحة الشرح والوسائط المركزية (Stage Canvas)</strong>
+                        <p style="font-size: 8pt; color: #94a3b8; margin-top: 4px; max-width: 320px;">
+                            عرض الكتب (PDF) بجودة متجهة • خلفيات الصور وأوراق العمل • مشغل الفيديو والشروحات • مستعرض كروم الداخلي • مشاركة الشاشة الحية
+                        </p>
+                    </div>
+
+                    <!-- شريط أدوات الرسم العائم -->
+                    <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; border-radius: 8px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 7.5pt;">
+                        <span style="color: #cbd5e1;">🖌️ الأدوات: [سهم | قلم | فرشاة | تظليل | ممحاة | أشكال هندسية | ملصقات | كتابة نص | ليزر 🔴]</span>
+                        <span style="color: #f43f5e;">🎨 [42 لوناً]</span>
+                    </div>
+                </div>
+
+                <!-- اللوحة الجانبية التفاعلية -->
+                <div class="mockup-sidebar-area">
+                    <!-- كاميرات الفيديو -->
+                    <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 6px; font-size: 7.5pt;">
+                        <div style="font-weight: bold; color: #93c5fd; margin-bottom: 4px;">📹 كاميرات الفيديو والمشاركين</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div style="background: #0f172a; border-radius: 4px; padding: 6px; text-align: center;">👨‍🏫 المعلم</div>
+                            <div style="background: #0f172a; border-radius: 4px; padding: 6px; text-align: center;">🎓 الطالب</div>
+                        </div>
+                    </div>
+
+                    <!-- تبويبات التفاعل -->
+                    <div style="display: flex; gap: 3px; font-size: 7pt; border-bottom: 1px solid #334155; padding-bottom: 4px;">
+                        <span style="color: #818cf8; font-weight: bold;">[💬 المحادثة]</span>
+                        <span>[👥 الحضور]</span>
+                        <span>[📚 المنهج والموارد]</span>
+                        <span>[⚙️ التحكم]</span>
+                    </div>
+
+                    <!-- صندوق الرسائل -->
+                    <div style="flex: 1; background: #020617; border-radius: 4px; padding: 6px; font-size: 7.5pt; color: #cbd5e1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="color: #10b981; font-weight: bold;">👨‍🏫 الأستاذ: أهلاً بكم في الحصة</div>
+                            <div style="color: #60a5fa; margin-top: 4px;">🎓 الطالب: وعليكم السلام أستاذنا</div>
+                        </div>
+                        <div style="border-top: 1px solid #1e293b; padding-top: 4px; font-size: 7pt; color: #64748b;">
+                            🎙️ تسجيل صوتي | 📎 إرسال رسالة
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>مكونات الشاشة الرئيسية الثلاثة:</h3>
+        <div class="features-grid">
+            <div class="feature-box">
+                <div class="feature-header">
+                    <span class="feature-icon">1️⃣</span>
+                    <span class="feature-name">الشريط العلوي للتحكم والأدوات</span>
+                </div>
+                <p class="feature-desc">يتضمن حالة البث، اسم الجلسة، مؤشر المزامنة التلقائية اللحظية، أزرار التبديل بين خلفيات السبورة (بيضاء، سوداء، مربعات)، واختصارات فتح المناهج وجوجل ومسح الشروحات.</p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-header">
+                    <span class="feature-icon">2️⃣</span>
+                    <span class="feature-name">مساحة العرض والسبورة المركزية</span>
+                </div>
+                <p class="feature-desc">أكبر مساحة بالشاشة مخصصة للشرح والتدريس التفاعلي بدقة عالية، تدعم الرسم المتجهي ثنائي الكانفاس، تصفح الـ PDF مع تكبير/تصغير احترافي، عرض الفيديو ومشاركة الشاشة.</p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-header">
+                    <span class="feature-icon">3️⃣</span>
+                    <span class="feature-name">اللوحة الجانبية التفاعلية (Sidebar)</span>
+                </div>
+                <p class="feature-desc">تجمع كاميرات الحاضرين، قائمة الطلاب المتصلين مع صلاحيات كتم الصوت والتحفيز، غرف المحادثة الفورية والرسائل الصوتية، ومستودع أنشطة وملفات المنهج القابلة للتنزيل.</p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-header">
+                    <span class="feature-icon">4️⃣</span>
+                    <span class="feature-name">الاستجابة الفائقة للجوال (Mobile Responsive)</span>
+                </div>
+                <p class="feature-desc">تتحول الواجهة تلقائياً في شاشات الهواتف إلى وضع ذكي يجعل السبورة تملأ الشاشة مع وضع كاميرا المعلم كنافذة عائمة (Picture-in-Picture) قابلة للسحب أو الإخفاء لراحة الطالب.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== صفحة 3: دليل واستخدامات المعلم (الجزء الأول) ==================== -->
+    <div class="page">
+        <div class="doc-header">
+            <div class="doc-header-title">
+                <span>👨‍🏫 دليل واستخدامات المعلم بالتفصيل (الجزء 1)</span>
+            </div>
+            <div class="doc-header-tag">إدارة الجلسة والبث المباشر</div>
+        </div>
+
+        <h2>أولاً: إدارة قاعة الدرس والتحكم في الصوت والبث الحي</h2>
+
+        <div class="features-grid">
+            <div class="feature-box feature-box-highlight">
+                <div class="feature-header">
+                    <span class="feature-icon">🔔</span>
+                    <span class="feature-name">غرفة الانتظار الذكية (Waiting Room)</span>
+                </div>
+                <p class="feature-desc">
+                    <strong>كيف يستخدمها المعلم:</strong> يمكن للمعلم بنقرة واحدة من تبويب (التحكم) تفعيل أو تعطيل غرفة الانتظار.<br>
+                    • عند طلب طالب جديد الدخول، يصدر النظام <strong>رنة جرس حصرية (Chime 🔔)</strong> مع نافذة إشعار فورية بأعلى الشاشة تُظهر اسم الطالب وزرين: <strong>[قبول ✓]</strong> أو <strong>[رفض ✕]</strong> دون مغادرة السبورة.
+                </p>
+            </div>
+
+            <div class="feature-box feature-box-emerald">
+                <div class="feature-header">
+                    <span class="feature-icon">🎙️</span>
+                    <span class="feature-name">نظام الحراسة الصوتي الدائم (Audio Watchdog)</span>
+                </div>
+                <p class="feature-desc">
+                    <strong>المشكلة السابقة والحل العبقري:</strong> سابقاً كان صوت المعلم يضيع عند فتح فيديو أو تصفح جوجل أو الانتقال للأدوات.<br>
+                    • تم تطوير <strong>مراقب صوتي مستمر يفحص المايكروفون كل 2.5 ثانية</strong>؛ في حال تعليق نظام الصوت يعيد إنعاشه فورياً وبشكل غير مرئي ليبقى صوت المعلم متصلاً وشغالاً طوال الحصة مالم يكتمه بنفسه.
+                </p>
+            </div>
+        </div>
+
+        <h2>ثانياً: مشاركة الشاشة الذكية وزر ضبط الانعكاس</h2>
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">بدء مشاركة الشاشة بلمسة واحدة:</div>
+                    <div class="step-text">ينقر المعلم على زر <strong>[🖥️ شاشة]</strong> في شريط التحكم، فيتيح له المتصفح اختيار مشاركة شاشة كاملة، أو نافذة تطبيق مستقل (مثل PowerPoint أو Word أو Photoshop)، أو تبويب كروم معين بدقة 1080p عالية.</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">ميزة [🔄 تعديل الاتجاه (عكس الشاشة)]:</div>
+                    <div class="step-text">إذا ظهرت الشاشة عند الطلاب مقلوبة أو معكوسة من اليسار بسبب تعريفات كرت الشاشة أو برامج العرض، يتوفر في الشريط العلوي زر مباشر <strong>[🔄 تعديل الاتجاه]</strong> يقوم فورياً بقلب اتجاه الشاشة أفقياً وبث التعديل لجميع الطلاب في نفس اللحظة.</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">العودة الفورية للسبورة:</div>
+                    <div class="step-text">بمجرد الانتهاء من العرض، ينقر المعلم على زر <strong>[⏹️ إيقاف المشاركة والرجوع للسبورة]</strong> ليعود مسرح الشرح تلقائياً للسبورة البيضاء واستئناف الشرح بسلاسة.</div>
+                </div>
+            </div>
+        </div>
+
+        <h2>ثالثاً: إدارة الطلاب والتفاعل المباشر بقائمة الحضور</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 25%;">الأداة / الميزة</th>
+                    <th style="width: 45%;">الوظيفة وكيفية استخدامها</th>
+                    <th style="width: 30%;">أهميتها في الدرس</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>🎙️ كتم وتفعيل صوت الطالب</strong></td>
+                    <td>يمكن للمعلم كتم مايك أي طالب بنقرة زر، أو السماح له بالحديث بعد رفع يده.</td>
+                    <td>منع الضوضاء والحفاظ على هدوء ونظام القاعة الصوتية.</td>
+                </tr>
+                <tr>
+                    <td><strong>📷 كتم كاميرا الطالب</strong></td>
+                    <td>إمكانية إيقاف بث كاميرا أي طالب من جانب المعلم بنقرة واحدة لحماية الخصوصية.</td>
+                    <td>التحكم الكامل في انضباط الصورة وخصوصية المشاركين.</td>
+                </tr>
+                <tr>
+                    <td><strong>⭐ منح النجوم والتحفيز</strong></td>
+                    <td>زر النجمة الذهبية بجانب اسم كل طالب لإرسال نجمة تشجيعية تظهر له مع مؤثر صوتي واحتفال.</td>
+                    <td>رفع حماس الطلاب وتشجيعهم على المشاركة والإجابة الصحيحة.</td>
+                </tr>
+                <tr>
+                    <td><strong>🔴 منح وسحب قلم الليزر</strong></td>
+                    <td>عندما يطلب الطالب التاشير بالليزر، يظهر إشعار فوري للمعلم لمنحه إذن التأشير على السبورة وسحبه بأي لحظة.</td>
+                    <td>تمكين الطلاب من حل المسائل والإشارة لنقاط الأسئلة جماعياً.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-emerald">
+            <div class="callout-title">💡 ميزة حصرية للمعلم: كتم الصوت العام (Mute All)</div>
+            يتوفر في أسفل قائمة المشاركين زر [🔇 كتم صوت الجميع]، بضغطة واحدة يُكتم صوت كل الطلاب في القاعة فورياً دون التأثير على صوت المعلم، وهو حل سريع جداً عند حدوث تشويش مفاجئ.
+        </div>
+    </div>
+
+    <!-- ==================== صفحة 4: دليل واستخدامات المعلم (السبورة والمناهج) ==================== -->
+    <div class="page">
+        <div class="doc-header">
+            <div class="doc-header-title">
+                <span>🎨 السبورة التفاعلية ومركز المناهج الشامل (الجزء 2)</span>
+            </div>
+            <div class="doc-header-tag">أدوات الشرح والوسائط التعليمية</div>
+        </div>
+
+        <h2>رابعاً: أدوات السبورة التفاعلية المتقدمة (Whiteboard Toolkit)</h2>
+        <p>
+            تضم السبورة الذكية شريط أدوات عائم فائق التطور يحتوي على ترسانة من أدوات الرسم والتوضيح الاحترافية:
+        </p>
+
+        <div style="margin: 10px 0;">
+            <span class="tool-pill">✏️ قلم حبر ناعم</span>
+            <span class="tool-pill">🖌️ فرشاة رسم عريضة</span>
+            <span class="tool-pill">🖍️ قلم تظليل نصوص (Highlighter)</span>
+            <span class="tool-pill">✨ قلم سحري متوهج (Magic Glow)</span>
+            <span class="tool-pill">🧹 ممحاة ذكية ومسح كامل</span>
+            <span class="tool-pill">📐 11 شكلاً هندسياً وبيانياً</span>
+            <span class="tool-pill">⭐ ملصقات تصحيح ونجوم</span>
+            <span class="tool-pill">📝 ملاحظات لاصقة ملونة</span>
+            <span class="tool-pill">🔤 كتابة نصوص حرة بالطباعة</span>
+            <span class="tool-pill">🔴 مؤشر ليزر حي متوهج</span>
+            <span class="tool-pill">🎨 42 لوناً بدقة واختيار حر</span>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-box">
+                <div class="feature-header">
+                    <span class="feature-icon">📖</span>
+                    <span class="feature-name">عرض وشرح كتب ومقررات الـ PDF</span>
+                </div>
+                <p class="feature-desc">
+                    • يتم استدعاء كتب المنهج المعتمدة للمجموعة وفتحها فورياً كخلفية متجهة عالية النقاء.<br>
+                    • إمكانية تصفح الصفحات عبر شريط التمرير السريع، وتظليل الكلمات الهامة بالقلم الفلوري وكتابة الملاحظات فوق صفحات الكتاب مع مزامنة كاملة لدى الطلاب.
+                </p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-header">
+                    <span class="feature-icon">🎬</span>
+                    <span class="feature-name">مشغل الفيديو التعليمي وخيارات الأمان</span>
+                </div>
+                <p class="feature-desc">
+                    • تشغيل فيديوهات المنهج أو يوتيوب مباشرة داخل السبورة مع شريط للتقديم والتأخير والكتم.<br>
+                    • إمكانية إيقاف الفيديو مؤقتاً والكتابة بالقلم فوق أي لقطة لتوضيح الفكرة.<br>
+                    • تم تزويد المشغل بزر <strong>[إنهاء الفيديو والرجوع للسبورة]</strong> وزر <strong>[سبورة بيضاء 📋]</strong> لمنع أي تعليق بشاشة سوداء نهائياً.
+                </p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-header">
+                    <span class="feature-icon">🌐</span>
+                    <span class="feature-name">مستعرض كروم ومسابقات جوجل المدمج</span>
+                </div>
+                <p class="feature-desc">
+                    • مستعرض إنترنت مصغر داخل السبورة يتيح للمعلم فتح صفحة جوجل للبحث اللحظي.<br>
+                    • إطلاق ألعاب ومسابقات الأطفال التفاعلية (Wordwall، ألعاب الذاكرة، مسابقات الحساب) لعرضها للطلاب مع زر للفتح بتبويب مستقل إذا تطلب الموقع.
+                </p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-header">
+                    <span class="feature-icon">📁</span>
+                    <span class="feature-name">مركز المناهج والموارد (6 تبويبات)</span>
+                </div>
+                <p class="feature-desc">
+                    واجهة موحدة تجمع كافة محتويات المجموعة:
+                    <strong>1. الكتب والمقررات</strong> | <strong>2. فيديوهات الشرح</strong> | <strong>3. الصوتيات والاستماع</strong> | <strong>4. أوراق العمل والصور</strong> | <strong>5. أنشطة حائط المجموعة</strong> | <strong>6. رفع ملف فوري من الجهاز</strong>.
+                </p>
+            </div>
+        </div>
+
+        <h2>خامساً: إجراءات تفريغ ومسح السبورة السريعة</h2>
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-number">🗑️</div>
+                <div class="step-content">
+                    <div class="step-title">زر [مسح الشرح] في الشريط العلوي:</div>
+                    <div class="step-text">يفتح للمعلم نافذة خيارات سريعة: <strong>(1) مسح شروحات الصفحة الحالية فقط</strong> مع الإبقاء على خلفية الكتاب، أو <strong>(2) مسح شروحات كافة صفحات الكتاب</strong>، أو <strong>(3) تفريغ السبورة بالكامل وإعادتها لسبورة بيضاء نظيفة</strong> وإلغاء أي كتاب أو فيديو مفتوح بنقرة واحدة.</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">📋</div>
+                <div class="step-content">
+                    <div class="step-title">أزرار الخلفيات السريعة (بيضاء / سوداء / مربعات):</div>
+                    <div class="step-text">نقرة واحدة على زر [بيضاء] أو [سوداء] أو [مربعات] كافية لإغلاق أي محتوى معروض فورياً والبدء بلوحة كتابة وشرح جديدة تماماً.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout callout-amber">
+            <div class="callout-title">💡 حفظ تلقائي للشروحات على صفحات الكتب</div>
+            عند تنقل المعلم بين صفحات كتاب الـ PDF، يقوم النظام بحفظ رسومات وملاحظات كل صفحة تلقائياً في الذاكرة السريعة؛ فعند الرجوع لأي صفحة سابقة تعود ملاحظات المعلم وشروحاته بدقة متناهية دون ضياع أي جهد.
+        </div>
+    </div>
+
+    <!-- ==================== صفحة 5: دليل واستخدامات الطالب ==================== -->
+    <div class="page">
+        <div class="doc-header">
+            <div class="doc-header-title">
+                <span>🎓 دليل واستخدامات الطالب بالتفصيل</span>
+            </div>
+            <div class="doc-header-tag">المشاركة والتعلم التفاعلي</div>
+        </div>
+
+        <h2>تجربة الطالب داخل الفصل التفاعلي المباشر</h2>
+        <p>
+            صُممت واجهة الطالب لتكون ممتعة، بديهية، ومحمية من التعقيد، بحيث يركز الطالب بنسبة 100% على الاستيعاب والفهم والمشاركة الإيجابية:
+        </p>
+
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">الدخول إلى الفصل وغرفة الانتظار:</div>
+                    <div class="step-text">ينقر الطالب على زر [دخول البث المباشر] من لوحة التحكم أو صفحة المجموعة. في حال كانت غرفة الانتظار مفعلة، تظهر له شاشة انتظار راقية تُعلمه بأن المعلم قد تلقى طلب انضمامه وسيتم إدخاله فوراً بمجرد الموافقة.</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">تفعيل الصوت والمايكروفون بنقرة واحدة (One-Click Activation):</div>
+                    <div class="step-text">بسبب القيود الصارمة لمتصفحات الجوال (Android و iOS Chrome) التي تمنع تشغيل الصوت تلقائياً، تظهر للطالب نافذة ذكية تحتوي على زر كبير <strong>[🔊 تفعيل وسماع الصوت الآن]</strong>؛ بمجرد نقرها يعمل صوت المعلم بكامل الوضوح ويتم تفعيل المايك للمشاركة.</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">متابعة السبورة والكاميرا العائمة في الجوال (Floating PiP):</div>
+                    <div class="step-text">في أجهزة الجوال والشاشات الصغيرة، تظهر السبورة بملء الشاشة ليتمكن الطالب من قراءة الكتاب بوضوح، بينما تظهر كاميرا المعلم كنافذة عائمة صغيرة في الزاوية العلوية يمكن للطالب تصغيرها أو إخفاؤها واستعادتها بأي لحظة.</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-title">طلب التحدث ورفع اليد (✋ رفع اليد):</div>
+                    <div class="step-text">للمشاركة بالصوت والإجابة، ينقر الطالب على زر [✋ رفع اليد]. يظهر وميض ذهبي جذاب على اسم الطالب عند المعلم؛ وعندما يسمح له المعلم بالتحدث، يتم فك كتم المايكروفون تلقائياً ويبدأ الطالب بالمشاركة فوراً.</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <div class="step-title">طلب التأشير بقلم الليزر على السبورة (🔴):</div>
+                    <div class="step-text">إذا رغب الطالب بالإشارة إلى سطر معين في الكتاب أو تحديد إجابة في مسألة، ينقر على زر [🔴 تأشير بالليزر]؛ فيصل إشعار للأستاذ، وعند الموافقة يتحول ماوس أو لمس شاشة الطالب إلى مؤشر ليزر أحمر متوهج يراه المعلم وكافة الزملاء مباشرة.</div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">6</div>
+                <div class="step-content">
+                    <div class="step-title">المحادثة الفورية، الرسائل الصوتية، وتحميل الكتب:</div>
+                    <div class="step-text">
+                        • كتابة الأسئلة في الدردشة مع تمرير تلقائي دائماً نحو آخر الرسائل لقراءتها فوراً.<br>
+                        • تسجيل رسائل صوتية سريعة بضغطة زر وإرسالها للمعلم والزملاء.<br>
+                        • <strong>تنزيل الكتب والفيديوهات للهاتف:</strong> تتوفر أزرار تحميل مباشرة لأي كتاب أو نشاط معروض ليحفظه الطالب في هاتفه ويستذكر منه بعد انتهاء الدرس.
+                    </div>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">7</div>
+                <div class="step-content">
+                    <div class="step-title">تلقي مكافآت النجوم واحتفال التفوق (⭐):</div>
+                    <div class="step-text">عند إجابة الطالب بشكل متميز، يمنحه المعلم نجماً فتنبثق في شاشة الطالب بطاقة تهنئة متحركة مبهجة (Celebration Card) مع رنة نصر مميزة، لتعزيز الثقة بالنفس والدافعية للتعلم.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout callout-emerald">
+            <div class="callout-title">📱 مصمم خصيصاً للتوافق الكامل مع هواتف الطلاب</div>
+            لا يحتاج الطالب إلى تثبيت أي تطبيق خارجي؛ يعمل الفصل التفاعلي مباشرة عبر أي متصفح ويب حديث (Chrome، Safari، Edge) دون الحاجة لتحميل Zoom أو برامج إضافية.
+        </div>
+    </div>
+
+    <!-- ==================== صفحة 6: جدول المقارنة والأسئلة الشائعة ==================== -->
+    <div class="page">
+        <div class="doc-header">
+            <div class="doc-header-title">
+                <span>📊 مصفوفة الصلاحيات وأفضل الممارسات وحل المشكلات</span>
+            </div>
+            <div class="doc-header-tag">دليل الدعم الفني والإداري</div>
+        </div>
+
+        <h2>مصفوفة الصلاحيات بين المعلم والطالب</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40%;">الميزة / الإجراء</th>
+                    <th style="width: 30%;">👨‍🏫 المعلم (Host)</th>
+                    <th style="width: 30%;">🎓 الطالب (Participant)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>التحكم بغرفة الانتظار وقبول/رفض الطلاب</td>
+                    <td style="color: #16a34a; font-weight: bold;">متاح بالكامل ✓</td>
+                    <td style="color: #dc2626;">غير متاح (ينتظر القبول)</td>
+                </tr>
+                <tr>
+                    <td>فتح الكتب ومقررات الـ PDF والوسائط</td>
+                    <td style="color: #16a34a; font-weight: bold;">تحكم كامل ومزامنة للجميع ✓</td>
+                    <td style="color: #2563eb;">مشاهدة وتنزيل للموبايل ✓</td>
+                </tr>
+                <tr>
+                    <td>مشاركة الشاشة الحية وزر تعديل الاتجاه</td>
+                    <td style="color: #16a34a; font-weight: bold;">متاح مع زر تعديل الاتجاه ✓</td>
+                    <td style="color: #2563eb;">مشاهدة مع زر تعديل الاتجاه ✓</td>
+                </tr>
+                <tr>
+                    <td>أدوات الرسم والتظليل والأشكال الهندسية</td>
+                    <td style="color: #16a34a; font-weight: bold;">متاح بالكامل (42 لوناً) ✓</td>
+                    <td style="color: #64748b;">متاح الليزر بإذن المعلم 🔴</td>
+                </tr>
+                <tr>
+                    <td>كتم صوت وكاميرا الآخرين في القاعة</td>
+                    <td style="color: #16a34a; font-weight: bold;">متاح (كتم فردي أو للجميع) ✓</td>
+                    <td style="color: #dc2626;">التحكم بكاميرته ومايكه الخاص فقط</td>
+                </tr>
+                <tr>
+                    <td>إرسال واستقبال الرسائل الصوتية والمحادثة</td>
+                    <td style="color: #16a34a; font-weight: bold;">متاح ✓</td>
+                    <td style="color: #16a34a; font-weight: bold;">متاح ✓</td>
+                </tr>
+                <tr>
+                    <td>منح وتلقي النجوم وبطاقات الاحتفال</td>
+                    <td style="color: #16a34a; font-weight: bold;">إرسال النجوم للطلاب ✓</td>
+                    <td style="color: #16a34a; font-weight: bold;">تلقي النجوم والاحتفال ⭐</td>
+                </tr>
+                <tr>
+                    <td>إنهاء الحصة وتوليد تقارير الحضور الذاتي</td>
+                    <td style="color: #16a34a; font-weight: bold;">متاح وحفظ فوري لقاعدة البيانات ✓</td>
+                    <td style="color: #dc2626;">غير متاح</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>حلول الطوارئ السريعة وأفضل الممارسات (Troubleshooting)</h2>
+        <div class="features-grid">
+            <div class="feature-box feature-box-amber">
+                <div class="feature-header">
+                    <span class="feature-icon">❓</span>
+                    <span class="feature-name">إذا انقطع صوت الطالب أو لم يسمع المعلم</span>
+                </div>
+                <p class="feature-desc">
+                    <strong>الحل الفوري:</strong> ينقر الطالب على زر [🔊 تفعيل الصوت] بأعلى الشاشة أو يضغط على أيقونة المايكروفون مرتين. يقوم النظام تلقائياً بإعادة تهيئة اتصال WebRTC وفك حظر المتصفح خلال ثانية واحدة.
+                </p>
+            </div>
+            <div class="feature-box feature-box-rose">
+                <div class="feature-header">
+                    <span class="feature-icon">❓</span>
+                    <span class="feature-name">إذا علق فيديو أو رغب المعلم بالرجوع الفوري للسبورة</span>
+                </div>
+                <p class="feature-desc">
+                    <strong>الحل الفوري:</strong> ينقر المعلم على زر <strong>[إنهاء الفيديو والرجوع للسبورة]</strong> أو زر <strong>[سبورة بيضاء 📋]</strong> الموجود بالشريط العلوي؛ حيث تم رفع هذه الأزرار للطبقة العليا وتعمل فورياً لإلغاء أي وسائط معلقة.
+                </p>
+            </div>
+            <div class="feature-box feature-box-highlight">
+                <div class="feature-header">
+                    <span class="feature-icon">❓</span>
+                    <span class="feature-name">إذا ظهرت الشاشة المشتركة معكوسة عند الطلاب</span>
+                </div>
+                <p class="feature-desc">
+                    <strong>الحل الفوري:</strong> ينقر المعلم أو الطالب على زر <strong>[🔄 تعديل الاتجاه (عكس الشاشة)]</strong> الموجود في رأس شاشة المشاركة، فيقوم المتصفح فوراً بعكس الاتجاه أفقياً ليعود العرض إلى وضعه الطبيعي.
+                </p>
+            </div>
+            <div class="feature-box feature-box-emerald">
+                <div class="feature-header">
+                    <span class="feature-icon">❓</span>
+                    <span class="feature-name">تنزيل الكتب والفيديوهات لهواتف الطلاب</span>
+                </div>
+                <p class="feature-desc">
+                    <strong>الحل الفوري:</strong> تم فك قيود الصلاحيات وتعديل ترويسات CORS لسماح الطلاب بتنزيل واستعراض أي ملف بالمنهج بنقرة واحدة على زر [تنزيل 📥] بجانب كل كتاب أو نشاط.
+                </p>
+            </div>
+        </div>
+
+        <div style="margin-top: 25px; text-align: center; border-top: 2px dashed #cbd5e1; padding-top: 15px;">
+            <p style="font-size: 10pt; font-weight: 800; color: #1e1b4b; margin-bottom: 2px;">
+                منظومة الفصول الدراسية الحية (Air Class Live) • تجربة تعليمية افتراضية استثنائية
+            </p>
+            <p style="font-size: 8.5pt; color: #64748b; margin: 0;">
+                جميع الحقوق محفوظة لمنصة التعليم الإلكتروني © 2026 • تم إعداد هذا التقرير الفني لخدمة الإدارة والكادر التعليمي
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
