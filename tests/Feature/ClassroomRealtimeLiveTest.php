@@ -20,20 +20,19 @@ class ClassroomRealtimeLiveTest extends TestCase
     {
         return User::where('role', 'admin')->first() ?? User::factory()->create([
             'role' => 'admin',
-            'is_active' => true,
+            'status' => 'active',
         ]);
     }
 
     protected function getStudent(): User
     {
-        return User::where('role', 'student')->first() ?? User::create([
-            'name' => 'طالب تجريبي',
-            'email' => 'student_wb_'.rand(100, 999).'@test.com',
+        return User::create([
+            'name' => 'طالب اختباري مؤقت '.uniqid(),
+            'email' => 'test_runner_'.uniqid().'@test.local',
             'phone_whatsapp' => '96773'.rand(1000000, 9999999),
             'password' => Hash::make('Secret123!'),
             'role' => 'student',
             'status' => 'active',
-            'is_active' => true,
         ]);
     }
 
@@ -85,7 +84,6 @@ class ClassroomRealtimeLiveTest extends TestCase
             'password' => Hash::make('Secret123!'),
             'role' => 'student',
             'status' => 'active',
-            'is_active' => true,
         ]);
 
         $group = StudyGroup::create([
@@ -192,7 +190,6 @@ class ClassroomRealtimeLiveTest extends TestCase
             'password' => Hash::make('Secret123!'),
             'role' => 'student',
             'status' => 'active',
-            'is_active' => true,
         ]);
 
         $roomId = 'test-room-moderator-'.uniqid();
@@ -256,7 +253,6 @@ class ClassroomRealtimeLiveTest extends TestCase
             'password' => Hash::make('Secret123!'),
             'role' => 'student',
             'status' => 'active',
-            'is_active' => true,
         ]);
 
         // 1. المعلم يفتح كتاب في مساحة الشرح
@@ -465,6 +461,7 @@ class ClassroomRealtimeLiveTest extends TestCase
         // تنظيف
         ClassroomParticipant::where('room_id', $roomId)->delete();
         ClassroomRoomControl::where('room_id', $roomId)->delete();
+        $student->delete();
     }
 
     public function test_refresh_all_bumps_version_and_flags_force_refresh_for_students(): void
@@ -510,5 +507,64 @@ class ClassroomRealtimeLiveTest extends TestCase
         // تنظيف
         ClassroomParticipant::where('room_id', $roomId)->delete();
         ClassroomRoomControl::where('room_id', $roomId)->delete();
+        $student->delete();
+    }
+
+    public function test_teacher_broadcasts_audio_chunk_and_student_syncs_audio_chunks(): void
+    {
+        $admin = $this->getAdmin();
+        $student = $this->getStudent();
+        $roomId = 'test-room-audio-'.uniqid();
+
+        ClassroomRoomControl::create([
+            'room_id' => $roomId,
+            'policy' => 'open',
+            'is_live' => true,
+            'requires_admission' => false,
+        ]);
+
+        ClassroomParticipant::create([
+            'room_id' => $roomId,
+            'user_id' => $student->id,
+            'peer_id' => 'peer_student_audio',
+            'admission_status' => 'admitted',
+            'last_seen_at' => now(),
+        ]);
+
+        // 1. المعلم يبث كتلة صوتية بصيغة WAV
+        $fakeWavBase64 = base64_encode('RIFF....WAVEfmt ....data....');
+        $broadcastRes = $this->actingAs($admin)->postJson(route('classroom.broadcast_audio', $roomId), [
+            'seq' => 1,
+            'mime' => 'audio/wav',
+            'audio_base64' => $fakeWavBase64,
+        ]);
+        $broadcastRes->assertOk();
+        $broadcastRes->assertJson(['success' => true, 'seq' => 1]);
+
+        // 2. مزامنة الطالب مع طلب كتل الصوت (last_audio_seq = 0)
+        $syncRes = $this->actingAs($student)->getJson(route('classroom.sync', [
+            'roomId' => $roomId,
+            'last_audio_seq' => 0,
+        ]));
+        $syncRes->assertOk();
+        $syncRes->assertJsonStructure(['audio_seq', 'audio_chunks']);
+        $this->assertEquals(1, $syncRes->json('audio_seq'));
+        $this->assertCount(1, $syncRes->json('audio_chunks'));
+        $this->assertEquals($fakeWavBase64, $syncRes->json('audio_chunks.0.data'));
+        $this->assertEquals('audio/wav', $syncRes->json('audio_chunks.0.mime'));
+
+        // 3. الطالب يجلب عبر pull_audio
+        $pullRes = $this->actingAs($student)->getJson(route('classroom.pull_audio', [
+            'roomId' => $roomId,
+            'last_seq' => 0,
+        ]));
+        $pullRes->assertOk();
+        $pullRes->assertJson(['success' => true, 'latest_seq' => 1]);
+        $this->assertCount(1, $pullRes->json('chunks'));
+
+        // تنظيف
+        ClassroomParticipant::where('room_id', $roomId)->delete();
+        ClassroomRoomControl::where('room_id', $roomId)->delete();
+        $student->delete();
     }
 }

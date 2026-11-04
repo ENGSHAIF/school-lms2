@@ -1645,10 +1645,13 @@
             </div>
 
             <!-- إجبار المستخدم على التغيير عند أول دخول -->
-            <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5">
-                <input type="checkbox" name="force_change" id="adminForceChangeCb" value="1" checked class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 shrink-0">
-                <label for="adminForceChangeCb" class="text-xs font-bold text-amber-900 cursor-pointer leading-relaxed">
-                    إجبار المستخدم على تغيير كلمة المرور فور أول تسجيل دخول لحسابه (موصى به للأمان والخصوصية) 🔐
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-start gap-2.5">
+                <input type="checkbox" name="force_change" id="adminForceChangeCb" value="1" class="mt-0.5 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 shrink-0">
+                <label for="adminForceChangeCb" class="text-xs font-bold text-slate-800 cursor-pointer leading-relaxed">
+                    إلزام المستخدم بتغيير كلمة المرور عند أول تسجيل دخول لحسابه 🔐
+                    <span class="block text-[11px] text-slate-500 font-normal mt-0.5">
+                        (ملاحظة: اترك هذا الخيار غير محدد لتبقى كلمة المرور التي قمت بتعيينها الآن ثابتة ودائمة للمستخدم دون مطالبته بوضع كلمة سر جديدة عند تسجيل الدخول).
+                    </span>
                 </label>
             </div>
 
@@ -1886,8 +1889,7 @@
         document.getElementById('changePassUserName').innerText = 'تغيير كلمة المرور: ' + user.name;
         document.getElementById('changePassUserSub').innerText = 'الرقم الفريد: ' + (user.user_code || user.student_code || ('USR-' + user.id)) + ' | البريد: ' + user.email;
         generateRandomPass('adminNewPassInput');
-        const isRev = (user.email === 'demo.reviewer@asots.com' || user.is_reviewer || user.role === 'reviewer');
-        document.getElementById('adminForceChangeCb').checked = isRev ? false : (user.must_change_password == 1 || user.must_change_password === true);
+        document.getElementById('adminForceChangeCb').checked = false;
         document.getElementById('adminChangePasswordModal').classList.remove('hidden');
     }
 

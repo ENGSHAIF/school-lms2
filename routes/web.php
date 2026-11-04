@@ -118,6 +118,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/classroom/{roomId}/hand', [ClassroomRealtimeController::class, 'toggleHand'])->name('classroom.hand');
     Route::post('/classroom/{roomId}/controls', [ClassroomRealtimeController::class, 'updateControls'])->name('classroom.controls');
     Route::post('/classroom/{roomId}/whiteboard', [ClassroomRealtimeController::class, 'updateWhiteboard'])->name('classroom.whiteboard');
+    Route::post('/classroom/{roomId}/broadcast-audio', [ClassroomRealtimeController::class, 'broadcastAudioChunk'])->name('classroom.broadcast_audio');
+    Route::get('/classroom/{roomId}/pull-audio', [ClassroomRealtimeController::class, 'pullAudioChunks'])->name('classroom.pull_audio');
     Route::post('/classroom/{roomId}/reward-star', [ClassroomRealtimeController::class, 'rewardStar'])->name('classroom.reward_star');
     Route::get('/packages', [PackageController::class, 'index'])->name('packages.index');
     Route::post('/packages/subscribe', [PackageController::class, 'subscribe'])->name('packages.subscribe');

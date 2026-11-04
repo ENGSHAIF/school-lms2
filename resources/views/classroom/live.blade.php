@@ -106,7 +106,33 @@
                 </div>
             </div>
         </div>
+
+        <!-- نافذة إشعار المعلم بطلب طالب للإشارة بالليزر على السبورة -->
+        <div id="laserRequestToast" class="hidden fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md border-2 border-red-500 text-white rounded-2xl shadow-2xl p-3.5 max-w-md w-[92%] transition-all duration-300">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="text-2xl animate-pulse shrink-0">🔴</span>
+                    <div class="min-w-0">
+                        <h4 class="font-black text-xs text-red-300 flex items-center gap-1">
+                            <span>طلب تأشير بالليزر على السبورة</span>
+                        </h4>
+                        <p id="toastLaserStudentName" class="text-xs text-white font-bold truncate mt-0.5">الطالب: ...</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" id="btnToastGrantLaser" onclick="grantToastStudentLaser()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black px-3 py-1.5 rounded-xl shadow transition">
+                        السماح بالليزر ✓
+                    </button>
+                    <button type="button" id="btnToastRejectLaser" onclick="rejectToastStudentLaser()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-700 transition">
+                        تجاهل ✕
+                    </button>
+                </div>
+            </div>
+        </div>
     @endif
+
+    <!-- مشغل الصوت الحي الرئيسي الموثوق به ضد قيود المتصفح للجوالات والكمبيوتر -->
+    <audio id="liveClassroomMasterAudio" autoplay playsinline preload="auto" class="hidden"></audio>
 
     <!-- شاشة انتظار الطالب حتى يوافق المعلم على دخوله للبث الحي (Waiting Room Modal) -->
     @if(! $isTeacher)
@@ -699,6 +725,16 @@
         <!-- 2. الجزء الوسط واليسار الكبير: مساحة الشرح والمشاركة المباشرة (Zoom Live Presentation & Whiteboard) -->
         <section id="whiteboardSection" class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative min-h-[400px] lg:min-h-0">
             
+            <!-- نافذة كاميرا المعلم العائمة (Floating Teacher Video PiP) للأجهزة المحمولة والشاشات الصغيرة أثناء عرض السبورة -->
+            <div id="floatingTeacherVideoContainer" class="hidden absolute top-14 left-4 z-40 w-36 sm:w-44 md:w-52 aspect-video bg-slate-950/95 border-2 border-indigo-500 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md transition-all duration-300">
+                <video id="floatingTeacherVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute bottom-1 right-1.5 bg-black/80 px-2 py-0.5 rounded-lg text-[9px] font-bold text-white flex items-center gap-1 shadow pointer-events-none">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>👨‍🏫 {{ $teacher?->name ?? ($booking->teacher?->name ?? 'المعلم') }}</span>
+                </div>
+                <button type="button" onclick="toggleFloatingTeacherVideo(false)" class="absolute top-1 left-1.5 bg-black/70 hover:bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs transition font-black" title="إغلاق مؤقت">×</button>
+            </div>
+            
             <!-- الشريط العلوي لمساحة الشرح والسبورة -->
             <div class="p-2 sm:p-2.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0 z-10 text-xs">
                 
@@ -770,21 +806,23 @@
                         </button>
                     @endif
 
-                    <!-- قارئ وتصفح صفحات الكتب والـ PDF (متقدم) -->
-                    <div id="wbPageNavControls" class="hidden flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-xl border border-slate-800 text-[11px] font-bold">
-                        <button type="button" onclick="changeWbPageTo(1)" class="px-1 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="أول صفحة (Home)">⏮️</button>
-                        <button type="button" onclick="changeWbPage(-1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="الصفحة السابقة (◀ / PageUp)">◀</button>
-                        <span class="text-slate-400 flex items-center gap-1">
-                            <span>صفحة</span>
-                            <input type="number" id="wbPageDirectInput" min="1" value="1" onchange="onPageDirectInputChange(this.value)" class="w-12 bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-center text-white font-mono text-xs font-bold focus:border-indigo-500 focus:outline-none" title="اكتب رقم الصفحة واضغط Enter للانتقال السريع">
-                            <span>من <span id="wbTotalPagesText" class="font-mono text-white">1</span></span>
-                        </span>
-                        <button type="button" onclick="changeWbPage(1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="الصفحة التالية (▶ / PageDown)">▶</button>
-                        <button type="button" onclick="changeWbPageTo(wbTotalPages)" class="px-1 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="آخر صفحة (End)">⏭️</button>
-                        <span class="w-px h-3 bg-slate-700 mx-0.5"></span>
-                        <button type="button" onclick="fitPdfWidth()" class="px-1.5 py-0.5 hover:bg-slate-800 text-indigo-300 rounded" title="ملاءمة عرض الشاشة">📐 عرض</button>
-                        <button type="button" onclick="fitPdfPage()" class="px-1.5 py-0.5 hover:bg-slate-800 text-indigo-300 rounded" title="ملاءمة كامل الصفحة">📄 صفحة</button>
-                    </div>
+                    @if($isTeacher)
+                        <!-- قارئ وتصفح صفحات الكتب والـ PDF (متقدم) - حصري للمعلم -->
+                        <div id="wbPageNavControls" class="hidden flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-xl border border-slate-800 text-[11px] font-bold">
+                            <button type="button" onclick="changeWbPageTo(1)" class="px-1 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="أول صفحة (Home)">⏮️</button>
+                            <button type="button" onclick="changeWbPage(-1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="الصفحة السابقة (◀ / PageUp)">◀</button>
+                            <span class="text-slate-400 flex items-center gap-1">
+                                <span>صفحة</span>
+                                <input type="number" id="wbPageDirectInput" min="1" value="1" onchange="onPageDirectInputChange(this.value)" class="w-12 bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-center text-white font-mono text-xs font-bold focus:border-indigo-500 focus:outline-none" title="اكتب رقم الصفحة واضغط Enter للانتقال السريع">
+                                <span>من <span id="wbTotalPagesText" class="font-mono text-white">1</span></span>
+                            </span>
+                            <button type="button" onclick="changeWbPage(1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="الصفحة التالية (▶ / PageDown)">▶</button>
+                            <button type="button" onclick="changeWbPageTo(wbTotalPages)" class="px-1 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="آخر صفحة (End)">⏭️</button>
+                            <span class="w-px h-3 bg-slate-700 mx-0.5"></span>
+                            <button type="button" onclick="fitPdfWidth()" class="px-1.5 py-0.5 hover:bg-slate-800 text-indigo-300 rounded" title="ملاءمة عرض الشاشة">📐 عرض</button>
+                            <button type="button" onclick="fitPdfPage()" class="px-1.5 py-0.5 hover:bg-slate-800 text-indigo-300 rounded" title="ملاءمة كامل الصفحة">📄 صفحة</button>
+                        </div>
+                    @endif
 
                     <!-- أزرار التكبير والتصغير -->
                     <div class="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px]">
@@ -793,6 +831,20 @@
                         <button type="button" onclick="zoomWb(0.1)" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-300 rounded" title="تكبير">+</button>
                         <button type="button" onclick="resetWbZoom()" class="px-1.5 py-0.5 hover:bg-slate-800 text-slate-400 rounded" title="إعادة ضبط الحجم">⟲</button>
                     </div>
+
+                    @if(! $isTeacher)
+                        <!-- زر إظهار/إخفاء كاميرا المعلم العائمة للطالب -->
+                        <button type="button" id="btnToggleFloatingTeacherCam" onclick="toggleFloatingTeacherVideo()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-200 hover:text-white border border-indigo-700/80 font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition shadow" title="إظهار أو إخفاء كاميرا المعلم العائمة">
+                            <span>📹</span>
+                            <span>كاميرا المعلم</span>
+                        </button>
+
+                        <!-- زر طلب التأشير بالليزر على السبورة للطالب -->
+                        <button type="button" id="btnStudentLaserToggle" onclick="toggleStudentLaserRequest()" class="bg-red-950/80 hover:bg-red-900 text-red-200 hover:text-white border border-red-700/80 font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition shadow" title="طلب إذن من المعلم للإشارة والتأشير بالليزر على السبورة">
+                            <span>🔴</span>
+                            <span id="txtStudentLaserToggle">طلب التأشير بالليزر</span>
+                        </button>
+                    @endif
 
                     <!-- زر تحديث ومزامنة الصوت والشاشة والسبورة للجميع -->
                     <button type="button" onclick="refreshClassroom()" class="bg-cyan-950/90 hover:bg-cyan-900 text-cyan-200 hover:text-white border border-cyan-700 font-black text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition shadow" title="تنشيط الصوت ومزامنة السبورة بدون إعادة تحميل الصفحة">
@@ -823,6 +875,32 @@
                         </div>
                     </div>
                 </div>
+
+                @if(! $isTeacher)
+                    <!-- شريط إعلام الطالب بتفعيل إذن التأشير بالليزر -->
+                    <div id="studentLaserBanner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-40 bg-red-950/95 border-2 border-red-500 rounded-2xl px-4 py-2 shadow-2xl flex items-center gap-3 backdrop-blur-md">
+                        <div class="flex items-center gap-2 text-xs font-bold text-red-200">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping shrink-0"></span>
+                            <span>🔴 إذن التأشير بالليزر مفعّل! حرك الماوس أو المس الشاشة لتحديد ما تشرحه للأستاذ وزملائك.</span>
+                        </div>
+                        <button type="button" onclick="releaseLaserPermission()" class="bg-red-600 hover:bg-red-500 text-white font-black text-xs px-2.5 py-1 rounded-xl transition shadow">
+                            إنهاء التأشير ✕
+                        </button>
+                    </div>
+                @endif
+
+                @if($isTeacher)
+                    <!-- شريط المعلم لمتابعة وسحب إذن التأشير النشط للطالب -->
+                    <div id="teacherActiveLaserBanner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 border border-red-500/70 rounded-2xl px-4 py-2 shadow-2xl flex items-center gap-3 backdrop-blur-md">
+                        <span class="text-xs text-red-300 font-bold flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                            <span>الطالب (<span id="activeLaserStudentName">-</span>) يمتلك إذن التأشير بالليزر الآن</span>
+                        </span>
+                        <button type="button" onclick="revokeStudentLaser()" class="bg-rose-600 hover:bg-rose-500 text-white font-black text-xs px-2.5 py-1 rounded-xl shadow transition">
+                            سحب إذن التأشير ✕
+                        </button>
+                    </div>
+                @endif
 
                 <!-- مسرح اللوحات والكانفاس المزدوج (Canvas Stage) -->
                 <div id="wbCanvasStage" class="relative my-auto transition-all duration-75 flex items-center justify-center">
@@ -865,38 +943,45 @@
                                 </button>
                             @endif
 
-                            <!-- أزرار التنقل الأساسية للخلف وللأمام والتحديث وجوجل -->
-                            <div class="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1 shrink-0">
-                                <button type="button" onclick="navigateBrowserBack()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1" title="للخلف">⬅️</button>
-                                <button type="button" onclick="navigateBrowserForward()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1" title="للأمام">➡️</button>
-                                <button type="button" onclick="reloadBrowserIframe()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 text-xs font-bold transition flex items-center gap-1" title="إعادة تحميل الصفحة">🔄</button>
-                                <button type="button" onclick="navigateBrowserToGoogleHome()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-amber-300 hover:text-amber-200 text-xs font-bold transition flex items-center gap-1" title="الرجوع لصفحة جوجل الرئيسية">
-                                    <span>🔍</span>
-                                    <span class="hidden sm:inline">جوجل</span>
-                                </button>
-                            </div>
+                            @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                <!-- أزرار التنقل الأساسية للخلف وللأمام والتحديث وجوجل -->
+                                <div class="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1 shrink-0">
+                                    <button type="button" onclick="navigateBrowserBack()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1" title="للخلف">⬅️</button>
+                                    <button type="button" onclick="navigateBrowserForward()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1" title="للأمام">➡️</button>
+                                    <button type="button" onclick="reloadBrowserIframe()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 text-xs font-bold transition flex items-center gap-1" title="إعادة تحميل الصفحة">🔄</button>
+                                    <button type="button" onclick="navigateBrowserToGoogleHome()" class="px-2 py-1 rounded-lg hover:bg-slate-800 text-amber-300 hover:text-amber-200 text-xs font-bold transition flex items-center gap-1" title="الرجوع لصفحة جوجل الرئيسية">
+                                        <span>🔍</span>
+                                        <span class="hidden sm:inline">جوجل</span>
+                                    </button>
+                                </div>
 
-                            <!-- شريط كتابة العنوان والبحث مثل كروم -->
-                            <div class="flex-1 relative flex items-center min-w-[200px]">
-                                <span class="absolute right-2.5 text-slate-400 text-xs pointer-events-none">🌐</span>
-                                <input type="text" id="wbBrowserCurrentUrl" class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl pr-7 pl-16 py-1.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none transition" placeholder="اكتب عنوان الموقع أو ابحث في جوجل..." onkeydown="if(event.key==='Enter') navigateBrowserToUrl()">
-                                <button type="button" onclick="navigateBrowserToUrl()" class="absolute left-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-sm" title="الانتقال للموقع">
-                                    ذهاب ⏎
-                                </button>
-                            </div>
+                                <!-- شريط كتابة العنوان والبحث مثل كروم -->
+                                <div class="flex-1 relative flex items-center min-w-[200px]">
+                                    <span class="absolute right-2.5 text-slate-400 text-xs pointer-events-none">🌐</span>
+                                    <input type="text" id="wbBrowserCurrentUrl" class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl pr-7 pl-16 py-1.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none transition" placeholder="اكتب عنوان الموقع أو ابحث في جوجل..." onkeydown="if(event.key==='Enter') navigateBrowserToUrl()">
+                                    <button type="button" onclick="navigateBrowserToUrl()" class="absolute left-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition shadow-sm" title="الانتقال للموقع">
+                                        ذهاب ⏎
+                                    </button>
+                                </div>
 
-                            <!-- زر الفتح في تبويب خارجي مستقل (كروم) -->
-                            <button type="button" onclick="openBrowserExternalTab()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-700 text-xs font-bold shrink-0 transition flex items-center gap-1 shadow-sm cursor-pointer" title="إذا كان الموقع يفرض حماية تمنع التضمين، افتحه هنا في نافذة كروم مباشرة">
-                                <span>↗️</span>
-                                <span class="hidden md:inline">فتح بتبويب مستقل</span>
-                            </button>
+                                <!-- زر الفتح في تبويب خارجي مستقل (كروم) -->
+                                <button type="button" onclick="openBrowserExternalTab()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-700 text-xs font-bold shrink-0 transition flex items-center gap-1 shadow-sm cursor-pointer" title="إذا كان الموقع يفرض حماية تمنع التضمين، افتحه هنا في نافذة كروم مباشرة">
+                                    <span>↗️</span>
+                                    <span class="hidden md:inline">فتح بتبويب مستقل</span>
+                                </button>
+                            @else
+                                <div class="flex items-center gap-2 text-slate-300 text-xs font-bold py-1">
+                                    <span>🌐</span>
+                                    <span>مستعرض الشرح (مشاهدة مباشرة لما يعرضه المعلم)</span>
+                                </div>
+                            @endif
                         </div>
 
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <span class="text-[10px] text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-xl border border-amber-500/30 hidden xl:inline font-bold">
-                                💡 اختر الماوس 🖱️ للتفاعل مع الموقع أو القلم ✏️ للشرح فوقه
-                            </span>
                             @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                                <span class="text-[10px] text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-xl border border-amber-500/30 hidden xl:inline font-bold">
+                                    💡 اختر الماوس 🖱️ للتفاعل مع الموقع أو القلم ✏️ للشرح فوقه
+                                </span>
                                 <button type="button" onclick="closeWbMediaLayer()" class="px-2.5 py-1 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-white text-xs font-bold border border-rose-800 transition" title="إنهاء التصفح">
                                     ✕ إغلاق
                                 </button>
@@ -904,17 +989,19 @@
                         </div>
                     </div>
 
-                    <!-- شريط إرشادي خفيف لمعالجة المواقع المحمية -->
-                    <div id="wbBrowserHelpTip" class="bg-indigo-950/80 border-b border-indigo-900/60 px-3 py-1 flex items-center justify-between text-[11px] text-indigo-200">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-amber-400">💡</span>
-                            <span>إذا صادفت موقعاً يمنع التضمين أو العرض الداخلي، يمكنك النقر على <strong>[فتح بتبويب مستقل ↗️]</strong> لفتحه فوراً ومشاركته عبر ميزة [مشاركة الشاشة 🖥️].</span>
+                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                        <!-- شريط إرشادي خفيف لمعالجة المواقع المحمية -->
+                        <div id="wbBrowserHelpTip" class="bg-indigo-950/80 border-b border-indigo-900/60 px-3 py-1 flex items-center justify-between text-[11px] text-indigo-200">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-amber-400">💡</span>
+                                <span>إذا صادفت موقعاً يمنع التضمين أو العرض الداخلي، يمكنك النقر على <strong>[فتح بتبويب مستقل ↗️]</strong> لفتحه فوراً ومشاركته عبر ميزة [مشاركة الشاشة 🖥️].</span>
+                            </div>
+                            <button type="button" onclick="document.getElementById('wbBrowserHelpTip').classList.add('hidden')" class="text-indigo-400 hover:text-white text-xs px-1">✕</button>
                         </div>
-                        <button type="button" onclick="document.getElementById('wbBrowserHelpTip').classList.add('hidden')" class="text-indigo-400 hover:text-white text-xs px-1">✕</button>
-                    </div>
+                    @endif
 
                     <div class="flex-1 relative w-full h-full bg-white overflow-hidden">
-                        <iframe id="whiteboardBrowserIframe" src="about:blank" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        <iframe id="whiteboardBrowserIframe" src="about:blank" class="w-full h-full border-0 {{ ! $isTeacher ? 'pointer-events-none' : '' }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
                 </div>
 
@@ -929,35 +1016,38 @@
                             </button>
                         @endif
                     </div>
-                    <video id="whiteboardHtml5Video" playsinline class="hidden w-full h-full max-h-full object-contain"></video>
-                    <iframe id="whiteboardYoutubeFrame" class="hidden w-full h-full max-w-full max-h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <video id="whiteboardHtml5Video" playsinline class="hidden w-full h-full max-h-full object-contain {{ ! $isTeacher ? 'pointer-events-none' : '' }}"></video>
+                    <iframe id="whiteboardYoutubeFrame" class="hidden w-full h-full max-w-full max-h-full border-0 {{ ! $isTeacher ? 'pointer-events-none' : '' }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-                    <!-- شريط التحكم العائم بالفيديو فوق الكانفاس (z-30) للتحكم والشرح في نفس الوقت -->
-                    <div id="wbVideoCustomControls" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-11/12 max-w-2xl bg-slate-900/95 backdrop-blur-md border border-slate-700/90 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-2 transition">
-                        <div class="flex items-center gap-2">
-                            <input type="range" id="wbVideoSeekSlider" min="0" max="100" value="0" step="0.1" oninput="onVideoSeekInput(this.value)" class="w-full accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                            <span id="wbVideoTimeLabel" class="text-[10px] font-mono text-slate-300 shrink-0">00:00 / 00:00</span>
-                        </div>
-                        <div class="flex items-center justify-between text-xs">
-                            <div class="flex items-center gap-1.5">
-                                <button type="button" onclick="toggleHtml5VideoPlay()" id="btnWbVideoPlay" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center gap-1 shadow">
-                                    <span id="iconWbVideoPlay">▶️</span>
-                                    <span id="txtWbVideoPlay">تشغيل</span>
-                                </button>
-                                <button type="button" onclick="rewindHtml5Video(10)" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="تراجع 10 ثواني">⏪ 10ث</button>
-                                <button type="button" onclick="forwardHtml5Video(10)" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="تقديم 10 ثواني">10ث ⏩</button>
-                                <button type="button" onclick="toggleHtml5VideoMute()" id="btnWbVideoMute" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="كتم/تشغيل الصوت">🔊</button>
-                            </div>
+                    @if($isTeacher || (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSupervisor())))
+                        <!-- شريط التحكم العائم بالفيديو فوق الكانفاس (z-30) للتحكم والشرح في نفس الوقت -->
+                        <div id="wbVideoCustomControls" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-11/12 max-w-2xl bg-slate-900/95 backdrop-blur-md border border-slate-700/90 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-2 transition">
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-amber-300 font-bold hidden sm:inline">💡 أوقف الفيديو واستخدم القلم ✏️ للشرح فوقه</span>
+                                <input type="range" id="wbVideoSeekSlider" min="0" max="100" value="0" step="0.1" oninput="onVideoSeekInput(this.value)" class="w-full accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                                <span id="wbVideoTimeLabel" class="text-[10px] font-mono text-slate-300 shrink-0">00:00 / 00:00</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="toggleHtml5VideoPlay()" id="btnWbVideoPlay" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center gap-1 shadow">
+                                        <span id="iconWbVideoPlay">▶️</span>
+                                        <span id="txtWbVideoPlay">تشغيل</span>
+                                    </button>
+                                    <button type="button" onclick="rewindHtml5Video(10)" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="تراجع 10 ثواني">⏪ 10ث</button>
+                                    <button type="button" onclick="forwardHtml5Video(10)" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="تقديم 10 ثواني">10ث ⏩</button>
+                                    <button type="button" onclick="toggleHtml5VideoMute()" id="btnWbVideoMute" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold" title="كتم/تشغيل الصوت">🔊</button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-amber-300 font-bold hidden sm:inline">💡 أوقف الفيديو واستخدم القلم ✏️ للشرح فوقه</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
             </div>
 
-            <!-- شريط التمرير الرأسي السريع لصفحات الـ PDF (Vertical Scrubber / Quick Navigator) -->
-            <div id="wbPdfSideNavigator" class="hidden absolute right-3 top-14 bottom-14 z-30 flex flex-col items-center justify-between bg-slate-900/90 backdrop-blur border border-slate-700/80 rounded-2xl py-2 px-1 shadow-2xl transition">
+            @if($isTeacher)
+                <!-- شريط التمرير الرأسي السريع لصفحات الـ PDF (Vertical Scrubber / Quick Navigator) -->
+                <div id="wbPdfSideNavigator" class="hidden absolute right-3 top-14 bottom-14 z-30 flex flex-col items-center justify-between bg-slate-900/90 backdrop-blur border border-slate-700/80 rounded-2xl py-2 px-1 shadow-2xl transition">
                 <button type="button" onclick="changeWbPageTo(1)" class="text-xs text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800" title="أول صفحة (Home)">⏮️</button>
                 <div class="relative flex-1 flex items-center justify-center py-2 my-1">
                     <!-- فقاعة رقم الصفحة التوضيحية عند السحب -->
@@ -1238,6 +1328,7 @@
                         <span>جامبو</span> <span class="font-mono text-[10px] text-indigo-300">36px</span>
                     </button>
                 </div>
+            @endif
         </section>
 
     </main>
@@ -1721,11 +1812,19 @@
 
     // حالة الأجهزة والمشاركة الحالية
     let localStream = null;
-    let isMicEnabled = true;
+    let isMicEnabled = IS_TEACHER ? true : false;
     let isCamEnabled = false;
     let isHandRaised = false;
-    let currentRoomPolicy = 'open'; // 'open' | 'permission'
+    let isSpeakPermitted = {{ $isTeacher ? 'true' : 'false' }};
+    let currentRoomPolicy = 'permission'; // 'open' | 'permission'
     let lastMessageId = {{ isset($chatMessages) && $chatMessages->isNotEmpty() ? $chatMessages->last()->id : 0 }};
+
+    // حالة إذن التأشير بالليزر للطلاب
+    let isStudentLaserAllowed = false;
+    let isStudentLaserRequested = false;
+    let activeLaserUserId = null;
+    let currentToastLaserStudentId = null;
+    let currentToastLaserStudentName = '';
 
     // اتصالات WebRTC بالأقران (PeerConnections Map)
     const peerConnections = {}; // key: peerId => RTCPeerConnection
@@ -1742,7 +1841,17 @@
             { urls: 'stun:stun2.l.google.com:19302' },
             { urls: 'stun:stun3.l.google.com:19302' },
             { urls: 'stun:stun4.l.google.com:19302' },
-            { urls: 'stun:stun.cloudflare.com:3478' }
+            { urls: 'stun:stun.cloudflare.com:3478' },
+            { urls: 'stun:stun.nextcloud.com:443' },
+            {
+                urls: [
+                    'turn:openrelay.metered.ca:80',
+                    'turn:openrelay.metered.ca:443',
+                    'turn:openrelay.metered.ca:443?transport=tcp'
+                ],
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            }
         ],
         iceCandidatePoolSize: 10
     };
@@ -1873,15 +1982,25 @@
                             vSyncEl.pause();
                         }
                     }
+                    break;
+                case 'wb_scale':
+                    if (!IS_TEACHER && data.scale) {
+                        wbPdfScale = data.scale;
+                        if (wbCurrentBg) wbCurrentBg.scale = data.scale;
+                        if (wbCurrentBg && wbCurrentBg.type === 'pdf' && wbCurrentBg.url) {
+                            renderPdfPage(wbCurrentBg.url, wbCurrentPage, data.scale);
+                        }
+                    }
+                    break;
                 case 'wb_scroll':
                     if (!IS_TEACHER) {
                         const wbCont = document.getElementById('whiteboardContainer');
                         if (wbCont) {
-                            const maxScroll = wbCont.scrollHeight - wbCont.clientHeight;
+                            const maxScroll = Math.max(0, wbCont.scrollHeight - wbCont.clientHeight);
                             const targetScroll = typeof data.scrollRatio === 'number' && maxScroll > 0
                                 ? (data.scrollRatio * maxScroll)
-                                : data.scrollTop;
-                            wbCont.scrollTo({ top: targetScroll, behavior: 'smooth' });
+                                : (data.scrollTop || 0);
+                            wbCont.scrollTop = targetScroll;
                         }
                     }
                     break;
@@ -1893,18 +2012,21 @@
                     break;
                 case 'force_mute_all':
                     if (!IS_TEACHER) {
+                        isSpeakPermitted = false;
                         if (isMicEnabled) toggleLocalMic();
-                        alert('قام المعلم بكتم صوت جميع الطلاب 🔇');
+                        showLiveToast('🔇 قام المعلم بكتم صوت جميع الطلاب.', '🔇');
                     }
                     break;
                 case 'force_mute_user':
                     if (data.target_user_id === CURRENT_USER_ID) {
+                        isSpeakPermitted = false;
                         if (isMicEnabled) toggleLocalMic();
-                        alert('قام المعلم بكتم صوتك 🔇');
+                        showLiveToast('🔇 قام المعلم بكتم صوتك.', '🔇');
                     }
                     break;
                 case 'allow_speak_user':
                     if (data.target_user_id === CURRENT_USER_ID) {
+                        isSpeakPermitted = true;
                         isHandRaised = false;
                         isMicEnabled = true;
                         if (!localStream) {
@@ -1915,6 +2037,26 @@
                             updateMediaButtonsUI();
                         }
                         showLiveToast('🎙️ أذن لك المعلم بالتحدث الآن! المايكروفون مفتوح وصوتك يصل للجميع.', '🎙️');
+                    }
+                    break;
+                case 'laser_requested':
+                    if (IS_TEACHER) {
+                        showLaserRequestToast({ user_id: data.user_id, name: data.user_name });
+                    }
+                    break;
+                case 'grant_laser_user':
+                    if (data.target_user_id === CURRENT_USER_ID) {
+                        activateStudentLaserMode();
+                    } else if (IS_TEACHER) {
+                        showTeacherActiveLaserBanner(data.target_name || 'طالب', data.target_user_id);
+                    }
+                    break;
+                case 'revoke_laser_user':
+                    if (data.target_user_id === CURRENT_USER_ID || !data.target_user_id) {
+                        deactivateStudentLaserMode();
+                    }
+                    if (IS_TEACHER) {
+                        hideTeacherActiveLaserBanner();
                     }
                     break;
                 case 'star_rewarded':
@@ -1928,17 +2070,54 @@
         }
     }
 
+    // أدوات تطهير ومعالجة بروتوكول SDP لمنع أخطاء WebRTC بالهواتف المحمولة
+    function sanitizeSdp(sdp) {
+        if (!sdp || typeof sdp !== 'string') return sdp;
+        // إزالة a=max-message-size التي تتسبب في فشل RTCPeerConnection parse على متصفحات الهواتف
+        let clean = sdp.replace(/^a=max-message-size:.*\r?\n?/gm, '');
+        // توحيد فواصل الأسطر إلى \r\n المعيارية وفق RFC 4566 / 8866
+        clean = clean.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+        return clean.split('\n').join('\r\n') + '\r\n';
+    }
+
+    function sanitizeDescription(desc) {
+        if (!desc) return desc;
+        if (typeof desc === 'object' && desc.sdp) {
+            return {
+                type: desc.type,
+                sdp: sanitizeSdp(desc.sdp)
+            };
+        }
+        return desc;
+    }
+
     // إدارة قفل وفك الصوت المتقدم (Web Audio API Unlocker)
     async function unlockAudioSystem() {
         try {
+            const masterAudio = document.getElementById('liveClassroomMasterAudio');
+            if (masterAudio) {
+                if (!masterAudio.src && !masterAudio.srcObject) {
+                    masterAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+                }
+                masterAudio.muted = false;
+                masterAudio.volume = 1.0;
+                masterAudio.play().catch(() => {});
+            }
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
                 if (!window.globalAudioCtx) {
                     window.globalAudioCtx = new AudioContext();
                 }
                 if (window.globalAudioCtx.state === 'suspended') {
-                    await window.globalAudioCtx.resume();
+                    await window.globalAudioCtx.resume().catch(() => {});
                 }
+                try {
+                    const buffer = window.globalAudioCtx.createBuffer(1, 1, 22050);
+                    const source = window.globalAudioCtx.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(window.globalAudioCtx.destination);
+                    source.start(0);
+                } catch (e) {}
             }
             unblockAllAudio();
         } catch(e) {
@@ -1988,9 +2167,12 @@
                         }
                     } else {
                         pc.addTrack(track, localStream);
-                        // إعادة التفاوض (Renegotiation) فورياً لكلا الطرفين لضمان وصول الصوت
+                        // إعادة التفاوض (Renegotiation) فورياً لكلا الطرفين لضمان وصول الصوت مع تطهير SDP
                         pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
-                            .then(offer => pc.setLocalDescription(offer))
+                            .then(offer => {
+                                const cleanOffer = new RTCSessionDescription({ type: offer.type, sdp: sanitizeSdp(offer.sdp) });
+                                return pc.setLocalDescription(cleanOffer);
+                            })
                             .then(() => postSignal(peerId, 'offer', pc.localDescription))
                             .catch(e => console.log('Renegotiate offer err:', e));
                     }
@@ -2011,8 +2193,8 @@
             });
 
             isCamEnabled = false;
-            // المعلم صوته مفتوح دائماً، أما الطالب فبحسب سياسة الغرفة
-            isMicEnabled = IS_TEACHER ? true : (currentRoomPolicy !== 'permission');
+            // المعلم صوته مفتوح دائماً، أما الطالب فمكتوم افتراضياً ومقيد بإذن المعلم
+            isMicEnabled = IS_TEACHER ? true : isSpeakPermitted;
 
             if (!isMicEnabled) {
                 localStream.getAudioTracks().forEach(t => t.enabled = false);
@@ -2020,6 +2202,10 @@
 
             ensureTracksInPeerConnections();
             updateMediaButtonsUI();
+
+            if (IS_TEACHER && isMicEnabled) {
+                startTeacherAudioBroadcast();
+            }
 
         } catch (err) {
             console.warn('Microphone access denied or error:', err);
@@ -2035,9 +2221,9 @@
             return;
         }
 
-        // إذا كانت السياسة "بإذن" والمستخدم ليس معلماً أو مديراً ولم يُمنح الإذن بعد
-        if (!CAN_MANAGE_ROOM && currentRoomPolicy === 'permission' && !isHandRaised) {
-            alert('⚠️ التحدث في هذا الفصل مقيد بإذن الأستاذ. يرجى الضغط على زر "طلب الكلمة ✋" أولاً.');
+        // إذا كان المستخدم طالباً ولم يُمنح إذن التحدث من قبل الأستاذ
+        if (!CAN_MANAGE_ROOM && !isSpeakPermitted) {
+            alert('⚠️ التحدث في هذا الفصل مقيد بإذن الأستاذ. يرجى الضغط على زر "طلب الكلمة ✋" أولاً ليأذن لك الأستاذ بالمشاركة الصوتية.');
             return;
         }
 
@@ -2045,6 +2231,10 @@
         localStream.getAudioTracks().forEach(track => track.enabled = isMicEnabled);
         ensureTracksInPeerConnections();
         updateMediaButtonsUI();
+
+        if (IS_TEACHER && isMicEnabled) {
+            startTeacherAudioBroadcast();
+        }
     }
 
     // تشغيل وإيقاف الكاميرا عند الطلب فقط (فيديو عند النقر)
@@ -2078,6 +2268,13 @@
                     avatarEl?.classList.add('hidden');
                 }
 
+                if (IS_TEACHER) {
+                    const floatingVideo = document.getElementById('floatingTeacherVideo');
+                    if (floatingVideo) {
+                        floatingVideo.srcObject = localStream;
+                    }
+                }
+
                 ensureTracksInPeerConnections();
                 updateMediaButtonsUI();
 
@@ -2100,6 +2297,13 @@
                     avatarEl?.classList.remove('hidden');
                 }
 
+                if (IS_TEACHER) {
+                    const floatingVideo = document.getElementById('floatingTeacherVideo');
+                    if (floatingVideo) floatingVideo.srcObject = null;
+                    const floatingCont = document.getElementById('floatingTeacherVideoContainer');
+                    if (floatingCont) floatingCont.classList.add('hidden');
+                }
+
                 ensureTracksInPeerConnections();
                 updateMediaButtonsUI();
             }
@@ -2108,6 +2312,18 @@
             alert('⚠️ تعذر تشغيل الكاميرا. يرجى التأكد من توصيل الكاميرا ومنح إذن المتصفح.');
             isCamEnabled = false;
             updateMediaButtonsUI();
+        }
+    }
+
+    // التحكم في إظهار وإخفاء كاميرا المعلم العائمة للطالب
+    function toggleFloatingTeacherVideo(forceState) {
+        const cont = document.getElementById('floatingTeacherVideoContainer');
+        if (!cont) return;
+        if (typeof forceState === 'boolean') {
+            if (forceState) cont.classList.remove('hidden');
+            else cont.classList.add('hidden');
+        } else {
+            cont.classList.toggle('hidden');
         }
     }
 
@@ -2163,6 +2379,16 @@
         const pc = new RTCPeerConnection(ICE_SERVERS);
         peerConnections[remotePeerId] = pc;
 
+        // للطلاب: تهيئة مسارات الاستقبال فورياً لضمان تدفق صوت المعلم بدون انتظار
+        if (!IS_TEACHER) {
+            try {
+                pc.addTransceiver('audio', { direction: 'recvonly' });
+                pc.addTransceiver('video', { direction: 'recvonly' });
+            } catch (e) {
+                console.warn('Transceiver add fallback:', e);
+            }
+        }
+
         // تهيئة قناة البيانات التفاعلية الفورية (P2P DataChannel) لنقل الدردشة والسبورة في أجزاء من الثانية
         try {
             const dc = pc.createDataChannel('live_classroom_sync', { negotiated: true, id: 0 });
@@ -2181,7 +2407,7 @@
 
         // عند وصول تيار الصوت أو الصورة من النظير البعيد
         pc.ontrack = (event) => {
-            const stream = event.streams[0];
+            const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
             peerStreams[remotePeerId] = stream;
             attachRemoteMedia(remotePeerId, remoteUserId, remoteName, isRemoteStaff, stream);
         };
@@ -2195,6 +2421,9 @@
 
         pc.onconnectionstatechange = () => {
             if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+                if (isRemoteStaff && !IS_TEACHER) {
+                    window.isTeacherWebRtcAudioActive = false;
+                }
                 removeRemotePeerUI(remotePeerId, remoteUserId);
             }
         };
@@ -2203,7 +2432,51 @@
     }
 
     function attachRemoteMedia(remotePeerId, remoteUserId, remoteName, isRemoteStaff, stream) {
-        // تشغيل الصوت دائماً عبر عنصر Audio
+        // إذا كان النظير معلماً والمستخدم الحالي طالباً: نشغل الصوت فوراً عبر مشغل الصوت الرئيسي الموثوق به ضد حظر المتصفحات
+        if (isRemoteStaff && !IS_TEACHER) {
+            const masterAudio = document.getElementById('liveClassroomMasterAudio');
+            if (masterAudio) {
+                masterAudio.srcObject = stream;
+                masterAudio.volume = 1.0;
+                masterAudio.muted = false;
+                masterAudio.play().then(() => {
+                    console.log('🔊 Master audio playing teacher stream successfully!');
+                    window.isTeacherWebRtcAudioActive = true;
+                    document.getElementById('audioUnblockBanner')?.classList.add('hidden');
+                }).catch(err => {
+                    console.warn('Master audio autoplay prevented, unblock banner ready:', err);
+                    window.isTeacherWebRtcAudioActive = false;
+                    document.getElementById('audioUnblockBanner')?.classList.remove('hidden');
+                });
+            }
+
+            // عرض فيديو المعلم للطالب في البطاقة الجانبية والنافذة العائمة (Floating Video)
+            const tVideo = document.getElementById('teacherVideo');
+            const floatingVideo = document.getElementById('floatingTeacherVideo');
+            const floatingCont = document.getElementById('floatingTeacherVideoContainer');
+            const tAvatar = document.getElementById('teacherAvatar');
+
+            if (stream.getVideoTracks().length > 0) {
+                if (tVideo) {
+                    tVideo.srcObject = stream;
+                    tVideo.classList.remove('hidden');
+                }
+                if (floatingVideo) {
+                    floatingVideo.srcObject = stream;
+                }
+                if (floatingCont) {
+                    const isSmallScreen = window.innerWidth < 1024;
+                    const isSidebarHidden = document.getElementById('liveInteractivePanel')?.classList.contains('hidden');
+                    if (isSmallScreen || isSidebarHidden) {
+                        floatingCont.classList.remove('hidden');
+                    }
+                }
+                tAvatar?.classList.add('hidden');
+            }
+            return;
+        }
+
+        // تشغيل الصوت للزملاء الطلاب أو للطلاب عند المعلم
         if (!remoteAudios[remotePeerId]) {
             const audioEl = document.createElement('audio');
             audioEl.id = 'audio_' + remotePeerId;
@@ -2217,38 +2490,11 @@
             remoteAudios[remotePeerId] = audioEl;
 
             audioEl.play().catch(e => {
-                console.log('Audio autoplay prevented, showing unblock banner:', e);
-                document.getElementById('audioUnblockBanner')?.classList.remove('hidden');
+                console.log('Audio autoplay prevented:', e);
             });
         } else {
             remoteAudios[remotePeerId].srcObject = stream;
             remoteAudios[remotePeerId].play().catch(() => {});
-        }
-
-        // توجيه الصوت أيضاً عبر Web Audio API لضمان وصوله بمكبر الصوت في الهواتف
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (AudioContext) {
-                if (!window.globalAudioCtx) window.globalAudioCtx = new AudioContext();
-                if (window.globalAudioCtx.state === 'running') {
-                    const src = window.globalAudioCtx.createMediaStreamSource(stream);
-                    src.connect(window.globalAudioCtx.destination);
-                }
-            }
-        } catch (e) {
-            console.log('Web Audio routing err:', e);
-        }
-
-        // إذا كان النظير معلماً والمستخدم الحالي طالباً: نعرض فيديو المعلم في بطاقة المعلم
-        if (isRemoteStaff && !IS_TEACHER) {
-            const tVideo = document.getElementById('teacherVideo');
-            const tAvatar = document.getElementById('teacherAvatar');
-            if (tVideo && stream.getVideoTracks().length > 0) {
-                tVideo.srcObject = stream;
-                tVideo.classList.remove('hidden');
-                tAvatar?.classList.add('hidden');
-            }
-            return;
         }
 
         // عرض بطاقة الطالب في شبكة الطلاب (Remote Peers Grid)
@@ -2385,6 +2631,10 @@
 
     async function postSignal(toPeerId, signalType, payload) {
         try {
+            let cleanPayload = payload;
+            if (payload && (signalType === 'offer' || signalType === 'answer')) {
+                cleanPayload = sanitizeDescription(payload);
+            }
             await fetch(`/classroom/${ROOM_ID}/signal`, {
                 method: 'POST',
                 headers: {
@@ -2396,7 +2646,7 @@
                     from_peer_id: MY_PEER_ID,
                     to_peer_id: toPeerId,
                     signal_type: signalType,
-                    payload: payload
+                    payload: cleanPayload
                 })
             });
         } catch (e) {
@@ -2464,6 +2714,10 @@
                 requestAdmissionFlag = false;
             }
 
+            if (!IS_TEACHER && !window.isTeacherWebRtcAudioActive) {
+                params.append('last_audio_seq', lastPulledAudioSeq);
+            }
+
             const response = await fetch(`/classroom/${ROOM_ID}/sync?${params.toString()}`, {
                 method: 'GET',
                 headers: {
@@ -2525,6 +2779,7 @@
                 if (!CAN_MANAGE_ROOM) {
                     const myInfo = (data.participants || []).find(p => p.user_id === CURRENT_USER_ID);
                     if (data.room_control.is_muted_by_host) {
+                        isSpeakPermitted = false;
                         if (isMicEnabled) {
                             isMicEnabled = false;
                             localStream?.getAudioTracks().forEach(t => t.enabled = false);
@@ -2534,6 +2789,7 @@
                         wasMutedByHost = true;
                     } else if (wasMutedByHost || (isHandRaised && myInfo && !myInfo.is_hand_raised)) {
                         // الأستاذ سمح للطالب بالتحدث (Unmuted or hand lowered with permission) -> تفعيل المايك تلقائياً
+                        isSpeakPermitted = true;
                         wasMutedByHost = false;
                         isHandRaised = false;
                         isMicEnabled = true;
@@ -2595,8 +2851,257 @@
                 renderRemoteLaser(data.laser_state);
             }
 
+            // ح) مزامنة إذن التأشير بالليزر للطالب والمعلم
+            if (data.laser_permission !== undefined) {
+                handleLaserPermissionSync(data.laser_permission);
+            }
+            if (IS_TEACHER && data.laser_request) {
+                showLaserRequestToast(data.laser_request);
+            }
+
+            // ط) مزامنة موضع تمرير السبورة للطلاب عبر الخادم
+            if (!IS_TEACHER && data.scroll_state) {
+                const wbCont = document.getElementById('whiteboardContainer');
+                if (wbCont) {
+                    const maxScroll = Math.max(0, wbCont.scrollHeight - wbCont.clientHeight);
+                    const targetScroll = (typeof data.scroll_state.scrollRatio === 'number' && maxScroll > 0)
+                        ? (data.scroll_state.scrollRatio * maxScroll)
+                        : (data.scroll_state.scrollTop || 0);
+                    wbCont.scrollTop = targetScroll;
+                }
+            }
+
+            // ي) تشغيل كتل صوت المعلم الاحتياطية للطلاب في حال واجهت شبكة الطالب أو الجوال حظراً لـ WebRTC
+            if (!IS_TEACHER) {
+                if (data.audio_chunks && data.audio_chunks.length > 0) {
+                    playAudioChunks(data.audio_chunks, data.audio_seq);
+                } else if (data.audio_seq && data.audio_seq > lastPulledAudioSeq && !window.isTeacherWebRtcAudioActive) {
+                    pullAndPlayAudioChunks(data.audio_seq);
+                }
+            }
+
         } catch (err) {
             console.error('Classroom sync error:', err);
+        }
+    }
+
+    // محرك البث الصوتي المباشر فائق النقاء والاعتمادية (Continuous 16kHz PCM WAV Audio Engine)
+    let broadcastAudioCtx = null;
+    let broadcastSource = null;
+    let broadcastProcessor = null;
+    let broadcastPcmBuffer = [];
+    let audioBroadcastSeq = 0;
+    let isBroadcastingAudio = false;
+
+    // خفض معدل العينات لتقليل حجم النقل والحفاظ على سرعة فائقة (Downsampling to 16kHz)
+    function downsampleBuffer(buffer, inputSampleRate, outputSampleRate = 16000) {
+        if (inputSampleRate === outputSampleRate) {
+            return buffer;
+        }
+        const ratio = inputSampleRate / outputSampleRate;
+        const newLength = Math.round(buffer.length / ratio);
+        const result = new Float32Array(newLength);
+        let offsetResult = 0;
+        let offsetBuffer = 0;
+        while (offsetResult < result.length) {
+            const nextOffsetBuffer = Math.round((offsetResult + 1) * ratio);
+            let accum = 0, count = 0;
+            for (let i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+                accum += buffer[i];
+                count++;
+            }
+            result[offsetResult] = count > 0 ? (accum / count) : (buffer[offsetBuffer] || 0);
+            offsetResult++;
+            offsetBuffer = nextOffsetBuffer;
+        }
+        return result;
+    }
+
+    // تشفير العينات الصوتية إلى صيغة WAV نقية ومستقلة 16-Bit Mono (Native 44-byte RIFF Header)
+    function encodePcmToWav(samples, sampleRate = 16000) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+
+        // RIFF chunk descriptor
+        view.setUint32(0, 0x52494646, false); // 'RIFF'
+        view.setUint32(4, 36 + samples.length * 2, true);
+        view.setUint32(8, 0x57415645, false); // 'WAVE'
+        // 'fmt ' sub-chunk
+        view.setUint32(12, 0x666d7420, false);
+        view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+        view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+        view.setUint16(22, 1, true); // NumChannels (1 mono)
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true); // ByteRate
+        view.setUint16(32, 2, true); // BlockAlign
+        view.setUint16(34, 16, true); // BitsPerSample
+        // 'data' sub-chunk
+        view.setUint32(36, 0x64617461, false); // 'data'
+        view.setUint32(40, samples.length * 2, true);
+
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++, offset += 2) {
+            let s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+
+        return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    function startTeacherAudioBroadcast() {
+        if (!IS_TEACHER || !localStream || isBroadcastingAudio) return;
+        const audioTracks = localStream.getAudioTracks();
+        if (audioTracks.length === 0) return;
+
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+
+            broadcastAudioCtx = new AudioContext();
+            broadcastSource = broadcastAudioCtx.createMediaStreamSource(new MediaStream([audioTracks[0]]));
+            broadcastProcessor = broadcastAudioCtx.createScriptProcessor(4096, 1, 1);
+            broadcastPcmBuffer = [];
+
+            const targetSampleRate = 16000;
+            const chunkSampleCount = Math.floor(broadcastAudioCtx.sampleRate * 0.5); // كتلة صوتية كل 500ms
+
+            broadcastProcessor.onaudioprocess = (e) => {
+                if (!isMicEnabled) {
+                    broadcastPcmBuffer = [];
+                    return;
+                }
+                const inputData = e.inputBuffer.getChannelData(0);
+                for (let i = 0; i < inputData.length; i++) {
+                    broadcastPcmBuffer.push(inputData[i]);
+                }
+
+                if (broadcastPcmBuffer.length >= chunkSampleCount) {
+                    const rawSamples = broadcastPcmBuffer.splice(0, chunkSampleCount);
+                    const downsampled = downsampleBuffer(rawSamples, broadcastAudioCtx.sampleRate, targetSampleRate);
+                    const wavBlob = encodePcmToWav(downsampled, targetSampleRate);
+
+                    audioBroadcastSeq++;
+                    const curSeq = audioBroadcastSeq;
+
+                    const formData = new FormData();
+                    formData.append('seq', curSeq);
+                    formData.append('mime', 'audio/wav');
+                    formData.append('audio', wavBlob, 'chunk.wav');
+
+                    fetch(`/classroom/${ROOM_ID}/broadcast-audio`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': CSRF_TOKEN,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    }).catch(() => {});
+                }
+            };
+
+            // كتم صوت المعالج في مخرج المعلم لمنع صدى صوته في سماعته
+            const silentGain = broadcastAudioCtx.createGain();
+            silentGain.gain.value = 0;
+            broadcastSource.connect(broadcastProcessor);
+            broadcastProcessor.connect(silentGain);
+            silentGain.connect(broadcastAudioCtx.destination);
+
+            isBroadcastingAudio = true;
+            console.log('🎙️ Teacher continuous 16kHz PCM WAV chunk broadcaster started successfully.');
+        } catch (recErr) {
+            console.warn('Teacher audio broadcast fallback error:', recErr);
+        }
+    }
+
+    // محرك تشغيل الكتل الصوتية المستلمة للطلاب (Universal Audio Decoder & Player for Students)
+    let lastPulledAudioSeq = 0;
+    let nextAudioPlayTime = 0;
+    let isPullingAudio = false;
+
+    async function playAudioChunks(chunks, latestSeq) {
+        if (IS_TEACHER) return;
+        if (window.isTeacherWebRtcAudioActive) return;
+        if (!chunks || chunks.length === 0) return;
+
+        if (latestSeq) {
+            lastPulledAudioSeq = Math.max(lastPulledAudioSeq, latestSeq);
+        }
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!window.globalAudioCtx && AudioContext) {
+            window.globalAudioCtx = new AudioContext();
+        }
+        if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
+            await window.globalAudioCtx.resume().catch(() => {});
+        }
+
+        for (const chunk of chunks) {
+            if (!chunk.data) continue;
+            try {
+                const binaryStr = atob(chunk.data);
+                const len = binaryStr.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryStr.charCodeAt(i);
+                }
+
+                let played = false;
+                if (window.globalAudioCtx && window.globalAudioCtx.state === 'running') {
+                    try {
+                        const audioBuffer = await window.globalAudioCtx.decodeAudioData(bytes.buffer.slice(0));
+                        const source = window.globalAudioCtx.createBufferSource();
+                        source.buffer = audioBuffer;
+                        source.connect(window.globalAudioCtx.destination);
+                        const now = window.globalAudioCtx.currentTime;
+                        const startTime = Math.max(now, nextAudioPlayTime);
+                        source.start(startTime);
+                        nextAudioPlayTime = startTime + audioBuffer.duration;
+                        played = true;
+                        document.getElementById('audioUnblockBanner')?.classList.add('hidden');
+                    } catch (webAudioErr) {
+                        console.warn('Web Audio decode fallback notice:', webAudioErr);
+                    }
+                }
+
+                if (!played) {
+                    const blob = new Blob([bytes], { type: chunk.mime || 'audio/wav' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    const tempAudio = new Audio(blobUrl);
+                    tempAudio.volume = 1.0;
+                    tempAudio.play().then(() => {
+                        document.getElementById('audioUnblockBanner')?.classList.add('hidden');
+                    }).catch(playErr => {
+                        console.warn('Audio play prevented:', playErr);
+                        document.getElementById('audioUnblockBanner')?.classList.remove('hidden');
+                    });
+                    tempAudio.onended = () => URL.revokeObjectURL(blobUrl);
+                }
+            } catch (e) {
+                console.warn('Audio chunk processing error:', e);
+            }
+        }
+    }
+
+    async function pullAndPlayAudioChunks(latestSeq) {
+        if (IS_TEACHER) return;
+        if (window.isTeacherWebRtcAudioActive) return;
+        if (isPullingAudio) return;
+        if (latestSeq && latestSeq <= lastPulledAudioSeq) return;
+
+        isPullingAudio = true;
+        try {
+            const res = await fetch(`/classroom/${ROOM_ID}/pull-audio?last_seq=${lastPulledAudioSeq}`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.success && data.chunks && data.chunks.length > 0) {
+                await playAudioChunks(data.chunks, data.latest_seq);
+            }
+        } catch (e) {
+            console.warn('Pull audio error:', e);
+        } finally {
+            isPullingAudio = false;
         }
     }
 
@@ -2649,7 +3154,8 @@
 
         try {
             if (type === 'offer') {
-                await pc.setRemoteDescription(new RTCSessionDescription(payload));
+                const cleanDesc = sanitizeDescription(payload);
+                await pc.setRemoteDescription(new RTCSessionDescription(cleanDesc));
                 // تفريغ المرشحين المؤجلين لهذا النظير إن وجدوا
                 if (peerCandidateQueue[fromPeer] && peerCandidateQueue[fromPeer].length > 0) {
                     for (const cand of peerCandidateQueue[fromPeer]) {
@@ -2658,10 +3164,12 @@
                     peerCandidateQueue[fromPeer] = [];
                 }
                 const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-                postSignal(fromPeer, 'answer', answer);
+                const cleanAnswer = new RTCSessionDescription({ type: answer.type, sdp: sanitizeSdp(answer.sdp) });
+                await pc.setLocalDescription(cleanAnswer);
+                postSignal(fromPeer, 'answer', cleanAnswer);
             } else if (type === 'answer') {
-                await pc.setRemoteDescription(new RTCSessionDescription(payload));
+                const cleanDesc = sanitizeDescription(payload);
+                await pc.setRemoteDescription(new RTCSessionDescription(cleanDesc));
                 // تفريغ المرشحين المؤجلين لهذا النظير
                 if (peerCandidateQueue[fromPeer] && peerCandidateQueue[fromPeer].length > 0) {
                     for (const cand of peerCandidateQueue[fromPeer]) {
@@ -2686,13 +3194,21 @@
         participants.forEach(p => {
             if (p.peer_id === MY_PEER_ID) return;
 
-            // نحدد بادئ الاتصال بشكل حتمي لتجنب تصادم الـ Offers ونعيد الاتصال إن كان منقطعاً
-            if (MY_PEER_ID < p.peer_id && (!peerConnections[p.peer_id] || peerConnections[p.peer_id].connectionState === 'failed' || peerConnections[p.peer_id].connectionState === 'disconnected')) {
+            const existingPc = peerConnections[p.peer_id];
+            const isDisconnected = !existingPc || existingPc.connectionState === 'failed' || existingPc.connectionState === 'disconnected' || existingPc.connectionState === 'closed';
+
+            // المعلم يبادر دائماً بإنشاء Offer لجميع الطلاب لضمان تدفق الصوت فورياً بدون انتظار
+            const shouldInitiate = IS_TEACHER ? true : (!p.is_staff && MY_PEER_ID < p.peer_id);
+
+            if (shouldInitiate && isDisconnected) {
                 const pc = getOrCreatePeerConnection(p.peer_id, p.user_id, p.name, p.is_staff);
                 pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
-                    .then(offer => pc.setLocalDescription(offer))
+                    .then(offer => {
+                        const cleanOffer = new RTCSessionDescription({ type: offer.type, sdp: sanitizeSdp(offer.sdp) });
+                        return pc.setLocalDescription(cleanOffer);
+                    })
                     .then(() => postSignal(p.peer_id, 'offer', pc.localDescription))
-                    .catch(console.error);
+                    .catch(err => console.log('CreateOffer err:', err));
             }
         });
     }
@@ -2783,6 +3299,15 @@
                                 <button type="button" onclick="openRewardStarModal(${p.user_id}, '${addslashes(p.name)}')" class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg font-bold flex items-center gap-1 shadow-xs" title="مكافأة بنجمة">
                                     ⭐ كافئ
                                 </button>
+                                ${activeLaserUserId === p.user_id ? `
+                                    <button type="button" onclick="revokeStudentLaser()" class="px-2 py-1 bg-red-900/60 hover:bg-red-800 text-red-300 border border-red-500/50 rounded-lg font-bold flex items-center gap-1 shadow-xs" title="سحب إذن التأشير بالليزر">
+                                        سحب الليزر ✕
+                                    </button>
+                                ` : `
+                                    <button type="button" onclick="grantStudentLaser(${p.user_id}, '${addslashes(p.name)}')" class="px-2 py-1 bg-slate-800 hover:bg-red-950 text-red-300 border border-slate-700 rounded-lg font-bold flex items-center gap-1 shadow-xs" title="السماح للطالب بالتأشير بالليزر على السبورة">
+                                        إذن الليزر 🔴
+                                    </button>
+                                `}
                             ` : ''}
                             ${p.is_muted_by_host ? `
                                 <button type="button" onclick="allowStudentToSpeak(${p.user_id})" class="px-2 py-1 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-300 rounded-lg font-bold">
@@ -3510,6 +4035,13 @@
             btnPan?.classList.remove('bg-indigo-600', 'text-white', 'shadow');
             btnPan?.classList.add('text-slate-400');
 
+            // إذا كان فيديو المعلم متاحاً، نظهر النافذة العائمة فوق السبورة بالجوال
+            const floatingVideo = document.getElementById('floatingTeacherVideo');
+            const floatingCont = document.getElementById('floatingTeacherVideoContainer');
+            if (floatingCont && floatingVideo && floatingVideo.srcObject) {
+                floatingCont.classList.remove('hidden');
+            }
+
             setTimeout(() => {
                 ensureCanvasLayerDimensions();
             }, 80);
@@ -3525,6 +4057,9 @@
             btnWb?.classList.add('text-slate-400');
 
             document.getElementById('mobileUnreadMessagesDot')?.classList.add('hidden');
+
+            // إخفاء النافذة العائمة لأن فيديو المعلم ظاهر باللوحة
+            document.getElementById('floatingTeacherVideoContainer')?.classList.add('hidden');
         }
     }
 
@@ -3825,6 +4360,7 @@
     // التنقل والتمرير المستمر بأسهم لوحة المفاتيح: التحرك فوق وتحت والتنقل التلقائي بين الصفحات عند نهايتها
     let isTransitioningWbPage = false;
     document.addEventListener('keydown', async (e) => {
+        if (!IS_TEACHER) return; // منع الطلاب تماماً من التحكم أو تقليب صفحات الكتاب بأسهم الكيبورد
         if (e.target.closest('input, textarea, select')) return;
         if (wbCurrentBg && wbCurrentBg.type === 'pdf') {
             const container = document.getElementById('whiteboardContainer');
@@ -3912,6 +4448,7 @@
         const container = document.getElementById('whiteboardContainer');
         if (container) {
             container.addEventListener('wheel', (e) => {
+                if (!IS_TEACHER) return; // منع الطلاب من تقليب صفحات الكتاب بعجلة الفأرة
                 if (!wbCurrentBg || wbCurrentBg.type !== 'pdf' || isTransitioningWbPage) return;
                 const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
                 if (e.deltaY > 30 && (maxScroll <= 15 || container.scrollTop >= maxScroll - 25)) {
@@ -3975,6 +4512,9 @@
         drawCanvas.addEventListener('mousedown', onWbMouseDown);
         window.addEventListener('mousemove', onWbMouseMove);
         window.addEventListener('mouseup', onWbMouseUp);
+        drawCanvas.addEventListener('mouseleave', () => {
+            if (wbCurrentTool === 'laser') broadcastLaserHide();
+        });
 
         // ربط أحداث اللمس للهواتف والأجهزة اللوحية
         drawCanvas.addEventListener('touchstart', onWbTouchStart, { passive: false });
@@ -3994,16 +4534,37 @@
         // تهيئة مستمعات مشغل الفيديو التعليمي
         initHtml5VideoListeners();
 
-        // مزامنة التمرير في السبورة وحاوية الكتاب للطلاب
+        // مزامنة وقفل التمرير في السبورة وحاوية الكتاب
         const wbContainer = document.getElementById('whiteboardContainer');
         if (wbContainer) {
-            wbContainer.addEventListener('scroll', syncScrollToPeersThrottled, { passive: true });
+            if (IS_TEACHER) {
+                wbContainer.addEventListener('scroll', syncScrollToPeersThrottled, { passive: true });
+            } else {
+                // منع تحريك أو تمرير الورقة للطالب نهائياً لمشاهدة شرح الأستاذ فقط
+                wbContainer.classList.remove('overflow-y-auto');
+                wbContainer.classList.add('overflow-hidden');
+                wbContainer.style.overflow = 'hidden';
+                wbContainer.addEventListener('wheel', (e) => { e.preventDefault(); }, { passive: false });
+                wbContainer.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
+                window.addEventListener('keydown', (e) => {
+                    if (!IS_TEACHER && ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) {
+                        const activeEl = document.activeElement;
+                        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
+                        e.preventDefault();
+                    }
+                });
+            }
         }
 
         // تحديث المظهر الافتراضي للأدوات
-        selectWbTool('pen');
-        setWbColor('#ef4444');
-        setWbSize(4);
+        if (IS_TEACHER) {
+            selectWbTool('pen');
+            setWbColor('#ef4444');
+            setWbSize(4);
+        } else {
+            selectWbTool('select');
+            drawCanvas.style.pointerEvents = 'none';
+        }
     }
 
     function getWbContentBox() {
@@ -4094,6 +4655,9 @@
     }
 
     function selectWbTool(tool) {
+        if (!IS_TEACHER && tool !== 'laser') {
+            tool = 'select';
+        }
         wbCurrentTool = tool;
         document.querySelectorAll('.wb-tool-btn').forEach(b => {
             b.classList.remove('bg-indigo-600', 'text-white');
@@ -4111,7 +4675,13 @@
         if (drawCanvas) {
             const cursorClasses = ['cursor-default', 'cursor-pen', 'cursor-brush', 'cursor-highlighter', 'cursor-magic', 'cursor-eraser', 'cursor-laser', 'cursor-text', 'cursor-pointer', 'cursor-crosshair'];
             drawCanvas.classList.remove(...cursorClasses);
-            if (tool === 'select') {
+            if (!IS_TEACHER && !isStudentLaserAllowed) {
+                drawCanvas.style.pointerEvents = 'none';
+                drawCanvas.classList.add('cursor-default');
+            } else if (!IS_TEACHER && isStudentLaserAllowed && tool === 'laser') {
+                drawCanvas.style.pointerEvents = 'auto';
+                drawCanvas.classList.add('cursor-laser');
+            } else if (tool === 'select' || !IS_TEACHER) {
                 drawCanvas.style.pointerEvents = 'none';
                 drawCanvas.classList.add('cursor-default');
             } else {
@@ -4293,15 +4863,18 @@
 
     function onWbMouseDown(e) {
         if (e.target.id !== 'whiteboardDrawCanvas') return;
-        if (!IS_TEACHER && !isStudentCollabAllowed) return;
+        if (!IS_TEACHER && !isStudentLaserAllowed) return;
+        if (!IS_TEACHER && wbCurrentTool !== 'laser') return;
 
         const coords = getWbCoords(e);
 
         if (wbCurrentTool === 'laser') {
             renderLocalLaser(coords.normX, coords.normY);
-            if (IS_TEACHER) broadcastLaserMove(coords.normX, coords.normY);
+            if (IS_TEACHER || isStudentLaserAllowed) throttleBroadcastLaser(coords.normX, coords.normY);
             return;
         }
+
+        if (!IS_TEACHER) return;
 
         if (wbCurrentTool === 'stamp') {
             const stroke = {
@@ -4376,10 +4949,14 @@
         const coords = getWbCoords(e);
 
         if (wbCurrentTool === 'laser') {
-            renderLocalLaser(coords.normX, coords.normY);
-            if (IS_TEACHER) throttleBroadcastLaser(coords.normX, coords.normY);
+            if (IS_TEACHER || isStudentLaserAllowed) {
+                renderLocalLaser(coords.normX, coords.normY);
+                throttleBroadcastLaser(coords.normX, coords.normY);
+            }
             return;
         }
+
+        if (!IS_TEACHER) return;
 
         if (!wbIsDrawing || !wbCurrentStroke) return;
 
@@ -4396,6 +4973,15 @@
     }
 
     function onWbMouseUp(e) {
+        if (wbCurrentTool === 'laser') {
+            return;
+        }
+        if (!IS_TEACHER) {
+            wbIsDrawing = false;
+            wbCurrentStroke = null;
+            return;
+        }
+
         if (!wbIsDrawing || !wbCurrentStroke) {
             wbIsDrawing = false;
             return;
@@ -4468,6 +5054,9 @@
         }
     }
     function onWbTouchEnd(e) {
+        if (wbCurrentTool === 'laser') {
+            broadcastLaserHide();
+        }
         onWbMouseUp(e);
     }
 
@@ -4847,18 +5436,29 @@
         laserEl.style.left = (normX * 100) + '%';
         laserEl.style.top = (normY * 100) + '%';
         laserEl.classList.remove('hidden');
+        const badge = document.getElementById('laserUserBadge');
+        if (badge) {
+            badge.textContent = '🔴 ' + CURRENT_USER_NAME;
+            badge.classList.remove('hidden');
+        }
     }
 
     function renderRemoteLaser(state) {
         const laserEl = document.getElementById('liveLaserPointer');
         if (!laserEl) return;
+        const badge = document.getElementById('laserUserBadge');
         if (state && state.active) {
             laserEl.style.left = (state.x * 100) + '%';
             laserEl.style.top = (state.y * 100) + '%';
             laserEl.classList.remove('hidden');
+            if (badge) {
+                badge.textContent = '🔴 ' + (state.user_name || 'طالب');
+                badge.classList.remove('hidden');
+            }
         } else {
             if (wbCurrentTool !== 'laser') {
                 laserEl.classList.add('hidden');
+                if (badge) badge.classList.add('hidden');
             }
         }
     }
@@ -4888,10 +5488,176 @@
         }).catch(() => {});
         if (wbCurrentTool !== 'laser') {
             document.getElementById('liveLaserPointer')?.classList.add('hidden');
+            document.getElementById('laserUserBadge')?.classList.add('hidden');
+        }
+    }
+
+    // ==========================================
+    // دوال إدارة إذن التأشير بالليزر (Laser Pointer Permission)
+    // ==========================================
+    function toggleStudentLaserRequest() {
+        if (isStudentLaserAllowed) {
+            releaseLaserPermission();
+        } else if (isStudentLaserRequested) {
+            isStudentLaserRequested = false;
+            updateStudentLaserBtnUI('idle');
+            broadcastP2P({ type: 'release_laser_user', user_id: CURRENT_USER_ID });
+            fetch(`/classroom/${ROOM_ID}/controls`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'release_laser' })
+            }).catch(console.error);
+        } else {
+            requestLaserPermission();
+        }
+    }
+
+    function requestLaserPermission() {
+        isStudentLaserRequested = true;
+        updateStudentLaserBtnUI('requested');
+        broadcastP2P({ type: 'laser_requested', user_id: CURRENT_USER_ID, user_name: CURRENT_USER_NAME });
+        fetch(`/classroom/${ROOM_ID}/controls`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ action: 'request_laser' })
+        }).catch(console.error);
+    }
+
+    function releaseLaserPermission() {
+        isStudentLaserAllowed = false;
+        isStudentLaserRequested = false;
+        deactivateStudentLaserMode();
+        updateStudentLaserBtnUI('idle');
+        broadcastP2P({ type: 'release_laser_user', user_id: CURRENT_USER_ID });
+        fetch(`/classroom/${ROOM_ID}/controls`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ action: 'release_laser' })
+        }).catch(console.error);
+    }
+
+    function updateStudentLaserBtnUI(state) {
+        const btn = document.getElementById('btnStudentLaserToggle');
+        const txt = document.getElementById('txtStudentLaserToggle');
+        if (!btn || !txt) return;
+
+        if (state === 'allowed') {
+            btn.className = 'bg-red-600 hover:bg-red-500 text-white font-black text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition shadow animate-pulse';
+            txt.textContent = 'إنهاء التأشير بالليزر';
+        } else if (state === 'requested') {
+            btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition shadow';
+            txt.textContent = 'إلغاء طلب الليزر ⏳';
+        } else {
+            btn.className = 'bg-red-950/80 hover:bg-red-900 text-red-200 hover:text-white border border-red-700/80 font-bold text-[11px] px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition shadow';
+            txt.textContent = 'طلب التأشير بالليزر';
+        }
+    }
+
+    function activateStudentLaserMode() {
+        isStudentLaserAllowed = true;
+        isStudentLaserRequested = false;
+        updateStudentLaserBtnUI('allowed');
+        document.getElementById('studentLaserBanner')?.classList.remove('hidden');
+        const drawCanvas = document.getElementById('whiteboardDrawCanvas');
+        if (drawCanvas) drawCanvas.style.pointerEvents = 'auto';
+        selectWbTool('laser');
+    }
+
+    function deactivateStudentLaserMode() {
+        isStudentLaserAllowed = false;
+        isStudentLaserRequested = false;
+        updateStudentLaserBtnUI('idle');
+        document.getElementById('studentLaserBanner')?.classList.add('hidden');
+        broadcastLaserHide();
+        const drawCanvas = document.getElementById('whiteboardDrawCanvas');
+        if (drawCanvas) drawCanvas.style.pointerEvents = 'none';
+        selectWbTool('select');
+    }
+
+    // دوال المعلم لإدارة طلبات وإذن التأشير بالليزر
+    function showLaserRequestToast(req) {
+        if (!IS_TEACHER || !req) return;
+        currentToastLaserStudentId = req.user_id;
+        currentToastLaserStudentName = req.name || req.user_name || 'طالب';
+        const nameEl = document.getElementById('toastLaserStudentName');
+        if (nameEl) nameEl.textContent = 'الطالب: ' + currentToastLaserStudentName;
+        document.getElementById('laserRequestToast')?.classList.remove('hidden');
+        if (typeof playAdmissionChime === 'function') playAdmissionChime();
+    }
+
+    function hideLaserRequestToast() {
+        document.getElementById('laserRequestToast')?.classList.add('hidden');
+        currentToastLaserStudentId = null;
+    }
+
+    function grantToastStudentLaser() {
+        if (!currentToastLaserStudentId) return;
+        grantStudentLaser(currentToastLaserStudentId, currentToastLaserStudentName);
+        hideLaserRequestToast();
+    }
+
+    function rejectToastStudentLaser() {
+        hideLaserRequestToast();
+    }
+
+    function grantStudentLaser(userId, userName) {
+        if (!IS_TEACHER) return;
+        activeLaserUserId = userId;
+        showTeacherActiveLaserBanner(userName || 'طالب', userId);
+        broadcastP2P({ type: 'grant_laser_user', target_user_id: userId, target_name: userName });
+        fetch(`/classroom/${ROOM_ID}/controls`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ action: 'grant_laser', target_user_id: userId, user_id: userId, target_name: userName })
+        }).catch(console.error);
+    }
+
+    function revokeStudentLaser() {
+        if (!IS_TEACHER) return;
+        const targetId = activeLaserUserId;
+        activeLaserUserId = null;
+        hideTeacherActiveLaserBanner();
+        broadcastLaserHide();
+        broadcastP2P({ type: 'revoke_laser_user', target_user_id: targetId });
+        fetch(`/classroom/${ROOM_ID}/controls`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ action: 'revoke_laser' })
+        }).catch(console.error);
+    }
+
+    function showTeacherActiveLaserBanner(name, userId) {
+        activeLaserUserId = userId;
+        const banner = document.getElementById('teacherActiveLaserBanner');
+        const nameEl = document.getElementById('activeLaserStudentName');
+        if (nameEl) nameEl.textContent = name;
+        if (banner) banner.classList.remove('hidden');
+    }
+
+    function hideTeacherActiveLaserBanner() {
+        activeLaserUserId = null;
+        document.getElementById('teacherActiveLaserBanner')?.classList.add('hidden');
+        broadcastLaserHide();
+    }
+
+    function handleLaserPermissionSync(permission) {
+        if (IS_TEACHER) {
+            if (permission && permission.user_id) {
+                showTeacherActiveLaserBanner(permission.user_name || 'طالب', permission.user_id);
+            } else {
+                hideTeacherActiveLaserBanner();
+            }
+        } else {
+            if (permission && permission.user_id == CURRENT_USER_ID) {
+                if (!isStudentLaserAllowed) activateStudentLaserMode();
+            } else {
+                if (isStudentLaserAllowed) deactivateStudentLaserMode();
+            }
         }
     }
 
     function undoStroke() {
+        if (!IS_TEACHER) return;
         if (wbStrokes.length === 0) return;
         const removed = wbStrokes.pop();
         wbRedoStack.push(removed);
@@ -4900,6 +5666,7 @@
         broadcastP2P({ type: 'wb_undo' });
     }
     function redoStroke() {
+        if (!IS_TEACHER) return;
         if (wbRedoStack.length === 0) return;
         const restored = wbRedoStack.pop();
         wbStrokes.push(restored);
@@ -4908,7 +5675,7 @@
         broadcastP2P({ type: 'wb_stroke', stroke: restored });
     }
     function clearWhiteboard() {
-        if (!IS_TEACHER && !isStudentCollabAllowed) return;
+        if (!IS_TEACHER) return;
         if (confirm('هل ترغب بمسح جميع الشروحات والملاحظات المكتوبة على السبورة؟')) {
             wbStrokes = [];
             wbUndoStack = [];
@@ -4926,6 +5693,7 @@
     }
 
     function openWbTextInput(canvasX, canvasY, clientX, clientY) {
+        if (!IS_TEACHER) return;
         const wrapper = document.getElementById('wbTextInputWrapper');
         const input = document.getElementById('wbTextInput');
         const container = document.getElementById('whiteboardContainer');
@@ -4967,10 +5735,12 @@
     }
 
     function openBrowserModal() {
+        if (!IS_TEACHER) return;
         document.getElementById('wbBrowserModal')?.classList.remove('hidden');
         document.getElementById('wbGoogleSearchInput')?.focus();
     }
     function openVideoModal() {
+        if (!IS_TEACHER) return;
         document.getElementById('wbVideoModal')?.classList.remove('hidden');
         document.getElementById('wbYoutubeUrlInput')?.focus();
     }
@@ -5075,6 +5845,7 @@
     }
 
     function executeBrowserSearch() {
+        if (!IS_TEACHER) return;
         const input = document.getElementById('wbGoogleSearchInput');
         const query = input ? input.value.trim() : '';
         if (!query) return;
@@ -5084,6 +5855,7 @@
     }
 
     function executeDirectUrlOpen() {
+        if (!IS_TEACHER) return;
         const input = document.getElementById('wbDirectUrlInput');
         let url = input ? input.value.trim() : '';
         if (!url) return;
@@ -5093,6 +5865,7 @@
     }
 
     function openPresetGame(url, title) {
+        if (!IS_TEACHER) return;
         const resolved = resolveClassroomBrowserUrl(url);
         openBrowserInWorkspace(resolved, title);
         closeWbMediaModals();
@@ -5113,6 +5886,7 @@
     }
 
     function executeYoutubeOpen() {
+        if (!IS_TEACHER) return;
         const input = document.getElementById('wbYoutubeUrlInput');
         const url = input ? input.value.trim() : '';
         if (!url) return;
@@ -5193,6 +5967,10 @@
 
     function renderVideoBackground(url, title) {
         hideMediaLayers();
+        if (!url || typeof url !== 'string' || !url.trim()) {
+            renderBlankBackground('whiteboard');
+            return;
+        }
         const videoWrapper = document.getElementById('whiteboardVideoWrapper');
         const videoEl = document.getElementById('whiteboardHtml5Video');
         const ytFrame = document.getElementById('whiteboardYoutubeFrame');
@@ -5204,13 +5982,13 @@
             const isYoutube = url.includes('youtube.com') || url.includes('youtu.be') || url.includes('/embed/');
             if (isYoutube && ytFrame) {
                 const ytId = parseYoutubeId(url);
-                const embedUrl = ytId ? `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0` : url;
+                const embedUrl = ytId ? `https://www.youtube.com/embed/${ytId}?rel=0` : url;
                 ytFrame.src = embedUrl;
                 ytFrame.classList.remove('hidden');
             } else if (videoEl) {
                 videoEl.src = url;
                 videoEl.classList.remove('hidden');
-                videoEl.play().catch(() => {});
+                try { videoEl.pause(); } catch(e) {}
             }
         }
         ensureCanvasLayerDimensions();
@@ -5300,24 +6078,38 @@
         wbRedoStack = [];
         redrawWhiteboard();
 
-        if (canManage) {
-            broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
-        }
-
         if (type === 'pdf') {
-            await renderPdfPage(url, pageNum);
-            document.getElementById('wbPageNavControls')?.classList.remove('hidden');
+            await renderPdfPage(url, pageNum, wbPdfScale);
+            if (IS_TEACHER) {
+                document.getElementById('wbPageNavControls')?.classList.remove('hidden');
+            }
         } else {
             renderImageBackground(url);
             document.getElementById('wbPageNavControls')?.classList.add('hidden');
             document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
         }
 
+        const wbContWidth = document.getElementById('whiteboardContainer')?.clientWidth || 1200;
+        wbCurrentBg.scale = wbPdfScale || null;
+        wbCurrentBg.teacherContWidth = wbContWidth;
+
+        if (canManage) {
+            broadcastP2P({ type: 'wb_bg', state: wbCurrentBg });
+        }
+
         if (canManage) {
             fetch(`/classroom/${ROOM_ID}/whiteboard`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
-                body: JSON.stringify({ action: 'set_background', bg_type: type, bg_url: url, bg_title: title, page_num: pageNum })
+                body: JSON.stringify({
+                    action: 'set_background',
+                    bg_type: type,
+                    bg_url: url,
+                    bg_title: title,
+                    page_num: pageNum,
+                    scale: wbCurrentBg.scale,
+                    teacher_cont_width: wbContWidth
+                })
             }).then(r => r.json()).then(data => {
                 if (data && data.whiteboard_version) currentWbVersion = data.whiteboard_version;
             }).catch(console.error);
@@ -5539,7 +6331,23 @@
             const contWidth = container ? container.clientWidth : 1200;
             const targetWidth = Math.max(640, contWidth - 70);
             const fitScale = targetWidth / baseViewport.width;
-            wbPdfScale = customScale || fitScale;
+
+            if (IS_TEACHER) {
+                wbPdfScale = customScale || fitScale;
+                if (wbCurrentBg) {
+                    wbCurrentBg.scale = wbPdfScale;
+                    wbCurrentBg.teacherContWidth = contWidth;
+                }
+            } else {
+                // للطالب: نعتمد نفس مقياس وتكبير المعلم تماماً لكي لا تظهر الورقة مكتملة أو مصغرة
+                if (customScale) {
+                    wbPdfScale = customScale;
+                } else if (wbCurrentBg && wbCurrentBg.scale) {
+                    wbPdfScale = wbCurrentBg.scale;
+                } else {
+                    wbPdfScale = fitScale;
+                }
+            }
 
             const displayWidth = Math.round(baseViewport.width * wbPdfScale);
             const displayHeight = Math.round(baseViewport.height * wbPdfScale);
@@ -5566,8 +6374,19 @@
             }
 
             if (container) {
-                container.classList.add('overflow-y-auto');
-                container.classList.remove('overflow-hidden');
+                if (IS_TEACHER) {
+                    container.classList.add('overflow-y-auto');
+                    container.classList.remove('overflow-hidden');
+                    container.style.overflowY = 'auto';
+                } else {
+                    // قفل التمرير اليدوي للطالب تماماً لمنع تحريك الورقة لمشاهدة شرح الأستاذ فقط
+                    container.classList.remove('overflow-y-auto');
+                    container.classList.add('overflow-hidden');
+                    container.style.overflow = 'hidden';
+                }
+                // بدء الصفحة دائماً من أعلى نقطة للطرفين فور تغيير أو فتح الصفحة
+                container.scrollTop = 0;
+                container.scrollLeft = 0;
             }
 
             const zoomLabel = document.getElementById('wbZoomLabel');
@@ -5585,12 +6404,14 @@
 
     // التنقل بين صفحات الـ PDF (خطوة للأمام أو للخلف)
     async function changeWbPage(delta) {
+        if (!IS_TEACHER) return;
         if (!wbPdfDoc) return;
         changeWbPageTo(wbCurrentPage + delta);
     }
 
     // الانتقال المباشر لأي صفحة محددة مع تحديد موضع البداية (أعلى الصفحة أو أسفلها)
     async function changeWbPageTo(targetPage, initialScroll = 'top') {
+        if (!IS_TEACHER) return;
         if (!wbPdfDoc) return;
         targetPage = Math.min(Math.max(1, targetPage), wbTotalPages);
         if (targetPage !== wbCurrentPage || (wbCurrentBg && wbCurrentBg.page_num !== targetPage)) {
@@ -5614,6 +6435,7 @@
     }
 
     function onPageDirectInputChange(val) {
+        if (!IS_TEACHER) return;
         const p = parseInt(val, 10);
         if (!isNaN(p)) {
             changeWbPageTo(p);
@@ -5621,6 +6443,7 @@
     }
 
     function onPdfSliderInput(val) {
+        if (!IS_TEACHER) return;
         const page = sliderValToPage(val);
         const bubble = document.getElementById('wbPdfSliderBubble');
         const bubbleNum = document.getElementById('wbPdfSliderBubbleNum');
@@ -5635,6 +6458,7 @@
     }
 
     function onPdfSliderChange(val) {
+        if (!IS_TEACHER) return;
         document.getElementById('wbPdfSliderBubble')?.classList.add('hidden');
         const page = sliderValToPage(val);
         changeWbPageTo(page);
@@ -5650,7 +6474,15 @@
             const contWidth = container ? container.clientWidth : 1200;
             const targetWidth = Math.max(640, contWidth - 70);
             wbPdfScale = targetWidth / baseViewport.width;
+            if (wbCurrentBg) {
+                wbCurrentBg.scale = wbPdfScale;
+                wbCurrentBg.teacherContWidth = contWidth;
+            }
             await renderPdfPage(wbCurrentBg.url, wbCurrentPage, wbPdfScale);
+            if (IS_TEACHER) {
+                broadcastP2P({ type: 'wb_scale', scale: wbPdfScale });
+                commitWhiteboardChange();
+            }
         } catch(e) { console.error(e); }
     }
 
@@ -5664,26 +6496,43 @@
             const contWidth = (container ? container.clientWidth : 1200) - 70;
             const contHeight = (container ? container.clientHeight : 800) - 40;
             wbPdfScale = Math.min(contWidth / baseViewport.width, contHeight / baseViewport.height);
+            if (wbCurrentBg) {
+                wbCurrentBg.scale = wbPdfScale;
+                wbCurrentBg.teacherContWidth = contWidth;
+            }
             await renderPdfPage(wbCurrentBg.url, wbCurrentPage, wbPdfScale);
+            if (IS_TEACHER) {
+                broadcastP2P({ type: 'wb_scale', scale: wbPdfScale });
+                commitWhiteboardChange();
+            }
         } catch(e) { console.error(e); }
     }
 
     // مزامنة التمرير اللحظي للطلاب عند قيام المعلم بالتمرير
     let lastScrollSyncTime = 0;
+    let lastServerScrollTime = 0;
     function syncScrollToPeersThrottled() {
-        if (!IS_TEACHER || !wbCurrentBg || wbCurrentBg.type !== 'pdf') return;
+        if (!IS_TEACHER || !wbCurrentBg || (wbCurrentBg.type !== 'pdf' && wbCurrentBg.type !== 'image')) return;
         const now = Date.now();
-        if (now - lastScrollSyncTime < 80) return;
+        if (now - lastScrollSyncTime < 40) return;
         lastScrollSyncTime = now;
         const container = document.getElementById('whiteboardContainer');
         if (!container) return;
-        const maxScroll = container.scrollHeight - container.clientHeight;
+        const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
         const scrollRatio = maxScroll > 0 ? (container.scrollTop / maxScroll) : 0;
         broadcastP2P({
             type: 'wb_scroll',
             scrollTop: container.scrollTop,
             scrollRatio: scrollRatio
         });
+        if (now - lastServerScrollTime > 120) {
+            lastServerScrollTime = now;
+            fetch(`/classroom/${ROOM_ID}/whiteboard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ action: 'scroll', scrollTop: container.scrollTop, scrollRatio: scrollRatio })
+            }).catch(() => {});
+        }
     }
 
     // دوال مشغل الفيديو التعليمي وعناصر التحكم العائمة
@@ -5785,31 +6634,58 @@
             const container = document.getElementById('whiteboardContainer');
             if (!bgCanvas || !drawCanvas) return;
 
-            if (container) {
-                container.classList.remove('overflow-y-auto');
-                container.classList.add('overflow-hidden');
-                container.scrollTop = 0;
-            }
+            const isPortrait = (h > w * 1.05);
+            if (isPortrait) {
+                if (container) {
+                    if (IS_TEACHER) {
+                        container.classList.add('overflow-y-auto');
+                        container.classList.remove('overflow-hidden');
+                        container.style.overflowY = 'auto';
+                    } else {
+                        container.classList.remove('overflow-y-auto');
+                        container.classList.add('overflow-hidden');
+                        container.style.overflow = 'hidden';
+                    }
+                    container.scrollTop = 0;
+                    container.scrollLeft = 0;
+                }
+                const contWidth = container ? container.clientWidth : 1200;
+                const targetWidth = Math.max(640, contWidth - 70);
+                const scale = targetWidth / w;
+                const displayW = Math.round(w * scale);
+                const displayH = Math.round(h * scale);
 
-            const w = img.naturalWidth || 1600;
-            const h = img.naturalHeight || 1000;
-            bgCanvas.width = w;
-            bgCanvas.height = h;
-            drawCanvas.width = w;
-            drawCanvas.height = h;
+                bgCanvas.style.width = displayW + 'px';
+                bgCanvas.style.height = displayH + 'px';
+                drawCanvas.style.width = displayW + 'px';
+                drawCanvas.style.height = displayH + 'px';
 
-            if (stage) {
-                stage.style.width = '100%';
-                stage.style.height = '100%';
-                stage.style.marginTop = '0';
-                stage.style.marginBottom = '0';
+                if (stage) {
+                    stage.style.width = displayW + 'px';
+                    stage.style.height = displayH + 'px';
+                    stage.style.marginTop = '12px';
+                    stage.style.marginBottom = '24px';
+                }
+            } else {
+                if (container) {
+                    container.classList.remove('overflow-y-auto');
+                    container.classList.add('overflow-hidden');
+                    container.scrollTop = 0;
+                    container.scrollLeft = 0;
+                }
+                if (stage) {
+                    stage.style.width = '100%';
+                    stage.style.height = '100%';
+                    stage.style.marginTop = '0';
+                    stage.style.marginBottom = '0';
+                }
+                bgCanvas.style.width = '100%';
+                bgCanvas.style.height = '100%';
+                bgCanvas.style.objectFit = 'contain';
+                drawCanvas.style.width = '100%';
+                drawCanvas.style.height = '100%';
+                drawCanvas.style.objectFit = 'contain';
             }
-            bgCanvas.style.width = '100%';
-            bgCanvas.style.height = '100%';
-            bgCanvas.style.objectFit = 'contain';
-            drawCanvas.style.width = '100%';
-            drawCanvas.style.height = '100%';
-            drawCanvas.style.objectFit = 'contain';
 
             const ctx = bgCanvas.getContext('2d');
             ctx.clearRect(0, 0, w, h);
@@ -5877,7 +6753,12 @@
     function zoomWb(delta) {
         if (wbCurrentBg && wbCurrentBg.type === 'pdf') {
             wbPdfScale = Math.min(3.5, Math.max(0.4, wbPdfScale + delta));
+            if (wbCurrentBg) wbCurrentBg.scale = wbPdfScale;
             renderPdfPage(wbCurrentBg.url, wbCurrentPage, wbPdfScale);
+            if (IS_TEACHER) {
+                broadcastP2P({ type: 'wb_scale', scale: wbPdfScale });
+                commitWhiteboardChange();
+            }
             return;
         }
         wbZoom = Math.min(2.5, Math.max(0.5, wbZoom + delta));
@@ -5935,6 +6816,8 @@
                         bg_url: wbCurrentBg.url,
                         bg_title: wbCurrentBg.title,
                         page_num: wbCurrentBg.page_num,
+                        scale: wbPdfScale || null,
+                        teacher_cont_width: document.getElementById('whiteboardContainer')?.clientWidth || 1200,
                         strokes: wbStrokes
                     }
                 })
@@ -5962,7 +6845,9 @@
             type: state.bg_type || 'whiteboard',
             url: normalizedUrl || null,
             title: state.bg_title || 'سبورة الشرح',
-            page_num: state.page_num || 1
+            page_num: state.page_num || 1,
+            scale: state.scale || null,
+            teacherContWidth: state.teacher_cont_width || state.teacherContWidth || 1200
         };
 
         const modeText = document.getElementById('wbModeText');
@@ -5989,8 +6874,10 @@
                 document.getElementById('wbPdfSideNavigator')?.classList.add('hidden');
             } else if (wbCurrentBg.type === 'pdf' && wbCurrentBg.url) {
                 hideMediaLayers();
-                await renderPdfPage(wbCurrentBg.url, wbCurrentBg.page_num);
-                document.getElementById('wbPageNavControls')?.classList.remove('hidden');
+                await renderPdfPage(wbCurrentBg.url, wbCurrentBg.page_num, wbCurrentBg.scale);
+                if (IS_TEACHER) {
+                    document.getElementById('wbPageNavControls')?.classList.remove('hidden');
+                }
             } else if (wbCurrentBg.type === 'image' && wbCurrentBg.url) {
                 hideMediaLayers();
                 renderImageBackground(wbCurrentBg.url);

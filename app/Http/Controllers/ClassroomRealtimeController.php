@@ -12,6 +12,7 @@ use App\Models\GroupSession;
 use App\Models\GroupStudentEvaluation;
 use App\Models\StudyGroup;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -248,6 +249,22 @@ class ClassroomRealtimeController extends Controller
         // مؤشر الليزر من الذاكرة اللحظية لتسريع الشرح
         $laserState = Cache::get("classroom_laser_{$roomId}", $control->laser_state);
 
+        // جلب كتل الصوت الاحتياطية المتزامنة فورا بدون الحاجة لطلب منفصل
+        $latestAudioSeq = (int) Cache::get("classroom_audio_seq_{$roomId}", 0);
+        $audioChunks = [];
+        if ($request->has('last_audio_seq')) {
+            $lastAudioSeq = (int) $request->input('last_audio_seq', 0);
+            if ($latestAudioSeq > $lastAudioSeq) {
+                $startSeq = max($lastAudioSeq + 1, $latestAudioSeq - 3);
+                for ($s = $startSeq; $s <= $latestAudioSeq; $s++) {
+                    $c = Cache::get("audio_chunk_{$roomId}_{$s}");
+                    if ($c) {
+                        $audioChunks[] = $c;
+                    }
+                }
+            }
+        }
+
         return response()->json([
             'success' => true,
             'my_peer_id' => $peerId,
@@ -262,6 +279,11 @@ class ClassroomRealtimeController extends Controller
             'whiteboard_version' => $serverWhiteboardVersion,
             'whiteboard_state' => $whiteboardPayload,
             'laser_state' => $laserState,
+            'laser_permission' => Cache::get("classroom_laser_permission_{$roomId}"),
+            'laser_request' => $isStaff ? Cache::get("classroom_laser_request_{$roomId}") : null,
+            'scroll_state' => Cache::get("classroom_scroll_{$roomId}"),
+            'audio_seq' => $latestAudioSeq,
+            'audio_chunks' => $audioChunks,
             'room_control' => [
                 'policy' => $control->policy,
                 'is_live' => (bool) $control->is_live,
@@ -437,6 +459,31 @@ class ClassroomRealtimeController extends Controller
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
+        $action = $request->input('action');
+
+        // 1. طلبات إذن التأشير بالليزر من قبل الطالب
+        if ($action === 'request_laser') {
+            Cache::put("classroom_laser_request_{$roomId}", [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'requested_at' => time(),
+            ], 60);
+
+            return response()->json(['success' => true, 'requested' => true]);
+        }
+
+        // 2. إنهاء الطالب للتأشير بالليزر الخاص به طوعاً
+        if ($action === 'release_laser') {
+            $currentPerm = Cache::get("classroom_laser_permission_{$roomId}");
+            if ($currentPerm && isset($currentPerm['user_id']) && (int) $currentPerm['user_id'] === (int) $user->id) {
+                Cache::forget("classroom_laser_permission_{$roomId}");
+                Cache::put("classroom_laser_{$roomId}", ['active' => false], 5);
+            }
+            Cache::forget("classroom_laser_request_{$roomId}");
+
+            return response()->json(['success' => true, 'released' => true]);
+        }
+
         // التحقق هل المستخدم صاحب صلاحية إدارية في هذه الغرفة
         $isAuthorized = ($user->isAdmin() || $user->isSupervisor() || $user->isTeacher());
         if (! $isAuthorized) {
@@ -457,8 +504,32 @@ class ClassroomRealtimeController extends Controller
             return response()->json(['error' => 'غير مصرح لك بإدارة عناصر التحكم في هذه الغرفة.'], 403);
         }
 
-        $action = $request->input('action');
         $control = ClassroomRoomControl::getControlForRoom($roomId);
+
+        // منح إذن التأشير بالليزر لطالب معين
+        if ($action === 'grant_laser') {
+            $targetUserId = (int) ($request->input('target_user_id') ?: $request->input('user_id'));
+            $targetUser = User::find($targetUserId);
+            if ($targetUser) {
+                Cache::put("classroom_laser_permission_{$roomId}", [
+                    'user_id' => $targetUserId,
+                    'user_name' => $targetUser->name,
+                    'granted_at' => time(),
+                ], 600);
+                Cache::forget("classroom_laser_request_{$roomId}");
+            }
+
+            return response()->json(['success' => true, 'granted' => true]);
+        }
+
+        // سحب إذن التأشير بالليزر
+        if ($action === 'revoke_laser') {
+            Cache::forget("classroom_laser_permission_{$roomId}");
+            Cache::forget("classroom_laser_request_{$roomId}");
+            Cache::put("classroom_laser_{$roomId}", ['active' => false], 5);
+
+            return response()->json(['success' => true, 'revoked' => true]);
+        }
 
         if ($action === 'toggle_policy') {
             $newPolicy = $control->policy === 'open' ? 'permission' : 'open';
@@ -597,15 +668,22 @@ class ClassroomRealtimeController extends Controller
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
+        $action = $request->input('action');
         $isStaff = in_array($user->role, ['admin', 'teacher', 'supervisor']);
         $control = ClassroomRoomControl::getControlForRoom($roomId);
 
-        // السماح للمعلم والمشرف والإدارة بالتحكم بالسبورة وشرح الدروس
-        if (! $isStaff) {
+        // إذا كان الإجراء تحريك أو إخفاء الليزر، يسمح للمعلم وللطالب الممنوح له إذن التأشير بالليزر
+        if (in_array($action, ['laser_move', 'laser_hide'])) {
+            $laserPerm = Cache::get("classroom_laser_permission_{$roomId}");
+            $isPermittedStudent = $laserPerm && isset($laserPerm['user_id']) && (int) $laserPerm['user_id'] === (int) $user->id;
+
+            if (! $isStaff && ! $isPermittedStudent) {
+                return response()->json(['error' => 'غير مصرح لك بالتأشير بالليزر في هذه الغرفة'], 403);
+            }
+        } elseif (! $isStaff) {
+            // بقية أدوات الشرح والسبورة (تغيير الخلفية، مسح، فتح ملفات) حصرية فقط للمعلم والإدارة
             return response()->json(['error' => 'فقط المعلم ومسؤول الجلسة يمكنهم التحكم بمساحة الشرح والسبورة'], 403);
         }
-
-        $action = $request->input('action');
 
         if ($action === 'laser_move') {
             $laserState = [
@@ -622,6 +700,17 @@ class ClassroomRealtimeController extends Controller
 
         if ($action === 'laser_hide') {
             Cache::put("classroom_laser_{$roomId}", ['active' => false], 5);
+
+            return response()->json(['success' => true]);
+        }
+
+        if ($action === 'scroll') {
+            $scroll = [
+                'scrollTop' => (float) $request->input('scrollTop', 0),
+                'scrollRatio' => (float) $request->input('scrollRatio', 0),
+                'time' => microtime(true),
+            ];
+            Cache::put("classroom_scroll_{$roomId}", $scroll, 10);
 
             return response()->json(['success' => true]);
         }
@@ -670,6 +759,12 @@ class ClassroomRealtimeController extends Controller
             $existing['bg_url'] = $bgUrl;
             $existing['bg_title'] = $request->input('bg_title', '');
             $existing['page_num'] = (int) $request->input('page_num', 1);
+            if ($request->filled('scale')) {
+                $existing['scale'] = (float) $request->input('scale');
+            }
+            if ($request->filled('teacher_cont_width')) {
+                $existing['teacher_cont_width'] = (float) $request->input('teacher_cont_width');
+            }
             $existing['strokes'] = [];
             $control->whiteboard_state = json_encode($existing);
             $control->whiteboard_version = ($control->whiteboard_version ?? 0) + 1;
@@ -1004,6 +1099,86 @@ HTML
             'amount' => $amount,
             'new_balance' => $newBalance,
             'message' => "تم منح {$amount} ⭐ للطالب ({$student->name}) بنجاح! رصيده الحالي: {$newBalance} ⭐",
+        ]);
+    }
+
+    /**
+     * استقبال وتخزين كتل الصوت الحية المباشرة من المعلم (Live Audio Fallback Broadcast)
+     */
+    public function broadcastAudioChunk(Request $request, string $roomId): JsonResponse
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        // فقط المعلم أو من لديه إذن التحدث يحق له البث الصوتي
+        $isStaff = in_array($user->role, ['admin', 'teacher', 'supervisor']);
+        $participant = ClassroomParticipant::where('room_id', $roomId)->where('user_id', $user->id)->first();
+        $canSpeak = $isStaff || ($participant && ! $participant->is_muted_by_host);
+
+        if (! $canSpeak) {
+            return response()->json(['error' => 'غير مصرح لك بالبث الصوتي'], 403);
+        }
+
+        $seq = (int) $request->input('seq', 0);
+        $audioData = null;
+
+        if ($request->hasFile('audio')) {
+            $file = $request->file('audio');
+            $audioData = base64_encode(file_get_contents($file->getRealPath()));
+        } elseif ($request->filled('audio_base64')) {
+            $audioData = $request->input('audio_base64');
+        }
+
+        if (! $audioData) {
+            return response()->json(['error' => 'بيانات الصوت فارغة'], 422);
+        }
+
+        // تخزين آخر كتل صوتية في الكاش اللحظي
+        Cache::put("audio_chunk_{$roomId}_{$seq}", [
+            'seq' => $seq,
+            'speaker_id' => $user->id,
+            'speaker_name' => $user->name,
+            'data' => $audioData,
+            'mime' => $request->input('mime', 'audio/wav'),
+            'timestamp' => microtime(true),
+        ], 20);
+
+        Cache::put("classroom_audio_seq_{$roomId}", $seq, 20);
+
+        return response()->json(['success' => true, 'seq' => $seq]);
+    }
+
+    /**
+     * جلب أحدث كتل صوتية للمعلم للطلاب الذين يواجهون عوائق في WebRTC (P2P NAT)
+     */
+    public function pullAudioChunks(Request $request, string $roomId): JsonResponse
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $lastSeq = (int) $request->input('last_seq', 0);
+        $latestSeq = (int) Cache::get("classroom_audio_seq_{$roomId}", 0);
+
+        $chunks = [];
+        if ($latestSeq > $lastSeq) {
+            // جلب الكتل الجديدة المتسلسلة (بحد أقصى آخر 4 كتل لتفادي التأخير)
+            $startSeq = max($lastSeq + 1, $latestSeq - 3);
+            for ($s = $startSeq; $s <= $latestSeq; $s++) {
+                $c = Cache::get("audio_chunk_{$roomId}_{$s}");
+                if ($c) {
+                    $chunks[] = $c;
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'latest_seq' => $latestSeq,
+            'chunks' => $chunks,
         ]);
     }
 }
