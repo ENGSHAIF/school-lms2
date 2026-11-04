@@ -255,11 +255,26 @@ class ClassroomRealtimeController extends Controller
         if ($request->has('last_audio_seq')) {
             $lastAudioSeq = (int) $request->input('last_audio_seq', 0);
             if ($latestAudioSeq > $lastAudioSeq) {
-                $startSeq = max($lastAudioSeq + 1, $latestAudioSeq - 3);
-                for ($s = $startSeq; $s <= $latestAudioSeq; $s++) {
-                    $c = Cache::get("audio_chunk_{$roomId}_{$s}");
+                // إذا كان الطالب يبدأ من الصفر أو متأخراً بأكثر من 3 كتل (أكثر من 650ms)، نرسل أحدث كتلتين فقط للحاق الفوري بالمعلم دون أي فارق زمني
+                if ($lastAudioSeq === 0) {
+                    $c = Cache::get("audio_chunk_{$roomId}_{$latestAudioSeq}");
                     if ($c) {
                         $audioChunks[] = $c;
+                    }
+                } elseif (($latestAudioSeq - $lastAudioSeq) > 3) {
+                    $startSeq = max(1, $latestAudioSeq - 1);
+                    for ($s = $startSeq; $s <= $latestAudioSeq; $s++) {
+                        $c = Cache::get("audio_chunk_{$roomId}_{$s}");
+                        if ($c) {
+                            $audioChunks[] = $c;
+                        }
+                    }
+                } else {
+                    for ($s = $lastAudioSeq + 1; $s <= $latestAudioSeq; $s++) {
+                        $c = Cache::get("audio_chunk_{$roomId}_{$s}");
+                        if ($c) {
+                            $audioChunks[] = $c;
+                        }
                     }
                 }
             }
@@ -1165,12 +1180,25 @@ HTML
 
         $chunks = [];
         if ($latestSeq > $lastSeq) {
-            // جلب الكتل الجديدة المتسلسلة (بحد أقصى آخر 4 كتل لتفادي التأخير)
-            $startSeq = max($lastSeq + 1, $latestSeq - 3);
-            for ($s = $startSeq; $s <= $latestSeq; $s++) {
-                $c = Cache::get("audio_chunk_{$roomId}_{$s}");
+            if ($lastSeq === 0) {
+                $c = Cache::get("audio_chunk_{$roomId}_{$latestSeq}");
                 if ($c) {
                     $chunks[] = $c;
+                }
+            } elseif (($latestSeq - $lastSeq) > 3) {
+                $startSeq = max(1, $latestSeq - 1);
+                for ($s = $startSeq; $s <= $latestSeq; $s++) {
+                    $c = Cache::get("audio_chunk_{$roomId}_{$s}");
+                    if ($c) {
+                        $chunks[] = $c;
+                    }
+                }
+            } else {
+                for ($s = $lastSeq + 1; $s <= $latestSeq; $s++) {
+                    $c = Cache::get("audio_chunk_{$roomId}_{$s}");
+                    if ($c) {
+                        $chunks[] = $c;
+                    }
                 }
             }
         }

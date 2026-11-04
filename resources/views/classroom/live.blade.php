@@ -1926,6 +1926,12 @@
             if (!data || !data.type) return;
 
             switch (data.type) {
+                case 'p2p_audio_chunk':
+                    // تشغيل كتل الصوت الفورية P2P sub-20ms فقط إذا لم يكن مسار WebRTC الصوتي المباشر نشطاً
+                    if (!IS_TEACHER && !window.isTeacherWebRtcAudioActive && data.data) {
+                        playAudioChunks([data], data.seq);
+                    }
+                    break;
                 case 'chat_message':
                     if (data.message) {
                         if (data.message.id && data.message.id > lastMessageId) {
@@ -2096,12 +2102,19 @@
         try {
             const masterAudio = document.getElementById('liveClassroomMasterAudio');
             if (masterAudio) {
-                if (!masterAudio.src && !masterAudio.srcObject) {
+                if (masterAudio.srcObject) {
+                    masterAudio.muted = false;
+                    masterAudio.volume = 1.0;
+                    masterAudio.play().then(() => {
+                        window.isTeacherWebRtcAudioActive = true;
+                        document.getElementById('audioUnblockBanner')?.classList.add('hidden');
+                    }).catch(() => {});
+                } else if (!masterAudio.src) {
                     masterAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+                    masterAudio.muted = false;
+                    masterAudio.volume = 1.0;
+                    masterAudio.play().catch(() => {});
                 }
-                masterAudio.muted = false;
-                masterAudio.volume = 1.0;
-                masterAudio.play().catch(() => {});
             }
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
@@ -2166,15 +2179,23 @@
                             existingSender.replaceTrack(track).catch(e => console.log('replaceTrack err:', e));
                         }
                     } else {
-                        pc.addTrack(track, localStream);
-                        // إعادة التفاوض (Renegotiation) فورياً لكلا الطرفين لضمان وصول الصوت مع تطهير SDP
-                        pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
-                            .then(offer => {
-                                const cleanOffer = new RTCSessionDescription({ type: offer.type, sdp: sanitizeSdp(offer.sdp) });
-                                return pc.setLocalDescription(cleanOffer);
-                            })
-                            .then(() => postSignal(peerId, 'offer', pc.localDescription))
-                            .catch(e => console.log('Renegotiate offer err:', e));
+                        // البحث عن sender غير معين مسار لتعيينه فورا بدون إحداث تعارض في التفاوض
+                        const unassignedSender = senders.find(s => !s.track);
+                        if (unassignedSender) {
+                            unassignedSender.replaceTrack(track).catch(e => console.log('unassignedSender replaceTrack err:', e));
+                        } else {
+                            try { pc.addTrack(track, localStream); } catch(e){}
+                            // إعادة التفاوض فقط إذا كانت حالة الإشارة مستقرة تماماً
+                            if (pc.signalingState === 'stable') {
+                                pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+                                    .then(offer => {
+                                        const cleanOffer = new RTCSessionDescription({ type: offer.type, sdp: sanitizeSdp(offer.sdp) });
+                                        return pc.setLocalDescription(cleanOffer);
+                                    })
+                                    .then(() => postSignal(peerId, 'offer', pc.localDescription))
+                                    .catch(e => console.log('Renegotiate offer err:', e));
+                            }
+                        }
                     }
                 });
             } catch (err) {
@@ -2379,13 +2400,20 @@
         const pc = new RTCPeerConnection(ICE_SERVERS);
         peerConnections[remotePeerId] = pc;
 
-        // للطلاب: تهيئة مسارات الاستقبال فورياً لضمان تدفق صوت المعلم بدون انتظار
+        // تهيئة مسارات الوسائط فورياً لضمان الربط اللحظي للصوت والفيديو
         if (!IS_TEACHER) {
             try {
                 pc.addTransceiver('audio', { direction: 'recvonly' });
                 pc.addTransceiver('video', { direction: 'recvonly' });
             } catch (e) {
                 console.warn('Transceiver add fallback:', e);
+            }
+        } else {
+            try {
+                pc.addTransceiver('audio', { direction: 'sendrecv' });
+                pc.addTransceiver('video', { direction: 'sendrecv' });
+            } catch (e) {
+                console.warn('Teacher transceiver add fallback:', e);
             }
         }
 
@@ -2402,7 +2430,15 @@
 
         // إضافة مسارات الصوت والصورة المحلية إلى الاتصال
         if (localStream) {
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            localStream.getTracks().forEach(track => {
+                const senders = pc.getSenders();
+                const unassigned = senders.find(s => !s.track);
+                if (unassigned) {
+                    unassigned.replaceTrack(track).catch(() => {});
+                } else {
+                    try { pc.addTrack(track, localStream); } catch(e){}
+                }
+            });
         }
 
         // عند وصول تيار الصوت أو الصورة من النظير البعيد
@@ -2433,9 +2469,13 @@
 
     function attachRemoteMedia(remotePeerId, remoteUserId, remoteName, isRemoteStaff, stream) {
         // إذا كان النظير معلماً والمستخدم الحالي طالباً: نشغل الصوت فوراً عبر مشغل الصوت الرئيسي الموثوق به ضد حظر المتصفحات
-        if (isRemoteStaff && !IS_TEACHER) {
+        const isTeacherStream = isRemoteStaff || (window.cachedParticipants || []).find(p => p.peer_id === remotePeerId)?.is_staff || (!IS_TEACHER && Object.keys(peerConnections).length <= 2);
+        if (isTeacherStream && !IS_TEACHER) {
             const masterAudio = document.getElementById('liveClassroomMasterAudio');
             if (masterAudio) {
+                if (masterAudio.src) {
+                    masterAudio.removeAttribute('src');
+                }
                 masterAudio.srcObject = stream;
                 masterAudio.volume = 1.0;
                 masterAudio.muted = false;
@@ -2585,6 +2625,16 @@
     function unblockAllAudio() {
         if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
             window.globalAudioCtx.resume().catch(() => {});
+        }
+        const masterAudio = document.getElementById('liveClassroomMasterAudio');
+        if (masterAudio && masterAudio.srcObject) {
+            masterAudio.muted = false;
+            masterAudio.volume = 1.0;
+            masterAudio.play().then(() => {
+                console.log('🔊 Master audio unblocked and playing teacher stream successfully!');
+                window.isTeacherWebRtcAudioActive = true;
+                document.getElementById('audioUnblockBanner')?.classList.add('hidden');
+            }).catch(e => console.warn('Master audio unblock wait:', e));
         }
         Object.values(remoteAudios).forEach(a => {
             try {
@@ -2963,7 +3013,7 @@
             broadcastPcmBuffer = [];
 
             const targetSampleRate = 16000;
-            const chunkSampleCount = Math.floor(broadcastAudioCtx.sampleRate * 0.5); // كتلة صوتية كل 500ms
+            const chunkSampleCount = Math.floor(broadcastAudioCtx.sampleRate * 0.22); // كتلة خفيفة وسريعة كل 220ms
 
             broadcastProcessor.onaudioprocess = (e) => {
                 if (!isMicEnabled) {
@@ -2982,6 +3032,24 @@
 
                     audioBroadcastSeq++;
                     const curSeq = audioBroadcastSeq;
+
+                    // البث الفوري عبر P2P DataChannel (< 10ms) للأجهزة المتصلة مباشرة على الشبكة
+                    const hasOpenP2P = Object.values(peerDataChannels).some(dc => dc && dc.readyState === 'open');
+                    if (hasOpenP2P) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const base64Data = (reader.result || '').split(',')[1];
+                            if (base64Data) {
+                                broadcastP2P({
+                                    type: 'p2p_audio_chunk',
+                                    seq: curSeq,
+                                    mime: 'audio/wav',
+                                    data: base64Data
+                                });
+                            }
+                        };
+                        reader.readAsDataURL(wavBlob);
+                    }
 
                     const formData = new FormData();
                     formData.append('seq', curSeq);
@@ -3053,6 +3121,10 @@
                         source.buffer = audioBuffer;
                         source.connect(window.globalAudioCtx.destination);
                         const now = window.globalAudioCtx.currentTime;
+                        // تصحيح التراكم والانزياح الزمني: إذا تراكم تأخير زمني أكثر من 300ms نقفز فوراً للحظة الحالية
+                        if (nextAudioPlayTime - now > 0.35 || nextAudioPlayTime < now) {
+                            nextAudioPlayTime = now;
+                        }
                         const startTime = Math.max(now, nextAudioPlayTime);
                         source.start(startTime);
                         nextAudioPlayTime = startTime + audioBuffer.duration;
@@ -3118,8 +3190,7 @@
                 isSyncing = false;
             }
         }
-        const hasOpenP2P = Object.values(peerDataChannels).some(dc => dc && dc.readyState === 'open');
-        const nextInterval = hasOpenP2P ? 600 : 350;
+        const nextInterval = window.isTeacherWebRtcAudioActive ? 600 : 250;
         syncTimer = setTimeout(runRealtimeSyncLoop, nextInterval);
     }
 
@@ -3139,8 +3210,22 @@
         }
     }
 
-    // 4. معالجة إشارات WebRTC مع دعم طابور المرشحين وتفويج الدفعات (ICE Candidate Batching)
+    // 4. معالجة إشارات WebRTC مع دعم طابور المرشحين وتفويج الدفعات (ICE Candidate Batching & Perfect Negotiation)
+    const processedSignalIds = new Set();
+
     async function handleIncomingSignal(sig) {
+        if (!sig) return;
+        if (sig.id && processedSignalIds.has(sig.id)) {
+            return;
+        }
+        if (sig.id) {
+            processedSignalIds.add(sig.id);
+            if (processedSignalIds.size > 200) {
+                const first = processedSignalIds.values().next().value;
+                processedSignalIds.delete(first);
+            }
+        }
+
         const fromPeer = sig.from_peer_id;
         const type = sig.signal_type;
         const payload = sig.payload;
@@ -3154,6 +3239,22 @@
 
         try {
             if (type === 'offer') {
+                const isCollision = pc.signalingState !== 'stable';
+                if (isCollision) {
+                    if (!IS_TEACHER) {
+                        // الطالب هو النظير الودود (Polite peer): يتراجع عن أي عرض محلي لقبول عرض المعلم فوراً
+                        try {
+                            await pc.setLocalDescription({ type: 'rollback' });
+                        } catch (rbErr) {
+                            console.warn('Rollback err:', rbErr);
+                        }
+                    } else {
+                        // المعلم هو النظير الرئيسي: يتجاهل أي عرض متصادم
+                        console.warn('Teacher ignoring incoming offer in collision state:', pc.signalingState);
+                        return;
+                    }
+                }
+
                 const cleanDesc = sanitizeDescription(payload);
                 await pc.setRemoteDescription(new RTCSessionDescription(cleanDesc));
                 // تفريغ المرشحين المؤجلين لهذا النظير إن وجدوا
@@ -3168,6 +3269,11 @@
                 await pc.setLocalDescription(cleanAnswer);
                 postSignal(fromPeer, 'answer', cleanAnswer);
             } else if (type === 'answer') {
+                // منع خطأ InvalidStateError: تطبيق الإجابة فقط إذا كان الاتصال ينتظر إجابة عرض محلي
+                if (pc.signalingState !== 'have-local-offer') {
+                    console.warn('Ignoring duplicate or unexpected answer in state:', pc.signalingState);
+                    return;
+                }
                 const cleanDesc = sanitizeDescription(payload);
                 await pc.setRemoteDescription(new RTCSessionDescription(cleanDesc));
                 // تفريغ المرشحين المؤجلين لهذا النظير
@@ -3202,13 +3308,15 @@
 
             if (shouldInitiate && isDisconnected) {
                 const pc = getOrCreatePeerConnection(p.peer_id, p.user_id, p.name, p.is_staff);
-                pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
-                    .then(offer => {
-                        const cleanOffer = new RTCSessionDescription({ type: offer.type, sdp: sanitizeSdp(offer.sdp) });
-                        return pc.setLocalDescription(cleanOffer);
-                    })
-                    .then(() => postSignal(p.peer_id, 'offer', pc.localDescription))
-                    .catch(err => console.log('CreateOffer err:', err));
+                if (pc.signalingState === 'stable') {
+                    pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+                        .then(offer => {
+                            const cleanOffer = new RTCSessionDescription({ type: offer.type, sdp: sanitizeSdp(offer.sdp) });
+                            return pc.setLocalDescription(cleanOffer);
+                        })
+                        .then(() => postSignal(p.peer_id, 'offer', pc.localDescription))
+                        .catch(err => console.log('CreateOffer err:', err));
+                }
             }
         });
     }
