@@ -406,6 +406,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/branding/background/remove', [BrandingController::class, 'removeBackground'])->name('admin.branding.background.remove');
         Route::post('/admin/branding/logo', [BrandingController::class, 'updateLogo'])->name('admin.branding.logo.update');
         Route::post('/admin/branding/logo/remove', [BrandingController::class, 'removeLogo'])->name('admin.branding.logo.remove');
+        Route::post('/admin/branding/splash', [BrandingController::class, 'updateSplashSettings'])->name('admin.branding.splash.update');
+        Route::post('/admin/branding/typography', [BrandingController::class, 'updateTypography'])->name('admin.branding.typography.update');
+        Route::post('/admin/branding/typography/reset', [BrandingController::class, 'resetTypography'])->name('admin.branding.typography.reset');
         Route::post('/admin/branding/texts', [BrandingController::class, 'updateTexts'])->name('admin.branding.texts.update');
         Route::post('/admin/branding/leadership', [BrandingController::class, 'updateLeadership'])->name('admin.branding.leadership.update');
         Route::post('/admin/branding/texts/reset', [BrandingController::class, 'resetTexts'])->name('admin.branding.texts.reset');

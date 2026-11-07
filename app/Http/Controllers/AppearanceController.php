@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,9 +19,10 @@ class AppearanceController extends Controller
             $activeTheme = Auth::user()->theme_preference;
         }
         $activeTheme = $activeTheme ?? $defaultTheme;
-        $activeFont = session('font', 'Cairo');
+        $defaultFont = SiteSetting::get('site_font_family', 'Cairo');
+        $activeFont = session('font', $defaultFont);
 
-        return view('settings.appearance', compact('themes', 'activeTheme', 'defaultTheme', 'activeFont'));
+        return view('settings.appearance', compact('themes', 'activeTheme', 'defaultTheme', 'activeFont', 'defaultFont'));
     }
 
     // حفظ وتطبيق القالب المختار
@@ -69,11 +71,12 @@ class AppearanceController extends Controller
     // حفظ وتطبيق نوع الخط العربي المختار
     public function updateFont(Request $request)
     {
-        $validFonts = ['Cairo', 'Almarai', 'Tajawal', 'IBM Plex Sans Arabic'];
-        $font = $request->input('font', 'Cairo');
+        $validFonts = ['Cairo', 'Almarai', 'Tajawal', 'IBM Plex Sans Arabic', 'Readex Pro', 'Amiri', 'Noto Kufi Arabic', 'Changa'];
+        $defaultFont = SiteSetting::get('site_font_family', 'Cairo');
+        $font = $request->input('font', $defaultFont);
 
         if (! in_array($font, $validFonts)) {
-            $font = 'Cairo';
+            $font = $defaultFont;
         }
 
         session(['font' => $font]);
@@ -85,8 +88,9 @@ class AppearanceController extends Controller
     public function reset()
     {
         $defaultTheme = config('themes.default');
+        $defaultFont = SiteSetting::get('site_font_family', 'Cairo');
         session(['theme' => $defaultTheme]);
-        session(['font' => 'Cairo']);
+        session(['font' => $defaultFont]);
 
         if (Auth::check()) {
             try {

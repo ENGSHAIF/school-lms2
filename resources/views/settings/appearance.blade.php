@@ -60,8 +60,40 @@
                     'desc' => 'طابع تقني ومؤسسي عالي الدقة يعكس الاحترافية والانضباط الأكاديمي.',
                     'family' => "'IBM Plex Sans Arabic', sans-serif",
                 ],
+                'Readex Pro' => [
+                    'name_ar' => 'خط ريدكس برو (Readex Pro)',
+                    'desc' => 'خط حداثي فائق الوضوح ومقروء بسلاسة تامة على مختلف أحجام الشاشات.',
+                    'family' => "'Readex Pro', sans-serif",
+                ],
+                'Amiri' => [
+                    'name_ar' => 'الخط الأميري (Amiri)',
+                    'desc' => 'طابع عربي كلاسيكي عريق بنمط خط النسخ التقليدي الرصين والموثوق.',
+                    'family' => "'Amiri', serif",
+                ],
+                'Noto Kufi Arabic' => [
+                    'name_ar' => 'خط نوتو كوفي (Noto Kufi)',
+                    'desc' => 'طابع كوفي هندسي متقن يجمع بين الأصالة العربية والتصميم الرقمي.',
+                    'family' => "'Noto Kufi Arabic', sans-serif",
+                ],
+                'Changa' => [
+                    'name_ar' => 'خط تشانجا (Changa)',
+                    'desc' => 'خط عريض وجريء يمنح العناوين والواجهات حضوراً حيوياً ومميزاً.',
+                    'family' => "'Changa', sans-serif",
+                ],
             ];
         @endphp
+
+        @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('system.branding_edit')))
+            <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span>👑</span>
+                    <span><strong>خاص بمدير النظام:</strong> لاختيار وتثبيت نوع الخط ولون وحجم الخط الافتراضي لكافة زوار وطلاب الموقع بالكامل:</span>
+                </div>
+                <a href="{{ route('admin.branding.index') }}#typography-section" class="px-3 py-1 bg-[#F58220] hover:bg-[#d96e14] text-white font-bold rounded-xl transition text-xs shrink-0">
+                    إدارة الهوية والخطوط للموقع ←
+                </a>
+            </div>
+        @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
             @foreach($fontsList as $fontKey => $f)

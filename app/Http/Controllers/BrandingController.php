@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PlatformLicense;
 use App\Models\SiteSetting;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -354,5 +355,107 @@ class BrandingController extends Controller
         $licenses = PlatformLicense::active()->orderBy('sort_order')->latest()->get();
 
         return view('public.licenses_viewer', compact('licenses'));
+    }
+
+    // 8. تحديث إعدادات شاشة الترحيب الأولى والشعار الضبابي
+    public function updateSplashSettings(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->isAdmin()) {
+            abort(403, 'غير مصرح لك بتعديل إعدادات شاشة الترحيب.');
+        }
+
+        $validated = $request->validate([
+            'splash_enabled' => 'required|in:0,1',
+            'splash_title_ar' => 'nullable|string|max:190',
+            'splash_subtitle_ar' => 'nullable|string|max:255',
+            'splash_duration' => 'required|numeric|min:1|max:10',
+            'splash_blur' => 'required|in:sm,md,lg,xl,2xl,3xl',
+            'splash_opacity_light' => 'required|numeric|min:0.05|max:0.8',
+            'splash_opacity_dark' => 'required|numeric|min:0.05|max:0.8',
+        ]);
+
+        foreach ($validated as $key => $val) {
+            SiteSetting::set($key, (string) $val, 'splash');
+        }
+
+        return back()->with('success', 'تم حفظ إعدادات شاشة الترحيب الأولى وخلفية الشعار الضبابية بنجاح! ✨');
+    }
+
+    /**
+     * تحديث نوع الخط ولون وحجم الخط الافتراضي للموقع.
+     */
+    public function updateTypography(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('system.branding_edit'))) {
+            abort(403, 'غير مصرح لك بإدارة خطوط وألوان الموقع.');
+        }
+
+        $validFonts = [
+            'Cairo',
+            'Almarai',
+            'Tajawal',
+            'IBM Plex Sans Arabic',
+            'Readex Pro',
+            'Amiri',
+            'Noto Kufi Arabic',
+            'Changa',
+        ];
+
+        $validated = $request->validate([
+            'site_font_family' => 'required|string|in:'.implode(',', $validFonts),
+            'site_font_color' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'site_font_color_muted' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'site_heading_color' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'site_font_size' => 'required|string|in:14px,15px,16px,17px,18px,19px,20px',
+        ]);
+
+        SiteSetting::set('site_font_family', $validated['site_font_family'], 'typography');
+        SiteSetting::set('site_font_size', $validated['site_font_size'], 'typography');
+
+        if (! empty($validated['site_font_color'])) {
+            SiteSetting::set('site_font_color', strtolower($validated['site_font_color']), 'typography');
+        } else {
+            SiteSetting::forget('site_font_color');
+        }
+
+        if (! empty($validated['site_font_color_muted'])) {
+            SiteSetting::set('site_font_color_muted', strtolower($validated['site_font_color_muted']), 'typography');
+        } else {
+            SiteSetting::forget('site_font_color_muted');
+        }
+
+        if (! empty($validated['site_heading_color'])) {
+            SiteSetting::set('site_heading_color', strtolower($validated['site_heading_color']), 'typography');
+        } else {
+            SiteSetting::forget('site_heading_color');
+        }
+
+        // تحديث جلسة المستخدم الحالية ليعكس التغيير مباشرة
+        session(['font' => $validated['site_font_family']]);
+
+        return back()->with('success', 'تم حفظ وتطبيق نوع الخط ولون وحجم الخط الافتراضي للموقع بنجاح! ✍️🎨');
+    }
+
+    /**
+     * استعادة نوع الخط ولون وحجم الخط الافتراضي الأصلي للموقع.
+     */
+    public function resetTypography(): RedirectResponse
+    {
+        $user = Auth::user();
+        if (! $user || (! $user->isAdmin() && ! $user->hasPermission('system.branding_edit'))) {
+            abort(403, 'غير مصرح لك باستعادة إعدادات خطوط وألوان الموقع.');
+        }
+
+        SiteSetting::forget('site_font_family');
+        SiteSetting::forget('site_font_color');
+        SiteSetting::forget('site_font_color_muted');
+        SiteSetting::forget('site_heading_color');
+        SiteSetting::forget('site_font_size');
+
+        session()->forget('font');
+
+        return back()->with('success', 'تمت استعادة نوع الخط ولون وحجم الخط الافتراضي الأصلي للموقع بنجاح! 🔄');
     }
 }

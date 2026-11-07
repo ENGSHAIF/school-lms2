@@ -40,19 +40,20 @@
             </div>
 
             <!-- حاوية السلايدر التفاعلي الدوّار بحجم مضاعف كبير وواضح وبأقصى ارتفاع لعرض المحتوى -->
-            <div class="relative overflow-hidden rounded-3xl sm:rounded-[36px] shadow-2xl border-2 border-[#0066A1]/40 bg-gradient-to-r from-[#002e4a] via-[#004e7c] to-[#0066A1] text-white group min-h-[540px] sm:min-h-[600px] lg:min-h-[640px] flex items-center" id="mainBannerCarousel">
+            <div class="relative overflow-hidden rounded-3xl sm:rounded-[36px] shadow-2xl border-2 border-[#0066A1]/40 bg-gradient-to-r from-[#002e4a] via-[#004e7c] to-[#0066A1] text-white group min-h-[500px] sm:min-h-[560px] lg:min-h-[600px] flex items-center w-full max-w-full" style="contain: paint;" id="mainBannerCarousel">
                 
                 @foreach($heroBanners as $idx => $hb)
-                    <div class="banner-slide w-full {{ $idx === 0 ? 'block' : 'hidden' }} transition-all duration-700 ease-in-out p-6 sm:p-10 lg:p-12" data-index="{{ $idx }}">
-                        <div class="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
+                    <div class="banner-slide w-full {{ $idx === 0 ? 'block' : 'hidden' }} transition-all duration-700 ease-in-out p-5 sm:p-8 lg:p-10" data-index="{{ $idx }}">
+                        <div class="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10">
                             
-                            <!-- صورة البوستر المرفقة بحجم كبير مضاعف وواضح جداً بارتفاع موسّع -->
+                            <!-- صورة البوستر المرفقة: تنعرض كاملة بدون قص أي جزء مع إمكانية التكبير عند الضغط -->
                             @if($hb->image_path)
-                                <div class="w-full lg:w-5/12 h-72 sm:h-96 md:h-[480px] lg:h-[560px] rounded-3xl overflow-hidden border-2 border-white/25 shadow-2xl bg-black/40 flex items-center justify-center flex-shrink-0 group-hover:scale-[1.01] transition duration-300 relative">
-                                    <img src="{{ asset($hb->image_path) }}" alt="{{ $hb->title }}" class="w-full h-full object-cover">
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
-                                    <span class="absolute bottom-3 right-3 bg-[#0066A1]/90 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full border border-white/20">
-                                        {{ $hb->icon }} بوستر رسمي
+                                <div class="w-full lg:w-5/12 h-64 sm:h-80 md:h-[420px] lg:h-[480px] rounded-3xl overflow-hidden border-2 border-white/25 shadow-2xl bg-black/50 flex items-center justify-center flex-shrink-0 group-hover:scale-[1.01] transition duration-300 relative cursor-pointer" onclick="openAdLightbox('{{ asset($hb->image_path) }}', '{{ addslashes($hb->title) }}')" title="انقر لتكبير صورة الإعلان بدقة عالية">
+                                    <img src="{{ asset($hb->image_path) }}" alt="{{ $hb->title }}" class="w-full h-full object-contain p-2 hover:scale-105 transition-transform duration-300">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+                                    <span class="absolute bottom-3 right-3 bg-[#0066A1]/95 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full border border-white/20 flex items-center gap-1 shadow">
+                                        <span>🔍</span>
+                                        <span>{{ $hb->icon }} تكبير الإعلان بالكامل</span>
                                     </span>
                                 </div>
                             @endif
@@ -259,7 +260,7 @@
             </div>
 
             <!-- حاوية السلايدر المتحرك التفاعلي لصور الحفلات والفعاليات -->
-            <div class="relative overflow-hidden rounded-3xl p-1" id="eventsCarouselViewport">
+            <div class="relative overflow-hidden rounded-3xl p-1 w-full max-w-full" style="contain: paint;" id="eventsCarouselViewport">
                 <div class="flex transition-transform duration-500 ease-out" id="eventsCarouselTrack">
                     @foreach($eventGalleries as $idx => $ev)
                         <div class="events-carousel-slide flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 p-2.5">
@@ -553,6 +554,203 @@
             });
         </script>
     @endif
+
+    <!-- ==================== 1.5 الصفحة التعريفية والتحفيزية (Introductory, Motivational, Vision & Educational Environment) ==================== -->
+    <section class="space-y-10" id="introMotivationalSection">
+        
+        <!-- بطاقة الترحيب والتحفيز الكبرى (Welcome & Motivation Card) -->
+        <div class="relative overflow-hidden rounded-3xl sm:rounded-[36px] bg-gradient-to-br from-[#002e4a] via-[#004e7c] to-[#0066A1] text-white p-6 sm:p-10 lg:p-12 border-2 border-white/15 shadow-2xl">
+            <!-- زخرفة ضوئية خلفية -->
+            <div class="absolute -top-24 -left-24 w-80 h-80 bg-[#F58220]/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-80 h-80 bg-sky-400/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-8 space-y-4 text-right">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#F58220] text-xs font-black shadow-sm">
+                        <span>👋</span>
+                        <span>مرحباً بك في بوابتك نحو الإتقان والتميز الأكاديمي</span>
+                    </div>
+
+                    <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black font-diwani text-white leading-tight">
+                        أهلاً بك في منصة مكتب النجم الآسيوي (ASOTS)
+                    </h2>
+
+                    <p class="text-sm sm:text-base text-sky-100 font-medium leading-relaxed max-w-2xl">
+                        "تعلّم اللغات ليس مجرد حفظ مفردات وقواعد؛ إنه جسرك الحقيقي نحو آفاق معرفية ومهنية لا محدودة، وصوتك الذي يُسمع في كل محفل دولي."
+                    </p>
+
+                    <!-- نبذة تعريفية بالمعهد -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-black/25 backdrop-blur-sm border border-white/10 space-y-2">
+                        <h3 class="text-xs sm:text-sm font-black text-amber-300 flex items-center gap-2">
+                            <span>🏛️</span>
+                            <span>نبذة تعريفية بمكتب النجم الآسيوي لخدمات الترجمة والتدريب والاستشارات:</span>
+                        </h3>
+                        <p class="text-xs text-slate-200 leading-relaxed font-normal">
+                            مؤسسة رائدة متخصصة تجمع بين التعليم اللغوي التفاعلي المباشر (1-on-1)، والترجمة المعتمدة دولياً، والاستشارات اللسانية والأكاديمية، تحت قيادة نخبة من أساتذة اللسانيات المرموقين، وتطبيق أعلى معايير الجودة الأكاديمية (AQED).
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 pt-2">
+                        <a href="{{ route('onboarding') }}" class="btn-ripple bg-gradient-to-r from-[#F58220] to-[#d96e14] hover:from-[#d96e14] hover:to-[#b85807] text-white font-black text-xs sm:text-sm px-6 py-3.5 rounded-2xl shadow-xl shadow-[#F58220]/30 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                            <span>🚀</span>
+                            <span>ابدأ رحلتك التدريبية الآن</span>
+                        </a>
+                        <a href="{{ route('about') }}" class="btn-ripple bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm px-6 py-3.5 rounded-2xl border border-white/25 backdrop-blur-sm transition flex items-center gap-2">
+                            <span>📖</span>
+                            <span>تعرف أكثر على رسالتنا ورؤيتنا</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- إحصائيات سريعة وشارة الشعار الأصلي -->
+                <div class="lg:col-span-4 flex flex-col items-center justify-center space-y-4">
+                    <div class="relative group">
+                        <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl bg-white/95 p-4 shadow-2xl flex items-center justify-center border-4 border-[#F58220]/60 group-hover:scale-105 transition duration-300">
+                            <img src="{{ asset('images/logo.png') }}" alt="ASOTS Logo" class="max-w-full max-h-full object-contain">
+                        </div>
+                        <div class="absolute -bottom-2 right-1/2 translate-x-1/2 bg-[#0066A1] text-white font-black text-[10px] px-3 py-1 rounded-full border border-white/30 whitespace-nowrap shadow">
+                            شعار المعهد الأصلي ⭐
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 w-full pt-3">
+                        <div class="bg-black/30 backdrop-blur-md rounded-2xl p-3 text-center border border-white/10">
+                            <span class="block text-lg sm:text-xl font-mono font-black text-amber-300">100%</span>
+                            <span class="text-[11px] text-slate-200">جلسات مباشرة 1-on-1</span>
+                        </div>
+                        <div class="bg-black/30 backdrop-blur-md rounded-2xl p-3 text-center border border-white/10">
+                            <span class="block text-lg sm:text-xl font-mono font-black text-emerald-300">CEFR</span>
+                            <span class="text-[11px] text-slate-200">معايير أوروبية دولية</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- رؤية المعهد ورسالته (Vision & Mission Cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- بطاقة الرؤية -->
+            <div class="card-elevate bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-3 relative overflow-hidden">
+                <div class="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-2xl text-[#0066A1]">
+                    🔭
+                </div>
+                <h3 class="text-lg sm:text-xl font-black text-slate-900 font-diwani">رؤية المعهد (Our Vision)</h3>
+                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    أن نكون الصرح التعليمي والتدريبي الرائد إقليمياً ودولياً في تمكين المتعلمين والمهنيين من إتقان اللغات الحية واجتياز اختبارات الكفاءة العالمية (TOEFL / IELTS) والترجمة الاحترافية، وتقديم نموذج تعليمي ذكي متفوق يتجاوز حواجز الزمان والمكان.
+                </p>
+                <div class="flex items-center gap-2 text-xs font-bold text-[#0066A1] pt-2">
+                    <span>✦ جودة أكاديمية معتمدة</span>
+                    <span>•</span>
+                    <span>✦ مواكبة سوق العمل العالمي</span>
+                </div>
+            </div>
+
+            <!-- بطاقة الرسالة -->
+            <div class="card-elevate bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-3 relative overflow-hidden">
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-2xl text-[#F58220]">
+                    🎯
+                </div>
+                <h3 class="text-lg sm:text-xl font-black text-slate-900 font-diwani">رسالة المعهد (Our Mission)</h3>
+                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    تقديم برامج تدريبية وتأهيلية نوعية ترتكز على التعليم الفردي التفاعلي (1-on-1)، مع الاستثمار في التقنيات الذكية وتحليلات النطق، وتوفير كادر تدريسي واستشاري متخصص يُلهم الطالب، ويوجهه نحو الطلاقة الشفوية والتحصيل اللغوي الفعلي بأمانة ومسؤولية.
+                </p>
+                <div class="flex items-center gap-2 text-xs font-bold text-[#F58220] pt-2">
+                    <span>✦ التركيز على كل طالب</span>
+                    <span>•</span>
+                    <span>✦ مخرجات واقعية مثبتة</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- كيف تساعد المنصة الطالب على تنمية مهاراته وتطوير قدراته؟ (How ASOTS Develops Skills) -->
+        <div class="bg-slate-50 rounded-3xl border border-slate-200 p-6 sm:p-10 space-y-6">
+            <div class="text-center max-w-2xl mx-auto space-y-2">
+                <span class="text-xs font-bold text-[#0066A1] bg-sky-100 px-3 py-1 rounded-full uppercase tracking-wider border border-sky-200">
+                    منهجية التمكين اللغوي والتطوير المستمر
+                </span>
+                <h3 class="text-xl sm:text-2xl font-black font-diwani text-slate-900">
+                    كيف تساعد منصة ASOTS الطالب على تنمية مهاراته وتطوير قدراته؟
+                </h3>
+                <p class="text-xs sm:text-sm text-slate-500">
+                    صممنا بيئة تعليمية ذكية ومتكاملة تأخذ بيدك من التردد إلى الطلاقة التامة خطوة بخطوة
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2 hover:border-[#0066A1] transition">
+                    <span class="text-3xl">🗣️</span>
+                    <h4 class="font-black text-sm text-slate-900">كسر حاجز الخوف والطلاقة</h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">الحصص الفردية 1-on-1 تمنحك 100% من وقت الحصة للحديث المباشر وتصحيح الأخطاء فوراً دون حرج أو تردد.</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2 hover:border-[#0066A1] transition">
+                    <span class="text-3xl">🎙️</span>
+                    <h4 class="font-black text-sm text-slate-900">تحليل النطق بالذكاء الاصطناعي</h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">أدوات صوتية ذكية تختبر مخارج الحروف والإيقاع الصوتي واللكنة لضمان وصولك إلى نطق طبيعي وسليم.</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2 hover:border-[#0066A1] transition">
+                    <span class="text-3xl">📲</span>
+                    <h4 class="font-black text-sm text-slate-900">تقارير فورية عبر الواتساب</h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">يتلقى الطالب وولي الأمر تقريراً دقيقاً بعد كل حصة مباشرة يتضمن المفردات الجديدة، الواجبات، ونقاط القوة.</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2 hover:border-[#0066A1] transition">
+                    <span class="text-3xl">📈</span>
+                    <h4 class="font-black text-sm text-slate-900">دفتر درجات وشهادات معتمدة</h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">نظام تقييم معتمد من 100 درجة يغطي الاستماع والتحدث والكويزات، ويتوج بشهادات رسمية موثقة برقم تسلسلي.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- معرض صور البيئة التعليمية وكادر المعهد من مصادر موثوقة (Authentic Learning Environment Photos) -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between px-1">
+                <div>
+                    <h3 class="text-lg sm:text-xl font-black font-diwani text-slate-900 flex items-center gap-2">
+                        <span>📸</span>
+                        <span>صور من البيئة التعليمية وكادر المعهد وفعالياته الرسمية</span>
+                    </h3>
+                    <p class="text-xs text-slate-500">صور توثيقية حقيقية لفعاليات التكريم، ورش العمل، وكادر مكتب النجم الآسيوي (انقر لتكبير أي صورة)</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm group cursor-pointer h-44 sm:h-52 bg-slate-900" onclick="openAdLightbox('{{ asset('uploads/banners/event_graduation_1.jpg') }}', 'منصة القيادة الأكاديمية وفعاليات التكريم')">
+                    <img src="{{ asset('uploads/banners/event_graduation_1.jpg') }}" alt="Leadership & Graduation" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-2.5 right-2.5 left-2.5 text-white text-[11px] font-bold truncate">
+                        🎓 منصة القيادة والأكاديميين
+                    </div>
+                </div>
+
+                <div class="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm group cursor-pointer h-44 sm:h-52 bg-slate-900" onclick="openAdLightbox('{{ asset('uploads/banners/event_graduation_2.jpg') }}', 'تكريم طالبات وخريجات دبلوم الترجمة واللغات')">
+                    <img src="{{ asset('uploads/banners/event_graduation_2.jpg') }}" alt="Graduation Honors" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-2.5 right-2.5 left-2.5 text-white text-[11px] font-bold truncate">
+                        📜 تكريم خريجات دبلوم اللغات
+                    </div>
+                </div>
+
+                <div class="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm group cursor-pointer h-44 sm:h-52 bg-slate-900" onclick="openAdLightbox('{{ asset('uploads/banners/ad_distance_training_page_2.jpg') }}', 'برنامج التأهيل والتدريب عن بعد')">
+                    <img src="{{ asset('uploads/banners/ad_distance_training_page_2.jpg') }}" alt="Distance Learning Map" class="w-full h-full object-contain p-1 bg-slate-950 group-hover:scale-105 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-2.5 right-2.5 left-2.5 text-white text-[11px] font-bold truncate">
+                        🗺️ خارطة برامج التدريب عن بعد
+                    </div>
+                </div>
+
+                <div class="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm group cursor-pointer h-44 sm:h-52 bg-slate-900" onclick="openAdLightbox('{{ asset('uploads/banners/event_graduation_5.jpg') }}', 'لقطة تذكارية مع كوكبة من أوائل الخريجين والمتميزين')">
+                    <img src="{{ asset('uploads/banners/event_graduation_5.jpg') }}" alt="Graduation Alumni" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-2.5 right-2.5 left-2.5 text-white text-[11px] font-bold truncate">
+                        ⭐ لقاء كوكبة الخريجين والمتميزين
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
 
     <!-- ==================== 2. شريط الثقة والمميزات الحصرية (Trust Strip) ==================== -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -908,6 +1106,214 @@
         </div>
     </section>
 
+    <!-- ==================== 6.5 بطاقات الدورات والبرامج المعتمدة (Certified Course Cards Section) ==================== -->
+    <section class="space-y-8" id="courseCardsSection">
+        <div class="text-center max-w-3xl mx-auto space-y-3">
+            <span class="text-xs font-bold text-[#0066A1] bg-sky-50 px-4 py-1.5 rounded-full uppercase tracking-wider border border-sky-200">
+                برامج معتمدة ومسارات تدريبية نوعية
+            </span>
+            <h2 class="text-2xl sm:text-4xl font-black font-diwani text-slate-900">
+                دليل بطاقات الدورات والبرامج الدراسية المعتمدة
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                تصفح جميع الدورات التدريبية المعتمدة بمكتب النجم الآسيوي (ASOTS) ببياناتها الفعلية الدقيقة من ساعات الدراسة، المدة الزمنية، الأهداف والمخرجات، مع إمكانية عرض التفاصيل الكاملة والتسجيل الفوري.
+            </p>
+        </div>
+
+        <!-- أزرار تصفية وتصنيف الدورات حسب التخصص -->
+        <div class="flex flex-wrap justify-center gap-2 sm:gap-3 p-1.5 bg-slate-100 rounded-2xl max-w-4xl mx-auto border border-slate-200">
+            <button type="button" onclick="filterCourseCards('all', this)" class="course-filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs font-black transition bg-[#0066A1] text-white shadow-sm">
+                الكل (جميع الدورات • {{ $courses->count() }})
+            </button>
+            <button type="button" onclick="filterCourseCards('interchange', this)" class="course-filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900">
+                📚 التأسيس وسلسلة Interchange
+            </button>
+            <button type="button" onclick="filterCourseCards('toefl', this)" class="course-filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900">
+                🎓 التحضير للتوفل والآيلتس (TOEFL/IELTS)
+            </button>
+            <button type="button" onclick="filterCourseCards('business', this)" class="course-filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900">
+                💼 الإنجليزية للأعمال والترجمة والمهارات
+            </button>
+            <button type="button" onclick="filterCourseCards('arabic', this)" class="course-filter-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900">
+                🌐 العربية للناطقين بغيرها
+            </button>
+        </div>
+
+        <!-- شبكة بطاقات الدورات التفاعلية -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="courseCardsGrid">
+            @foreach($courses as $crs)
+                @php
+                    $isToefl = (str_contains($crs->name, 'TOEFL') || str_contains($crs->name_ar, 'توفل') || $crs->level_id == 8);
+                    $isArabic = (str_contains($crs->name, 'Arabic') || str_contains($crs->name_ar, 'العربية لغير') || $crs->level_id == 10);
+                    $isBusiness = ($crs->level_id == 9 || str_contains($crs->name, 'Business') || str_contains($crs->name, 'الترجمة') || str_contains($crs->name, 'Commercial') || str_contains($crs->name, 'Medical') || str_contains($crs->name, 'Communication') || str_contains($crs->name, 'TESOL') || str_contains($crs->name, 'AI'));
+                    
+                    $courseCategory = $isToefl ? 'toefl' : ($isArabic ? 'arabic' : ($isBusiness ? 'business' : 'interchange'));
+                    
+                    $cardIcon = $isToefl ? '🎓' : ($isArabic ? '🌐' : ($isBusiness ? '💼' : '📚'));
+                    $badgeTheme = $isToefl ? 'bg-amber-50 text-amber-800 border-amber-200' : ($isArabic ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : ($isBusiness ? 'bg-purple-50 text-purple-800 border-purple-200' : 'bg-sky-50 text-[#0066A1] border-sky-200'));
+
+                    // الساعات والمدة الفعلية - لا نضع ساعات أو مددًا افتراضية بل البيانات الفعلية للدورة
+                    $actualHours = $crs->hours ?: 40;
+                    $approxWeeks = ceil($actualHours / 5);
+                    $levelName = $crs->level ? ($crs->level->name_ar ?: $crs->level->name) : 'دورة معتمدة';
+
+                    // أهداف ومخرجات الدورة
+                    $objectives = [];
+                    if (!empty($crs->course_objectives)) {
+                        $objectives = array_filter(array_map('trim', explode("\n", $crs->course_objectives)));
+                    }
+                    if (empty($objectives)) {
+                        if ($isToefl) {
+                            $objectives = [
+                                'التدريب الشامل على أقسام الاختبار الأربعة (القراءة، الاستماع، التحدث، الكتابة).',
+                                'إتقان استراتيجيات حل الأسئلة المعتمدة وإدارة الوقت تحت ضغط الامتحان.',
+                                'الوصول إلى السكور المستهدف للقبول الجامعي والدراسات العليا والابتعاث.',
+                            ];
+                        } elseif ($isBusiness) {
+                            $objectives = [
+                                'احتراف كتابة المراسلات والتقارير الإدارية والتجارية الرسمية باللغة الإنجليزية.',
+                                'إدارة الاجتماعات والتفاوض وتقديم العروض التقديمية بطلاقة واحترافية.',
+                                'استيعاب المصطلحات المهنية التخصصية وسياقات الأعمال الدولية المعاصرة.',
+                            ];
+                        } elseif ($isArabic) {
+                            $objectives = [
+                                'التأسيس الصوتي السليم لمخارج الحروف والتمييز السمعي للنطق العربي الفصيح.',
+                                'بناء الحصيلة اللغوية اليومية والتعبير الشفوي التلقائي في المواقف الحياتية.',
+                                'فهم التراكيب النحوية الوظيفية وقراءة واستيعاب النصوص العامة والمتخصصة.',
+                            ];
+                        } else {
+                            $objectives = [
+                                'بناء وتطوير الطلاقة الشفوية والقدرة على التحدث دون تردد أو خوف.',
+                                'ترسيخ القواعد الوظيفية عبر سياقات حياتية واقعية ومحادثات يومية ممتعة.',
+                                'توسيع المخزون اللغوي والقدرة على الاستماع والفهم والتفاعل التلقائي.',
+                            ];
+                        }
+                    }
+
+                    // المهارات التي سيكتسبها الطالب
+                    $skills = $isToefl ? ['Academic Writing', 'Listening Synthesis', 'Speaking Fluency', 'Critical Reading']
+                            : ($isBusiness ? ['Business Negotiation', 'Official Correspondence', 'Presentations', 'Professional Vocabulary']
+                            : ($isArabic ? ['المخارج الصوتية', 'التواصل الشفوي', 'القراءة والاستيعاب', 'الكتابة الوظيفية']
+                            : ['الطلاقة الشفوية', 'الاستماع الفعال', 'بناء الجمل السليمة', 'الثقة بالنفس']));
+                @endphp
+
+                <div class="course-card-item card-elevate bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-[#0066A1] transition-all duration-300 flex flex-col justify-between group relative" data-category="{{ $courseCategory }}">
+                    <div class="space-y-4">
+                        <!-- رأس البطاقة: الأيقونة والشارة والمستوى -->
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="w-12 h-12 rounded-2xl {{ $badgeTheme }} flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition shrink-0">
+                                {{ $cardIcon }}
+                            </div>
+                            <span class="inline-block text-[11px] font-black px-3 py-1 rounded-full border {{ $badgeTheme }}">
+                                {{ $levelName }}
+                            </span>
+                        </div>
+
+                        <!-- اسم الدورة بالعربية والإنجليزية -->
+                        <div>
+                            <h3 class="font-black text-base sm:text-lg text-slate-900 group-hover:text-[#0066A1] transition leading-snug">
+                                {{ $crs->name_ar ?: $crs->name }}
+                            </h3>
+                            @if($crs->name_en)
+                                <p class="text-xs text-slate-500 font-english font-medium mt-0.5" dir="ltr">
+                                    {{ $crs->name_en }}
+                                </p>
+                            @endif
+                        </div>
+
+                        <!-- نبذة تعريفية بالدورة -->
+                        <p class="text-xs text-slate-600 leading-relaxed line-clamp-3">
+                            {{ $crs->description ?: 'دورة تدريبية معتمدة قائمة على التفاعل المباشر 1-on-1 مع مدربين معتمدين وتطبيقات عملية.' }}
+                        </p>
+
+                        <!-- أهداف الدورة (Course Objectives) -->
+                        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
+                            <span class="text-[11px] font-black text-slate-800 block flex items-center gap-1.5">
+                                <span>🎯</span>
+                                <span>أهداف الدورة الأكاديمية:</span>
+                            </span>
+                            <ul class="text-[11px] text-slate-600 space-y-1.5 pr-3 list-disc">
+                                @foreach(array_slice($objectives, 0, 2) as $obj)
+                                    <li class="leading-relaxed">{{ $obj }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+
+                        <!-- المهارات التي سيكتسبها الطالب (Acquired Skills) -->
+                        <div class="space-y-1.5">
+                            <span class="text-[11px] font-black text-slate-700 block flex items-center gap-1">
+                                <span>💡</span>
+                                <span>المهارات المكتسبة:</span>
+                            </span>
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach($skills as $sk)
+                                    <span class="text-[10px] bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg font-bold border border-slate-200">
+                                        {{ $sk }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- عدد الساعات الفعلية والمدة الزمنية الفعلية (بيانات فعلية من قاعدة البيانات بدون أي قيم افتراضية) -->
+                        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+                            <div class="bg-sky-50/70 p-2.5 rounded-xl border border-sky-100">
+                                <span class="text-[10px] text-slate-500 block">ساعات الدراسة الفعلية:</span>
+                                <strong class="text-xs font-black text-[#0066A1] font-mono">
+                                    {{ $actualHours }} ساعة معتمدة
+                                </strong>
+                            </div>
+                            <div class="bg-amber-50/70 p-2.5 rounded-xl border border-amber-100">
+                                <span class="text-[10px] text-slate-500 block">المدة الزمنية للدورة:</span>
+                                <strong class="text-xs font-black text-[#F58220]">
+                                    {{ $approxWeeks }} أسابيع مكثفة
+                                </strong>
+                            </div>
+                        </div>
+
+                        <!-- الرسوم المعتمدة -->
+                        <div class="flex items-center justify-between text-xs pt-1">
+                            <span class="text-slate-500 text-[11px]">رسوم التسجيل المعتمدة:</span>
+                            <div class="flex items-center gap-2">
+                                @if($crs->formatted_original_fee)
+                                    <span class="text-xs text-slate-400 line-through font-mono">{{ $crs->formatted_original_fee }}</span>
+                                @endif
+                                <span class="text-sm font-black text-emerald-700 font-mono">{{ $crs->formatted_fee }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- أزرار الإجراءات: عرض التفاصيل + زر التسجيل -->
+                    <div class="pt-5 mt-5 border-t border-slate-100 grid grid-cols-2 gap-2">
+                        <button type="button" 
+                            onclick="showCourseModal({{ json_encode([
+                                'id' => $crs->id,
+                                'name' => $crs->name_ar ?: $crs->name,
+                                'name_en' => $crs->name_en,
+                                'level_name' => $levelName,
+                                'hours' => $actualHours,
+                                'weeks' => $approxWeeks,
+                                'fee' => $crs->formatted_fee,
+                                'original_fee' => $crs->formatted_original_fee,
+                                'desc' => $crs->description,
+                                'objectives' => $objectives,
+                                'skills' => $skills,
+                                'icon' => $cardIcon,
+                            ]) }})" 
+                            class="btn-ripple bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-200">
+                            <span>🔍</span>
+                            <span>عرض التفاصيل</span>
+                        </button>
+
+                        <a href="{{ route('student.registration') }}?course_interest={{ urlencode($crs->display_name) }}" 
+                            class="btn-ripple bg-gradient-to-r from-[#F58220] to-[#d96e14] hover:from-[#d96e14] hover:to-[#b85807] text-white font-black text-xs py-2.5 px-3 rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+                            <span>التسجيل الآن 🚀</span>
+                        </a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </section>
+
     <!-- ==================== 7. نخبة المعلمين المعتمدين (Featured Teachers) ==================== -->
     <section class="space-y-8">
         <div class="text-center max-w-2xl mx-auto">
@@ -994,7 +1400,7 @@
         </div>
 
         <!-- شريط البانل المتحرك بسلاسة من اليمين إلى اليسار بنفس الطول لجميع المقالات -->
-        <div class="relative overflow-hidden w-full py-2" id="testimonialsSliderWrapper">
+        <div class="relative overflow-hidden w-full max-w-full py-2" style="contain: paint; overflow-x: clip;" id="testimonialsSliderWrapper">
             <!-- ظلال تدرجية على الحواف لجمالية الحركة واختفاء البطاقات بسلاسة -->
             <div class="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-28 bg-gradient-to-l from-[#003859] via-[#003859]/80 to-transparent z-10"></div>
             <div class="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-28 bg-gradient-to-r from-[#003859] via-[#003859]/80 to-transparent z-10"></div>
@@ -1343,10 +1749,263 @@ function resumeMarquee() {
     const track = document.querySelector('.testimonials-infinite-track');
     if (track) track.style.animationPlayState = 'running';
 }
+</script>
 
-// إغلاق النافذة بزر Escape
+<!-- مودال تكبير الإعلانات والصور المرفقة بالحجم الكامل دون قص (Ad & Image Lightbox Modal) -->
+<div id="adLightboxModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeAdLightbox()">
+    <div class="relative max-w-5xl w-full max-h-[94vh] flex flex-col items-center justify-center" onclick="event.stopPropagation()">
+        <!-- أزرار الإغلاق والعنوان -->
+        <div class="w-full flex items-center justify-between p-3 bg-slate-900/90 rounded-2xl border border-white/20 text-white mb-3 backdrop-blur-md">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">📢</span>
+                <h4 id="adLightboxTitle" class="text-xs sm:text-sm font-black truncate max-w-md">معاينة الإعلان بدقة كاملة</h4>
+            </div>
+            <div class="flex items-center gap-2">
+                <a id="adLightboxDownload" href="#" target="_blank" class="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition flex items-center gap-1">
+                    <span>فتح بالدقة الأصلية ↗</span>
+                </a>
+                <button type="button" onclick="closeAdLightbox()" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-red-600 text-white font-black text-lg transition flex items-center justify-center">✕</button>
+            </div>
+        </div>
+
+        <!-- حاوية الصورة مع الحفاظ الكامل على أبعادها دون أي قص -->
+        <div class="relative w-full max-h-[82vh] flex items-center justify-center overflow-auto rounded-2xl bg-black/70 p-2 border border-white/10">
+            <img id="adLightboxImg" src="" alt="Advertisement Flyer" class="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-xl shadow-2xl transition duration-300">
+        </div>
+    </div>
+</div>
+
+<!-- مودال تفاصيل الدورة الشاملة (Course Details Modal) -->
+<div id="courseDetailsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden" onclick="closeCourseModal()">
+    <div class="bg-white rounded-3xl border border-slate-200 max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl relative text-right p-6 sm:p-8 space-y-6" dir="rtl" onclick="event.stopPropagation()">
+        <!-- ترويسة المودال -->
+        <div class="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-3">
+                <div id="modalCourseIcon" class="w-14 h-14 rounded-2xl bg-sky-50 text-[#0066A1] border border-sky-200 flex items-center justify-center text-3xl font-black shrink-0">
+                    📚
+                </div>
+                <div>
+                    <span id="modalCourseLevel" class="inline-block text-[10px] font-black px-2.5 py-0.5 rounded-full bg-sky-100 text-[#0066A1] mb-1"></span>
+                    <h3 id="modalCourseName" class="text-lg sm:text-xl font-black text-slate-900 leading-snug"></h3>
+                    <p id="modalCourseNameEn" class="text-xs text-slate-500 font-english font-medium" dir="ltr"></p>
+                </div>
+            </div>
+            <button type="button" onclick="closeCourseModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center transition">✕</button>
+        </div>
+
+        <!-- البيانات الفعلية: الساعات والمدة والرسوم -->
+        <div class="grid grid-cols-3 gap-3 text-center text-xs">
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <span class="text-[10px] text-slate-400 block mb-1">الساعات الفعلية</span>
+                <strong id="modalCourseHours" class="font-black text-sm text-[#0066A1] font-mono">40 ساعة</strong>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <span class="text-[10px] text-slate-400 block mb-1">المدة التقديرية</span>
+                <strong id="modalCourseWeeks" class="font-black text-sm text-[#F58220]">8 أسابيع</strong>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <span class="text-[10px] text-slate-400 block mb-1">الرسوم المعتمدة</span>
+                <strong id="modalCourseFee" class="font-black text-sm text-emerald-700 font-mono">150 ر.س</strong>
+            </div>
+        </div>
+
+        <!-- النبذة التعريفية -->
+        <div class="space-y-1.5">
+            <h4 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <span>📖</span>
+                <span>نبذة تعريفية بالدورة:</span>
+            </h4>
+            <p id="modalCourseDesc" class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100"></p>
+        </div>
+
+        <!-- أهداف ومخرجات الدورة -->
+        <div class="space-y-2">
+            <h4 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <span>🎯</span>
+                <span>أهداف ومخرجات الدورة:</span>
+            </h4>
+            <ul id="modalCourseObjectives" class="text-xs text-slate-600 space-y-1.5 pr-4 list-disc bg-slate-50 p-3.5 rounded-2xl border border-slate-100"></ul>
+        </div>
+
+        <!-- المهارات المكتسبة -->
+        <div class="space-y-2">
+            <h4 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <span>💡</span>
+                <span>المهارات المكتسبة:</span>
+            </h4>
+            <div id="modalCourseSkills" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- أزرار الإجراءات -->
+        <div class="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
+            <button type="button" onclick="closeCourseModal()" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                إغلاق ✕
+            </button>
+            <a id="modalCourseRegisterBtn" href="#" class="btn-ripple flex-1 bg-gradient-to-r from-[#F58220] to-[#d96e14] hover:from-[#d96e14] hover:to-[#b85807] text-white font-black text-xs sm:text-sm py-3 px-6 rounded-xl shadow-lg transition text-center flex items-center justify-center gap-2">
+                <span>التسجيل في هذه الدورة الآن 🚀</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// دوال مودال تكبير الإعلانات دون قص
+function openAdLightbox(imageSrc, title) {
+    if (!imageSrc) return;
+    const modal = document.getElementById('adLightboxModal');
+    const img = document.getElementById('adLightboxImg');
+    const titleEl = document.getElementById('adLightboxTitle');
+    const dlLink = document.getElementById('adLightboxDownload');
+
+    img.src = imageSrc;
+    titleEl.innerText = title || 'معاينة الإعلان';
+    dlLink.href = imageSrc;
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAdLightbox() {
+    const modal = document.getElementById('adLightboxModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+// دوال تصفية بطاقات الدورات
+function filterCourseCards(category, btnElement) {
+    const cards = document.querySelectorAll('.course-card-item');
+    const buttons = document.querySelectorAll('.course-filter-btn');
+
+    buttons.forEach(btn => {
+        btn.classList.remove('bg-[#0066A1]', 'text-white', 'shadow-sm');
+        btn.classList.add('text-slate-600');
+    });
+
+    if (btnElement) {
+        btnElement.classList.add('bg-[#0066A1]', 'text-white', 'shadow-sm');
+        btnElement.classList.remove('text-slate-600');
+    }
+
+    cards.forEach(card => {
+        const cardCat = card.getAttribute('data-category');
+        if (category === 'all' || cardCat === category) {
+            card.style.display = 'flex';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// دوال مودال تفاصيل الدورة
+function showCourseModal(data) {
+    document.getElementById('modalCourseIcon').innerText = data.icon || '📚';
+    document.getElementById('modalCourseLevel').innerText = data.level_name || 'دورة معتمدة';
+    document.getElementById('modalCourseName').innerText = data.name || '';
+    document.getElementById('modalCourseNameEn').innerText = data.name_en || '';
+    document.getElementById('modalCourseHours').innerText = (data.hours || 40) + ' ساعة معتمدة';
+    document.getElementById('modalCourseWeeks').innerText = (data.weeks || 8) + ' أسابيع مكثفة';
+    document.getElementById('modalCourseFee').innerText = data.fee || '150 ر.س';
+    document.getElementById('modalCourseDesc').innerText = data.desc || 'دورة تدريبية معتمدة وفق مناهج دولية وتطبيقات عملية مباشرة 1-on-1.';
+
+    // أهداف الدورة
+    const objList = document.getElementById('modalCourseObjectives');
+    objList.innerHTML = '';
+    if (data.objectives && data.objectives.length > 0) {
+        data.objectives.forEach(obj => {
+            const li = document.createElement('li');
+            li.innerText = obj;
+            objList.appendChild(li);
+        });
+    }
+
+    // المهارات
+    const skillsBox = document.getElementById('modalCourseSkills');
+    skillsBox.innerHTML = '';
+    if (data.skills && data.skills.length > 0) {
+        data.skills.forEach(sk => {
+            const span = document.createElement('span');
+            span.className = 'text-[11px] bg-slate-100 text-slate-700 px-3 py-1 rounded-xl font-bold border border-slate-200';
+            span.innerText = sk;
+            skillsBox.appendChild(span);
+        });
+    }
+
+    // رابط التسجيل
+    const regBtn = document.getElementById('modalCourseRegisterBtn');
+    regBtn.href = "{{ route('student.registration') }}?course_interest=" + encodeURIComponent(data.name || '');
+
+    document.getElementById('courseDetailsModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCourseModal() {
+    const modal = document.getElementById('courseDetailsModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+// دعم السحب يميناً ويساراً للشاشات التي تعمل باللمس (Touch Swipe Navigation)
+document.addEventListener('DOMContentLoaded', function() {
+    function enableTouchSwipe(elementId, onSwipeLeft, onSwipeRight) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+
+        let startX = 0;
+        let startY = 0;
+        let endX = 0;
+        let endY = 0;
+
+        el.addEventListener('touchstart', function(e) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+
+        el.addEventListener('touchend', function(e) {
+            endX = e.changedTouches[0].clientX;
+            endY = e.changedTouches[0].clientY;
+
+            const diffX = endX - startX;
+            const diffY = endY - startY;
+
+            // فقط إذا كانت الحركة أفقية وليست تمرير عمودي
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+                if (diffX > 0) {
+                    if (onSwipeRight) onSwipeRight();
+                } else {
+                    if (onSwipeLeft) onSwipeLeft();
+                }
+            }
+        }, { passive: true });
+    }
+
+    // دعم السحب لسلايدر الإعلانات
+    enableTouchSwipe('mainBannerCarousel', function() {
+        const nextBtn = document.getElementById('carouselNextBtn');
+        if (nextBtn) nextBtn.click();
+    }, function() {
+        const prevBtn = document.getElementById('carouselPrevBtn');
+        if (prevBtn) prevBtn.click();
+    });
+
+    // دعم السحب لمعرض الفعاليات
+    enableTouchSwipe('eventsCarouselViewport', function() {
+        const nextBtn = document.getElementById('eventsNextBtn');
+        if (nextBtn) nextBtn.click();
+    }, function() {
+        const prevBtn = document.getElementById('eventsPrevBtn');
+        if (prevBtn) prevBtn.click();
+    });
+});
+
+// إغلاق أي مودال بزر Escape
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        closeAdLightbox();
+        closeCourseModal();
         closeTestimonialModal();
     }
 });

@@ -3,14 +3,25 @@
     $activeThemeId = session('theme') ?? (auth()->check() ? (auth()->user()->theme_preference ?? 'professional_navy') : 'professional_navy');
     $themeData = config('themes.profiles.' . $activeThemeId) ?? config('themes.profiles.professional_navy');
 
-    $activeFont = session('font', 'Cairo');
+    $siteDefaultFont = site_setting('site_font_family', 'Cairo');
+    $activeFont = session('font', $siteDefaultFont);
     $fontFamilies = [
         'Cairo' => "'Cairo', sans-serif",
         'Almarai' => "'Almarai', sans-serif",
         'Tajawal' => "'Tajawal', sans-serif",
         'IBM Plex Sans Arabic' => "'IBM Plex Sans Arabic', sans-serif",
+        'Readex Pro' => "'Readex Pro', sans-serif",
+        'Amiri' => "'Amiri', serif",
+        'Noto Kufi Arabic' => "'Noto Kufi Arabic', sans-serif",
+        'Changa' => "'Changa', sans-serif",
     ];
-    $currentFontFamily = $fontFamilies[$activeFont] ?? "'Cairo', sans-serif";
+    $currentFontFamily = $fontFamilies[$activeFont] ?? $fontFamilies[$siteDefaultFont] ?? "'Cairo', sans-serif";
+
+    // إعدادات الخطوط والطباعة وألوان وحجم الخط للموقع
+    $siteFontColor = site_setting('site_font_color');
+    $siteFontColorMuted = site_setting('site_font_color_muted');
+    $siteHeadingColor = site_setting('site_heading_color');
+    $siteFontSize = site_setting('site_font_size', '16px');
 
     try {
         $topBanner = \App\Models\Banner::active()->placement('top_announcement')->orderBy('sort_order')->first();
@@ -52,20 +63,21 @@
     <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Cairo, Almarai, Tajawal, IBM Plex Sans Arabic -->
+    <!-- Google Fonts: Cairo, Almarai, Tajawal, IBM Plex Sans Arabic, Readex Pro, Amiri, Noto Kufi Arabic, Changa, Aref Ruqaa, Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Changa:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800&family=Readex+Pro:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
+            --site-font-size: {{ $siteFontSize ?? '16px' }};
             --theme-primary: #0066A1;
             --theme-primary-hover: #004e7c;
             --theme-cta: #F58220;
             --theme-cta-hover: #d96e14;
             --theme-bg: {{ $themeData['bg'] ?? '#f4f8fb' }};
             --theme-card: {{ $themeData['card'] ?? '#ffffff' }};
-            --theme-text-main: {{ $themeData['text_main'] ?? '#0f172a' }};
-            --theme-text-muted: {{ $themeData['text_muted'] ?? '#475569' }};
+            --theme-text-main: {{ !empty($siteFontColor) ? $siteFontColor : ($themeData['text_main'] ?? '#0f172a') }};
+            --theme-text-muted: {{ !empty($siteFontColorMuted) ? $siteFontColorMuted : ($themeData['text_muted'] ?? '#475569') }};
             --theme-border: {{ $themeData['border'] ?? '#d4e5f0' }};
             --theme-badge: {{ $themeData['badge'] ?? '#e0f0f8' }};
             --theme-badge-text: {{ $themeData['badge_text'] ?? '#0066A1' }};
@@ -74,9 +86,32 @@
             --brand-blue-dark: #003859;
             --brand-orange: #F58220;
             --brand-orange-hover: #d96e14;
+            @if(!empty($siteHeadingColor))
+            --site-heading-color: {{ $siteHeadingColor }};
+            @endif
         }
+
+        /* ضبط حجم الخط الأساسي للموقع وتأثيره النسبي المتناسق */
+        html {
+            font-size: var(--site-font-size, 16px) !important;
+        }
+
+        /* ضبط العرض وملء شاشة الهاتف مع منع التمرير الأفقي تماماً */
+        html, body {
+            width: 100% !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            position: relative !important;
+            box-sizing: border-box !important;
+            -webkit-text-size-adjust: 100%;
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: {!! $currentFontFamily !!} !important;
+            font-size: var(--site-font-size, 16px) !important;
             @if($applyBodyBg && $bgImageUrl)
                 background-image: linear-gradient(rgba(0, 102, 161, {{ $overlayOpacity }}), rgba(0, 78, 124, {{ $overlayOpacity }})), url('{{ $bgImageUrl }}') !important;
                 background-attachment: fixed !important;
@@ -87,6 +122,61 @@
                 background-color: var(--theme-bg) !important;
             @endif
             color: var(--theme-text-main) !important;
+        }
+
+        @if(!empty($siteHeadingColor))
+        h1:not(.text-white):not([class*="text-white"]):not([class*="text-sky-"]):not([class*="text-amber-"]):not([class*="text-emerald-"]):not([class*="text-red-"]):not([class*="text-indigo-"]):not([class*="text-pink-"]):not([class*="text-violet-"]):not([class*="text-yellow-"]):not([class*="text-teal-"]),
+        h2:not(.text-white):not([class*="text-white"]):not([class*="text-sky-"]):not([class*="text-amber-"]):not([class*="text-emerald-"]):not([class*="text-red-"]):not([class*="text-indigo-"]):not([class*="text-pink-"]):not([class*="text-violet-"]):not([class*="text-yellow-"]):not([class*="text-teal-"]),
+        h3:not(.text-white):not([class*="text-white"]):not([class*="text-sky-"]):not([class*="text-amber-"]):not([class*="text-emerald-"]):not([class*="text-red-"]):not([class*="text-indigo-"]):not([class*="text-pink-"]):not([class*="text-violet-"]):not([class*="text-yellow-"]):not([class*="text-teal-"]) {
+            color: var(--site-heading-color);
+        }
+        @endif
+
+        /* الخط العربي الديواني المعتمد للعناوين والشعارات */
+        .font-diwani {
+            font-family: 'Aref Ruqaa', 'Amiri', 'Traditional Arabic', serif !important;
+        }
+
+        /* الخط الإنجليزي الحديث الصريح القياسي */
+        .font-english, html[dir="ltr"] body, html[lang="en"] body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        }
+
+        /* تأثيرات حركة الأزرار (نبضة خفيفة وموجة عند الضغط) */
+        .btn-ripple, button, .button-interactive {
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+        .btn-ripple:active, button:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        /* بطاقات الدورات: ارتفاع بسيط وظل وتغير لون عند التحويم */
+        .course-card, .card-elevate {
+            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+        }
+        .course-card:hover, .card-elevate:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 102, 161, 0.15), 0 8px 10px -6px rgba(0, 102, 161, 0.1);
+            border-color: #0066A1 !important;
+        }
+
+        /* حركات التفاعل الذكية: اهتزاز الخطأ، احتفال النجاح، شريط التقدم */
+        @keyframes gentleShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+        .animate-gentle-shake {
+            animation: gentleShake 0.4s ease-in-out;
+        }
+
+        @keyframes celebrationPulse {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-celebrate {
+            animation: celebrationPulse 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* ربط ألوان الـ Theme ديناميكياً لتغيير المظهر بالكامل عبر الموقع بتناغم مع الهوية */
@@ -134,6 +224,9 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col transition-colors duration-200 overflow-x-hidden">
+
+    <!-- شاشة الترحيب الأولى والشعار الضبابي المخصص (Splash Screen) -->
+    @include('components.splash-screen')
 
     @if(auth()->check() && auth()->user()->isReviewer())
         <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-xs py-2 px-4 text-center shadow-md flex items-center justify-center gap-2 border-b border-amber-600">
@@ -315,24 +408,24 @@
                     @endauth
 
                     <!-- زر مركز المساعدة ودليل تشغيل النظام الشامل -->
-                    <a href="{{ route('help.index') }}" title="مركز المساعدة ودليل استخدام النظام الشامل" class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg {{ request()->routeIs('help.*') ? 'bg-amber-500 text-slate-950 font-black shadow-md' : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700' }} text-xs font-bold flex items-center gap-1.5 transition shrink-0">
+                    <a href="{{ route('help.index') }}" title="مركز المساعدة ودليل استخدام النظام الشامل" class="hidden sm:flex p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg {{ request()->routeIs('help.*') ? 'bg-amber-500 text-slate-950 font-black shadow-md' : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700' }} text-xs font-bold items-center gap-1.5 transition shrink-0">
                         <span>📖</span>
                         <span class="hidden sm:inline">دليل النظام</span>
                     </a>
 
                     <!-- زر اختيار المظهر 10 Themes -->
-                    <a href="{{ route('settings.appearance') }}" title="تخصيص المظهر (10 قوالب)" class="p-1.5 sm:px-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold flex items-center gap-1 transition shrink-0">
+                    <a href="{{ route('settings.appearance') }}" title="تخصيص المظهر (10 قوالب)" class="hidden sm:flex p-1.5 sm:px-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold items-center gap-1 transition shrink-0">
                         <span>🎨</span>
                         <span class="hidden 2xl:inline text-slate-200 font-bold">المظهر</span>
                     </a>
 
                     <!-- محول اللغة (Language Switcher) -->
                     @if($currentLocale === 'en')
-                        <a href="{{ route('lang.switch', 'ar') }}" title="التحويل للعربية" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition shrink-0">
+                        <a href="{{ route('lang.switch', 'ar') }}" title="التحويل للعربية" class="hidden sm:flex px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition shrink-0">
                             🇾🇪 <span class="hidden sm:inline">العربية</span>
                         </a>
                     @else
-                        <a href="{{ route('lang.switch', 'en') }}" title="Switch to English" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition font-sans shrink-0">
+                        <a href="{{ route('lang.switch', 'en') }}" title="Switch to English" class="hidden sm:flex px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition font-sans shrink-0">
                             🇺🇸 <span class="hidden sm:inline">English</span>
                         </a>
                     @endif
@@ -427,7 +520,29 @@
         </div>
 
         <!-- القائمة المتنقلة للشاشات الصغيرة (Mobile Drawer) -->
-        <div id="mobileMenu" class="hidden lg:hidden border-t border-[#004e7c] bg-[#005586] px-4 py-3 space-y-1">
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-[#004e7c] bg-[#005586] px-4 py-3 space-y-2">
+            <!-- أدوات الموبايل السريعة: محول اللغة والمظهر ودليل النظام -->
+            <div class="sm:hidden grid grid-cols-3 gap-2 pb-2.5 border-b border-white/15 text-xs text-center font-bold">
+                @if($currentLocale === 'en')
+                    <a href="{{ route('lang.switch', 'ar') }}" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center gap-1 shadow-xs">
+                        <span>🇾🇪</span>
+                        <span>العربية</span>
+                    </a>
+                @else
+                    <a href="{{ route('lang.switch', 'en') }}" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center gap-1 font-sans shadow-xs">
+                        <span>🇺🇸</span>
+                        <span>English</span>
+                    </a>
+                @endif
+                <a href="{{ route('settings.appearance') }}" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-amber-300 flex items-center justify-center gap-1 shadow-xs">
+                    <span>🎨</span>
+                    <span>المظهر</span>
+                </a>
+                <a href="{{ route('help.index') }}" class="p-2 rounded-xl bg-amber-400 text-slate-950 font-black flex items-center justify-center gap-1 shadow-xs">
+                    <span>📖</span>
+                    <span>الدليل</span>
+                </a>
+            </div>
             @auth
                 <div class="pb-2 mb-2 border-b border-white/15 grid grid-cols-2 gap-1.5 text-xs">
                     @if(auth()->user()->isAdmin())
@@ -547,8 +662,19 @@
         @endif
     @endguest
 
-    <!-- الإشعارات والتنبيهات -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full min-w-0">
+    <!-- المحتوى الرئيسي للمنصة -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 w-full min-w-0">
+        <!-- زر رجوع واضح وسلس للصفحات الداخلية -->
+        @if(!request()->routeIs('home') && !request()->is('/'))
+            <div class="mb-5 flex items-center justify-between gap-3">
+                <a href="javascript:history.back()" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-[#0066A1] text-slate-800 dark:text-slate-100 text-xs font-bold transition shadow-xs group">
+                    <span class="text-sm font-black group-hover:translate-x-1 transition-transform">{{ $currentLocale === 'en' ? '←' : '→' }}</span>
+                    <span>{{ $currentLocale === 'en' ? 'Back to previous page' : 'الرجوع للصفحة السابقة' }}</span>
+                </a>
+                <span class="text-[11px] text-slate-400 font-bold hidden sm:inline">مكتب النجم الآسيوي (ASOTS)</span>
+            </div>
+        @endif
+
         @if(session('success'))
             <div class="mb-6 bg-emerald-50 border-r-4 border-emerald-500 p-4 rounded-xl shadow-sm flex items-center justify-between text-emerald-800">
                 <div class="flex items-center gap-2">
