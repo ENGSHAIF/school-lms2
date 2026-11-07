@@ -59,13 +59,9 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA')
-                    ? (file_exists(base_path(env('MYSQL_ATTR_SSL_CA'))) ? base_path(env('MYSQL_ATTR_SSL_CA')) : env('MYSQL_ATTR_SSL_CA'))
-                    : null,
-                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') !== null
-                    ? filter_var(env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
-                    : null,
-            ], fn ($value) => ! is_null($value) && $value !== '') : [],
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA', true),
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', false),
+            ], fn ($value) => ! is_null($value)) : [],
         ],
 
         'mariadb' => [
@@ -84,13 +80,9 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA')
-                    ? (file_exists(base_path(env('MYSQL_ATTR_SSL_CA'))) ? base_path(env('MYSQL_ATTR_SSL_CA')) : env('MYSQL_ATTR_SSL_CA'))
-                    : null,
-                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') !== null
-                    ? filter_var(env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
-                    : null,
-            ], fn ($value) => ! is_null($value) && $value !== '') : [],
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA', true),
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', false),
+            ], fn ($value) => ! is_null($value)) : [],
         ],
 
         'pgsql' => [
